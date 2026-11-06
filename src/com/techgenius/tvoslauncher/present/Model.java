@@ -216,7 +216,7 @@ public final class Model {
         Set<String> ids = new HashSet<>();
         for (int i = 0; i < slides.size(); i++) {
             Slide s = slides.get(i);
-            String label = "Slide " + (i + 1);
+            String label = "Слайд " + (i + 1);
             if (!ids.add(s.id)) errors.add(label + " содержит повторяющийся идентификатор");
             if (!VIDEO.equals(s.type) && (s.durationSec < 1 || s.durationSec > 86_400)) {
                 errors.add(label + " длительность должна быть от 1 секунды до 24 часов");
@@ -227,7 +227,7 @@ public final class Model {
             } else {
                 String url = s.url == null ? "" : s.url;
                 if (!url.startsWith("http://") && !url.startsWith("https://")) {
-                    errors.add(label + " webpage URL must start with http:// or https://");
+                    errors.add(label + " адрес веб-страницы должен начинаться с http:// или https://");
                 }
                 if (s.webpageScrollSpeedPxPerSec < 5 || s.webpageScrollSpeedPxPerSec > 1000) {
                     errors.add(label + " скорость прокрутки веб-страницы должна быть от 5 до 1000 пикселей в секунду");
