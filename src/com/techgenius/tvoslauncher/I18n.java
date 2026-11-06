@@ -526,6 +526,14 @@ public final class I18n {
 
     /** Russian additions for UI strings not covered by the shared translation table. */
     private static void initRussianSupplement() {
+        ru("Nothing to present yet", "Пока нечего показывать");
+        ru("Add images, videos or webpages from a phone or computer on the same Wi-Fi.", "Отправляйте изображения, видео и веб-страницы с телефона или компьютера в той же сети Wi-Fi.");
+        ru("Send to this TV", "Отправить на этот телевизор");
+        ru("Scan the code or open this address on a phone or computer on the same Wi-Fi.", "Отсканируйте код или откройте этот адрес на телефоне или компьютере в той же сети Wi-Fi.");
+        ru("PAIRING CODE", "КОД СОПРЯЖЕНИЯ");
+        ru("Skipping this slide", "Слайд пропущен");
+        ru("No enabled slides in the active playlist", "В текущем плейлисте нет включённых слайдов");
+
         ru("Could not check for updates.", "Не удалось проверить наличие обновлений.");
         ru("You are up to date (v", "Установлена последняя версия (v");
         ru("ADB is active — selecting Install will download and install the update automatically.", "ADB включён — при выборе «Установить» обновление будет загружено и установлено автоматически.");
