@@ -3795,6 +3795,9 @@ public class MainActivity extends Activity {
                     ControlPanelOverlay.openInputs(this, () -> showInputs(popoverReturn != null ? popoverReturn : ccButton));
                 },
                 () -> {
+                    dropPicker();
+                    pickerLayer = null;
+                    popoverReturn = null;
                     VpnController.toggleHappWithFeedback(this);
                 },
                 () -> {
