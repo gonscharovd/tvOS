@@ -5108,11 +5108,7 @@ public class MainActivity extends Activity {
     }
 
     void refreshAvatar() {
-        boolean multi = Profiles.list(this).size() > 1;
-        if (avatarView != null) {
-            avatarView.setImageBitmap(Profiles.avatar(this, Profiles.current(this), avatarSize));
-            avatarView.setVisibility(multi ? View.VISIBLE : View.GONE);
-        }
+        if (avatarView != null) avatarView.setVisibility(View.GONE);
         if (sceneHome != null) sceneHome.refreshWhoBar();
     }
 
