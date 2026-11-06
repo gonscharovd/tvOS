@@ -75,7 +75,6 @@ public class SettingsActivity extends Activity {
         {LOOK_SCENES, "scene"},
         {WEATHER, "cloud"},
         {APPS, "apps"},
-        {PROFILES, "person"},
         {CONTROL_PANEL, "sliders"},
         {BUTTON_MAPPER, "remote"},
         {QUICK, "bolt"},
@@ -167,7 +166,7 @@ public class SettingsActivity extends Activity {
         } else if ("apps".equalsIgnoreCase(pg)) {
             return APPS;
         } else if ("profiles".equalsIgnoreCase(pg) || "people".equalsIgnoreCase(pg)) {
-            return PROFILES;
+            return QUICK;
         } else if ("language".equalsIgnoreCase(pg)) {
             return LANGUAGE;
         }
@@ -1066,12 +1065,6 @@ public class SettingsActivity extends Activity {
                             .apply();
                     showStatusMsg(tr("App layout reset to default.", "Uygulama düzeni varsayılana sıfırlandı."));
                 });
-        row(tr("Show Continue Watching on Home", "Ana ekranda İzlemeye Devam Et'i göster"),
-                () -> Profiles.homePrefs(this).getBoolean("cw_enabled", false) ? tr("On", "Açık") : tr("Off", "Kapalı"),
-                () -> {
-                    boolean on = !Profiles.homePrefs(this).getBoolean("cw_enabled", false);
-                    Profiles.homePrefs(this).edit().putBoolean("cw_enabled", on).apply();
-                });
         row(tr("Home screen weather shortcut", "Ana ekranda hava durumu kısayolu"),
                 () -> SceneHome.isWeatherShortcutEnabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
                 () -> {
@@ -1079,40 +1072,12 @@ public class SettingsActivity extends Activity {
                     SceneHome.setWeatherShortcutEnabled(this, next);
                     refreshAll();
                 });
-        row(tr("Classic Top Shelf suggestions", "Klasik Üst Raf önerileri"), () -> {
-            switch (Suggestions.shelf(this)) {
-                case Suggestions.SHELF_RECS: return tr("Recommendations", "Öneriler");
-                case Suggestions.SHELF_NEWS: return tr("News", "Haberler");
-                case Suggestions.SHELF_NONE: return tr("Off", "Kapalı");
-                default: return tr("Recommendations & News", "Öneriler ve Haberler");
-            }
-        }, () -> openSubMenu("top_shelf"));
-        row(tr("Clear Continue Watching history", "İzlemeye Devam Et geçmişini temizle"),
-                () -> "",
-                () -> {
-                    MediaWatchService.Store.clear(this);
-                    showStatusMsg(tr("Continue Watching cleared.", "İzlemeye Devam Et geçmişi temizlendi."));
-                });
         row(tr("Manage system apps in TV settings…", "TV ayarlarında uygulamaları yönet…"),
                 () -> "›",
                 () -> Suggestions.start(this, new Intent(Settings.ACTION_APPLICATION_SETTINGS)));
         infoNote(tr("Tip: Hold OK on any app on the home screen dock to move or hide it.",
                 "İpucu: Ana ekran dock'undaki herhangi bir uygulamayı taşımak veya gizlemek için OK tuşuna basılı tutun."));
 
-        // One section per streaming app with a continue-watching popup on its dock tile.
-        for (WatchCloud cloud : new WatchCloud[]{new NuvioCloud(this), new StremioCloud(this)}) {
-            section(cloud.name().toUpperCase(java.util.Locale.ROOT));
-            row(tr("Continue Watching on dock", "Dock'ta İzlemeye Devam Et"),
-                    () -> cloud.popupEnabled() ? tr("On", "Açık") : tr("Off", "Kapalı"),
-                    () -> {
-                        cloud.setPopupEnabled(!cloud.popupEnabled());
-                        refreshAll();
-                    });
-            row(tr("Account", "Hesap"),
-                    () -> cloud.isSignedIn() ? tr("Signed in · Sign out", "Giriş yapıldı · Çıkış yap")
-                            : tr("Not signed in", "Giriş yapılmadı"),
-                    () -> confirmWatchSignOut(cloud));
-        }
     }
 
     static final class HiddenAppItem {
@@ -1138,16 +1103,6 @@ public class SettingsActivity extends Activity {
                 it.pkg = getPackageName();
                 it.label = MainActivity.getCustomAppName(this, it.key, null, tr("Inputs", "Girişler"));
                 it.icon = new BitmapDrawable(getResources(), Glyphs.get("input", u(22), Color.WHITE));
-                out.add(it);
-            }
-            if (hidden.contains(MainActivity.PRESENT_KEY)) {
-                HiddenAppItem it = new HiddenAppItem();
-                it.key = MainActivity.PRESENT_KEY;
-                it.pkg = getPackageName();
-                it.label = MainActivity.getCustomAppName(this, it.key, null, tr("Presentation", "Sunum"));
-                it.icon = new BitmapDrawable(getResources(), Glyphs.get("present", u(22), Color.WHITE));
-                it.launch = new Intent(this, com.techgenius.tvoslauncher.present.PresentationActivity.class)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 out.add(it);
             }
             Collections.sort(out, (a, b) -> a.label.compareToIgnoreCase(b.label));
@@ -1525,34 +1480,10 @@ public class SettingsActivity extends Activity {
         row(tr("Default home screen", "Varsayılan ana ekran"),
                 () -> Perms.isDefaultHome(this) ? tr("Active", "Etkin") : tr("Set as default…", "Varsayılan yap…"),
                 () -> Perms.requestDefaultHome(this));
-        row(tr("Continue Watching & DND permission", "İzlemeye Devam Et ve Rahatsız Etmeyin izni"),
-                () -> Perms.hasListener(this) ? tr("Allowed", "İzin verildi")
-                        : Perms.listenerSupported(this) ? tr("Allow…", "İzin ver…") : tr("Not on this TV", "Bu TV'de yok"),
-                () -> Perms.requestListener(this));
         row(tr("Navigation click sounds", "Gezinme tıklama sesleri"),
                 () -> Clicks.enabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
                 () -> Clicks.setEnabled(this, !Clicks.enabled(this)));
 
-        section(tr("PRESENTATION &CLASSIC SHELF", "SUNUM VE KLASİK ÜST RAF"));
-        row(tr("Presentation mode", "Sunum modu"),
-                () -> com.techgenius.tvoslauncher.present.Presenter.enabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
-                () -> {
-                    boolean on = !com.techgenius.tvoslauncher.present.Presenter.enabled(this);
-                    com.techgenius.tvoslauncher.present.Presenter.set(this, com.techgenius.tvoslauncher.present.Presenter.KEY_ENABLED, on);
-                });
-        row(tr("Presentation address & QR code", "Sunum adresi ve QR kodu"),
-                () -> com.techgenius.tvoslauncher.present.Presenter.enabled(this)
-                        ? com.techgenius.tvoslauncher.present.Presenter.address().replace("http://", "")
-                        : tr("Turn on first", "Önce etkinleştirin"),
-                this::showPresentInfo);
-        row(tr("Classic Top Shelf content", "Klasik Üst Raf içeriği"), () -> {
-            switch (Suggestions.shelf(this)) {
-                case Suggestions.SHELF_RECS: return tr("Recommendations", "Öneriler");
-                case Suggestions.SHELF_NEWS: return tr("News", "Haberler");
-                case Suggestions.SHELF_NONE: return tr("Off", "Kapalı");
-                default: return tr("Recommendations & News", "Öneriler ve Haberler");
-            }
-        }, () -> openSubMenu("top_shelf"));
         row(tr("Run first-time setup again…", "İlk kurulumu tekrar çalıştır…"),
                 () -> "›",
                 () -> {
@@ -1596,18 +1527,6 @@ public class SettingsActivity extends Activity {
                 this::confirmRevokeAllPermissions);
 
         section(tr("STARTUP & KEEP ALIVE", "BAŞLANGIÇ VE KEEP ALIVE"));
-        row(tr("Launch automatically on system boot", "Sistem açılışında otomatik başlat"),
-                () -> com.techgenius.tvoslauncher.present.BootReceiver.isLaunchOnBootEnabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
-                () -> {
-                    boolean next = !com.techgenius.tvoslauncher.present.BootReceiver.isLaunchOnBootEnabled(this);
-                    com.techgenius.tvoslauncher.present.BootReceiver.setLaunchOnBootEnabled(this, next);
-                    refreshAll();
-                    showStatusMsg(next
-                            ? tr("tvOS Launcher will launch immediately on system boot.",
-                                 "tvOS Launcher sistem açılışında anında otomatik başlatılacak.")
-                            : tr("Automatic launch on boot disabled.",
-                                 "Sistem açılışında otomatik başlatma kapatıldı."));
-                });
         row(tr("Keep Alive (Auto-repair Accessibility)", "Keep Alive (Erişilebilirliği otomatik onar)"),
                 () -> LocalAdb.isKeepAliveEnabled(this) ? tr("On (Default)", "Açık (Varsayılan)") : tr("Off", "Kapalı"),
                 this::toggleKeepAliveWithWarning);
