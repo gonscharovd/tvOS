@@ -615,7 +615,7 @@ public class PresentationActivity extends Activity implements AdminServer.Gatewa
     void showError(String message, Model.Slide s) {
         hideSurfaces();
         messageTitle.setText(I18n.t(this, "Skipping this slide"));
-        messageBody.setText(message);
+        messageBody.setText(I18n.t(this, message));
         messageCard.setVisibility(View.VISIBLE);
         synchronized (statusLock) {
             status = new Model.Status();
