@@ -145,49 +145,24 @@ final class SceneHome {
         buildTopBar();
         buildKeepWatchingShelf();
         buildBottomDock();
-        watchPopups.add(new WatchPopup(this, new NuvioCloud(host)));
-        watchPopups.add(new WatchPopup(this, new StremioCloud(host)));
     }
 
     /** The continue-watching popup for a dock tile's app, or null when it has none. */
-    WatchPopup watchPopupFor(String pkg) {
-        for (WatchPopup p : watchPopups) if (p.owns(pkg)) return p;
-        return null;
-    }
+    WatchPopup watchPopupFor(String pkg) { return null; }
 
     /** DPAD Up on a dock tile: moves into that tile's popup row, if one is open. */
-    private boolean focusWatchPopupRow(View tile) {
-        for (WatchPopup p : watchPopups) if (p.focusRow(tile)) return true;
-        return false;
-    }
+    private boolean focusWatchPopupRow(View tile) { return false; }
 
-    void onWatchPopupsResume() {
-        // Home pressed / launcher resumed: rows reappear in place, without the entrance slide.
-        suppressCwAnimUntil = android.os.SystemClock.uptimeMillis() + 700L;
-        for (WatchPopup p : watchPopups) p.onLauncherResume();
-    }
+    void onWatchPopupsResume() { }
 
-    /** Uptime until which Continue Watching rows show/hide instantly (set on resume). */
+    /** Uptime until which Continue Watching rows show/hide instantly (unused in lightweight build). */
     private long suppressCwAnimUntil;
 
     boolean cwAnimSuppressed() {
         return android.os.SystemClock.uptimeMillis() < suppressCwAnimUntil;
     }
 
-    void onWatchPopupsPause() {
-        for (WatchPopup p : watchPopups) p.onLauncherPause();
-        // Keep the shelf exactly as it is: on Home / return the focused tile is usually the same,
-        // and Android won't re-fire its focus listener, so hiding here made the row slide in again.
-        if (shelfBox != null && shelfBox.getVisibility() == View.VISIBLE) {
-            shelfBox.animate().cancel();
-            if (shelfHiding) {
-                hideShelfImmediate();
-            } else {
-                shelfBox.setAlpha(1f);
-                shelfBox.setTranslationY(0f);
-            }
-        }
-    }
+    void onWatchPopupsPause() { }
 
     void invalidateSceneGlass() {
         if (whoBar != null) whoBar.invalidate();
@@ -226,7 +201,10 @@ final class SceneHome {
         whoBar.setBackground(whoGlass);
         whoBar.setFocusable(true);
         whoBar.setClickable(true);
-        whoBar.setLongClickable(true);
+        whoBar.setLongClickable(false);
+        whoBar.setFocusable(false);
+        whoBar.setClickable(false);
+        whoBar.setVisibility(View.GONE);
 
         GradientDrawable whoFocusRing = new GradientDrawable();
         whoFocusRing.setCornerRadius(dp(22));
@@ -359,35 +337,7 @@ final class SceneHome {
     }
 
     void refreshWhoBar() {
-        if (whoBar == null) return;
-        whoBar.removeAllViews();
-        List<Profiles.Profile> ps = Profiles.list(host);
-        if (ps.size() <= 1) {
-            whoBar.setVisibility(View.GONE);
-            return;
-        }
-        whoBar.setVisibility(View.VISIBLE);
-        String curId = Profiles.current(host).id;
-        for (Profiles.Profile p : ps) {
-            boolean active = p.id.equals(curId);
-            TextView pill = new TextView(host);
-            Ui.textSize(pill, 11f);
-            pill.setTypeface(Ui.font(host, "semibold"));
-            pill.setText(I18n.profileName(host, p.name));
-            pill.setPadding(dp(13), dp(6), dp(13), dp(6));
-            pill.setSingleLine(true);
-            if (active) {
-                GradientDrawable abg = new GradientDrawable();
-                abg.setCornerRadius(dp(18));
-                abg.setColor(0xF2FFFFFF);
-                pill.setBackground(abg);
-                pill.setTextColor(0xFF111114);
-            } else {
-                pill.setTextColor(0xB8F4F4F6);
-            }
-            whoBar.addView(pill, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        }
+        if (whoBar != null) whoBar.setVisibility(View.GONE);
     }
 
     void refreshWeatherBtn() {
@@ -467,65 +417,9 @@ final class SceneHome {
         overlay.addView(shelfBox, slp);
     }
 
-    void refreshKeepWatching() {
-        if (shelfRow == null) return;
-        shelfHeader.setText(I18n.s(host, "Continue watching", "İzlemeye devam et"));
-        if (!host.cwEnabled() || moreExpanded) {
-            pkgWatchCache.clear();
-            hideShelf();
-            return;
-        }
-        final String curPkg = activeShelfPkg;
-        final List<String> dockPkgs = new ArrayList<>();
-        for (MainActivity.AppEntry e : dockEntries) {
-            if (e != null && e.pkg != null && !e.pkg.isEmpty()
-                    && !GEAR_KEY.equals(e.key) && !MORE_KEY.equals(e.key)) {
-                WatchPopup p = watchPopupFor(e.pkg);
-                if (p == null) {
-                    dockPkgs.add(e.pkg);
-                }
-            }
-        }
-        final int gen = ++shelfLoadGen;
-        host.io.execute(() -> {
-            if (curPkg != null && !curPkg.isEmpty()) {
-                List<WatchCardData> curCards = loadWatchCardsForPackage(curPkg);
-                pkgWatchCache.put(curPkg, curCards);
-                host.handler.post(() -> {
-                    if (gen != shelfLoadGen || !curPkg.equals(activeShelfPkg)) return;
-                    populateWatchRow(curPkg, curCards);
-                });
-            }
-            for (String p : dockPkgs) {
-                if (p.equals(curPkg)) continue;
-                List<WatchCardData> cards = loadWatchCardsForPackage(p);
-                pkgWatchCache.put(p, cards);
-                for (WatchCardData cd : cards) {
-                    if (cd.thumb == null && cd.backdropUrl != null && !cd.backdropUrl.isEmpty()) {
-                        Bitmap b = Suggestions.image(host, cd.backdropUrl, "w300", 240);
-                        if (b != null) {
-                            shelfThumbs.put(cd.backdropUrl, b);
-                            cd.thumb = b;
-                        }
-                    }
-                }
-            }
-        });
-    }
+    void refreshKeepWatching() { }
 
-    void onDockTileFocusForShelf(View tile, MainActivity.AppEntry a, boolean isGear, boolean isMore, WatchPopup popup, boolean has) {
-        if (has) {
-            if (isGear || isMore || a == null || a.pkg == null || a.pkg.isEmpty()
-                    || moveDockIdx >= 0 || !host.cwEnabled() || moreExpanded
-                    || (popup != null && popup.isShowing())) {
-                hideShelf();
-                return;
-            }
-            showShelfForPackage(tile, a.pkg);
-        } else {
-            overlay.post(this::hideShelfIfFocusLeft);
-        }
-    }
+    void onDockTileFocusForShelf(View tile, MainActivity.AppEntry a, boolean isGear, boolean isMore, WatchPopup popup, boolean has) { }
 
     private boolean shelfHiding;
 
