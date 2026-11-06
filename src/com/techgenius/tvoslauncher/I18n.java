@@ -526,6 +526,17 @@ public final class I18n {
 
     /** Russian additions for UI strings not covered by the shared translation table. */
     private static void initRussianSupplement() {
+        ru("Sign in to ", "Войти в ");
+        ru("Couldn't reach ", "Не удалось подключиться к ");
+        ru("Nothing to continue yet", "Пока нечего продолжать");
+        ru("Preparing QR code…", "Подготовка QR-кода…");
+        ru("Scan with your phone and approve.", "Отсканируйте код телефоном и подтвердите вход.");
+        ru("Or open ", "Или откройте ");
+        ru(" and enter:", " и введите код:");
+        ru("Waiting for approval…", "Ожидание подтверждения…");
+        ru("Up next", "Далее");
+        ru("Profile ", "Профиль ");
+
         ru("Continue watching", "Продолжить просмотр");
         ru("Resume playback", "Продолжить воспроизведение");
         ru("Resume", "Продолжить");
