@@ -526,6 +526,25 @@ public final class I18n {
 
     /** Russian additions for UI strings not covered by the shared translation table. */
     private static void initRussianSupplement() {
+        ru("Could not check for updates.", "Не удалось проверить наличие обновлений.");
+        ru("You are up to date (v", "Установлена последняя версия (v");
+        ru("ADB is active — selecting Install will download and install the update automatically.", "ADB включён — при выборе «Установить» обновление будет загружено и установлено автоматически.");
+        ru("ADB is turned off (Secure Mode) — selecting Install will download the update and open the system package installer.", "ADB выключен (защищённый режим) — при выборе «Установить» обновление будет загружено, затем откроется системный установщик пакетов.");
+        ru("A new version of tvOS Launcher is available on GitHub.\n", "На GitHub доступна новая версия tvOS Launcher.\n");
+        ru("Show Changelog", "Показать список изменений");
+        ru("Install", "Установить");
+        ru("Changelog — v", "Список изменений — v");
+        ru("No changelog text provided for this release.", "Для этой версии список изменений не опубликован.");
+        ru("Downloading update v", "Загрузка обновления v");
+        ru("Installing update v", "Установка обновления v");
+        ru("ADB install failed, opening package installer…", "Не удалось установить через ADB, открываем системный установщик…");
+        ru("Update download failed.", "Не удалось загрузить обновление.");
+        ru("Please allow 'Install unknown apps' for tvOS Launcher.", "Разрешите tvOS Launcher устанавливать неизвестные приложения.");
+        ru("Could not start installer.", "Не удалось запустить установщик.");
+        ru("Update installed!", "Обновление установлено!");
+        ru("Now", "Сейчас");
+        ru("Today", "Сегодня");
+
         ru("Mute / Unmute (164)", "Без звука / включить звук (164)");
         ru("Volume Up (24)", "Громкость + (24)");
         ru("Volume Down (25)", "Громкость − (25)");
