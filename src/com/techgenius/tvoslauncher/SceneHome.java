@@ -58,6 +58,8 @@ final class SceneHome {
     LinearLayout whoBar;
     LinearLayout weatherBtn;
     ImageView weatherIcon;
+    LinearLayout vpnIndicator;
+    ImageView vpnIndicatorIcon;
     LinearLayout moonBtn;
     ImageView moonIcon;
     TextView moonText;
@@ -302,6 +304,25 @@ final class SceneHome {
         topRightRow.addView(weatherBtn, wxlp);
         refreshWeatherBtn();
 
+        // VPN indicator: visible only while Android reports an active VPN transport.
+        vpnIndicator = new LinearLayout(host);
+        vpnIndicator.setOrientation(LinearLayout.HORIZONTAL);
+        vpnIndicator.setGravity(Gravity.CENTER);
+        MainActivity.LiquidGlass vpnGlass = new MainActivity.LiquidGlass(
+                mSize / 2f, 0x6614161C, host.glassSource, host.screenW, host.screenH, host.unit);
+        vpnGlass.lens = dp(5);
+        vpnGlass.rimStrength = 0.45f;
+        vpnIndicator.setBackground(vpnGlass);
+        vpnIndicator.setFocusable(false);
+        vpnIndicator.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_YES);
+        vpnIndicatorIcon = new ImageView(host);
+        vpnIndicatorIcon.setImageBitmap(Glyphs.get("shield", dp(19), 0xFF30D158));
+        vpnIndicator.addView(vpnIndicatorIcon, new LinearLayout.LayoutParams(dp(19), dp(19)));
+        LinearLayout.LayoutParams vlp = new LinearLayout.LayoutParams(mSize, mSize);
+        vlp.rightMargin = dp(10);
+        topRightRow.addView(vpnIndicator, vlp);
+        refreshVpnIndicator();
+
         // Top-right Control Panel Button
         moonBtn = new LinearLayout(host);
         moonBtn.setOrientation(LinearLayout.HORIZONTAL);
@@ -394,6 +415,15 @@ final class SceneHome {
         if (weatherBtn == null) return;
         boolean show = isWeatherShortcutEnabled(host) && Weather.enabled(host);
         weatherBtn.setVisibility(show ? View.VISIBLE : View.GONE);
+    }
+
+    void refreshVpnIndicator() {
+        if (vpnIndicator == null) return;
+        boolean active = VpnController.isVpnActive(host);
+        vpnIndicator.setVisibility(active ? View.VISIBLE : View.GONE);
+        if (active) {
+            vpnIndicator.setContentDescription(I18n.s(host, "VPN connected", "VPN подключён"));
+        }
     }
 
     void refreshMoonBtn() {
