@@ -424,10 +424,6 @@ final class SearchPanel {
         gen++;
         Search.cancel();
         render();
-        String q = q();
-        if (q.length() >= 2 && Search.titlesEnabled(a) && !cache.containsKey(q.toLowerCase())) {
-            a.handler.postDelayed(fetch, DEBOUNCE_MS);
-        }
     }
 
     String q() {
