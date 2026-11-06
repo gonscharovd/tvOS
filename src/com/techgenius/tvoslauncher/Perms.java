@@ -86,7 +86,7 @@ final class Perms {
         if (tryStart(a, new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))) return;
         if (tryStart(a, new Intent("android.settings.NOTIFICATION_POLICY_ACCESS_SETTINGS"))) return;
         lastResort(a, I18n.s(a, "Continue Watching & Do Not Disturb", "\u0130zlemeye Devam Et ve Rahats\u0131z Etmeyin"),
-                "adb shell cmd notification allow_listener com.techgenius.tvoslauncher/com.techgenius.tvoslauncher.MediaWatchService");
+                "adb shell cmd notification allow_listener com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.MediaWatchService");
     }
 
     /** Starts a system screen if the TV really has it (many TVs map settings actions to empty stubs). */
