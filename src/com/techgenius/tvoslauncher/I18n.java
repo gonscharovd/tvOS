@@ -526,6 +526,10 @@ public final class I18n {
 
     /** Russian additions for UI strings not covered by the shared translation table. */
     private static void initRussianSupplement() {
+        ru("\u25B6  Resume", "▶  Продолжить");
+        ru("\u2715  Remove", "✕  Убрать");
+        ru("Emoji", "Эмодзи");
+
         ru("DOCK", "ПАНЕЛЬ ПРИЛОЖЕНИЙ");
         ru("Dock size", "Размер панели");
         ru("Show app names", "Показывать названия приложений");
