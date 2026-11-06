@@ -44,8 +44,8 @@ final class VpnController {
     static void toggleHappWithFeedback(Context context) {
         boolean sent = toggleHapp(context);
         String message = sent
-                ? I18n.s(context, "VPN toggle sent to Happ", "Команда переключения отправлена в Happ")
-                : I18n.s(context, "Happ VPN toggle is unavailable", "Не удалось обратиться к службе Happ");
+                ? I18n.s(context, "VPN toggle sent to Happ", "Happ VPN anahtarı gönderildi")
+                : I18n.s(context, "Happ VPN toggle is unavailable", "Happ VPN geçişi kullanılamıyor");
         android.widget.Toast.makeText(context, message,
                 sent ? android.widget.Toast.LENGTH_SHORT : android.widget.Toast.LENGTH_LONG).show();
     }
