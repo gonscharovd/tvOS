@@ -278,8 +278,8 @@ final class LocalAdb {
 
     static String buildCleanAccessibilityServicesList(Context c, String existingAcc) {
         String pkg = c.getPackageName();
-        String ourAcc = pkg + "/" + pkg + ".PowerService";
-        String ourShort = pkg + "/.PowerService";
+        String ourAcc = pkg + "/com.techgenius.tvoslauncher.PowerService";
+        String ourShort = pkg + "/com.techgenius.tvoslauncher.PowerService";
         StringBuilder sb = new StringBuilder();
         if (existingAcc != null && !existingAcc.trim().isEmpty() && !"null".equalsIgnoreCase(existingAcc.trim())) {
             for (String part : existingAcc.split(":")) {
@@ -324,7 +324,7 @@ final class LocalAdb {
             try {
                 if (!MediaWatchService.granted(c)) {
                     String pkg = c.getPackageName();
-                    String ourNotif = pkg + "/" + pkg + ".MediaWatchService";
+                    String ourNotif = pkg + "/com.techgenius.tvoslauncher.MediaWatchService";
                     String curNotif = Settings.Secure.getString(cr, "enabled_notification_listeners");
                     if (curNotif == null || curNotif.trim().isEmpty() || "null".equalsIgnoreCase(curNotif.trim())) {
                         Settings.Secure.putString(cr, "enabled_notification_listeners", ourNotif);
@@ -848,8 +848,8 @@ final class LocalAdb {
             // enabled_notification_listeners setting, so low-RAM Android TVs also allow MediaSessionManager!)
             cmds.add("pm grant " + pkg + " android.permission.MEDIA_CONTENT_CONTROL 2>/dev/null");
             if (!MediaWatchService.granted(c)) {
-                cmds.add("cmd notification allow_listener " + pkg + "/" + pkg + ".MediaWatchService 2>/dev/null");
-                String ourNotif = pkg + "/" + pkg + ".MediaWatchService";
+                cmds.add("cmd notification allow_listener " + pkg + "/com.techgenius.tvoslauncher.MediaWatchService 2>/dev/null");
+                String ourNotif = pkg + "/com.techgenius.tvoslauncher.MediaWatchService";
                 String curNotif = "";
                 try {
                     curNotif = Settings.Secure.getString(c.getContentResolver(), "enabled_notification_listeners");
@@ -1010,8 +1010,8 @@ final class LocalAdb {
         try {
             existingAcc = Settings.Secure.getString(appCtx.getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
         } catch (Exception ignored) { }
-        String ourAcc = pkg + "/" + pkg + ".PowerService";
-        String ourShort = pkg + "/.PowerService";
+        String ourAcc = pkg + "/com.techgenius.tvoslauncher.PowerService";
+        String ourShort = pkg + "/com.techgenius.tvoslauncher.PowerService";
         StringBuilder cleanAcc = new StringBuilder();
         if (existingAcc != null && !existingAcc.trim().isEmpty() && !"null".equalsIgnoreCase(existingAcc.trim())) {
             for (String part : existingAcc.split(":")) {
@@ -1035,7 +1035,7 @@ final class LocalAdb {
                 if (cleanAccStr.isEmpty()) {
                     Settings.Secure.putInt(cr, Settings.Secure.ACCESSIBILITY_ENABLED, 0);
                 }
-                String ourNotif = pkg + "/" + pkg + ".MediaWatchService";
+                String ourNotif = pkg + "/com.techgenius.tvoslauncher.MediaWatchService";
                 String curNotif = Settings.Secure.getString(cr, "enabled_notification_listeners");
                 if (curNotif != null && curNotif.contains(ourNotif)) {
                     StringBuilder cleanNotif = new StringBuilder();
