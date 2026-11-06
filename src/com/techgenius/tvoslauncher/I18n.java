@@ -526,6 +526,49 @@ public final class I18n {
 
     /** Russian additions for UI strings not covered by the shared translation table. */
     private static void initRussianSupplement() {
+        ru("Make tvOS Launcher your home screen?", "Сделать tvOS Launcher главным экраном?");
+        ru("The Home button on the remote will open tvOS Launcher.", "Кнопка Home на пульте будет открывать tvOS Launcher.");
+        ru("Make Home Screen", "Назначить главным экраном");
+        ru("Not Now", "Не сейчас");
+        ru("Back to return   ·   Hold OK for options", "Назад — вернуться · Удерживайте OK для параметров");
+        ru("Can't open ", "Не удаётся открыть ");
+        ru("App icon reset to default", "Значок приложения сброшен");
+        ru("App icon updated", "Значок приложения обновлён");
+        ru("Show on Home Screen", "Показать на главном экране");
+        ru("Hide", "Скрыть");
+        ru("App Info", "О приложении");
+        ru("Reset Layout", "Сбросить расположение");
+        ru("% used  ·  Clean", "% использовано · Очистить");
+        ru("No apps to close", "Нет приложений для закрытия");
+        ru("Closed ", "Закрыто: ");
+        ru("Not Connected", "Не подключено");
+        ru("TV Speakers", "Динамики телевизора");
+        ru(" min left", " мин. осталось");
+        ru("This TV has no inputs", "На этом телевизоре нет входов");
+        ru("Not connected", "Не подключено");
+        ru("Can't switch to ", "Не удаётся переключиться на ");
+        ru("Who’s Watching?", "Кто смотрит?");
+        ru("Add User", "Добавить пользователя");
+        ru("New Profile", "Новый профиль");
+        ru("Change Emoji", "Изменить эмодзи");
+        ru("Change Colour", "Изменить цвет");
+        ru("Colour", "Цвет");
+        ru("Delete", "Удалить");
+        ru("Delete “", "Удалить «");
+        ru("Its layout and Continue Watching list will be removed.", "Его расположение и список «Продолжить просмотр» будут удалены.");
+        ru("Lock Now", "Заблокировать сейчас");
+        ru("Screen Off", "Выключить экран");
+        ru(" paired", " — подключено");
+        ru("% used · Recent Apps", "% использовано · Недавние приложения");
+        ru("Change app icon", "Изменить значок приложения");
+        ru("Rename", "Переименовать");
+        ru("Move", "Переместить");
+        ru("Move left in dock", "Переместить влево на панели");
+        ru("Move right in dock", "Переместить вправо на панели");
+        ru("Move to Other Apps", "Переместить в «Другие приложения»");
+        ru("Uninstall", "Удалить приложение");
+        ru("Cancel", "Отмена");
+
         ru("\u25B6  Resume", "▶  Продолжить");
         ru("\u2715  Remove", "✕  Убрать");
         ru("Emoji", "Эмодзи");
