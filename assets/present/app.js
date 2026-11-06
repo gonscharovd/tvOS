@@ -391,7 +391,7 @@ function renderPreview() {
     body = `<div class="web-card" style="background:#1c1c1e"><div class="web-url">Файл не найден</div><div class="web-note">Выберите другой файл для этого слайда.</div></div>`;
   }
   box.className = `preview${enabled ? "" : " off"}`;
-  box.innerHTML = body + `<span class="chip tl">${i + 1} of ${state.draft.slides.length}</span>`
+  box.innerHTML = body + `<span class="chip tl">${i + 1} из ${state.draft.slides.length}</span>`
     + (state.onTv === s.id && !state.dirty ? `<span class="chip tr live">Сейчас на ТВ</span>` : enabled ? "" : `<span class="chip tr">${ICON.hidden}Скрыт</span>`);
   $("capTitle").textContent = titleOf(s);
   $("capSub").textContent = summary(s);
