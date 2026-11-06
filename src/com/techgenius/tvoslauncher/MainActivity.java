@@ -297,22 +297,10 @@ public class MainActivity extends Activity {
         buildGrid();
         applyLookMode();
         registerPackageReceiver();
-        // Presentation mode: run the admin server if enabled, and honour "Start on boot".
-        com.techgenius.tvoslauncher.present.Presenter.ensureRunning(this);
-        if (com.techgenius.tvoslauncher.present.Presenter.justBooted()) {
-            handler.postDelayed(() -> com.techgenius.tvoslauncher.present.Presenter.openOnBootOnce(this), 1500);
-        }
         wakeReceiver = new BroadcastReceiver() {
             @Override public void onReceive(Context c, Intent i) {
                 AirPlayGuard.check(c, true);
                 LocalAdb.scheduleKeepAliveRepair(c, 1500L);
-                if (!Profiles.askOnWake(c) || Profiles.list(c).size() < 2) return;
-                if (resumed) {
-                    showProfilePicker(true);
-                } else {
-                    startActivity(new Intent(c, MainActivity.class).putExtra("pick_profile", true)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                }
             }
         };
         registerReceiver(wakeReceiver, new IntentFilter(Intent.ACTION_SCREEN_ON));
@@ -330,12 +318,6 @@ public class MainActivity extends Activity {
             I18n.setLang(this, lang);
             activeLang = I18n.getLang(this);
             recreate();
-            return;
-        }
-        if (intent.getBooleanExtra("pick_profile", false)) {
-            closeMenu();
-            if (launchOverlay != null) finishLaunchReturn();
-            showProfilePicker(true);
             return;
         }
         // adb perf probe: --es perf weather|status|hero|dockglass|shadows hides one layer to measure its GPU cost.
@@ -361,7 +343,6 @@ public class MainActivity extends Activity {
             else if (panel.equals("recents")) RecentAppsOverlay.showInActivity(this);
             else if (panel.equals("inputs")) ControlPanelOverlay.openInputs(this, () -> showInputs(ccButton));
             else if (panel.equals("weather")) showWeather();
-            else if (panel.equals("present")) com.techgenius.tvoslauncher.present.Presenter.open(this);
             else if (panel.equals("search")) showSearch(intent.getStringExtra("q"));
             else if (panel.equals("ambient")) {
                 setIntent(intent);
@@ -438,13 +419,6 @@ public class MainActivity extends Activity {
         if (returningFromSettings && !folderMode && launchOverlay == null && moveIndex < 0) reload(currentKey());
         returningFromSettings = false;
         updateStatusClockFormat();
-        if (avatarView != null) {
-            avatarView.setImageBitmap(Profiles.avatar(this, Profiles.current(this), avatarSize));
-            avatarView.setVisibility(Profiles.list(this).size() > 1 ? View.VISIBLE : View.GONE);
-        }
-        // Signed in to Nuvio/Stremio: refresh continue watching in the background. Signed out: no-op.
-        ensureTvListingsPermission();
-        MediaWatchService.ensureSessionTracking(this);
         if (sceneHome != null) sceneHome.onWatchPopupsResume();
         if (Scenes.isScenesLook(this) && sceneHome != null) {
             sceneHome.sceneView.syncSettings();
@@ -537,7 +511,6 @@ public class MainActivity extends Activity {
             exitAmbientShowcase();
         }
         if (sceneHome != null && !ambientShowcase) sceneHome.sceneView.stop();
-        if (sceneHome != null) sceneHome.onWatchPopupsPause();
         handler.removeCallbacks(heroAdvance);
         handler.removeCallbacks(weatherTick);
         handler.removeCallbacks(idleRunnable);
@@ -801,7 +774,9 @@ public class MainActivity extends Activity {
         avatar.setClipToOutline(true);
         avatarView = avatar;
         avatarSize = av;
-        avatar.setVisibility(Profiles.list(this).size() > 1 ? View.VISIBLE : View.GONE);
+        avatar.setVisibility(View.GONE);
+        avatar.setFocusable(false);
+        avatar.setClickable(false);
         LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(av, av);
         alp.leftMargin = dp(12);
         clockBox.addView(avatar, alp);
@@ -814,7 +789,6 @@ public class MainActivity extends Activity {
             v.animate().withLayer().scaleX(has ? 1.14f : 1f).scaleY(has ? 1.14f : 1f)
                     .setDuration(180).setInterpolator(LIFT).start();
         });
-        avatar.setOnClickListener(v -> showProfilePicker(false));
 
         // Room around the buttons for their focus growth (1.12x / 1.18x) so nothing is clipped;
         // the margins shrink by the same amount, so the row sits exactly where it did.
@@ -1996,7 +1970,7 @@ public class MainActivity extends Activity {
 
     /** Continue Watching can be switched off per profile (Settings -> Continue Watching); off by default. */
     boolean cwEnabled() {
-        return Profiles.homePrefs(this).getBoolean("cw_enabled", false);
+        return false;
     }
 
     /** The tab bar only appears when there are two things to switch between. */
@@ -2042,48 +2016,12 @@ public class MainActivity extends Activity {
      * titles mixed in (if it's on) — one after every two items; or Continue Watching alone.
      */
     void loadHero() {
-        updateEmpty();
-        boolean shelf = Suggestions.enabled(this) && Suggestions.ready(this);
-        boolean cw = cwEnabled();
-        if (!shelf && !cw) {
-            heroItems = new ArrayList<>();
-            shelfView.setFocusable(false);
-            setHeroShown(false);
-            return;
-        }
-        int v = Suggestions.version(this) * 2 + (cw ? 1 : 0);
-        boolean reconfigured = v != heroVersion;
-        heroVersion = v;
-        io.execute(() -> {
-            List<Suggestions.Item> cwItems = cw ? MediaWatchService.Store.list(this) : new ArrayList<>();
-            StringBuilder sig = new StringBuilder();
-            for (Suggestions.Item it : cwItems) sig.append(it.key).append(it.progress).append(';');
-            boolean cwChanged = !sig.toString().equals(lastCwSig);
-            lastCwSig = sig.toString();
-            List<Suggestions.Item> base = shelf ? Suggestions.cached(this, true) : null;
-            List<Suggestions.Item> mixed = mixContinue(base, cwItems);
-            if (!mixed.isEmpty() && (reconfigured || cwChanged || heroItems.isEmpty())) {
-                handler.post(() -> setHeroItems(mixed));
-            } else if (mixed.isEmpty()) {
-                handler.post(() -> {
-                    heroItems = new ArrayList<>();
-                    shelfView.setFocusable(false);
-                    setHeroShown(false);
-                });
-            }
-            if (shelf && Suggestions.cached(this, false) == null) {
-                try {
-                    List<Suggestions.Item> fresh = Suggestions.fetch(this);
-                    List<Suggestions.Item> m2 = mixContinue(fresh, cwItems);
-                    handler.post(() -> setHeroItems(m2));
-                } catch (Exception e) {
-                    android.util.Log.w("TvHome", "suggestions: " + e);
-                }
-            }
-        });
+        heroItems = new ArrayList<>();
+        if (shelfView != null) shelfView.setFocusable(false);
+        if (heroShown) setHeroShown(false);
     }
 
-    /** Resume first: up to six recent Continue Watching titles, then news and recommendations. */
+    /** Removed: the lightweight build has no recommendations, news or Continue Watching carousel. */
     static List<Suggestions.Item> mixContinue(List<Suggestions.Item> base, List<Suggestions.Item> cw) {
         List<Suggestions.Item> out = new ArrayList<>(cw.subList(0, Math.min(6, cw.size())));
         if (base != null) out.addAll(base);
@@ -3300,7 +3238,6 @@ public class MainActivity extends Activity {
         addResolved(pm, Intent.CATEGORY_LEANBACK_LAUNCHER, pkgs, true);
         addResolved(pm, Intent.CATEGORY_LAUNCHER, pkgs, false);
         if (!pkgs.contains(TV_SETTINGS)) addSettingsEntry(pm);
-        if (com.techgenius.tvoslauncher.present.Presenter.enabled(this)) addPresentEntry();
         inputs = Inputs.list(this);
         if (Inputs.showCard(this) && (!inputs.isEmpty() || ControlPanelOverlay.hasCustomAction(this, ControlPanelOverlay.ACTION_INPUTS))) {
             addInputsEntry();
@@ -4316,16 +4253,13 @@ public class MainActivity extends Activity {
 
     /** Refresh button: fetch fresh recommendations and news, reload Continue Watching and weather. */
     void refreshAll() {
-        refreshButton.animate().cancel();
-        refreshButton.setRotation(0);
-        refreshButton.animate().rotation(360).setDuration(700).setInterpolator(EASE).start();
-        Suggestions.changed(this);
-        lastCwSig = "";
-        heroVersion = -1;
-        heroItems = new ArrayList<>();
-        loadHero();
+        if (refreshButton != null) {
+            refreshButton.animate().cancel();
+            refreshButton.setRotation(0);
+            refreshButton.animate().rotation(360).setDuration(700).setInterpolator(EASE).start();
+        }
         Weather.refresh(this, true, this::updateWeather);
-        toast("Refreshing");
+        toast("Refreshing weather");
     }
 
     // ---------------------------------------------------------------- built-in ambient mode & idle carousel
