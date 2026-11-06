@@ -230,8 +230,7 @@ public final class ControlPanelOverlay {
                 },
                 () -> {
                     dismiss();
-                    startExternal(svcCtx, new Intent(svcCtx, SettingsActivity.class)
-                            .putExtra("page", SettingsActivity.BUTTON_MAPPER));
+                    VpnController.toggleHappWithFeedback(svcCtx);
                 },
                 () -> {
                     dismiss();
@@ -282,7 +281,7 @@ public final class ControlPanelOverlay {
             MainActivity.LiquidGlass.Backdrop glassSource,
             List<View> outCells,
             Runnable onInputs,
-            Runnable onButtonMapper,
+            Runnable onVpnToggle,
             Runnable onSettings,
             Runnable onSearch) {
 
@@ -328,7 +327,7 @@ public final class ControlPanelOverlay {
         if (isItemEnabled(c, ITEM_MEMORY)) {
             capsules.add(new CapsuleSpec("memory", I18n.s(c, "Memory", "Bellek"), () -> memoryState(c), v -> {
                 dismissAll(c);
-                RecentAppsOverlay.show(c);
+                RecentAppsOverlay.cleanAllNow(c);
             }, true));
         }
         if (isItemEnabled(c, ITEM_DND)) {
@@ -381,9 +380,9 @@ public final class ControlPanelOverlay {
         int capsuleRows = (capsules.size() + 1) / 2;
         int y4 = capsuleRows > 0 ? capsuleRows * (cap + gap) : 0;
 
-        String[] itemKeys = {ITEM_INPUTS, ITEM_MAPPER, ITEM_SETTINGS, ITEM_SEARCH};
-        String[] icons = {"input", "remote", "gear", "search"};
-        Runnable[] actions = {onInputs, onButtonMapper, onSettings, onSearch};
+        String[] itemKeys = {ITEM_INPUTS, ITEM_VPN, ITEM_SETTINGS, ITEM_SEARCH};
+        String[] icons = {"input", "shield", "gear", "search"};
+        Runnable[] actions = {onInputs, onVpnToggle, onSettings, onSearch};
         List<Integer> enabledSmallIdx = new ArrayList<>();
         for (int i = 0; i < itemKeys.length; i++) {
             if (isItemEnabled(c, itemKeys[i])) {
@@ -778,7 +777,7 @@ public final class ControlPanelOverlay {
     public static final String ITEM_AMBIENT = "ambient";
     public static final String ITEM_POWER = "power";
     public static final String ITEM_INPUTS = "inputs";
-    public static final String ITEM_MAPPER = "mapper";
+    public static final String ITEM_VPN = "vpn";
     public static final String ITEM_SETTINGS = "settings";
     public static final String ITEM_SEARCH = "search";
 
@@ -792,7 +791,7 @@ public final class ControlPanelOverlay {
         {ITEM_AMBIENT, "Ambient Mode / Lock Screen", "Ortam Modu / Kilit Ekranı"},
         {ITEM_POWER, "Power Off / Screen Off", "Kapat / Ekranı Kapat"},
         {ITEM_INPUTS, "TV Inputs Shortcut", "TV Girişleri Kısayolu"},
-        {ITEM_MAPPER, "Button Mapper Shortcut", "Tuş Atayıcı Kısayolu"},
+        {ITEM_VPN, "VPN (Happ)", "VPN (Happ)"},
         {ITEM_SETTINGS, "Settings Shortcut", "Ayarlar Kısayolu"},
         {ITEM_SEARCH, "Search / Assistant Shortcut", "Arama / Asistan Kısayolu"}
     };
