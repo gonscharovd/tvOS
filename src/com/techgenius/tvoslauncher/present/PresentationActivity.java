@@ -32,6 +32,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.techgenius.tvoslauncher.I18n;
 import com.techgenius.tvoslauncher.Ui;
 
 import org.json.JSONObject;
