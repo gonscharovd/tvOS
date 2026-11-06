@@ -2,14 +2,23 @@ $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
 if (-not $env:JAVA_HOME) {
-    $jdkCandidate = "C:\Users\asen4\AppData\Local\Programs\Microsoft\jdk-17.0.10.7-hotspot"
-    if (Test-Path $jdkCandidate) {
-        $env:JAVA_HOME = $jdkCandidate
+    $javacCommand = Get-Command javac.exe -ErrorAction SilentlyContinue
+    if (-not $javacCommand) { $javacCommand = Get-Command javac -ErrorAction SilentlyContinue }
+    if ($javacCommand) {
+        $env:JAVA_HOME = Split-Path (Split-Path $javacCommand.Source -Parent) -Parent
     }
 }
-if ($env:JAVA_HOME) {
-    $env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
+if (-not $env:JAVA_HOME -or -not (Test-Path "$env:JAVA_HOME\bin\javac.exe")) {
+    throw "JDK 17 or newer not found. Set JAVA_HOME or add javac.exe to PATH."
 }
+$env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
+$javaVersion = (& "$env:JAVA_HOME\bin\javac.exe" -version 2>&1 | Out-String)
+if ($javaVersion -notmatch "javac 1[7-9]|javac [2-9][0-9]") {
+    throw "JDK 17 or newer is required. Found: $javaVersion"
+}
+
+$VERSION_CODE = if ($env:VERSION_CODE) { $env:VERSION_CODE } else { "13" }
+$VERSION_NAME = if ($env:VERSION_NAME) { $env:VERSION_NAME } else { "2.1.2-ru1" }
 
 $SDK = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT } else { "$env:LOCALAPPDATA\Android\Sdk" }
 $BT = "$SDK\build-tools\34.0.0"
@@ -23,7 +32,7 @@ if ($LASTEXITCODE -ne 0) { throw "aapt2 compile failed" }
 
 & "$BT\aapt2.exe" link -o build\unsigned.apk -I "$JAR" --manifest AndroidManifest.xml `
     --java build\gen --min-sdk-version 24 --target-sdk-version 34 `
-    --version-code 12 --version-name "2.1.2" build\res.zip
+    --version-code $VERSION_CODE --version-name $VERSION_NAME build\res.zip
 if ($LASTEXITCODE -ne 0) { throw "aapt2 link failed" }
 
 $javaFiles = Get-ChildItem -Recurse -Path src, build\gen -Filter "*.java" | Select-Object -ExpandProperty FullName
