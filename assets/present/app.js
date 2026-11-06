@@ -355,7 +355,7 @@ function renderNav() {
         ${s.type === "webpage" ? ICON.web : m ? thumb(m) : ""}
         ${state.onTv === s.id && !state.dirty ? `<span class="chip tl live">На ТВ</span>` : ""}
         ${enabled ? "" : `<span class="chip tr">${ICON.hidden}</span>`}
-        <span class="chip br">${s.type === "video" ? ICON.video + "Видео" : (s.type === "webpage" && s.webpageAutoScroll !== false ? "Scroll" : formatDuration(s.durationSec || defaultDuration(s.type)))}</span>
+        <span class="chip br">${s.type === "video" ? ICON.video + "Видео" : (s.type === "webpage" && s.webpageAutoScroll !== false ? "Прокрутка" : formatDuration(s.durationSec || defaultDuration(s.type)))}</span>
       </div>`;
     li.addEventListener("click", () => select(s.id));
     li.addEventListener("keydown", (e) => navKey(e, i));
@@ -424,7 +424,7 @@ function renderInspector() {
       : `<div class="cell"><span>Время показа</span><span class="stepper"><button type="button" data-step="-5" aria-label="Уменьшить на 5 секунд">−</button><input data-f="durationSec" type="number" min="1" max="86400" value="${s.durationSec || defaultDuration(s.type)}" aria-label="Секунды"><span class="unit">с</span><button type="button" data-step="5" aria-label="Увеличить на 5 секунд">+</button></span></div>`;
   g.push(`<div class="group-label">Воспроизведение</div><div class="group">
     ${timing}
-    <div class="cell"><span>Fit</span><div class="segmented small" role="group" aria-label="Масштабирование">
+    <div class="cell"><span>Масштабирование</span><div class="segmented small" role="group" aria-label="Масштабирование">
       ${["contain", "cover", "fill"].map((f) => `<button type="button" data-fit="${f}" aria-pressed="${f === fit}" title="${{ contain: "Показать целиком", cover: "Заполнить экран с обрезкой краёв", fill: "Растянуть на весь экран" }[f]}">${{ contain: "Вписать", cover: "Заполнить", fill: "Растянуть" }[f]}</button>`).join("")}</div></div>
     ${s.type === "video" ? `<div class="cell"><span>Звук</span><label class="switch"><input type="checkbox" data-f="muted" data-invert ${s.muted === false ? "checked" : ""} aria-label="Воспроизводить звук"><span></span></label></div>` : ""}
     <div class="cell"><span>Показывать слайд</span><label class="switch"><input type="checkbox" data-f="enabled" ${s.enabled !== false ? "checked" : ""} aria-label="Показывать этот слайд"><span></span></label></div>
