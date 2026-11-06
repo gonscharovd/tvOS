@@ -993,7 +993,7 @@ public final class RecentAppsOverlay {
         if (!targets.isEmpty()) {
             // One Local ADB batch is cheaper and more reliable than starting one thread per app.
             LocalAdb.forceStopPackagesAsync(c, targets);
-            String message = I18n.s(c, "Cleaned · " + targets.size(), "Очищено · " + targets.size());
+            String message = I18n.s(c, "Cleanup started", "Temizlik başlatıldı");
             android.widget.Toast.makeText(c, message, android.widget.Toast.LENGTH_SHORT).show();
         } else {
             android.widget.Toast.makeText(c,
@@ -1003,14 +1003,24 @@ public final class RecentAppsOverlay {
     }
 
     private static boolean isProtectedCleanupPackage(Context c, String pkg) {
-        return pkg == null || pkg.isEmpty()
+        if (pkg == null || pkg.isEmpty()
                 || pkg.equals(c.getPackageName())
                 || pkg.equals(VpnController.HAPP_PACKAGE)
+                || pkg.equals("com.happproxy")
                 || pkg.equals("com.android.systemui")
                 || pkg.equals("com.android.settings")
                 || pkg.equals("com.android.tv.settings")
                 || pkg.equals("com.salute.star")
-                || pkg.startsWith("ru.sberdevices.services");
+                || pkg.startsWith("ru.sberdevices.services")) return true;
+        // Never force-stop system/preinstalled packages from a generic cleanup shortcut.
+        try {
+            android.content.pm.ApplicationInfo ai = c.getPackageManager().getApplicationInfo(pkg, 0);
+            int systemFlags = android.content.pm.ApplicationInfo.FLAG_SYSTEM
+                    | android.content.pm.ApplicationInfo.FLAG_UPDATED_SYSTEM_APP;
+            return (ai.flags & systemFlags) != 0;
+        } catch (Exception ignored) {
+            return true;
+        }
     }
 
     private static void markClosedAndKillBackground(Context c, String pkg) {
