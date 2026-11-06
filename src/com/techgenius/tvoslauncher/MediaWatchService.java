@@ -28,7 +28,7 @@ import java.util.Map;
  * Builds the Continue Watching list. Android's own Watch Next list is reserved for system
  * launchers, so instead this listens to the media sessions apps publish while they play (title,
  * artwork, position) and remembers the latest per title. Requires notification-listener access:
- *   adb shell cmd notification allow_listener com.techgenius.tvoslauncher/com.techgenius.tvoslauncher.MediaWatchService
+ *   adb shell cmd notification allow_listener com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.MediaWatchService
  */
 public class MediaWatchService extends NotificationListenerService {
 
