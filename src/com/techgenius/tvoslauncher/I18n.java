@@ -1973,6 +1973,10 @@ public final class I18n {
         }
         if (en.endsWith(" min left")) {
             String num = en.substring(0, en.length() - " min left".length());
+            if (LANG_RU.equals(lang)) {
+                num = num.replace(" h ", " ч ");
+                return num + " мин.";
+            }
             return num + " min";
         }
         if (en.startsWith("Move ") && map != null) {
@@ -2032,6 +2036,11 @@ public final class I18n {
             if (name.startsWith("Person ")) return "Kişi " + name.substring("Person ".length());
             if (name.startsWith("Profile ")) return "Profile " + name.substring("Profile ".length());
             if (name.equals("Kids")) return "Çocuklar";
+        } else if (LANG_RU.equals(getLang(c))) {
+            if (name.equals("Default")) return "По умолчанию";
+            if (name.startsWith("Person ")) return "Пользователь " + name.substring("Person ".length());
+            if (name.startsWith("Profile ")) return "Профиль " + name.substring("Profile ".length());
+            if (name.equals("Kids")) return "Дети";
         } else {
             if (name.equals("Varsayılan")) return "Default";
             if (name.startsWith("Kişi ")) return "Person " + name.substring("Kişi ".length());
