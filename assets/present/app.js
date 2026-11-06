@@ -207,7 +207,7 @@ function renderMedia() {
   $("mediaCount").textContent = state.media.length ? state.media.length : "";
   const items = state.media.filter((m) => state.filter === "all" || kind(m) === state.filter);
   if (!items.length) {
-    grid.innerHTML = `<div class="empty">${state.filter === "all" ? "Файлов пока нет. Перетащите изображения или видео выше." : `No ${state.filter}s yet.`}</div>`;
+    grid.innerHTML = `<div class="empty">${state.filter === "all" ? "Файлов пока нет. Перетащите изображения или видео выше." : `${state.filter === "image" ? "Изображений" : "Видео"} пока нет.`}</div>`;
     return;
   }
   items.forEach((m) => {
@@ -220,8 +220,8 @@ function renderMedia() {
         <div class="tile-name" title="${esc(m.displayName)}">${esc(m.displayName)}</div>
         <div class="tile-meta">${formatBytes(m.sizeBytes)} · ${formatDate(m.createdAt)}</div>
         <div class="tile-actions">
-          ${t ? `<button class="btn tinted small" data-a="add">Add to Playlist</button>` : ""}
-          <button class="icon-btn danger" data-a="del" title="Удалить" aria-label="Delete ${esc(m.displayName)}"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>
+          ${t ? `<button class="btn tinted small" data-a="add">Добавить в плейлист</button>` : ""}
+          <button class="icon-btn danger" data-a="del" title="Удалить" aria-label="Удалить ${esc(m.displayName)}"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>
         </div>
       </div>`;
     el.querySelector('[data-a="add"]')?.addEventListener("click", () => { addMediaSlide(m); setTab("playlist"); });
@@ -246,10 +246,10 @@ async function uploadFiles(files) {
   for (const file of list) {
     const row = document.createElement("div");
     row.className = "upload";
-    row.innerHTML = `<div class="upload-row"><span class="upload-name">${esc(file.name)}</span><span class="secondary" data-s>Waiting…</span></div><div class="bar"><i></i></div>`;
+    row.innerHTML = `<div class="upload-row"><span class="upload-name">${esc(file.name)}</span><span class="secondary" data-s >Ожидание…</span></div><div class="bar"><i></i></div>`;
     $("uploads").prepend(row);
     try {
-      await uploadOne(file, (pct) => { row.querySelector("i").style.width = pct + "%"; row.querySelector("[data-s]").textContent = `${pct}% of ${formatBytes(file.size)}`; });
+      await uploadOne(file, (pct) => { row.querySelector("i").style.width = pct + "%"; row.querySelector("[data-s]").textContent = `${pct}% · из ${formatBytes(file.size)}`; });
       row.classList.add("done");
       row.querySelector("i").style.width = "100%";
       row.querySelector("[data-s]").textContent = "Загружено";
@@ -263,9 +263,9 @@ async function uploadFiles(files) {
   }
   // Report what actually happened, not how many files were picked.
   const failed = list.length - ok;
-  if (ok && !failed) toast(ok === 1 ? `${list[0].name} uploaded` : `${ok} files uploaded`);
-  else if (ok && failed) toast(`${ok} uploaded, ${failed} failed`, "error");
-  else if (failed) toast(failed === 1 ? "Ошибка загрузки" : `${failed} uploads failed`, "error");
+  if (ok && !failed) toast(ok === 1 ? `${list[0].name}: загружено` : `Загружено файлов: ${ok}`);
+  else if (ok && failed) toast(`Загружено: ${ok}, ошибок: ${failed}`, "error");
+  else if (failed) toast(failed === 1 ? "Ошибка загрузки" : `Ошибок загрузки: ${failed}`, "error");
 }
 
 function uploadOne(file, onProgress) {
