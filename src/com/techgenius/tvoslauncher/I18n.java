@@ -526,6 +526,17 @@ public final class I18n {
 
     /** Russian additions for UI strings not covered by the shared translation table. */
     private static void initRussianSupplement() {
+        ru("Continue watching", "Продолжить просмотр");
+        ru("Resume playback", "Продолжить воспроизведение");
+        ru("Resume", "Продолжить");
+        ru("Remove from Keep Watching", "Убрать из списка просмотра");
+        ru("Move ", "Переместить ");
+        ru("Off in ", "Выключение через ");
+        ru(" min", " мин.");
+        ru("min", "мин.");
+        ru("iPhone Rounded", "Округлённые iPhone");
+        ru("Tall Glass", "Высокие стеклянные");
+
         ru("Continue Watching & Do Not Disturb", "Продолжить просмотр и режим «Не беспокоить»");
         ru("Set Default via Local ADB (Recommended)", "Назначить главным через локальный ADB (рекомендуется)");
         ru("Disable Stock TV Launchers (TCL / Philips / Google TV)", "Отключить штатные лаунчеры ТВ (TCL / Philips / Google TV)");
