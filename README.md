@@ -66,7 +66,7 @@ A fast, lightweight, tvOS 26 & macOS–inspired home screen for Android TV & Goo
 - **Night Scenes Weather Shortcut Button (`Settings → Apps`)**:
   - Added a glass **Weather Icon Shortcut** next to the Control Panel button in the top-right corner of Night Scenes Home that opens the 5-day weather forecast modal on tap (enabled by default, toggleable in `Settings → Apps → Home screen weather shortcut`).
 - **Customizable Control Panel Tiles (`Settings → Control Panel`)**:
-  - Toggle individual Control Panel buttons (**Wi-Fi, Bluetooth, RAM, Do Not Disturb, Audio, Sleep Timer, Ambient Mode, Power, Inputs, Button Mapper, Settings, Search**) on or off (all enabled by default).
+  - Toggle individual Control Panel buttons (**Wi-Fi, Bluetooth, RAM, Do Not Disturb, Audio, Sleep Timer, Ambient Mode, Power, Inputs, VPN (Happ), Settings, Search**) on or off (all enabled by default).
 - **Send Key Code in Button Mapper (`Settings → Button Mapper`)**:
   - Assign any mapped button (`1x / 2x / 3x` tap) to **Send Key Code** (Media Play/Pause, Next, Previous, Mute, Volume Up/Down, Back, Home, Menu, TV Input, Channel Up/Down, Captions, Guide, Info, or any custom Android `KeyEvent` code) without needing third-party apps like tvQuickActions.
 - **Interactive Update Available Popup & Dual-Mode APK Installer (`Settings → Updates`)**:
@@ -119,12 +119,13 @@ A fast, lightweight, tvOS 26 & macOS–inspired home screen for Android TV & Goo
   - **One-Tap Backup, Restore & AdGuard DNS**: Tracks disabled packages, shows live **Debloat Status** (`Done` / `Not done`), restores disabled apps anytime with one tap, and includes an **Ad-blocking Private DNS (`dns.adguard-dns.com`)** toggle.
 - **Universal Glass Control Panel (`Quick Settings`) Overlay**
   - Accessible from the home screen or over **any running app** via the Button Mapper accessibility service with real-time background blur (`RenderEffect` on Android 12+ with high-speed box-blur fallback).
-  - Includes **Wi-Fi**, **Bluetooth**, **RAM / Recent Apps**, **Do Not Disturb**, **Audio / Sound**, **Sleep Timer**, **Ambient Mode**, **Power / Screen Off**, **Inputs**, **Button Mapper**, **Settings**, and **Search**.
+  - Includes **Wi-Fi**, **Bluetooth**, **RAM / Recent Apps**, **Do Not Disturb**, **Audio / Sound**, **Sleep Timer**, **Ambient Mode**, **Power / Screen Off**, **Inputs**, **VPN (Happ)**, **Settings**, and **Search**.
   - **Universal Brand Activity Picker**: From **Settings → Control Panel**, choose any installed system app and specific activity to launch when tapping **Wi-Fi**, **Bluetooth**, **Sound**, or **Inputs** (synced with the **Inputs** app on the dock).
   - **Built-In Ambient Mode Fallback**: Launches your TV's native Google Ambient Mode / screensaver if installed, or automatically falls back to a built-in full-screen ambient showcase.
-- **Recent Apps Switcher Overlay & RAM Cleaner**
-  - Open from any app via a mapped remote button or by tapping the **RAM** tile in the Control Panel.
-  - Displays live memory usage (`RAM used / total`), horizontal app cards, **DPAD UP** to force-stop/dismiss individual apps, and a **Close All** button.
+- **Recent Apps Switcher Overlay & One-Tap RAM Cleaner**
+  - The **RAM** tile in the Control Panel immediately closes recent user apps without opening another screen; the separate Recent Apps overlay remains available through remote-button mapping.
+  - The overlay displays live memory usage (`RAM used / total`), horizontal app cards, **DPAD UP** to close individual apps, and a **Close All** button.
+  - The cleanup protects Happ and essential system components; full `force-stop` uses Persistent ADB when enabled, with Android's background-process cleanup as the safe-mode fallback.
 - **Multi-Tap Remote Button Mapper (`1x` / `2x` / `3x` Tap), Home Button Fix & Volume Hold Fix**
   - Built-in crash-safe Accessibility Service that intercepts any remote button you choose and lets you assign independent actions for **Single Tap (1x)**, **Double Tap (2x)**, and **Triple Tap (3x)** — open the Control Panel on `1x`, Recent Apps Switcher on `2x`, or launch any installed app on `3x`.
   - **Fix Home Button (Off by default)**: Optional toggle to remap the remote's Home key directly to tvOS Launcher on TVs (such as TCL and Philips Android 11/12) where the firmware overrides the default launcher role.
@@ -211,7 +212,7 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 ```sh
 adb connect <tv-ip>:5555
 adb install -r build/tvos-home.apk
-adb shell am start -n com.techgenius.tvoslauncher/.MainActivity
+adb shell am start -n com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.MainActivity
 ```
 
 ---
