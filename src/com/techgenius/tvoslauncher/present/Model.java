@@ -211,29 +211,29 @@ public final class Model {
     static List<String> validate(String name, List<Slide> slides) {
         List<String> errors = new ArrayList<>();
         String trimmed = name == null ? "" : name.trim();
-        if (trimmed.isEmpty()) errors.add("Playlist name is required");
-        if (trimmed.length() > 80) errors.add("Playlist name must be 80 characters or less");
+        if (trimmed.isEmpty()) errors.add("Укажите название плейлиста");
+        if (trimmed.length() > 80) errors.add("Название плейлиста не должно превышать 80 символов");
         Set<String> ids = new HashSet<>();
         for (int i = 0; i < slides.size(); i++) {
             Slide s = slides.get(i);
             String label = "Slide " + (i + 1);
-            if (!ids.add(s.id)) errors.add(label + " has a duplicate id");
+            if (!ids.add(s.id)) errors.add(label + " содержит повторяющийся идентификатор");
             if (!VIDEO.equals(s.type) && (s.durationSec < 1 || s.durationSec > 86_400)) {
-                errors.add(label + " duration must be between 1 second and 24 hours");
+                errors.add(label + " длительность должна быть от 1 секунды до 24 часов");
             }
-            if (s.order < 0) errors.add(label + " order must not be negative");
+            if (s.order < 0) errors.add(label + " порядок не может быть отрицательным");
             if (IMAGE.equals(s.type) || VIDEO.equals(s.type)) {
-                if (s.mediaId == null || s.mediaId.trim().isEmpty()) errors.add(label + " requires a media item");
+                if (s.mediaId == null || s.mediaId.trim().isEmpty()) errors.add(label + " требует указать медиафайл");
             } else {
                 String url = s.url == null ? "" : s.url;
                 if (!url.startsWith("http://") && !url.startsWith("https://")) {
                     errors.add(label + " webpage URL must start with http:// or https://");
                 }
                 if (s.webpageScrollSpeedPxPerSec < 5 || s.webpageScrollSpeedPxPerSec > 1000) {
-                    errors.add(label + " webpage scroll speed must be between 5 and 1000 pixels per second");
+                    errors.add(label + " скорость прокрутки веб-страницы должна быть от 5 до 1000 пикселей в секунду");
                 }
                 if (s.webpageScrollPauseSec < 0 || s.webpageScrollPauseSec > 300) {
-                    errors.add(label + " webpage wait time must be between 0 and 300 seconds");
+                    errors.add(label + " пауза на веб-странице должна быть от 0 до 300 секунд");
                 }
             }
         }
