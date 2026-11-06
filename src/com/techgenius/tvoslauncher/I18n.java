@@ -526,6 +526,26 @@ public final class I18n {
 
     /** Russian additions for UI strings not covered by the shared translation table. */
     private static void initRussianSupplement() {
+        ru("RAM ", "ОЗУ ");
+        ru("Getting the weather…", "Загрузка погоды…");
+        ru("H:", "М:");
+        ru("L:", "М:");
+        ru("My Location", "Моё местоположение");
+        ru("HOURLY FORECAST", "ПОЧАСОВОЙ ПРОГНОЗ");
+        ru("Humidity ", "Влажность ");
+        ru("Wind ", "Ветер ");
+        ru("5-DAY FORECAST", "ПРОГНОЗ НА 5 ДНЕЙ");
+        ru("Updated ", "Обновлено ");
+        ru("Persistent ADB Mode (Keep port 5555 open)", "Постоянный режим ADB (оставить порт 5555 открытым)");
+        ru("Secure Mode — WRITE_SECURE_SETTINGS & Close ADB (Recommended)", "Защищённый режим — WRITE_SECURE_SETTINGS и закрытие ADB (рекомендуется)");
+        ru("Secure Mode Active (ADB Not Used · Self-Repair Ready)", "Защищённый режим активен (ADB не используется · автовосстановление готово)");
+        ru("Secure Mode (Needs One-Time Pair to Grant Permissions)", "Защищённый режим (нужно однократное подключение для выдачи разрешений)");
+        ru("Connected & Paired (Port 5555 Open)", "Подключено и сопряжено (порт 5555 открыт)");
+        ru("Port 5555 Open · Ready to Pair", "Порт 5555 открыт · готово к сопряжению");
+        ru("Paired · ADB Enabled", "Сопряжено · ADB включён");
+        ru("ADB Enabled · Not Paired", "ADB включён · не сопряжено");
+        ru("Disconnected (ADB Off)", "Отключено (ADB выключен)");
+
         ru("Make tvOS Launcher your home screen?", "Сделать tvOS Launcher главным экраном?");
         ru("The Home button on the remote will open tvOS Launcher.", "Кнопка Home на пульте будет открывать tvOS Launcher.");
         ru("Make Home Screen", "Назначить главным экраном");
