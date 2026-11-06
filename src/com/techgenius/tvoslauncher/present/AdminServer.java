@@ -1,503 +1,283 @@
 package com.techgenius.tvoslauncher.present;
 
-import android.content.Context;
-import android.util.Log;
-
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.RandomAccessFile;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.SocketException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Set;
+import java.util.UUID;
 
 /**
- * The admin web server on port 8080 (replaces NanoHTTPD in pb-marketer-tv). Same API as the
- * original minus the removed admin-lock, debug telemetry and app-update endpoints:
- *
- *   GET  /api/info                     (no auth)  name, port, URLs, pairing required
- *   POST /api/pair {pin}               (no auth)  -> {token}
- *   GET  /api/media                    list        POST /api/media  multipart upload (field "file")
- *   DELETE /api/media/{id}                         GET  /api/media/{id}/file  (thumbnails/previews)
- *   GET/PUT /api/playlist (+ /api/playlists, /api/playlists/{id}[/activate] aliases)
- *   GET  /api/playback/status          POST /api/playback/control {command}
- *
- * Authorised calls carry "Authorization: Bearer &lt;token&gt;" (or ?token= for media file URLs).
+ * Presentation data model, ported from pb-marketer-tv (Models.kt, JsonCodecs.kt, PlaylistRules.kt).
+ * Wire format and validation are unchanged so existing behaviour is preserved.
  */
-final class AdminServer {
-    static final int PORT = 8080;
-    private static final String TAG = "tvOSPresent";
+public final class Model {
+    private Model() { }
 
-    interface Gateway {
-        void reload();
+    static final int DEFAULT_IMAGE_DURATION_SEC = 10;
+    static final int DEFAULT_WEBPAGE_DURATION_SEC = 20;
+    static final int DEFAULT_VIDEO_DURATION_SEC = 0;
+    static final int DEFAULT_WEBPAGE_SCROLL_PAUSE_SEC = 5;
+    static final int DEFAULT_WEBPAGE_SCROLL_SPEED_PX_PER_SEC = 40;
 
-        boolean control(String command);
+    static final String IMAGE = "image", VIDEO = "video", WEBPAGE = "webpage";
+    static final String CONTAIN = "contain", COVER = "cover", FILL = "fill";
 
-        Model.Status status();
-    }
+    public static final class Slide {
+        String id = UUID.randomUUID().toString();
+        String type;
+        int durationSec;
+        String mediaId;
+        String url;
+        String fitMode = CONTAIN;
+        boolean muted = true;
+        boolean loop = false;
+        boolean webpageAutoScroll = true;
+        int webpageScrollSpeedPxPerSec = DEFAULT_WEBPAGE_SCROLL_SPEED_PX_PER_SEC;
+        int webpageScrollPauseSec = DEFAULT_WEBPAGE_SCROLL_PAUSE_SEC;
+        boolean enabled = true;
+        int order = 0;
 
-    private final Context context;
-    private final Repo repo;
-    private final Pairing pairing;
-    private final Gateway gateway;
-    private final ExecutorService pool = Executors.newFixedThreadPool(6);
-    private volatile ServerSocket socket;
-    private Thread acceptor;
-
-    AdminServer(Context c, Repo repo, Pairing pairing, Gateway gateway) {
-        this.context = c.getApplicationContext();
-        this.repo = repo;
-        this.pairing = pairing;
-        this.gateway = gateway;
-    }
-
-    synchronized void start() throws IOException {
-        if (socket != null && !socket.isClosed()) return;
-        ServerSocket s = new ServerSocket();
-        s.setReuseAddress(true);
-        s.bind(new java.net.InetSocketAddress(PORT));
-        socket = s;
-        acceptor = new Thread(() -> {
-            while (!s.isClosed()) {
-                try {
-                    Socket client = s.accept();
-                    pool.execute(() -> handle(client));
-                } catch (IOException e) {
-                    if (!s.isClosed()) Log.w(TAG, "accept: " + e);
-                }
-            }
-        }, "present-http");
-        acceptor.start();
-    }
-
-    synchronized void stop() {
-        try {
-            if (socket != null) socket.close();
-        } catch (IOException ignored) {
-        }
-        socket = null;
-    }
-
-    boolean running() {
-        ServerSocket s = socket;
-        return s != null && !s.isClosed();
-    }
-
-    // ------------------------------------------------------------------ request handling
-
-    static final class Req {
-        String method, path;
-        final Map<String, String> headers = new HashMap<>();
-        final Map<String, String> query = new HashMap<>();
-        InputStream body;
-        long contentLength;
-    }
-
-    private void handle(Socket client) {
-        try (Socket c = client) {
-            c.setSoTimeout(60_000);
-            InputStream in = new BufferedInputStream(c.getInputStream(), 64 * 1024);
-            OutputStream out = c.getOutputStream();
-            Req r = parse(in);
-            if (r == null) return;
-            try {
-                route(r, out);
-            } catch (Exception e) {
-                Log.w(TAG, r.method + " " + r.path + ": " + e);
-                json(out, 500, new JSONObject().put("error", e.getMessage() == null ? "Непредвиденная ошибка сервера" : e.getMessage()));
-            }
-        } catch (SocketException ignored) {
-        } catch (Exception e) {
-            Log.w(TAG, "connection: " + e);
-        }
-    }
-
-    private static Req parse(InputStream in) throws IOException {
-        String line = readLine(in);
-        if (line == null || line.isEmpty()) return null;
-        String[] parts = line.split(" ");
-        if (parts.length < 2) return null;
-        Req r = new Req();
-        r.method = parts[0].toUpperCase(Locale.US);
-        String target = parts[1];
-        int q = target.indexOf('?');
-        r.path = decode(q < 0 ? target : target.substring(0, q));
-        if (q >= 0) {
-            for (String kv : target.substring(q + 1).split("&")) {
-                int e = kv.indexOf('=');
-                if (e > 0) r.query.put(decode(kv.substring(0, e)), decode(kv.substring(e + 1)));
-            }
-        }
-        String h;
-        while ((h = readLine(in)) != null && !h.isEmpty()) {
-            int colon = h.indexOf(':');
-            if (colon > 0) r.headers.put(h.substring(0, colon).trim().toLowerCase(Locale.US), h.substring(colon + 1).trim());
-        }
-        try {
-            r.contentLength = Long.parseLong(r.headers.getOrDefault("content-length", "0"));
-        } catch (NumberFormatException e) {
-            r.contentLength = 0;
-        }
-        r.body = in;
-        return r;
-    }
-
-    private static String readLine(InputStream in) throws IOException {
-        ByteArrayOutputStream b = new ByteArrayOutputStream(128);
-        int ch;
-        while ((ch = in.read()) != -1) {
-            if (ch == '\n') break;
-            if (ch != '\r') b.write(ch);
-            if (b.size() > 16 * 1024) throw new IOException("header too long");
-        }
-        if (ch == -1 && b.size() == 0) return null;
-        return b.toString("ISO-8859-1");
-    }
-
-    private void route(Req r, OutputStream out) throws Exception {
-        String p = r.path;
-        if ("OPTIONS".equals(r.method)) {
-            send(out, 200, "text/plain; charset=utf-8", new byte[0]);
-            return;
-        }
-        // Web app
-        if (p.equals("/") || p.equals("/index.html")) { asset(out, "index.html", "text/html; charset=utf-8"); return; }
-        if (p.equals("/app.css")) { asset(out, "app.css", "text/css; charset=utf-8"); return; }
-        if (p.equals("/app.js")) { asset(out, "app.js", "application/javascript; charset=utf-8"); return; }
-        if (p.equals("/logo.png")) { asset(out, "logo.png", "image/png"); return; }
-        if (p.equals("/icon.svg")) { asset(out, "icon.svg", "image/svg+xml"); return; }
-        if (p.equals("/api/info")) { json(out, 200, info()); return; }
-        if (p.equals("/api/pair") && "POST".equals(r.method)) {
-            String token = pairing.pair(body(r).optString("pin"));
-            if (token == null) json(out, 403, new JSONObject().put("error", "Код не совпадает с кодом на телевизоре."));
-            else json(out, 200, new JSONObject().put("token", token));
-            return;
-        }
-        if (!p.startsWith("/api/")) { asset(out, "index.html", "text/html; charset=utf-8"); return; }
-
-        String auth = r.headers.getOrDefault("authorization", "");
-        String token = auth.startsWith("Bearer") ? auth.substring(6).trim() : r.query.get("token");
-        if (!pairing.valid(token)) {
-            drain(r);
-            json(out, 401, new JSONObject().put("error", "Сначала подключите браузер с помощью кода на телевизоре."));
-            return;
-        }
-        String[] seg = p.replaceAll("^/+|/+$", "").split("/");
-
-        if (p.equals("/api/media") && "GET".equals(r.method)) {
-            JSONArray a = new JSONArray();
-            for (Model.Media m : repo.listMedia()) a.put(m.toJson());
-            json(out, 200, new JSONObject().put("media", a));
-        } else if (p.equals("/api/media") && "POST".equals(r.method)) {
-            upload(r, out);
-        } else if (seg.length == 4 && seg[1].equals("media") && seg[3].equals("file") && "GET".equals(r.method)) {
-            mediaFile(r, out, seg[2]);
-        } else if (seg.length == 3 && seg[1].equals("media") && "DELETE".equals(r.method)) {
-            if (!repo.deleteMedia(seg[2])) json(out, 404, new JSONObject().put("error", "Медиафайл не найден"));
-            else {
-                gateway.reload();
-                json(out, 200, new JSONObject().put("deleted", true));
-            }
-        } else if ((p.equals("/api/playlist") || p.equals("/api/playlists")) && "GET".equals(r.method)) {
-            if (p.equals("/api/playlists")) json(out, 200, new JSONObject().put("playlists", new JSONArray().put(repo.playlist().toJson())));
-            else json(out, 200, new JSONObject().put("playlist", repo.playlist().toJson()));
-        } else if (seg.length == 3 && seg[1].equals("playlists") && "GET".equals(r.method)) {
-            json(out, 200, new JSONObject().put("playlist", repo.playlist().toJson()));
-        } else if ((p.equals("/api/playlist") && "PUT".equals(r.method))
-                || (p.equals("/api/playlists") && "POST".equals(r.method))
-                || (seg.length == 3 && seg[1].equals("playlists") && "PUT".equals(r.method))) {
-            savePlaylist(r, out, "POST".equals(r.method) ? 201 : 200);
-        } else if (seg.length == 3 && seg[1].equals("playlists") && "DELETE".equals(r.method)) {
-            json(out, 400, new JSONObject().put("error", "Плейлист по умолчанию нельзя удалить"));
-        } else if (seg.length == 4 && seg[1].equals("playlists") && seg[3].equals("activate") && "POST".equals(r.method)) {
-            gateway.reload();
-            json(out, 200, new JSONObject().put("playlist", repo.playlist().toJson()));
-        } else if (p.equals("/api/playback/status") && "GET".equals(r.method)) {
-            json(out, 200, new JSONObject().put("playback", gateway.status().toJson()));
-        } else if (p.equals("/api/playback/control") && "POST".equals(r.method)) {
-            String cmd = body(r).optString("command").toLowerCase(Locale.US);
-            if (!cmd.matches("play|pause|next|previous|restart|showconnectioninfo|connectinfo|connection")) {
-                json(out, 400, new JSONObject().put("error", "Неподдерживаемая команда воспроизведения"));
-            } else if (!gateway.control(cmd)) {
-                json(out, 409, new JSONObject().put("error", "Презентация не запущена на экране. Запустите её на телевизоре или включите параметр «Запуск при включении»."));
-            } else {
-                json(out, 200, new JSONObject().put("accepted", true));
-            }
-        } else {
-            drain(r);
-            json(out, 404, new JSONObject().put("error", "Адрес API не найден"));
-        }
-    }
-
-    private JSONObject info() throws Exception {
-        String version = "";
-        try {
-            version = context.getPackageManager().getPackageInfo(context.getPackageName(), 0).versionName;
-        } catch (Exception ignored) {
-        }
-        return new JSONObject()
-                .put("name", "tvOS Presentation")
-                .put("device", android.os.Build.MODEL)
-                .put("port", PORT)
-                .put("urls", new JSONArray(Net.urls(PORT)))
-                .put("versionName", version)
-                .put("pairingRequired", true);
-    }
-
-    private void savePlaylist(Req r, OutputStream out, int okStatus) throws Exception {
-        List<Model.Slide> slides = Model.slidesFromRequest(body(r));
-        List<String> errors = Model.validate(Repo.PLAYLIST_NAME, slides);
-        if (!errors.isEmpty()) {
-            json(out, 400, new JSONObject().put("errors", new JSONArray(errors)));
-            return;
-        }
-        Model.Playlist p = repo.savePlaylist(slides);
-        gateway.reload();
-        json(out, okStatus, new JSONObject().put("playlist", p.toJson()));
-    }
-
-    // ------------------------------------------------------------------ uploads
-
-    /**
-     * Streams the request body to a temp file, then extracts the file part (multipart/form-data,
-     * field "file") or treats the whole body as the file (raw upload with X-File-Name).
-     */
-    private void upload(Req r, OutputStream out) throws Exception {
-        File dir = new File(context.getCacheDir(), "uploads");
-        dir.mkdirs();
-        File raw = File.createTempFile("body", ".part", dir);
-        try {
-            try (OutputStream fo = new FileOutputStream(raw)) {
-                copy(r.body, fo, r.contentLength);
-            }
-            String type = r.headers.getOrDefault("content-type", "");
-            String name = header(r, "x-file-name");
-            String mime = header(r, "x-file-type");
-            File payload;
-            int b = type.indexOf("boundary=");
-            if (type.startsWith("multipart/form-data") && b > 0) {
-                String boundary = type.substring(b + 9).replace("\"", "").trim();
-                Multipart mp = Multipart.extract(raw, boundary, dir);
-                if (mp.file == null) {
-                    json(out, 400, new JSONObject().put("error", "В форме загрузки требуется поле file"));
-                    return;
-                }
-                payload = mp.file;
-                if (mp.fileName != null && !mp.fileName.isEmpty()) name = mp.fileName;
-                if (mp.fields.containsKey("originalName")) name = mp.fields.get("originalName");
-                if (mp.fields.containsKey("mimeType")) mime = mp.fields.get("mimeType");
-            } else {
-                payload = raw;
-            }
-            Model.Media m = repo.saveUpload(payload, name == null ? "upload" : name, mime);
-            json(out, 201, new JSONObject().put("media", m.toJson()));
-        } finally {
-            raw.delete();
-        }
-    }
-
-    private static String header(Req r, String key) {
-        String v = r.headers.get(key);
-        return v == null || v.isEmpty() ? null : decode(v);
-    }
-
-    /** Minimal multipart parser over a file on disk (memory stays flat for large videos). */
-    static final class Multipart {
-        File file;
-        String fileName;
-        final Map<String, String> fields = new HashMap<>();
-
-        static Multipart extract(File body, String boundary, File dir) throws IOException {
-            Multipart m = new Multipart();
-            byte[] delim = ("--" + boundary).getBytes(StandardCharsets.ISO_8859_1);
-            try (RandomAccessFile f = new RandomAccessFile(body, "r")) {
-                long pos = indexOf(f, delim, 0);
-                while (pos >= 0) {
-                    long headStart = pos + delim.length;
-                    f.seek(headStart);
-                    int a = f.read(), b2 = f.read();
-                    if (a == '-' && b2 == '-') break;          // closing delimiter
-                    long hEnd = indexOf(f, "\r\n\r\n".getBytes(StandardCharsets.ISO_8859_1), headStart);
-                    if (hEnd < 0) break;
-                    byte[] hb = new byte[(int) (hEnd - headStart)];
-                    f.seek(headStart);
-                    f.readFully(hb);
-                    String headers = new String(hb, StandardCharsets.UTF_8);
-                    long dataStart = hEnd + 4;
-                    long next = indexOf(f, ("\r\n--" + boundary).getBytes(StandardCharsets.ISO_8859_1), dataStart);
-                    if (next < 0) break;
-                    String disp = "";
-                    for (String hl : headers.split("\r\n")) {
-                        if (hl.toLowerCase(Locale.US).startsWith("content-disposition")) disp = hl;
-                    }
-                    String fieldName = param(disp, "name");
-                    String fn = param(disp, "filename");
-                    if (fn != null && m.file == null) {  // first file part (the UI sends it as "file")
-                        File out = File.createTempFile("file", ".bin", dir);
-                        try (OutputStream o = new FileOutputStream(out)) {
-                            f.seek(dataStart);
-                            long left = next - dataStart;
-                            byte[] buf = new byte[64 * 1024];
-                            while (left > 0) {
-                                int n = f.read(buf, 0, (int) Math.min(buf.length, left));
-                                if (n <= 0) break;
-                                o.write(buf, 0, n);
-                                left -= n;
-                            }
-                        }
-                        m.file = out;
-                        m.fileName = fn;
-                    } else if (fieldName != null && next - dataStart < 64 * 1024) {
-                        byte[] vb = new byte[(int) (next - dataStart)];
-                        f.seek(dataStart);
-                        f.readFully(vb);
-                        m.fields.put(fieldName, new String(vb, StandardCharsets.UTF_8));
-                    }
-                    pos = next + 2;
-                }
-            }
-            return m;
+        JSONObject toJson() throws JSONException {
+            return new JSONObject()
+                    .put("id", id)
+                    .put("type", type)
+                    .put("durationSec", durationSec)
+                    .put("mediaId", mediaId == null ? JSONObject.NULL : mediaId)
+                    .put("url", url == null ? JSONObject.NULL : url)
+                    .put("fitMode", fitMode)
+                    .put("muted", muted)
+                    .put("loop", loop)
+                    .put("webpageAutoScroll", webpageAutoScroll)
+                    .put("webpageScrollSpeedPxPerSec", webpageScrollSpeedPxPerSec)
+                    .put("webpageScrollPauseSec", webpageScrollPauseSec)
+                    .put("enabled", enabled)
+                    .put("order", order);
         }
 
-        static String param(String disp, String key) {
-            String k = key + "=\"";
-            int i = disp.indexOf("; " + k);
-            if (i < 0) i = disp.indexOf(";" + k);
-            if (i < 0) return null;
-            int s = disp.indexOf('"', i) + 1;
-            int e = disp.indexOf('"', s);
-            return e > s ? disp.substring(s, e) : "";
-        }
-
-        /** Byte-sequence search in a file from `from` (buffered, overlapping windows). */
-        static long indexOf(RandomAccessFile f, byte[] needle, long from) throws IOException {
-            int bufSize = 256 * 1024;
-            byte[] buf = new byte[bufSize];
-            long base = from;
-            long len = f.length();
-            while (base < len) {
-                f.seek(base);
-                int n = f.read(buf, 0, (int) Math.min(bufSize, len - base));
-                if (n <= 0) return -1;
-                outer:
-                for (int i = 0; i + needle.length <= n; i++) {
-                    for (int j = 0; j < needle.length; j++) if (buf[i + j] != needle[j]) continue outer;
-                    return base + i;
-                }
-                if (base + n >= len) return -1;
-                base += n - needle.length + 1;
-            }
-            return -1;
-        }
-    }
-
-    // ------------------------------------------------------------------ media files
-
-    private void mediaFile(Req r, OutputStream out, String id) throws IOException {
-        Model.Media m = repo.getMedia(id);
-        File f = m == null ? null : repo.file(m);
-        if (f == null || !f.exists()) {
-            send(out, 404, "text/plain; charset=utf-8", "Не найдено".getBytes(StandardCharsets.UTF_8));
-            return;
-        }
-        long len = f.length();
-        String head = "HTTP/1.1 200 OK\r\nContent-Type: " + m.mimeType + "\r\nContent-Length: " + len
-                + "\r\nCache-Control: private, max-age=3600\r\nAccess-Control-Allow-Origin: *\r\nConnection: close\r\n\r\n";
-        out.write(head.getBytes(StandardCharsets.ISO_8859_1));
-        try (InputStream in = new FileInputStream(f)) {
-            copy(in, out, len);
-        }
-        out.flush();
-    }
-
-    // ------------------------------------------------------------------ io helpers
-
-    private void asset(OutputStream out, String name, String type) throws IOException {
-        try (InputStream in = context.getAssets().open("present/" + name)) {
-            ByteArrayOutputStream b = new ByteArrayOutputStream();
-            copy(in, b, Long.MAX_VALUE);
-            send(out, 200, type, b.toByteArray());
-        }
-    }
-
-    private static JSONObject body(Req r) throws Exception {
-        if (r.contentLength <= 0) return new JSONObject();
-        ByteArrayOutputStream b = new ByteArrayOutputStream((int) Math.min(r.contentLength, 1 << 20));
-        copy(r.body, b, r.contentLength);
-        String s = b.toString("UTF-8").trim();
-        return s.isEmpty() ? new JSONObject() : new JSONObject(s);
-    }
-
-    private static void drain(Req r) throws IOException {
-        if (r.contentLength > 0) copy(r.body, new OutputStream() {
-            @Override public void write(int b) { }
-            @Override public void write(byte[] b, int o, int l) { }
-        }, r.contentLength);
-    }
-
-    private static void copy(InputStream in, OutputStream out, long limit) throws IOException {
-        byte[] buf = new byte[64 * 1024];
-        long left = limit;
-        while (left > 0) {
-            int n = in.read(buf, 0, (int) Math.min(buf.length, left));
-            if (n < 0) break;
-            out.write(buf, 0, n);
-            left -= n;
-        }
-    }
-
-    private static void json(OutputStream out, int status, JSONObject j) throws IOException {
-        send(out, status, "application/json; charset=utf-8", j.toString().getBytes(StandardCharsets.UTF_8));
-    }
-
-    private static void send(OutputStream out, int status, String type, byte[] body) throws IOException {
-        String head = "HTTP/1.1 " + status + " " + reason(status) + "\r\n"
-                + "Content-Type: " + type + "\r\n"
-                + "Content-Length: " + body.length + "\r\n"
-                + "Access-Control-Allow-Origin: *\r\n"
-                + "Access-Control-Allow-Headers: Authorization, Content-Type, X-File-Name, X-File-Type\r\n"
-                + "Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS\r\n"
-                + "Cache-Control: no-store\r\n"
-                + "Connection: close\r\n\r\n";
-        out.write(head.getBytes(StandardCharsets.ISO_8859_1));
-        out.write(body);
-        out.flush();
-    }
-
-    private static String reason(int s) {
-        switch (s) {
-            case 200: return "OK";
-            case 201: return "Created";
-            case 400: return "Bad Request";
-            case 401: return "Unauthorized";
-            case 403: return "Forbidden";
-            case 404: return "Not Found";
-            case 409: return "Conflict";
-            default: return "Internal Server Error";
-        }
-    }
-
-    private static String decode(String s) {
-        try {
-            return URLDecoder.decode(s, "UTF-8");
-        } catch (Exception e) {
+        static Slide fromJson(JSONObject json, int fallbackOrder) {
+            String type = typeFromWire(json.optString("type"));
+            if (type == null) throw new IllegalArgumentException("Slide type is required");
+            int defaultDuration = IMAGE.equals(type) ? DEFAULT_IMAGE_DURATION_SEC
+                    : VIDEO.equals(type) ? DEFAULT_VIDEO_DURATION_SEC : DEFAULT_WEBPAGE_DURATION_SEC;
+            Slide s = new Slide();
+            String id = json.optString("id");
+            if (!id.trim().isEmpty()) s.id = id;
+            s.type = type;
+            s.durationSec = json.optInt("durationSec", defaultDuration);
+            s.mediaId = optNullableString(json, "mediaId");
+            s.url = optNullableString(json, "url");
+            s.fitMode = fitFromWire(json.optString("fitMode"));
+            s.muted = json.optBoolean("muted", true);
+            s.loop = json.optBoolean("loop", false);
+            s.webpageAutoScroll = json.optBoolean("webpageAutoScroll", true);
+            s.webpageScrollSpeedPxPerSec = json.optInt("webpageScrollSpeedPxPerSec", DEFAULT_WEBPAGE_SCROLL_SPEED_PX_PER_SEC);
+            s.webpageScrollPauseSec = json.optInt("webpageScrollPauseSec", DEFAULT_WEBPAGE_SCROLL_PAUSE_SEC);
+            s.enabled = json.optBoolean("enabled", true);
+            s.order = json.optInt("order", fallbackOrder);
             return s;
         }
+    }
+
+    public static final class Media {
+        String id, fileName, displayName, mimeType;
+        long sizeBytes, createdAt;
+
+        JSONObject toJson() throws JSONException {
+            return new JSONObject()
+                    .put("id", id)
+                    .put("fileName", fileName)
+                    .put("displayName", displayName)
+                    .put("mimeType", mimeType)
+                    .put("sizeBytes", sizeBytes)
+                    .put("createdAt", createdAt);
+        }
+
+        /** "image", "video" or "" from MIME type, falling back to the extension. */
+        String kind() {
+            if (mimeType != null && mimeType.startsWith("image/")) return IMAGE;
+            if (mimeType != null && mimeType.startsWith("video/")) return VIDEO;
+            String ext = extension(displayName != null ? displayName : fileName);
+            switch (ext) {
+                case "jpg": case "jpeg": case "png": case "gif": case "webp": return IMAGE;
+                case "mp4": case "m4v": case "webm": case "mkv": case "mov": case "3gp": case "3gpp": case "avi": return VIDEO;
+                default: return "";
+            }
+        }
+    }
+
+    public static final class Playlist {
+        String id, name;
+        List<Slide> slides = new ArrayList<>();
+        long createdAt, updatedAt;
+        boolean active;
+
+        JSONObject toJson() throws JSONException {
+            JSONArray a = new JSONArray();
+            for (Slide s : sortedByOrder(slides)) a.put(s.toJson());
+            return new JSONObject()
+                    .put("id", id)
+                    .put("name", name)
+                    .put("slides", a)
+                    .put("createdAt", createdAt)
+                    .put("updatedAt", updatedAt)
+                    .put("active", active);
+        }
+    }
+
+    /** What the TV player is doing, for the browser's Now Playing bar. */
+    public static final class Status {
+        boolean available = true;
+        String state = "idle";
+        String playlistId, playlistName, slideId, slideType, mediaName, url, error;
+        int slideIndex = -1, slideCount = 0;
+
+        Status copy() {
+            Status s = new Status();
+            s.available = available;
+            s.state = state;
+            s.playlistId = playlistId;
+            s.playlistName = playlistName;
+            s.slideId = slideId;
+            s.slideType = slideType;
+            s.mediaName = mediaName;
+            s.url = url;
+            s.error = error;
+            s.slideIndex = slideIndex;
+            s.slideCount = slideCount;
+            return s;
+        }
+
+        JSONObject toJson() throws JSONException {
+            return new JSONObject()
+                    .put("available", available)
+                    .put("state", state)
+                    .put("playlistId", nul(playlistId))
+                    .put("playlistName", nul(playlistName))
+                    .put("slideId", nul(slideId))
+                    .put("slideIndex", slideIndex)
+                    .put("slideCount", slideCount)
+                    .put("slideType", nul(slideType))
+                    .put("mediaName", nul(mediaName))
+                    .put("url", nul(url))
+                    .put("error", nul(error));
+        }
+    }
+
+    // ------------------------------------------------------------------ codecs
+
+    static String slidesToJson(List<Slide> slides) {
+        JSONArray a = new JSONArray();
+        try {
+            for (Slide s : sortedByOrder(slides)) a.put(s.toJson());
+        } catch (JSONException e) {
+            throw new IllegalStateException(e);
+        }
+        return a.toString();
+    }
+
+    static List<Slide> slidesFromJson(String value) {
+        List<Slide> out = new ArrayList<>();
+        if (value == null || value.trim().isEmpty()) return out;
+        try {
+            JSONArray a = new JSONArray(value);
+            for (int i = 0; i < a.length(); i++) out.add(Slide.fromJson(a.getJSONObject(i), i));
+        } catch (JSONException e) {
+            throw new IllegalArgumentException(e);
+        }
+        return sortedByOrder(out);
+    }
+
+    /** Body of PUT /api/playlist: {name, slides[]} with order re-indexed by position. */
+    static List<Slide> slidesFromRequest(JSONObject json) {
+        JSONArray a = json.optJSONArray("slides");
+        List<Slide> out = new ArrayList<>();
+        if (a == null) return out;
+        for (int i = 0; i < a.length(); i++) {
+            Slide s = Slide.fromJson(a.optJSONObject(i) == null ? new JSONObject() : a.optJSONObject(i), i);
+            s.order = i;
+            out.add(s);
+        }
+        return out;
+    }
+
+    // ------------------------------------------------------------------ rules
+
+    static List<String> validate(String name, List<Slide> slides) {
+        List<String> errors = new ArrayList<>();
+        String trimmed = name == null ? "" : name.trim();
+        if (trimmed.isEmpty()) errors.add("Укажите название плейлиста");
+        if (trimmed.length() > 80) errors.add("Название плейлиста не должно превышать 80 символов");
+        Set<String> ids = new HashSet<>();
+        for (int i = 0; i < slides.size(); i++) {
+            Slide s = slides.get(i);
+            String label = "Slide " + (i + 1);
+            if (!ids.add(s.id)) errors.add(label + " содержит повторяющийся идентификатор");
+            if (!VIDEO.equals(s.type) && (s.durationSec < 1 || s.durationSec > 86_400)) {
+                errors.add(label + " длительность должна быть от 1 секунды до 24 часов");
+            }
+            if (s.order < 0) errors.add(label + " порядок не может быть отрицательным");
+            if (IMAGE.equals(s.type) || VIDEO.equals(s.type)) {
+                if (s.mediaId == null || s.mediaId.trim().isEmpty()) errors.add(label + " требует указать медиафайл");
+            } else {
+                String url = s.url == null ? "" : s.url;
+                if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                    errors.add(label + " webpage URL must start with http:// or https://");
+                }
+                if (s.webpageScrollSpeedPxPerSec < 5 || s.webpageScrollSpeedPxPerSec > 1000) {
+                    errors.add(label + " скорость прокрутки веб-страницы должна быть от 5 до 1000 пикселей в секунду");
+                }
+                if (s.webpageScrollPauseSec < 0 || s.webpageScrollPauseSec > 300) {
+                    errors.add(label + " пауза на веб-странице должна быть от 0 до 300 секунд");
+                }
+            }
+        }
+        return errors;
+    }
+
+    static List<Slide> normalized(List<Slide> slides) {
+        List<Slide> out = sortedByOrder(slides);
+        for (int i = 0; i < out.size(); i++) out.get(i).order = i;
+        return out;
+    }
+
+    // ------------------------------------------------------------------ helpers
+
+    static List<Slide> sortedByOrder(List<Slide> slides) {
+        List<Slide> out = new ArrayList<>(slides);
+        Collections.sort(out, (a, b) -> Integer.compare(a.order, b.order));
+        return out;
+    }
+
+    static String typeFromWire(String v) {
+        if (v == null) return null;
+        String t = v.trim().toLowerCase(Locale.US);
+        return IMAGE.equals(t) || VIDEO.equals(t) || WEBPAGE.equals(t) ? t : null;
+    }
+
+    static String fitFromWire(String v) {
+        String t = v == null ? "" : v.trim().toLowerCase(Locale.US);
+        return COVER.equals(t) || FILL.equals(t) ? t : CONTAIN;
+    }
+
+    static String optNullableString(JSONObject json, String name) {
+        if (!json.has(name) || json.isNull(name)) return null;
+        String s = json.optString(name);
+        return s.trim().isEmpty() ? null : s;
+    }
+
+    static String extension(String name) {
+        if (name == null) return "";
+        int dot = name.lastIndexOf('.');
+        return dot < 0 ? "" : name.substring(dot + 1).toLowerCase(Locale.US);
+    }
+
+    static Object nul(Object o) {
+        return o == null ? JSONObject.NULL : o;
     }
 }
