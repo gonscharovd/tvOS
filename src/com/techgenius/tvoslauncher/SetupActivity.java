@@ -432,106 +432,7 @@ public class SetupActivity extends Activity {
     }
 
     void profile() {
-        title(tr("Create Your Profile", "Profilinizi Olu\u015fturun"));
-        subtitle(tr(
-                "Your name and an avatar. Each profile keeps its own apps, background and Home Screen. Up to three people can have one.",
-                "Ad\u0131n\u0131z ve bir avatar. Her profil kendi uygulamalar\u0131n\u0131, arka plan\u0131n\u0131 ve Ana Ekran\u0131n\u0131 saklar. En fazla \u00fc\u00e7 ki\u015fi kullanabilir."));
-        Profiles.Profile p = Profiles.current(this);
-        LinearLayout l = list();
-        View nameRow = option(l, tr("Name", "Ad"), I18n.profileName(this, p.name), false, () -> {
-            EditText in = new EditText(this);
-            in.setSingleLine(true);
-            in.setText(p.name);
-            in.setSelection(in.getText().length());
-            int pad = u(14);
-            FrameLayout box = new FrameLayout(this);
-            box.setPadding(pad, pad / 2, pad, 0);
-            box.addView(in);
-            android.app.AlertDialog dlg = new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle(tr("Your name", "Ad\u0131n\u0131z")).setView(box)
-                    .setPositiveButton(tr("OK", "Tamam"), (d, w) -> {
-                        String n = in.getText().toString().trim();
-                        if (!n.isEmpty()) {
-                            p.name = n;
-                            Profiles.update(this, p);
-                        }
-                        show(index, 0);
-                    }).setNegativeButton(tr("Cancel", "\u0130ptal"), null).show();
-            Ui.setupDialogEditText(in, dlg);
-            in.requestFocus();
-        });
-        int nameId = View.generateViewId();
-        nameRow.setId(nameId);
-
-        // Avatar: a row of emoji, the current one ringed.
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER);
-        row.setClipChildren(false);
-        List<String> choices = new ArrayList<>(Profiles.freeEmojis(this, p.id));
-        if (!choices.contains(p.emoji)) choices.add(0, p.emoji);
-        int count = Math.min(8, choices.size());
-        int[] emojiIds = new int[count];
-        TextView[] emojiViews = new TextView[count];
-        GradientDrawable[] emojiBgs = new GradientDrawable[count];
-        int activeEmojiId = View.NO_ID;
-        for (int i = 0; i < count; i++) {
-            final int idx = i;
-            String e = choices.get(i);
-            TextView t = new TextView(this);
-            int eid = View.generateViewId();
-            t.setId(eid);
-            emojiIds[i] = eid;
-            emojiViews[i] = t;
-            if (e.equals(p.emoji) || activeEmojiId == View.NO_ID) activeEmojiId = eid;
-            t.setText(e);
-            Ui.textSize(t, 26);
-            t.setGravity(Gravity.CENTER);
-            t.setFocusable(true);
-            t.setClickable(true);
-            GradientDrawable g = new GradientDrawable();
-            g.setShape(GradientDrawable.OVAL);
-            g.setColor(e.equals(p.emoji) ? 0x59FFFFFF : 0x1FFFFFFF);
-            emojiBgs[i] = g;
-            t.setBackground(g);
-            t.setOnFocusChangeListener((v, has) -> {
-                g.setStroke(has ? u(2) : 0, Color.WHITE);
-                v.animate().scaleX(has ? 1.2f : 1f).scaleY(has ? 1.2f : 1f).setDuration(160).start();
-            });
-            t.setOnClickListener(v -> {
-                p.emoji = e;
-                Profiles.update(this, p);
-                for (int j = 0; j < count; j++) {
-                    boolean sel = choices.get(j).equals(p.emoji);
-                    emojiBgs[j].setColor(sel ? 0x59FFFFFF : 0x1FFFFFFF);
-                }
-                nameRow.setNextFocusDownId(emojiIds[idx]);
-            });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(u(46), u(46));
-            lp.leftMargin = lp.rightMargin = u(5);
-            row.addView(t, lp);
-        }
-        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        rlp.topMargin = u(6);
-        rlp.bottomMargin = u(14);
-        page.addView(row, rlp);
-        LinearLayout l2 = list();
-        View contRow = option(l2, tr("Continue", "Devam Et"), null, false, this::next);
-        int contId = View.generateViewId();
-        contRow.setId(contId);
-
-        if (activeEmojiId != View.NO_ID) {
-            nameRow.setNextFocusDownId(activeEmojiId);
-            contRow.setNextFocusUpId(activeEmojiId);
-            for (int i = 0; i < count; i++) {
-                emojiViews[i].setNextFocusUpId(nameId);
-                emojiViews[i].setNextFocusDownId(contId);
-                if (i > 0) emojiViews[i].setNextFocusLeftId(emojiIds[i - 1]);
-                if (i + 1 < count) emojiViews[i].setNextFocusRightId(emojiIds[i + 1]);
-            }
-        }
-        nameRow.requestFocus();
-        dots();
+        next(); // Single-user build: retain the existing profile-1 settings without a profile UI.
     }
 
     /** Step 1: Choose Appearance (Night scenes vs Classic). Step 2: Choose Scenes or Classic Background. */
@@ -780,44 +681,7 @@ public class SetupActivity extends Activity {
 
     /** Presentation is for the whole TV: switch it on and choose its options here, once. */
     void presentation() {
-        ImageView icon = new ImageView(this);
-        icon.setImageBitmap(com.techgenius.tvoslauncher.present.PresentIcon.banner(u(90) * 2, u(54) * 2));
-        icon.setClipToOutline(true);
-        GradientDrawable shape = new GradientDrawable();
-        shape.setCornerRadius(u(9));
-        icon.setBackground(shape);
-        LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(u(90), u(54));
-        ilp.bottomMargin = u(10);
-        page.addView(icon, ilp);
-        title(tr("Presentation", "Sunum"));
-        subtitle(tr("Images, videos and webpages sent from any phone or computer on the same Wi-Fi. For everyone on this TV.",
-                "Ayn\u0131 Wi-Fi a\u011f\u0131ndaki herhangi bir telefon veya bilgisayardan g\u00f6nderilen g\u00f6rseller, videolar ve web sayfalar\u0131."));
-        boolean on = com.techgenius.tvoslauncher.present.Presenter.enabled(this);
-        LinearLayout l = list();
-        option(l, tr("Use Presentation", "Sunumu Kullan"),
-                on ? tr("Adds a Presentation card to Home", "Ana Ekrana bir Sunum kart\u0131 ekler") : tr("Off", "Kapal\u0131"), on, () -> {
-            com.techgenius.tvoslauncher.present.Presenter.set(this, com.techgenius.tvoslauncher.present.Presenter.KEY_ENABLED, !on);
-            show(index, 0);
-            focusRow(0);
-        });
-        if (on) {
-            boolean boot = com.techgenius.tvoslauncher.present.Presenter.startOnBoot(this),
-                    awake = com.techgenius.tvoslauncher.present.Presenter.keepAwake(this);
-            option(l, tr("Start with the TV", "TV ile Ba\u015flat"),
-                    tr("Play as soon as the TV turns on (signage)", "TV a\u00e7\u0131l\u0131r a\u00e7\u0131lmaz oynatmaya ba\u015fla (tabela modu)"), boot, () -> {
-                com.techgenius.tvoslauncher.present.Presenter.set(this, com.techgenius.tvoslauncher.present.Presenter.KEY_BOOT, !boot);
-                show(index, 0);
-                focusRow(1);
-            });
-            option(l, tr("Keep Screen Awake", "Ekran\u0131 A\u00e7\u0131k Tut"),
-                    tr("No screensaver or sleep while presenting", "Sunum s\u0131ras\u0131nda ekran koruyucu veya uyku yok"), awake, () -> {
-                com.techgenius.tvoslauncher.present.Presenter.set(this, com.techgenius.tvoslauncher.present.Presenter.KEY_AWAKE, !awake);
-                show(index, 0);
-                focusRow(2);
-            });
-        }
-        option(l, tr("Continue", "Devam Et"), null, false, this::next);
-        dots();
+        next(); // Presentation is not part of the lightweight build.
     }
 
     boolean askedLocation;
@@ -831,8 +695,8 @@ public class SetupActivity extends Activity {
         if (permMode == 0) {
             title(tr("Finish Setting Up", "Kurulumu Tamamla"));
             TextView s = subtitle(tr(
-                    "Select a usage mode for permissions (Button Mapper Accessibility, Continue Watching, and Wi-Fi). Pick ONE usage mode below:",
-                    "İzinler için bir kullanım modu seçin (Düğme Eşleyici Erişilebilirliği, İzlemeye Devam Et ve Wi-Fi). Aşağıdan BİR kullanım modu seçin:"));
+                    "Select a usage mode for permissions (Button Mapper Accessibility and Wi-Fi). Pick ONE usage mode below:",
+                    "İzinler için bir kullanım modu seçin (Düğme Eşleyici Erişilebilirliği ve Wi-Fi). Aşağıdan BİR kullanım modu seçin:"));
             ((LinearLayout.LayoutParams) s.getLayoutParams()).bottomMargin = u(14);
             LinearLayout l = scrollableList();
             option(l, tr("Mode: Secure Auto Setup & Close ADB (Recommended)", "Mod: Güvenli Otomatik Kurulum ve ADB'yi Kapat (Önerilen)"),
@@ -925,10 +789,6 @@ public class SetupActivity extends Activity {
             option(l, tr("Show the Wi-Fi Name", "Wi-Fi Ad\u0131n\u0131 G\u00f6ster"),
                     tr("In Control Center (needs location access)", "Denetim Merkezi'nde (konum izni gerekir)"), false,
                     () -> Perms.requestLocation(this));
-        }
-        if (Perms.listenerSupported(this) && !Perms.hasListener(this)) {
-            option(l, tr("Continue Watching", "\u0130zlemeye Devam Et"),
-                    tr("Remember what you play in each app", "Her uygulamada ne oynatt\u0131\u011f\u0131n\u0131z\u0131 hat\u0131rla"), false, () -> Perms.requestListener(this));
         }
         boolean accOn = ButtonMapper.isServiceEnabled(this);
         option(l, tr("Button Mapper & Control Panel", "D\u00fc\u011fme E\u015fleyici ve Denetim Paneli"),
