@@ -422,7 +422,7 @@ final class SceneHome {
         boolean active = VpnController.isVpnActive(host);
         vpnIndicator.setVisibility(active ? View.VISIBLE : View.GONE);
         if (active) {
-            vpnIndicator.setContentDescription(I18n.s(host, "VPN connected", "VPN подключён"));
+            vpnIndicator.setContentDescription(I18n.s(host, "VPN connected", "VPN bağlı"));
         }
     }
 
