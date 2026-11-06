@@ -450,6 +450,7 @@ public class MainActivity extends Activity {
             sceneHome.sceneView.syncSettings();
             sceneHome.sceneView.start();
             sceneHome.refreshWhoBar();
+            sceneHome.refreshVpnIndicator();
             sceneHome.refreshMoonBtn();
             sceneHome.refreshKeepWatching();
             if (wasReturningFromSettings || sceneHome.dockTiles.isEmpty()) {
@@ -3794,13 +3795,7 @@ public class MainActivity extends Activity {
                     ControlPanelOverlay.openInputs(this, () -> showInputs(popoverReturn != null ? popoverReturn : ccButton));
                 },
                 () -> {
-                    dropPicker();
-                    pickerLayer = null;
-                    popoverReturn = null;
-                    weatherOpen = false;
-                    returningFromSettings = true;
-                    startActivity(new Intent(this, SettingsActivity.class)
-                            .putExtra("page", SettingsActivity.BUTTON_MAPPER));
+                    VpnController.toggleHappWithFeedback(this);
                 },
                 () -> {
                     dropPicker();
@@ -4172,6 +4167,7 @@ public class MainActivity extends Activity {
     boolean netEthernet;
 
     void updateNet() {
+        if (sceneHome != null) sceneHome.refreshVpnIndicator();
         if (netIcon == null) return;
         android.net.ConnectivityManager cm = getSystemService(android.net.ConnectivityManager.class);
         android.net.NetworkCapabilities nc = cm.getNetworkCapabilities(cm.getActiveNetwork());
