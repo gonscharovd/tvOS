@@ -874,10 +874,10 @@ final class LocalAdb {
             // 5. Default Home Role + Preferred Home Activity (compatible with Android 9, 10, 11, 12, 14)
             cmds.add("cmd role add-role-holder --user 0 android.app.role.HOME " + pkg + " 1 2>/dev/null");
             cmds.add("cmd role add-role-holder --user 0 android.app.role.HOME " + pkg + " 2>/dev/null");
-            cmds.add("cmd package set-home-activity --user 0 " + pkg + "/" + pkg + ".MainActivity 2>/dev/null");
-            cmds.add("cmd package set-home-activity --user 0 " + pkg + "/.MainActivity 2>/dev/null");
-            cmds.add("cmd package set-home-activity " + pkg + "/" + pkg + ".MainActivity 2>/dev/null");
-            cmds.add("pm set-home-activity --user 0 " + pkg + "/" + pkg + ".MainActivity 2>/dev/null");
+            cmds.add("cmd package set-home-activity --user 0 " + pkg + "/com.techgenius.tvoslauncher.MainActivity 2>/dev/null");
+            cmds.add("cmd package set-home-activity --user 0 " + pkg + "/com.techgenius.tvoslauncher.MainActivity 2>/dev/null");
+            cmds.add("cmd package set-home-activity " + pkg + "/com.techgenius.tvoslauncher.MainActivity 2>/dev/null");
+            cmds.add("pm set-home-activity --user 0 " + pkg + "/com.techgenius.tvoslauncher.MainActivity 2>/dev/null");
 
             // 6. If Secure Mode (closeAdbAfter) was requested, close ADB right at the end of setup
             if (closeAdbAfter) {
@@ -937,11 +937,11 @@ final class LocalAdb {
             }
             cmds.add("cmd role add-role-holder --user 0 android.app.role.HOME " + pkg + " 1 2>/dev/null");
             cmds.add("cmd role add-role-holder --user 0 android.app.role.HOME " + pkg + " 2>/dev/null");
-            cmds.add("cmd package set-home-activity --user 0 " + pkg + "/" + pkg + ".MainActivity 2>/dev/null");
-            cmds.add("cmd package set-home-activity --user 0 " + pkg + "/.MainActivity 2>/dev/null");
-            cmds.add("cmd package set-home-activity " + pkg + "/" + pkg + ".MainActivity 2>/dev/null");
-            cmds.add("pm set-home-activity --user 0 " + pkg + "/" + pkg + ".MainActivity 2>/dev/null");
-            cmds.add("pm set-home-activity " + pkg + "/" + pkg + ".MainActivity 2>/dev/null");
+            cmds.add("cmd package set-home-activity --user 0 " + pkg + "/com.techgenius.tvoslauncher.MainActivity 2>/dev/null");
+            cmds.add("cmd package set-home-activity --user 0 " + pkg + "/com.techgenius.tvoslauncher.MainActivity 2>/dev/null");
+            cmds.add("cmd package set-home-activity " + pkg + "/com.techgenius.tvoslauncher.MainActivity 2>/dev/null");
+            cmds.add("pm set-home-activity --user 0 " + pkg + "/com.techgenius.tvoslauncher.MainActivity 2>/dev/null");
+            cmds.add("pm set-home-activity " + pkg + "/com.techgenius.tvoslauncher.MainActivity 2>/dev/null");
 
             String[] hosts = {"127.0.0.1", localLanIp()};
             Exception lastErr = null;
@@ -1059,7 +1059,7 @@ final class LocalAdb {
             if (cleanAccStr.isEmpty()) {
                 cmds.add("settings put secure accessibility_enabled 0");
             }
-            cmds.add("cmd notification disallow_listener " + pkg + "/" + pkg + ".MediaWatchService 2>/dev/null");
+            cmds.add("cmd notification disallow_listener " + pkg + "/com.techgenius.tvoslauncher.MediaWatchService 2>/dev/null");
             cmds.add("cmd role remove-role-holder --user 0 android.app.role.HOME " + pkg + " 2>/dev/null");
             cmds.add("cmd package clear-package-preferred-activities " + pkg + " 2>/dev/null");
 
