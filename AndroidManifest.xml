@@ -65,7 +65,7 @@
         android:allowBackup="false">
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.techgenius.tvoslauncher.MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:clearTaskOnLaunch="true"
@@ -87,10 +87,10 @@
             </intent-filter>
         </activity>
 
-        <receiver android:name=".SleepReceiver" android:exported="false" />
-        <receiver android:name=".AppUpdater$InstallStatusReceiver" android:exported="false" />
+        <receiver android:name="com.techgenius.tvoslauncher.SleepReceiver" android:exported="false" />
+        <receiver android:name="com.techgenius.tvoslauncher.AppUpdater$InstallStatusReceiver" android:exported="false" />
         <service
-            android:name=".PowerService"
+            android:name="com.techgenius.tvoslauncher.PowerService"
             android:exported="true"
             android:label="tvOS Launcher – Button Mapper &amp; Control Panel"
             android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
@@ -102,7 +102,7 @@
 
         <!-- Continue Watching: reads the media sessions apps publish while playing. -->
         <service
-            android:name=".MediaWatchService"
+            android:name="com.techgenius.tvoslauncher.MediaWatchService"
             android:exported="true"
             android:label="tvOS Launcher – Continue Watching"
             android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
@@ -113,7 +113,7 @@
 
         <!-- Presentation mode (ported from pb-marketer-tv): full-screen player + boot start. -->
         <activity
-            android:name=".present.PresentationActivity"
+            android:name="com.techgenius.tvoslauncher.present.PresentationActivity"
             android:exported="false"
             android:launchMode="singleTask"
             android:excludeFromRecents="true"
@@ -121,7 +121,7 @@
             android:theme="@style/HomeTheme"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|smallestScreenSize|screenLayout|uiMode|density" />
         <receiver
-            android:name=".present.BootReceiver"
+            android:name="com.techgenius.tvoslauncher.present.BootReceiver"
             android:directBootAware="true"
             android:enabled="true"
             android:exported="true">
@@ -136,7 +136,7 @@
         </receiver>
 
         <activity
-            android:name=".SetupActivity"
+            android:name="com.techgenius.tvoslauncher.SetupActivity"
             android:exported="true"
             android:launchMode="singleTop"
             android:excludeFromRecents="true"
@@ -144,7 +144,7 @@
             android:windowSoftInputMode="adjustNothing"
             android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize|smallestScreenSize|screenLayout|uiMode|density" />
         <activity
-            android:name=".SettingsActivity"
+            android:name="com.techgenius.tvoslauncher.SettingsActivity"
             android:exported="true"
             android:excludeFromRecents="true"
             android:screenOrientation="landscape"
