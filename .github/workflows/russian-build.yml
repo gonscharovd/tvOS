@@ -1,0 +1,40 @@
+name: Russian branch build
+
+on:
+  push:
+    branches:
+      - feature/russian-happ-control-center
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+      - name: Install Android SDK components
+        run: sdkmanager "platforms;android-34" "build-tools;34.0.0"
+      - name: Build APK
+        env:
+          VERSION_CODE: '13'
+          VERSION_NAME: 2.1.2-ru1
+        run: |
+          chmod +x build.sh
+          ./build.sh
+      - name: Upload test APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvos-russian-debug-apk
+          path: build/tvos-home.apk
+          if-no-files-found: error
+          retention-days: 14
