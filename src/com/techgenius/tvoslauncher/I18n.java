@@ -526,6 +526,18 @@ public final class I18n {
 
     /** Russian additions for UI strings not covered by the shared translation table. */
     private static void initRussianSupplement() {
+        ru("Continue Watching & Do Not Disturb", "Продолжить просмотр и режим «Не беспокоить»");
+        ru("Set Default via Local ADB (Recommended)", "Назначить главным через локальный ADB (рекомендуется)");
+        ru("Disable Stock TV Launchers (TCL / Philips / Google TV)", "Отключить штатные лаунчеры ТВ (TCL / Philips / Google TV)");
+        ru("Enable Home Button Fix (Accessibility Remap)", "Включить переназначение кнопки Home (специальные возможности)");
+        ru("Open Android Default Home Settings", "Открыть настройки главного экрана Android");
+        ru("Set Default Home Launcher", "Назначить главным лаунчером");
+        ru("Default home launcher set via ADB!", "Главный лаунчер назначен через ADB!");
+        ru("Home Button Fix & Accessibility enabled!", "Переназначение Home и специальные возможности включены!");
+        ru("Home Button Fix enabled!", "Переназначение кнопки Home включено!");
+        ru("Select Home App", "Выберите приложение главного экрана");
+        ru("This TV's settings have no switch for this permission. Whoever set up the TV can turn it on once from a computer on the same network:\n\n", "В настройках этого телевизора нет переключателя для данного разрешения. Его можно один раз включить с компьютера в той же сети:\n\n");
+
         ru("RAM ", "ОЗУ ");
         ru("Getting the weather…", "Загрузка погоды…");
         ru("H:", "М:");
