@@ -120,7 +120,7 @@ final class AdminServer {
                 route(r, out);
             } catch (Exception e) {
                 Log.w(TAG, r.method + " " + r.path + ": " + e);
-                json(out, 500, new JSONObject().put("error", e.getMessage() == null ? "Unexpected server error" : e.getMessage()));
+                json(out, 500, new JSONObject().put("error", e.getMessage() == null ? "Непредвиденная ошибка сервера" : e.getMessage()));
             }
         } catch (SocketException ignored) {
         } catch (Exception e) {
@@ -185,7 +185,7 @@ final class AdminServer {
         if (p.equals("/api/info")) { json(out, 200, info()); return; }
         if (p.equals("/api/pair") && "POST".equals(r.method)) {
             String token = pairing.pair(body(r).optString("pin"));
-            if (token == null) json(out, 403, new JSONObject().put("error", "That PIN doesn\u2019t match the one on the TV."));
+            if (token == null) json(out, 403, new JSONObject().put("error", "Код не совпадает с кодом на телевизоре."));
             else json(out, 200, new JSONObject().put("token", token));
             return;
         }
@@ -195,7 +195,7 @@ final class AdminServer {
         String token = auth.startsWith("Bearer") ? auth.substring(6).trim() : r.query.get("token");
         if (!pairing.valid(token)) {
             drain(r);
-            json(out, 401, new JSONObject().put("error", "Pair with the TV PIN first"));
+            json(out, 401, new JSONObject().put("error", "Сначала подключите браузер с помощью кода на телевизоре."));
             return;
         }
         String[] seg = p.replaceAll("^/+|/+$", "").split("/");
@@ -209,7 +209,7 @@ final class AdminServer {
         } else if (seg.length == 4 && seg[1].equals("media") && seg[3].equals("file") && "GET".equals(r.method)) {
             mediaFile(r, out, seg[2]);
         } else if (seg.length == 3 && seg[1].equals("media") && "DELETE".equals(r.method)) {
-            if (!repo.deleteMedia(seg[2])) json(out, 404, new JSONObject().put("error", "Media item not found"));
+            if (!repo.deleteMedia(seg[2])) json(out, 404, new JSONObject().put("error", "Медиафайл не найден"));
             else {
                 gateway.reload();
                 json(out, 200, new JSONObject().put("deleted", true));
@@ -224,7 +224,7 @@ final class AdminServer {
                 || (seg.length == 3 && seg[1].equals("playlists") && "PUT".equals(r.method))) {
             savePlaylist(r, out, "POST".equals(r.method) ? 201 : 200);
         } else if (seg.length == 3 && seg[1].equals("playlists") && "DELETE".equals(r.method)) {
-            json(out, 400, new JSONObject().put("error", "Default playlist cannot be deleted"));
+            json(out, 400, new JSONObject().put("error", "Плейлист по умолчанию нельзя удалить"));
         } else if (seg.length == 4 && seg[1].equals("playlists") && seg[3].equals("activate") && "POST".equals(r.method)) {
             gateway.reload();
             json(out, 200, new JSONObject().put("playlist", repo.playlist().toJson()));
@@ -233,15 +233,15 @@ final class AdminServer {
         } else if (p.equals("/api/playback/control") && "POST".equals(r.method)) {
             String cmd = body(r).optString("command").toLowerCase(Locale.US);
             if (!cmd.matches("play|pause|next|previous|restart|showconnectioninfo|connectinfo|connection")) {
-                json(out, 400, new JSONObject().put("error", "Unsupported playback command"));
+                json(out, 400, new JSONObject().put("error", "Неподдерживаемая команда воспроизведения"));
             } else if (!gateway.control(cmd)) {
-                json(out, 409, new JSONObject().put("error", "Presentation isn\u2019t on screen. Start it from the TV or turn on \u201cStart on boot\u201d."));
+                json(out, 409, new JSONObject().put("error", "Презентация не запущена на экране. Запустите её на телевизоре или включите параметр «Запуск при включении»."));
             } else {
                 json(out, 200, new JSONObject().put("accepted", true));
             }
         } else {
             drain(r);
-            json(out, 404, new JSONObject().put("error", "Endpoint not found"));
+            json(out, 404, new JSONObject().put("error", "Адрес API не найден"));
         }
     }
 
@@ -295,7 +295,7 @@ final class AdminServer {
                 String boundary = type.substring(b + 9).replace("\"", "").trim();
                 Multipart mp = Multipart.extract(raw, boundary, dir);
                 if (mp.file == null) {
-                    json(out, 400, new JSONObject().put("error", "Upload form field named file is required"));
+                    json(out, 400, new JSONObject().put("error", "В форме загрузки требуется поле file"));
                     return;
                 }
                 payload = mp.file;
@@ -413,7 +413,7 @@ final class AdminServer {
         Model.Media m = repo.getMedia(id);
         File f = m == null ? null : repo.file(m);
         if (f == null || !f.exists()) {
-            send(out, 404, "text/plain; charset=utf-8", "Not found".getBytes(StandardCharsets.UTF_8));
+            send(out, 404, "text/plain; charset=utf-8", "Не найдено".getBytes(StandardCharsets.UTF_8));
             return;
         }
         long len = f.length();
