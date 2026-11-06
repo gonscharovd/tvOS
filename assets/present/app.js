@@ -658,7 +658,7 @@ function confirmLeave() { return !state.dirty || window.confirm("Есть нес
 function summary(s) {
   const t = s.type === "video" ? "Видео · до конца" : s.type === "image" ? `Изображение · ${formatDuration(s.durationSec || 10)}`
     : s.webpageAutoScroll !== false ? "Веб-страница · автопрокрутка" : `Веб-страница · ${formatDuration(s.durationSec || 20)}`;
-  return `${t} · ${(s.fitMode || "contain").replace(/^./, (c) => c.toUpperCase())}${s.enabled === false ? " · Скрыт" : ""}`;
+  return `${t} · ${({ contain: "Вписать", cover: "Заполнить", fill: "Растянуть" }[s.fitMode || "contain"])}${s.enabled === false ? " · Скрыт" : ""}`;
 }
 
 function loopLabel(slides) {
