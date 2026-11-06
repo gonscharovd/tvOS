@@ -1795,10 +1795,9 @@ public class SettingsActivity extends Activity {
 
     private String permissionsSummaryCount() {
         int granted = 0;
-        int total = 4;
+        int total = 3;
         if (Perms.isDefaultHome(this)) granted++;
         if (ButtonMapper.isServiceEnabled(this)) granted++;
-        if (Perms.hasListener(this)) granted++;
         if (Perms.hasLocation(this)) granted++;
         return granted + " / " + total + " " + tr("active", "etkin");
     }
@@ -2609,10 +2608,6 @@ public class SettingsActivity extends Activity {
                         pairOrRepairAdb();
                     }
                 });
-
-        row(tr("Continue Watching & DND (Notification Access)", "İzlemeye Devam Et ve Rahatsız Etmeyin"),
-                () -> Perms.hasListener(this) ? "✓  " + tr("Allowed", "İzin verildi") : "✗  " + tr("Not allowed", "İzin verilmedi"),
-                () -> Perms.requestListener(this));
 
         row(tr("Wi-Fi Name (Location)", "Wi-Fi Adı (Konum)"),
                 () -> Perms.hasLocation(this) ? "✓  " + tr("Allowed", "İzin verildi") : "✗  " + tr("Not allowed", "İzin verilmedi"),
