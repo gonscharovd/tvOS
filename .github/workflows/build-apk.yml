@@ -1,0 +1,40 @@
+name: Build custom tvOS APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feature/ram-cleaner-happ-vpn
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android build tools
+        run: sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Build and sign development APK
+        run: bash build.sh
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: tvos-custom-2.1.2-custom1
+          path: build/tvos-home.apk
+          if-no-files-found: error
+          retention-days: 14
