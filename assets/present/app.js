@@ -168,17 +168,17 @@ async function refreshPlayback() {
     const onTv = p.available && p.slideCount > 0 && live[p.slideIndex] ? live[p.slideIndex].id : null;
     if (onTv !== state.onTv) { state.onTv = onTv; if (state.tab === "playlist") { renderNav(); renderPreview(); } }
     $("playPause").dataset.cmd = state.playing ? "pause" : "play";
-    $("playPause").title = state.playing ? "Pause" : "Play";
+    $("playPause").title = state.playing ? "Пауза" : "Воспроизвести";
     $("ppIcon").setAttribute("d", state.playing ? "M8 5v14M16 5v14" : "M7 5l12 7-12 7z");
     if (!p.available) {
-      $("nowTitle").textContent = "Not on screen";
-      $("nowSub").textContent = "Open Presentation on the TV, or turn on “Start on boot” in Settings.";
+      $("nowTitle").textContent = "Не запущено на ТВ";
+      $("nowSub").textContent = "Откройте раздел «Презентация» на телевизоре или включите «Запуск при включении» в настройках.";
     } else if (p.state === "empty") {
-      $("nowTitle").textContent = "Nothing playing";
-      $("nowSub").textContent = "Add slides in Playlist, then Save to TV.";
+      $("nowTitle").textContent = "Сейчас ничего не воспроизводится";
+      $("nowSub").textContent = "Добавьте слайды в плейлист и сохраните его на телевизор.";
     } else {
-      const label = { playing: "Playing", paused: "Paused", error: "Skipping", starting: "Starting" }[p.state] || p.state;
-      $("nowTitle").textContent = p.slideCount > 0 ? `${label} · Слайд ${p.slideIndex + 1} of ${p.slideCount}` : label;
+      const label = { playing: "Воспроизведение", paused: "Пауза", error: "Пропуск слайда", starting: "Запуск" }[p.state] || p.state;
+      $("nowTitle").textContent = p.slideCount > 0 ? `${label} · слайд ${p.slideIndex + 1} из ${p.slideCount}` : label;
       $("nowSub").textContent = [p.mediaName || p.url, p.error].filter(Boolean).join(" — ");
     }
   } catch (err) { handleError(err, true); }
@@ -226,13 +226,13 @@ function renderMedia() {
       </div>`;
     el.querySelector('[data-a="add"]')?.addEventListener("click", () => { addMediaSlide(m); setTab("playlist"); });
     el.querySelector('[data-a="del"]').addEventListener("click", async () => {
-      const ok = await confirmSheet(`Delete “${m.displayName}”?`, "It will be removed from the TV, along with any slides that use it.");
+      const ok = await confirmSheet(`Удалить «${m.displayName}»?`, "Файл будет удалён с телевизора, а также из всех слайдов, в которых он используется.");
       if (!ok) return;
       try {
         await api(`/api/media/${m.id}`, { method: "DELETE" });
         removeMediaFromDraft(m.id);
         await refreshAll({ preserveDirty: true });
-        toast("Deleted");
+        toast("Удалено");
       } catch (err) { handleError(err); }
     });
     grid.appendChild(el);
@@ -353,7 +353,7 @@ function renderNav() {
       <span class="nav-num">${i + 1}</span>
       <div class="nav-thumb${s.type === "webpage" ? " web" : ""}">
         ${s.type === "webpage" ? ICON.web : m ? thumb(m) : ""}
-        ${state.onTv === s.id && !state.dirty ? `<span class="chip tl live">On TV</span>` : ""}
+        ${state.onTv === s.id && !state.dirty ? `<span class="chip tl live">На ТВ</span>` : ""}
         ${enabled ? "" : `<span class="chip tr">${ICON.hidden}</span>`}
         <span class="chip br">${s.type === "video" ? ICON.video + "Видео" : (s.type === "webpage" && s.webpageAutoScroll !== false ? "Scroll" : formatDuration(s.durationSec || defaultDuration(s.type)))}</span>
       </div>`;
@@ -404,7 +404,7 @@ function renderInspector() {
   const fit = s.fitMode || "contain", count = state.draft.slides.length;
   const g = [];
   if (s.type === "webpage") {
-    g.push(`<div class="group-label">Webpage</div><div class="group">
+    g.push(`<div class="group-label">Веб-страница</div><div class="group">
       <div class="cell stack"><input data-f="url" type="text" inputmode="url" autocapitalize="off" spellcheck="false" value="${esc(s.url || "")}" placeholder="https://example.com" aria-label="Адрес веб-страницы"></div>
       <div class="cell"><span>Автопрокрутка</span><label class="switch"><input type="checkbox" data-f="webpageAutoScroll" ${s.webpageAutoScroll !== false ? "checked" : ""} aria-label="Автопрокрутка"><span></span></label></div>
       ${s.webpageAutoScroll !== false ? `
@@ -415,19 +415,19 @@ function renderInspector() {
     const opts = state.media.filter((m) => kind(m) === s.type)
       .map((m) => `<option value="${m.id}" ${m.id === s.mediaId ? "selected" : ""}>${esc(m.displayName)}</option>`).join("");
     g.push(`<div class="group-label">${s.type === "video" ? "Видео" : "Изображение"}</div><div class="group">
-      <div class="cell"><span>File</span><select data-f="mediaId" aria-label="Файл">${opts}</select></div></div>`);
+      <div class="cell"><span>Файл</span><select data-f="mediaId" aria-label="Файл">${opts}</select></div></div>`);
   }
   const timing = s.type === "video"
     ? `<div class="cell"><span>Время показа</span><span class="note">До конца воспроизведения</span></div>`
     : s.type === "webpage" && s.webpageAutoScroll !== false
       ? `<div class="cell"><span>Время показа</span><span class="note">До конца страницы</span></div>`
-      : `<div class="cell"><span>Время показа</span><span class="stepper"><button type="button" data-step="-5" aria-label="5 seconds less">−</button><input data-f="durationSec" type="number" min="1" max="86400" value="${s.durationSec || defaultDuration(s.type)}" aria-label="Seconds"><span class="unit">s</span><button type="button" data-step="5" aria-label="5 seconds more">+</button></span></div>`;
-  g.push(`<div class="group-label">Playback</div><div class="group">
+      : `<div class="cell"><span>Время показа</span><span class="stepper"><button type="button" data-step="-5" aria-label="Уменьшить на 5 секунд">−</button><input data-f="durationSec" type="number" min="1" max="86400" value="${s.durationSec || defaultDuration(s.type)}" aria-label="Секунды"><span class="unit">с</span><button type="button" data-step="5" aria-label="Увеличить на 5 секунд">+</button></span></div>`;
+  g.push(`<div class="group-label">Воспроизведение</div><div class="group">
     ${timing}
-    <div class="cell"><span>Fit</span><div class="segmented small" role="group" aria-label="Fit">
-      ${["contain", "cover", "fill"].map((f) => `<button type="button" data-fit="${f}" aria-pressed="${f === fit}" title="${{ contain: "Show all of it", cover: "Fill the screen, cropping edges", fill: "Stretch to the screen" }[f]}">${f[0].toUpperCase() + f.slice(1)}</button>`).join("")}</div></div>
-    ${s.type === "video" ? `<div class="cell"><span>Sound</span><label class="switch"><input type="checkbox" data-f="muted" data-invert ${s.muted === false ? "checked" : ""} aria-label="Воспроизводить звук"><span></span></label></div>` : ""}
-    <div class="cell"><span>Show this slide</span><label class="switch"><input type="checkbox" data-f="enabled" ${s.enabled !== false ? "checked" : ""} aria-label="Показывать этот слайд"><span></span></label></div>
+    <div class="cell"><span>Fit</span><div class="segmented small" role="group" aria-label="Масштабирование">
+      ${["contain", "cover", "fill"].map((f) => `<button type="button" data-fit="${f}" aria-pressed="${f === fit}" title="${{ contain: "Показать целиком", cover: "Заполнить экран с обрезкой краёв", fill: "Растянуть на весь экран" }[f]}">${{ contain: "Вписать", cover: "Заполнить", fill: "Растянуть" }[f]}</button>`).join("")}</div></div>
+    ${s.type === "video" ? `<div class="cell"><span>Звук</span><label class="switch"><input type="checkbox" data-f="muted" data-invert ${s.muted === false ? "checked" : ""} aria-label="Воспроизводить звук"><span></span></label></div>` : ""}
+    <div class="cell"><span>Показывать слайд</span><label class="switch"><input type="checkbox" data-f="enabled" ${s.enabled !== false ? "checked" : ""} aria-label="Показывать этот слайд"><span></span></label></div>
   </div>`);
   g.push(`<div class="insp-actions">
     <button type="button" class="btn small" data-a="up" ${i === 0 ? "disabled" : ""}>${ICON.up}Выше</button>
@@ -544,15 +544,15 @@ function openWebpageSheet() {
   $("sheetTitle").textContent = "Добавить веб-страницу";
   $("sheetBody").innerHTML = `<form id="webForm" class="web-form">
     <div class="group"><div class="cell stack"><input id="webUrl" type="text" inputmode="url" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="example.com/dashboard" aria-label="Адрес веб-страницы" required></div></div>
-    <p class="secondary small">The page opens full screen on the TV and scrolls down slowly. You can change scrolling in the slide’s settings.</p>
-    <button class="btn primary wide" type="submit">Add Slide</button></form>`;
+    <p class="secondary small">Страница откроется на телевизоре во весь экран с медленной прокруткой вниз. Скорость и паузы можно изменить в настройках слайда.</p>
+    <button class="btn primary wide" type="submit">Добавить слайд</button></form>`;
   $("sheet").classList.remove("hidden");
   setTimeout(() => $("webUrl").focus(), 50);
   $("webForm").addEventListener("submit", (e) => {
     e.preventDefault();
     let url = $("webUrl").value.trim();
     if (url && !/^[a-z]+:\/\//i.test(url)) url = "https://" + url;
-    if (!/^https?:\/\//.test(url)) { toast("Webpage address must start with http:// or https://", "error"); return; }
+    if (!/^https?:\/\//.test(url)) { toast("Адрес веб-страницы должен начинаться с http:// или https://", "error"); return; }
     addSlide({
       type: "webpage", url, durationSec: defaultDuration("webpage"), fitMode: "contain", muted: true, loop: false,
       webpageAutoScroll: true, webpageScrollSpeedPxPerSec: 40, webpageScrollPauseSec: 5, enabled: true,
@@ -653,7 +653,7 @@ function normalizeOrders() { state.draft.slides.forEach((s, i) => (s.order = i))
 function markDirty() { setDirty(true); }
 function setDirty(d) { state.dirty = d; $("saveError").textContent = ""; renderSaveBar(); }
 function renderSaveBar() { $("saveBar").classList.toggle("show", state.dirty && !!state.token); }
-function confirmLeave() { return !state.dirty || window.confirm("You have unsaved playlist changes. Leave anyway?"); }
+function confirmLeave() { return !state.dirty || window.confirm("Есть несохранённые изменения плейлиста. Всё равно выйти?"); }
 
 function summary(s) {
   const t = s.type === "video" ? "Видео · до конца" : s.type === "image" ? `Изображение · ${formatDuration(s.durationSec || 10)}`
