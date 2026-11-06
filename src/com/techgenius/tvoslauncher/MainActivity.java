@@ -1786,7 +1786,7 @@ public class MainActivity extends Activity {
         btnRow.addView(heroButton, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(32)));
         heroRemove = text(13, Ui.font(this, "semibold"), 1f);
         heroRemove.setShadowLayer(0, 0, 0, 0);
-        heroRemove.setText("\u2715  Remove");
+        heroRemove.setText(I18n.t(this, "\u2715  Remove"));
         heroRemove.setGravity(Gravity.CENTER);
         heroRemove.setPadding(dp(16), 0, dp(18), 0);
         heroRemoveBg = new GradientDrawable();
@@ -2250,7 +2250,7 @@ public class MainActivity extends Activity {
                     ? (it.remainingMin / 60) + " h " + (it.remainingMin % 60) + " min left" : it.remainingMin + " min left");
             heroMeta.setText(String.join("  \u00B7  ", meta));
             heroOverview.setText(it.overview);
-            heroBtnText.setText("\u25B6  Resume");
+            heroBtnText.setText(I18n.t(this, "\u25B6  Resume"));
             try {
                 heroProvider.setImageDrawable(getPackageManager().getApplicationIcon(it.pkg));
                 heroProvider.setVisibility(View.VISIBLE);
@@ -5109,7 +5109,7 @@ public class MainActivity extends Activity {
                 if (free.get(i).equals(prof.emoji)) cur = i;
             }
             new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle("Emoji")
+                    .setTitle(I18n.t(this, "Emoji"))
                     .setSingleChoiceItems(items, cur, (d, w) -> {
                         prof.emoji = free.get(w);
                         Profiles.update(this, prof);
