@@ -16,9 +16,9 @@ import android.net.NetworkCapabilities;
  */
 final class VpnController {
     static final String HAPP_PACKAGE = "su.happ.proxyutility";
-    private static final String HAPP_WIDGET_ACTION = HAPP_PACKAGE + ".action.widget.click";
-    private static final ComponentName HAPP_WIDGET_RECEIVER =
-            new ComponentName(HAPP_PACKAGE, HAPP_PACKAGE + ".receiver.WidgetProvider");
+    private static final String[] HAPP_PACKAGES = {
+            "su.happ.proxyutility", "com.happproxy"
+    };
 
     private VpnController() { }
 
@@ -54,14 +54,19 @@ final class VpnController {
         if (context == null) return false;
         try {
             PackageManager pm = context.getPackageManager();
-            ActivityInfo receiver = pm.getReceiverInfo(HAPP_WIDGET_RECEIVER, 0);
-            if (receiver == null || !receiver.enabled || !receiver.exported) return false;
-
-            Intent intent = new Intent(HAPP_WIDGET_ACTION);
-            intent.setComponent(HAPP_WIDGET_RECEIVER);
-            context.sendBroadcast(intent);
-            return true;
-        } catch (PackageManager.NameNotFoundException e) {
+            for (String pkg : HAPP_PACKAGES) {
+                ComponentName receiverName = new ComponentName(pkg, pkg + ".receiver.WidgetProvider");
+                try {
+                    ActivityInfo receiver = pm.getReceiverInfo(receiverName, 0);
+                    if (receiver == null || !receiver.enabled || !receiver.exported) continue;
+                    Intent intent = new Intent(pkg + ".action.widget.click");
+                    intent.setComponent(receiverName);
+                    context.sendBroadcast(intent);
+                    return true;
+                } catch (PackageManager.NameNotFoundException ignored) {
+                    // Try the other official Happ package variant.
+                }
+            }
             return false;
         } catch (Throwable ignored) {
             return false;
