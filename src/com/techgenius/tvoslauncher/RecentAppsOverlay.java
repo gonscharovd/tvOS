@@ -980,7 +980,40 @@ public final class RecentAppsOverlay {
         } catch (Exception ignored) { }
     }
 
-    private static void removeAndKillApp(Context c, String pkg) {
+    /** Closes recent user apps immediately without opening the Recent Apps overlay. */
+    public static void cleanAllNow(Context c) {
+        if (c == null) return;
+        List<String> recent = getRecentPackages(c, 12);
+        List<String> targets = new ArrayList<>();
+        for (String pkg : recent) {
+            if (isProtectedCleanupPackage(c, pkg)) continue;
+            markClosedAndKillBackground(c, pkg);
+            targets.add(pkg);
+        }
+        if (!targets.isEmpty()) {
+            // One Local ADB batch is cheaper and more reliable than starting one thread per app.
+            LocalAdb.forceStopPackagesAsync(c, targets);
+            String message = I18n.s(c, "Cleaned · " + targets.size(), "Очищено · " + targets.size());
+            android.widget.Toast.makeText(c, message, android.widget.Toast.LENGTH_SHORT).show();
+        } else {
+            android.widget.Toast.makeText(c,
+                    I18n.s(c, "No recent apps to clean", "Нет приложений для очистки"),
+                    android.widget.Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private static boolean isProtectedCleanupPackage(Context c, String pkg) {
+        return pkg == null || pkg.isEmpty()
+                || pkg.equals(c.getPackageName())
+                || pkg.equals(VpnController.HAPP_PACKAGE)
+                || pkg.equals("com.android.systemui")
+                || pkg.equals("com.android.settings")
+                || pkg.equals("com.android.tv.settings")
+                || pkg.equals("com.salute.star")
+                || pkg.startsWith("ru.sberdevices.services");
+    }
+
+    private static void markClosedAndKillBackground(Context c, String pkg) {
         if (pkg == null || pkg.isEmpty()) return;
         long now = System.currentTimeMillis();
 
@@ -1002,11 +1035,13 @@ public final class RecentAppsOverlay {
 
         try {
             ActivityManager am = (ActivityManager) c.getSystemService(Context.ACTIVITY_SERVICE);
-            if (am != null) {
-                am.killBackgroundProcesses(pkg);
-            }
+            if (am != null) am.killBackgroundProcesses(pkg);
         } catch (Exception ignored) { }
+    }
 
+    private static void removeAndKillApp(Context c, String pkg) {
+        if (pkg == null || pkg.isEmpty()) return;
+        markClosedAndKillBackground(c, pkg);
         LocalAdb.forceStopPackagesAsync(c, Collections.singletonList(pkg));
     }
 
