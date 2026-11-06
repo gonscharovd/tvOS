@@ -47,7 +47,7 @@ import java.util.Set;
  * 3. Memory         | 4. Do Not Disturb
  * 5. Audio          | 6. Sleep Timer
  * 7. Ambient Mode   | 8. Power Off
- * 9..12. 1x1 Icons: Inputs, Button Mapper, Settings, Search
+ * 9..12. 1x1 Icons: Inputs, VPN (Happ), Settings, Search
  */
 public final class ControlPanelOverlay {
 
