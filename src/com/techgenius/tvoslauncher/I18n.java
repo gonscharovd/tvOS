@@ -988,7 +988,6 @@ public final class I18n {
         ru("Switch", "Переключить");
         ru("Recent Apps", "Недавние приложения");
         ru("Clean", "Очистить");
-        }
         ru("Weather from", "Погода от");
         ru(" seconds", " сек.");
         ru("Tip: Hold OK on any app on the home screen dock to move or hide it.", "Совет: удерживайте OK на приложении в нижней панели, чтобы переместить или скрыть его.");
