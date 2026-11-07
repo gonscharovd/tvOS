@@ -320,7 +320,9 @@ final class SceneHome {
         vpnIndicator.addView(vpnIndicatorIcon, new LinearLayout.LayoutParams(dp(19), dp(19)));
         LinearLayout.LayoutParams vlp = new LinearLayout.LayoutParams(mSize, mSize);
         vlp.rightMargin = dp(10);
-        topRightRow.addView(vpnIndicator, vlp);
+        // Keep the active VPN badge immediately to the left of the weather shortcut.
+        int weatherIndex = topRightRow.indexOfChild(weatherBtn);
+        topRightRow.addView(vpnIndicator, Math.max(0, weatherIndex), vlp);
         refreshVpnIndicator();
 
         // Top-right Control Panel Button
