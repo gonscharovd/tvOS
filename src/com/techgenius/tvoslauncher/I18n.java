@@ -1765,7 +1765,7 @@ public final class I18n {
     public static String s(Context c, String en, String ignored) { return translateOther(LANG_RU, en); }
     public static String t(Context c, String enKey) { return translateOther(LANG_RU, enKey); }
 
-    private static String translateOther(String lang, String en) {
+    static String translateOther(String lang, String en) {
         if (en == null) return "";
         Map<String, String> map = LANG_MAPS.get(LANG_RU);
         String direct = map != null ? map.get(en) : null;
