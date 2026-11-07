@@ -238,10 +238,36 @@ public class MainActivity extends Activity {
     };
     final Runnable reloadRun = () -> reload(currentKey());
 
+    private void cleanupRemovedFeatureData() {
+        android.content.SharedPreferences marker = getSharedPreferences("feature_cleanup", MODE_PRIVATE);
+        if (marker.getBoolean("recommendations_news_cloud_removed_v1", false)) return;
+        for (String name : new String[]{"suggestions", "nuvio_cloud", "stremio_cloud", "watch_cloud"}) {
+            getSharedPreferences(name, MODE_PRIVATE).edit().clear().apply();
+        }
+        try {
+            Profiles.homePrefs(this).edit()
+                    .remove("shelf_mode").remove("cw_enabled").remove("shelf")
+                    .remove("top_shelf_tab").apply();
+        } catch (Throwable ignored) { }
+        deleteLegacyFeatureFiles(new java.io.File(getCacheDir(), "tmdb"));
+        deleteLegacyFeatureFiles(new java.io.File(getFilesDir(), "continue.json"));
+        marker.edit().putBoolean("recommendations_news_cloud_removed_v1", true).apply();
+    }
+
+    private void deleteLegacyFeatureFiles(java.io.File file) {
+        if (file == null || !file.exists()) return;
+        if (file.isDirectory()) {
+            java.io.File[] children = file.listFiles();
+            if (children != null) for (java.io.File child : children) deleteLegacyFeatureFiles(child);
+        }
+        try { file.delete(); } catch (Throwable ignored) { }
+    }
+
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         activeInstance = this;
+        cleanupRemovedFeatureData();
         // The wallpaper/artwork always covers the screen: skip the window's own full-screen fill
         // (this Mali-450 GPU is fill-rate bound, so every hidden full-screen layer costs frames).
         getWindow().setBackgroundDrawable(null);
