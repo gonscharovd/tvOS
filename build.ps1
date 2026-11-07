@@ -20,7 +20,7 @@ New-Item -ItemType Directory -Force -Path "build\gen", "build\classes", "build\d
 if ($env:ASSET_OPTIMIZE -eq "1") {
     $python = Get-Command python -ErrorAction SilentlyContinue
     if (-not $python) { throw "Python 3 is required when ASSET_OPTIMIZE=1" }
-    & $python.Source tools/prepare_assets.py --source assets --dest build/assets --optimize --quality 88 --max-width 1920 --max-height 1080
+    & $python.Source tools/prepare_assets.py --source assets --dest build/assets --optimize --profile $(if ($env:ASSET_PROFILE) { $env:ASSET_PROFILE } else { "full" }) --quality 88 --max-width 1920 --max-height 1080
     if ($LASTEXITCODE -ne 0) { throw "Asset optimization failed" }
 } else {
     Copy-Item -Path assets -Destination build -Recurse
