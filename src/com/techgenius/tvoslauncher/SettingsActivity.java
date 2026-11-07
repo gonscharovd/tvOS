@@ -1364,7 +1364,7 @@ public class SettingsActivity extends Activity {
                     String n = in.getText().toString().trim();
                     if (!n.isEmpty()) {
                         Profiles.add(this, n);
-                        selectSection(HOME, true, 0);
+                        selectSection(HOME, true, 6 + Profiles.list(this).size() - 1);
                     }
                 })
                 .setNegativeButton(tr("Cancel", "İptal"), null)
