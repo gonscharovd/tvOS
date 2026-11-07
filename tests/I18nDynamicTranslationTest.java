@@ -114,6 +114,27 @@ public final class I18nDynamicTranslationTest {
         expect("Lock Screen folder shuffle enabled: /storage/emulated/0/Pictures",
                 "Смена изображений из папки для экрана блокировки включена: /storage/emulated/0/Pictures");
         expect("Custom 2", "Свой вариант 2");
+        expect("✅ Disable Selected Packages (4)", "✅ Отключить выбранные пакеты (4)");
+        expect("None of the packages listed in Sber 50U4123B are installed on this TV.",
+                "На этом телевизоре не установлено ни одного пакета из списка модели Sber 50U4123B.");
+        expect("Switch to Ирине", "Переключиться на Ирине");
+        expect("Removed remap for Home.", "Удалено переназначение кнопки Home.");
+        expect("⚠️ Security Warning:\n\n"
+                        + "Keep Alive monitors and restores permissions if your TV turns them off in the background.\n\n"
+                        + "Without WRITE_SECURE_SETTINGS, Keep Alive requires Network Debugging (ADB on port 5555) to stay enabled on your home network. For better security, run Pair / Repair ADB in Secure Mode first so WRITE_SECURE_SETTINGS is granted and port 5555 can be closed.\n\n"
+                        + "Enable Keep Alive anyway?",
+                "⚠️ Предупреждение безопасности:\n\n"
+                        + "Keep Alive отслеживает разрешения и восстанавливает их, если телевизор отключает их в фоновом режиме.\n\n"
+                        + "Без WRITE_SECURE_SETTINGS для работы Keep Alive должна оставаться включённой сетевая отладка (ADB на порту 5555) в домашней сети. Для большей безопасности сначала выполните «Подключить / восстановить ADB» в безопасном режиме, чтобы выдать WRITE_SECURE_SETTINGS и закрыть порт 5555.\n\n"
+                        + "Всё равно включить Keep Alive?");
+        expect("WARNING: Manual Debloat lists ALL system apps installed on your TV.\n\n"
+                        + "• Only disable packages if you know exactly what you are doing.\n"
+                        + "• Disabling core Android system services, TV input/tuner services, or Settings packages can break HDMI inputs, Wi-Fi, remote control, or cause a bootloop.\n\n"
+                        + "Proceed at your own risk?",
+                "ПРЕДУПРЕЖДЕНИЕ: в ручном режиме отображаются ВСЕ системные приложения.\n\n"
+                        + "• Отключайте пакеты, только если точно знаете их назначение.\n"
+                        + "• Отключение основных служб Android, служб ТВ-входов / тюнера или настроек может нарушить работу HDMI, Wi-Fi, пульта или привести к циклической перезагрузке.\n\n"
+                        + "Продолжить на свой риск?");
         System.out.println("Dynamic Russian translation tests passed: " + checks);
     }
 }
