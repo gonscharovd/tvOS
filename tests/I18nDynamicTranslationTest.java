@@ -117,7 +117,7 @@ public final class I18nDynamicTranslationTest {
         expect("✅ Disable Selected Packages (4)", "✅ Отключить выбранные пакеты (4)");
         expect("None of the packages listed in Sber 50U4123B are installed on this TV.",
                 "На этом телевизоре не установлено ни одного пакета из списка модели Sber 50U4123B.");
-        expect("Switch to Ирине", "Переключиться на Ирине");
+        expect("Switch to Ирине", "Выбрать профиль «Ирине»");
         expect("Removed remap for Home.", "Удалено переназначение кнопки Home.");
         expect("⚠️ Security Warning:\n\n"
                         + "Keep Alive monitors and restores permissions if your TV turns them off in the background.\n\n"
