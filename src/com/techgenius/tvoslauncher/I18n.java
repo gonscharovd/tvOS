@@ -133,6 +133,7 @@ public final class I18n {
         }
 
         initTranslations();
+        initRussianExtras();
         initSwedish();
         initKorean();
     }
@@ -522,6 +523,179 @@ public final class I18n {
         add("Update Available", "अपडेट उपलब्ध है", "Actualización disponible", "Mise à jour disponible", "Update verfügbar", "Aggiornamento disponibile", "Доступно обновление", "Atualização disponível", "يتوفر تحديث", "アップデートがあります", "发现新版本");
         add("Download & Install", "डाउनलोड और इंस्टॉल करें", "Descargar e instalar", "Télécharger et installer", "Herunterladen & installieren", "Scarica e installa", "Скачать и установить", "Transferir e instalar", "تنزيل وتثبيت", "ダウンロードしてインストール", "下载并安装");
         add("Up to Date", "अप टू डेट", "Actualizado", "À jour", "Auf dem neuesten Stand", "Aggiornato", "Установлена последняя версия", "Atualizado", "محدّث لأحدث إصدار", "最新の状態です", "已是最新版本");
+    }
+
+
+    /**
+     * Russian additions for the custom Sber TV build.
+     * Keep technical product names (ADB, Wi-Fi, Happ, tvOS Launcher) unchanged.
+     */
+    private static void initRussianExtras() {
+        Map<String, String> ru = LANG_MAPS.get(LANG_RU);
+        ru.put("Home settings", "Настройки главного экрана");
+        ru.put("Control Panel", "Панель управления");
+        ru.put("Control Center", "Центр управления");
+        ru.put("Appearance", "Внешний вид");
+        ru.put("Profiles", "Профили");
+        ru.put("Quick buttons", "Быстрые кнопки");
+        ru.put("Advanced", "Дополнительно");
+        ru.put("About", "О приложении");
+        ru.put("Accessibility Service", "Служба специальных возможностей");
+        ru.put("Accessibility service", "Служба специальных возможностей");
+        ru.put("Active (works in all apps)", "Активно (работает во всех приложениях)");
+        ru.put("Active — Set as default home launcher", "Активно — установлен как главный экран");
+        ru.put("Not Connected", "Не подключено");
+        ru.put("Not connected", "Не подключено");
+        ru.put("Not signed in", "Не выполнен вход");
+        ru.put("Not set", "Не задано");
+        ru.put("Not Now", "Не сейчас");
+        ru.put("On (Default)", "Включено (по умолчанию)");
+        ru.put("Off", "Выключено");
+        ru.put("On", "Включено");
+        ru.put("OK", "ОК");
+        ru.put("Back", "Назад");
+        ru.put("Close", "Закрыть");
+        ru.put("Close All", "Закрыть всё");
+        ru.put("Resume", "Продолжить");
+        ru.put("Continue", "Продолжить");
+        ru.put("Next", "Далее");
+        ru.put("Previous Page", "Предыдущая страница");
+        ru.put("Next Page", "Следующая страница");
+        ru.put("Page ", "Страница ");
+        ru.put("PAGE ", "СТРАНИЦА ");
+        ru.put("Search", "Поиск");
+        ru.put("Searching…", "Поиск…");
+        ru.put("Filter", "Фильтр");
+        ru.put("Clear filter", "Сбросить фильтр");
+        ru.put("Clear filter (Show all)", "Сбросить фильтр (показать всё)");
+        ru.put("Show app names", "Показывать названия приложений");
+        ru.put("Show on Home Screen", "Показывать на главном экране");
+        ru.put("Hide", "Скрыть");
+        ru.put("Delete", "Удалить");
+        ru.put("Rename person", "Переименовать профиль");
+        ru.put("Remove person", "Удалить профиль");
+        ru.put("Switch Profile", "Сменить профиль");
+        ru.put("Add User", "Добавить пользователя");
+        ru.put("Create Your Profile", "Создайте свой профиль");
+        ru.put("Your name", "Ваше имя");
+        ru.put("Your Home Screen", "Ваш главный экран");
+        ru.put("Weather Forecast", "Прогноз погоды");
+        ru.put("Weather from", "Источник погоды");
+        ru.put("Wi-Fi", "Wi-Fi");
+        ru.put("Wi-Fi Name (Location)", "Название Wi-Fi (местоположение)");
+        ru.put("TV Speakers", "Динамики телевизора");
+        ru.put("Bluetooth", "Bluetooth");
+        ru.put("Memory", "Оперативная память");
+        ru.put("RAM ", "ОЗУ ");
+        ru.put("Clean", "Очистить");
+        ru.put("No apps to close", "Нет приложений для закрытия");
+        ru.put("Recent Apps", "Недавние приложения");
+        ru.put("Recent Apps Switcher", "Переключатель приложений");
+        ru.put("VPN (Happ)", "VPN (Happ)");
+        ru.put("VPN connected", "VPN подключён");
+        ru.put("Cleanup started", "Очистка запущена");
+        ru.put("ADB & SECURITY MODE", "ADB И РЕЖИМ БЕЗОПАСНОСТИ");
+        ru.put("ADB Operating Mode", "Режим работы ADB");
+        ru.put("ADB operating mode", "Режим работы ADB");
+        ru.put("ADB Mode Required", "Требуется режим ADB");
+        ru.put("ADB Debugging Needed", "Требуется отладка ADB");
+        ru.put("ADB connection status", "Состояние подключения ADB");
+        ru.put("Pair / Repair ADB", "Подключить / восстановить ADB");
+        ru.put("Pair / Repair ADB connection", "Подключить / восстановить ADB");
+        ru.put("Pair now", "Подключить");
+        ru.put("Paired & Ready", "Подключено и готово");
+        ru.put("Not paired (ADB off)", "Не подключено (ADB выключен)");
+        ru.put("Persistent ADB Mode", "Постоянный режим ADB");
+        ru.put("Persistent ADB Setup", "Настройка постоянного режима ADB");
+        ru.put("Secure Setup (ADB)", "Безопасная настройка (ADB)");
+        ru.put("Secure Mode — Grant WRITE_SECURE_SETTINGS & Close ADB (Recommended)", "Безопасный режим — выдать WRITE_SECURE_SETTINGS и выключить ADB (рекомендуется)");
+        ru.put("Persistent ADB Mode — Keep Network ADB Open (Optional)", "Постоянный режим — оставить сетевой ADB включённым (необязательно)");
+        ru.put("Enable ADB Now", "Включить ADB");
+        ru.put("Close ADB Now", "Выключить ADB");
+        ru.put("Turn On / Off ADB", "Включить / выключить ADB");
+        ru.put("Turn On ADB Debugging", "Включить отладку ADB");
+        ru.put("Enable ADB & Switch", "Включить ADB и переключить режим");
+        ru.put("Enable USB / Network Debugging in Developer Options", "Включите отладку по USB / сети в параметрах разработчика");
+        ru.put("Open Developer Options…", "Открыть параметры разработчика…");
+        ru.put("Developer Options…", "Параметры разработчика…");
+        ru.put("Grant All Permissions via Local ADB", "Выдать все разрешения через локальный ADB");
+        ru.put("Grant Permissions Now", "Выдать разрешения");
+        ru.put("Grant All ›", "Выдать все ›");
+        ru.put("Check permissions", "Проверить разрешения");
+        ru.put("Permissions Granted & ADB Closed", "Разрешения выданы, ADB выключен");
+        ru.put("Remove / revoke all permissions", "Отозвать все разрешения");
+        ru.put("Revoke All Permissions", "Отозвать все разрешения");
+        ru.put("Keep Alive enabled.", "Keep Alive включён.");
+        ru.put("Keep Alive disabled.", "Keep Alive выключен.");
+        ru.put("STARTUP & KEEP ALIVE", "АВТОЗАПУСК И KEEP ALIVE");
+        ru.put("Launch automatically on system boot", "Запускать автоматически при включении телевизора");
+        ru.put("tvOS Launcher will launch immediately on system boot.", "tvOS Launcher будет запускаться сразу после включения телевизора.");
+        ru.put("CLEANYOURTV (BETA)", "CLEANYOURTV (БЕТА)");
+        ru.put("Choose TV model", "Выбрать модель телевизора");
+        ru.put("Debloat status", "Состояние очистки системы");
+        ru.put("Debloat TV…", "Очистить телевизор…");
+        ru.put("Disabled apps backup", "Резервная копия отключённых приложений");
+        ru.put("Restore debloated apps…", "Восстановить отключённые приложения…");
+        ru.put("Restore all ›", "Восстановить всё ›");
+        ru.put("Manual debloat (All system apps)", "Ручная очистка (все системные приложения)");
+        ru.put("WARNING: Manual Debloat lists ALL system apps installed on your TV.\n\n", "ВНИМАНИЕ: ручная очистка показывает ВСЕ системные приложения телевизора.\n\n");
+        ru.put("⚠️ Manual Debloat Warning", "⚠️ Предупреждение о ручной очистке");
+        ru.put("⚠️ Core System Package", "⚠️ Критически важный системный пакет");
+        ru.put("INSTALLED APPS", "УСТАНОВЛЕННЫЕ ПРИЛОЖЕНИЯ");
+        ru.put("PACKAGES ON THIS TV (", "ПАКЕТЫ НА ЭТОМ ТВ (");
+        ru.put("SAVED DISABLED PACKAGES (TAP TO RE-ENABLE)", "СОХРАНЁННЫЕ ОТКЛЮЧЁННЫЕ ПАКЕТЫ (НАЖМИТЕ ДЛЯ ВКЛЮЧЕНИЯ)");
+        ru.put("Re-enable All Stock Launchers", "Включить все штатные лаунчеры");
+        ru.put("Disable system launchers", "Отключить системные лаунчеры");
+        ru.put("Manage system apps in TV settings…", "Управление системными приложениями в настройках ТВ…");
+        ru.put("App Info", "Сведения о приложении");
+        ru.put("App info", "Сведения о приложении");
+        ru.put("Version", "Версия");
+        ru.put("Developer", "Разработчик");
+        ru.put("Current version", "Текущая версия");
+        ru.put("Check for updates", "Проверить обновления");
+        ru.put("Tap Check for updates", "Нажмите «Проверить обновления»");
+        ru.put("Checking…", "Проверка…");
+        ru.put("Update Available", "Доступно обновление");
+        ru.put("Download & Install", "Скачать и установить");
+        ru.put("Up to Date", "Установлена последняя версия");
+        ru.put("BACKUP & RESTORE", "РЕЗЕРВНОЕ КОПИРОВАНИЕ И ВОССТАНОВЛЕНИЕ");
+        ru.put("Backup settings to Download", "Сохранить настройки в папку Download");
+        ru.put("Restore settings from folder…", "Восстановить настройки из папки…");
+        ru.put("RESET", "СБРОС");
+        ru.put("Reset settings to defaults", "Сбросить настройки");
+        ru.put("Reset settings?", "Сбросить настройки?");
+        ru.put("Done", "Готово");
+        ru.put("Not done", "Не завершено");
+        ru.put("Cancel", "Отмена");
+        ru.put("Apply", "Применить");
+        ru.put("Save", "Сохранить");
+        ru.put("Preview", "Предпросмотр");
+        ru.put("Screen Off", "Выключить экран");
+        ru.put("Power Off (Screen Off)", "Выключить экран");
+        ru.put("Lock Now", "Заблокировать сейчас");
+        ru.put("Lock Screen", "Экран блокировки");
+        ru.put("Preview Lock Screen now", "Посмотреть экран блокировки");
+        ru.put("Use Presentation", "Режим презентации");
+        ru.put("Presentation", "Презентация");
+        ru.put("Inputs", "Входы");
+        ru.put("Ambient Mode", "Режим заставки");
+        ru.put("Screensaver", "Заставка");
+        ru.put("Sleep timer", "Таймер сна");
+        ru.put("Turn the TV off after", "Выключить телевизор через");
+        ru.put("seconds", "секунд");
+        ru.put(" seconds", " секунд");
+        ru.put(" min", " мин");
+        ru.put(" min left", " мин осталось");
+        ru.put("Off in ", "Выключение через ");
+        ru.put(" paired", " подключено");
+        ru.put("e.g. tcl, philips, sony, hisense, xiaomi…", "например: TCL, Philips, Sony, Hisense, Xiaomi…");
+        ru.put("Matching places", "Совпадения");
+        ru.put("Popular movies and series on your streaming services", "Популярные фильмы и сериалы в ваших онлайн-кинотеатрах");
+        ru.put("Headlines from your city and the world", "Новости вашего города и мира");
+        ru.put("No recent apps yet", "Пока нет недавних приложений");
+        ru.put("No place found for ", "Не найдено место: ");
+        ru.put("Couldn't search. Check the internet connection.", "Не удалось выполнить поиск. Проверьте подключение к интернету.");
+        ru.put("TMDB connected", "TMDB подключён");
     }
 
     private static void sv(String en, String svVal) {
@@ -1266,12 +1440,17 @@ public final class I18n {
         if (cachedLang != null) return cachedLang;
         SharedPreferences p = c.getSharedPreferences("settings", Context.MODE_PRIVATE);
         String saved = p.getString("lang", null);
-        if (saved == null || !SUPPORTED.contains(saved)) {
-            saved = detectSystemLang(c);
-            p.edit().putString("lang", saved).apply();
+        // This custom build targets the user's Russian-language Sber TV setup.
+        // Respect a language explicitly selected in the launcher; otherwise initialise Russian once.
+        if (!p.getBoolean("lang_user_selected", false)) {
+            saved = LANG_RU;
+            p.edit().putString("lang", saved).putBoolean("lang_user_selected", true).apply();
             if (!p.contains("clock_24h")) {
                 Scenes.setClock24h(c, isDefault24hForLang(saved));
             }
+        } else if (saved == null || !SUPPORTED.contains(saved)) {
+            saved = LANG_RU;
+            p.edit().putString("lang", saved).apply();
         }
         cachedLang = saved;
         return cachedLang;
@@ -1293,7 +1472,7 @@ public final class I18n {
         String valid = (lang != null && SUPPORTED.contains(lang)) ? lang : LANG_EN;
         cachedLang = valid;
         c.getSharedPreferences("settings", Context.MODE_PRIVATE)
-                .edit().putString("lang", valid).apply();
+                .edit().putString("lang", valid).putBoolean("lang_user_selected", true).apply();
         Scenes.setClock24h(c, isDefault24hForLang(valid));
     }
 
@@ -1417,6 +1596,11 @@ public final class I18n {
             if (name.startsWith("Person ")) return "Kişi " + name.substring("Person ".length());
             if (name.startsWith("Profile ")) return "Profile " + name.substring("Profile ".length());
             if (name.equals("Kids")) return "Çocuklar";
+        } else if (LANG_RU.equals(getLang(c))) {
+            if (name.equals("Default")) return "По умолчанию";
+            if (name.startsWith("Person ")) return "Профиль " + name.substring("Person ".length());
+            if (name.startsWith("Profile ")) return "Профиль " + name.substring("Profile ".length());
+            if (name.equals("Kids")) return "Детский профиль";
         } else {
             if (name.equals("Varsayılan")) return "Default";
             if (name.startsWith("Kişi ")) return "Person " + name.substring("Kişi ".length());
