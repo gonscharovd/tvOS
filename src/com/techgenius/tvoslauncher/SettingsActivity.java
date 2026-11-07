@@ -3032,7 +3032,7 @@ public class SettingsActivity extends Activity {
             choiceRow(item.appLabel + badge,
                     item.pkg + "  •  " + item.description,
                     !isEnabled,
-                    () -> CleanYourTv.toggleSinglePackage(this, item.pkg, isEnabled, false, () -> {
+                    () -> CleanYourTv.toggleSinglePackage(this, item.pkg, isEnabled, () -> {
                         cytLaunchersSyncedAdb = false;
                         rebuildMainRows();
                     }));
@@ -3166,7 +3166,7 @@ public class SettingsActivity extends Activity {
                                     "You are about to disable " + item.appLabel + " (" + item.pkg + ").\n\nThis is a manual operation. It may affect TV features. Continue only if you know what this package does.",
                                     item.appLabel + " (" + item.pkg + ") paketini devre dışı bırakmak üzeresiniz.\n\nBu manuel bir işlemdir ve TV özelliklerini etkileyebilir. Yalnızca bu paketin ne işe yaradığını biliyorsanız devam edin."))
                             .setPositiveButton(tr("Disable", "Devre Dışı Bırak"), (d, w) -> {
-                                CleanYourTv.toggleSinglePackage(this, item.pkg, true, true, () -> {
+                                CleanYourTv.toggleSinglePackage(this, item.pkg, true, () -> {
                                     item.checked = false;
                                     cytCachedEnabledPkgs.remove(item.pkg);
                                     rebuildMainRows();
@@ -3175,7 +3175,7 @@ public class SettingsActivity extends Activity {
                             .setNegativeButton(tr("Cancel", "İptal"), null)
                             .show();
                 } else {
-                    CleanYourTv.toggleSinglePackage(this, item.pkg, false, true, () -> {
+                    CleanYourTv.toggleSinglePackage(this, item.pkg, false, () -> {
                         item.checked = true;
                         cytCachedEnabledPkgs.add(item.pkg);
                         rebuildMainRows();
