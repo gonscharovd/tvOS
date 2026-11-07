@@ -2282,7 +2282,7 @@ public class MainActivity extends Activity {
             heroInfo.animate().translationY(0).setDuration(380).setInterpolator(EASE).start();
             heroDots.animate().translationY(0).setDuration(380).setInterpolator(EASE).start();
             heroOverview.setVisibility(View.VISIBLE);
-            heroButton.setVisibility(heroIsNews() ? View.GONE : View.VISIBLE);
+            heroButton.setVisibility(View.VISIBLE);
             heroRemove.setVisibility(heroIsContinue() ? View.VISIBLE : View.GONE);
             heroRemove.setAlpha(1f);
             if (continueMode() && heroStrip.getChildCount() > 0) heroStrip.setVisibility(View.VISIBLE);
@@ -2298,10 +2298,8 @@ public class MainActivity extends Activity {
                     .setUpdateListener(null).withEndAction(this::invalidateGlass).start();
             heroInfo.animate().translationY(heroInfoRestY()).setDuration(340).setInterpolator(EASE).start();
             heroDots.animate().translationY(heroDotsRestY()).setDuration(340).setInterpolator(EASE).start();
-            if (!heroIsNews()) {
-                heroOverview.animate().alpha(0f).setDuration(160).setStartDelay(0)
-                        .withEndAction(() -> heroOverview.setVisibility(View.GONE)).start();
-            }
+            heroOverview.animate().alpha(0f).setDuration(160).setStartDelay(0)
+                    .withEndAction(() -> heroOverview.setVisibility(View.GONE)).start();
             heroButton.animate().alpha(0f).setDuration(160).setStartDelay(0)
                     .withEndAction(() -> heroButton.setVisibility(View.GONE)).start();
             if (removeSelected) selectRemove(false);
@@ -4412,7 +4410,7 @@ public class MainActivity extends Activity {
             heroButton.animate().alpha(1f).setDuration(300).start();
             handler.removeCallbacks(heroAdvance);  // browsing by hand: no auto-advance
         }
-        if (!idleOverviewShown && !heroIsNews()) {
+        if (!idleOverviewShown) {
             heroOverview.animate().alpha(0f).setDuration(200)
                     .withEndAction(() -> heroOverview.setVisibility(View.GONE)).start();
         }
