@@ -31,13 +31,18 @@ assert "NuvioCloud" not in settings and "StremioCloud" not in settings
 assert "pageUpdates();" in settings
 
 perms = (ROOT / "Perms.java").read_text(encoding="utf-8")
+local_adb = (ROOT / "LocalAdb.java").read_text(encoding="utf-8")
+control = (ROOT / "ControlPanelOverlay.java").read_text(encoding="utf-8")
 manifest = Path("AndroidManifest.xml").read_text(encoding="utf-8")
 assert not (ROOT / "MediaWatchService.java").exists()
-for source in (main, scene, settings, power, perms, manifest):
+for source in (main, scene, settings, power, perms, local_adb, control, manifest):
     assert "MediaWatchService" not in source
-assert "requestDndAccess(this)" in main
-assert "setInterruptionFilter(" in main
-assert "NotificationListenerService" not in perms
+    assert "enabled_notification_listeners" not in source
+    assert "NotificationListenerService" not in source
+assert "Perms.toggleDnd(this)" in main
+assert "Perms.toggleDnd(c)" in control
+assert "setInterruptionFilter(" in perms
+assert "requestLocation(Activity a)" in perms
 assert "WRITE_EPG_DATA" not in manifest
 
 print("Bounded artwork caches, memory-trim hooks, Settings de-duplication and unused media-service removal passed.")
