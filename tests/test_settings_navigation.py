@@ -72,7 +72,7 @@ for route in ('return CONTROL_PANEL;', 'return HOME;', 'return LOOK_SCENES;', 'r
 i18n = (ROOT / "I18n.java").read_text(encoding="utf-8")
 dictionary = {
     m.group(1)
-    for m in re.finditer(r'add\\("((?:\\\\.|[^"\\\\])*)",', i18n)
+    for m in re.finditer(r'add\("((?:\\.|[^"\\])*)",', i18n)
 }
 required_russian = [
     "Main screen",
