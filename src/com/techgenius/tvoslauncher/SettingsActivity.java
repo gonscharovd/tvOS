@@ -1056,12 +1056,6 @@ public class SettingsActivity extends Activity {
                             .apply();
                     showStatusMsg(tr("App layout reset to default.", "Uygulama düzeni varsayılana sıfırlandı."));
                 });
-        row(tr("Show Continue Watching on Home", "Ana ekranda İzlemeye Devam Et'i göster"),
-                () -> Profiles.homePrefs(this).getBoolean("cw_enabled", false) ? tr("On", "Açık") : tr("Off", "Kapalı"),
-                () -> {
-                    boolean on = !Profiles.homePrefs(this).getBoolean("cw_enabled", false);
-                    Profiles.homePrefs(this).edit().putBoolean("cw_enabled", on).apply();
-                });
         row(tr("Home screen weather shortcut", "Ana ekranda hava durumu kısayolu"),
                 () -> SceneHome.isWeatherShortcutEnabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
                 () -> {
@@ -1077,12 +1071,6 @@ public class SettingsActivity extends Activity {
                 default: return tr("Recommendations & News", "Öneriler ve Haberler");
             }
         }, () -> openSubMenu("top_shelf"));
-        row(tr("Clear Continue Watching history", "İzlemeye Devam Et geçmişini temizle"),
-                () -> "",
-                () -> {
-                    MediaWatchService.Store.clear(this);
-                    showStatusMsg(tr("Continue Watching cleared.", "İzlemeye Devam Et geçmişi temizlendi."));
-                });
         row(tr("Manage system apps in TV settings…", "TV ayarlarında uygulamaları yönet…"),
                 () -> "›",
                 () -> Suggestions.start(this, new Intent(Settings.ACTION_APPLICATION_SETTINGS)));
@@ -1444,10 +1432,6 @@ public class SettingsActivity extends Activity {
         row(tr("Default home screen", "Varsayılan ana ekran"),
                 () -> Perms.isDefaultHome(this) ? tr("Active", "Etkin") : tr("Set as default…", "Varsayılan yap…"),
                 () -> Perms.requestDefaultHome(this));
-        row(tr("Continue Watching notification access", "Доступ к уведомлениям для «Продолжить просмотр»"),
-                () -> Perms.hasListener(this) ? tr("Allowed", "İzin verildi")
-                        : Perms.listenerSupported(this) ? tr("Allow…", "İzin ver…") : tr("Not on this TV", "Bu TV'de yok"),
-                () -> Perms.requestListener(this));
         row(tr("Navigation click sounds", "Gezinme tıklama sesleri"),
                 () -> Clicks.enabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
                 () -> Clicks.setEnabled(this, !Clicks.enabled(this)));
@@ -2587,9 +2571,6 @@ public class SettingsActivity extends Activity {
                     }
                 });
 
-        row(tr("Continue Watching & DND (Notification Access)", "İzlemeye Devam Et ve Rahatsız Etmeyin"),
-                () -> Perms.hasListener(this) ? "✓  " + tr("Allowed", "İzin verildi") : "✗  " + tr("Not allowed", "İzin verilmedi"),
-                () -> Perms.requestListener(this));
 
         row(tr("Wi-Fi Name (Location)", "Wi-Fi Adı (Konum)"),
                 () -> Perms.hasLocation(this) ? "✓  " + tr("Allowed", "İzin verildi") : "✗  " + tr("Not allowed", "İzin verilmedi"),
