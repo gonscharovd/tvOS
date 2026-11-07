@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="power_service_desc">Позволяет testOS переназначать кнопки пульта, открывать Панель управления поверх приложений, запускать таймер сна и закрывать фоновые приложения.</string>
+    <string name="power_service_label">testOS — кнопки пульта и Панель управления</string>
+    <string name="media_watch_service_label">testOS — Продолжить просмотр</string>
+</resources>

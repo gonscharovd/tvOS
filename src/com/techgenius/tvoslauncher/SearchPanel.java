@@ -413,7 +413,7 @@ final class SearchPanel {
 
     void showQuery() {
         boolean empty = query.length() == 0;
-        queryView.setText(empty ? (listening ? tr("Listening\u2026", "Dinleniyor\u2026") : tr("Search apps, movies and shows", "Uygulama, film ve dizi ara")) : query);
+        queryView.setText(empty ? (listening ? tr("Listening\u2026", "Dinleniyor\u2026") : tr("Search apps, settings and inputs", "Uygulama, ayar ve giriş ara")) : query);
         queryView.setAlpha(empty ? 0.45f : 1f);
     }
 
@@ -424,10 +424,6 @@ final class SearchPanel {
         gen++;
         Search.cancel();
         render();
-        String q = q();
-        if (q.length() >= 2 && Search.titlesEnabled(a) && !cache.containsKey(q.toLowerCase())) {
-            a.handler.postDelayed(fetch, DEBOUNCE_MS);
-        }
     }
 
     String q() {
@@ -440,26 +436,13 @@ final class SearchPanel {
         View focus = a.getCurrentFocus();
         boolean inResults = focus != null && isInside(focus, list);
         list.removeAllViews();
-        titleRow = stremioRow = null;
-        titleStatus = null;
         String q = q();
         if (q.isEmpty()) {
             renderSuggestions();
         } else {
             List<View> local = localResults(q);
-            if (!local.isEmpty()) addRow(tr("Apps & Settings", "Uygulamalar ve Ayarlar"), local, a.dp(84));
-            if (q.length() >= 2 && Search.titlesEnabled(a)) {
-                titleRow = addRow(tr("Movies & TV", "Filmler ve Diziler"), new ArrayList<>(), a.dp(176));
-                List<Search.Title> hit = cache.get(q.toLowerCase());
-                if (hit != null) fillTitles(hit);
-                else titleStatus(q.equals(failed) ? tr("Can\u2019t reach the internet", "\u0130nternete ula\u015f\u0131lam\u0131yor") : tr("Searching\u2026", "Aran\u0131yor\u2026"));
-                if (Search.hasStremioApp(a)) {
-                    List<Search.Title> sh = stremioCache.get(q.toLowerCase());
-                    if (sh != null) fillStremio(sh);
-                }
-            } else if (local.isEmpty()) {
-                addNote(q.length() < 2 ? tr("Keep typing to search movies and shows", "Film ve dizileri aramak i\u00e7in yazmaya devam edin") : tr("No results", "Sonu\u00e7 bulunamad\u0131"));
-            }
+            if (!local.isEmpty()) addRow(tr("Apps & Settings", "Приложения и настройки"), local, a.dp(84));
+            else addNote(tr("No results", "Ничего не найдено"));
         }
         if (inResults) firstKey().requestFocus();
     }
@@ -479,27 +462,15 @@ final class SearchPanel {
         if (!recent.isEmpty()) {
             List<View> chips = new ArrayList<>();
             for (String r : recent) chips.add(chip(r, () -> setQuery(r)));
-            chips.add(chip(tr("Clear", "Temizle"), () -> {
+            chips.add(chip(tr("Clear", "Очистить"), () -> {
                 Search.clearRecent(a);
                 render();
                 firstKey().requestFocus();
             }));
-            addRow(tr("Recent Searches", "Son Aramalar"), chips, a.dp(44));
+            addRow(tr("Recent Searches", "Недавние запросы"), chips, a.dp(44));
+        } else {
+            addNote(tr("Type to search apps, settings and inputs", "Введите название приложения, настройки или входа ТВ"));
         }
-        List<View> trend = new ArrayList<>();
-        Set<String> seen = new HashSet<>();
-        List<Suggestions.Item> items = a.heroItems;
-        if (items == null || items.isEmpty()) items = Suggestions.cached(a, true);
-        if (items != null) {
-            for (Suggestions.Item it : items) {
-                if ("news".equals(it.type) || it.title == null || it.title.isEmpty() || !seen.add(it.title)) continue;
-                if (!it.pkg.isEmpty()) continue;  // Continue Watching entries
-                trend.add(chip(it.title, () -> setQuery(it.title)));
-                if (trend.size() >= 10) break;
-            }
-        }
-        if (!trend.isEmpty()) addRow(tr("Trending", "Trendler"), trend, a.dp(44));
-        if (recent.isEmpty() && trend.isEmpty()) addNote(tr("Type to search your apps, settings, movies and shows", "Uygulamalar\u0131n\u0131z\u0131, ayarlar\u0131n\u0131z\u0131, filmleri ve dizileri aramak i\u00e7in yaz\u0131n"));
     }
 
     /** Apps (including hidden ones), TV inputs, tvOS Launcher actions and TV settings matching q, best first. */
@@ -529,12 +500,10 @@ final class SearchPanel {
         List<Object[]> l = new ArrayList<>();
         l.add(new Object[]{tr("Control Center", "Denetim Merkezi"), "controls power sleep denetim g\u00fc\u00e7 uyku", "controls", (Runnable) () -> { close(); a.showControlCenter(); }});
         l.add(new Object[]{tr("Weather Forecast", "Hava Durumu Tahmini"), "weather temperature rain hava s\u0131cakl\u0131k ya\u011fmur", "refresh", (Runnable) () -> { close(); a.showWeather(); }});
-        l.add(new Object[]{tr("Switch Profile", "Profil De\u011fi\u015ftir"), "profile user who profil kullan\u0131c\u0131 ki\u015fi", "controls", (Runnable) () -> { close(); a.showProfilePicker(false); }});
         l.add(new Object[]{tr("Home Settings", "tvOS Launcher Ayarlar\u0131"), "settings launcher preferences ayarlar g\u00f6r\u00fcn\u00fcm sahneler dil", "gear", (Runnable) () -> {
             a.returningFromSettings = true;
             a.startActivity(new Intent(a, SettingsActivity.class));
         }});
-        l.add(new Object[]{tr("Refresh Carousel", "Vitrin Yenile"), "refresh reload news recommendations yenile haberler \u00f6neriler", "refresh", (Runnable) () -> { close(); a.refreshAll(); }});
         l.add(new Object[]{"Wi-Fi", "wifi network internet a\u011f", "wifi", settings(Settings.ACTION_WIFI_SETTINGS)});
         l.add(new Object[]{"Bluetooth", "bluetooth remote controller headphones speaker pair kumanda kulakl\u0131k hoparl\u00f6r", "gamepad", settings(Settings.ACTION_BLUETOOTH_SETTINGS)});
         l.add(new Object[]{tr("Sound", "Ses"), "sound audio volume speaker ses hoparl\u00f6r", "audio", settings("android.settings.SOUND_SETTINGS")});
@@ -614,44 +583,7 @@ final class SearchPanel {
 
     // ---------------------------------------------------------------- titles (network)
 
-    void fetchTitles() {
-        String q = q();
-        if (q.length() < 2 || closed) return;
-        int g = gen;
-        String key = q.toLowerCase();
-        net.execute(() -> {
-            List<Search.Title> r = null;
-            try {
-                r = Search.titles(a, q, apps);
-            } catch (Exception e) {
-                android.util.Log.w("TvHome", "search: " + e);
-            }
-            List<Search.Title> res = r;
-            a.handler.post(() -> {
-                if (closed) return;
-                if (res != null) cache.put(key, res);
-                else failed = q;
-                if (g != gen) return;
-                if (res != null) fillTitles(res);
-                else titleStatus(tr("Can\u2019t reach the internet", "\u0130nternete ula\u015f\u0131lam\u0131yor"));
-            });
-        });
-        if (Search.hasStremioApp(a) && !stremioCache.containsKey(key)) {
-            net.execute(() -> {
-                List<Search.Title> r;
-                try {
-                    r = Search.stremio(a, q);
-                } catch (Exception e) {
-                    return;
-                }
-                a.handler.post(() -> {
-                    if (closed) return;
-                    stremioCache.put(key, r);
-                    if (g == gen) fillStremio(r);
-                });
-            });
-        }
-    }
+    void fetchTitles() { }
 
     void fillTitles(List<Search.Title> ts) {
         if (titleRow == null) return;

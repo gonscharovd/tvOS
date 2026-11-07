@@ -32,6 +32,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.techgenius.tvoslauncher.I18n;
 import com.techgenius.tvoslauncher.Ui;
 
 import org.json.JSONObject;
@@ -257,13 +258,13 @@ public class PresentationActivity extends Activity implements AdminServer.Gatewa
         icon.setBackground(shape);
         col.addView(icon, new LinearLayout.LayoutParams(u(150), u(90)));
         TextView t = label(26, "semibold", 1f);
-        t.setText("Nothing to present yet");
+        t.setText(I18n.t(this, "Nothing to present yet"));
         t.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams tl = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         tl.topMargin = u(20);
         col.addView(t, tl);
         TextView b = label(14, "regular", 0.7f);
-        b.setText("Add images, videos or webpages from a phone or computer on the same Wi-Fi.");
+        b.setText(I18n.t(this, "Add images, videos or webpages from a phone or computer on the same Wi-Fi."));
         b.setGravity(Gravity.CENTER);
         LinearLayout.LayoutParams bl = new LinearLayout.LayoutParams(u(460), ViewGroup.LayoutParams.WRAP_CONTENT);
         bl.topMargin = u(6);
@@ -298,14 +299,14 @@ public class PresentationActivity extends Activity implements AdminServer.Gatewa
         text.setOrientation(LinearLayout.VERTICAL);
         text.setPadding(u(18), 0, 0, 0);
         TextView t = label(17, "semibold", 1f);
-        t.setText("Send to this TV");
+        t.setText(I18n.t(this, "Send to this TV"));
         TextView sub = label(11.5f, "regular", 0.65f);
-        sub.setText("Scan the code or open this address on a phone or computer on the same Wi-Fi.");
+        sub.setText(I18n.t(this, "Scan the code or open this address on a phone or computer on the same Wi-Fi."));
         sub.setMaxWidth(u(300));
         TextView addr = label(15, "medium", 1f);
         addr.setText(url.replace("http://", ""));
         TextView pinL = label(11, "medium", 0.55f);
-        pinL.setText("PAIRING CODE");
+        pinL.setText(I18n.t(this, "PAIRING CODE"));
         pinL.setLetterSpacing(0.08f);
         TextView pin = label(24, "semibold", 1f);
         String p = Presenter.pin(this);
@@ -614,8 +615,8 @@ public class PresentationActivity extends Activity implements AdminServer.Gatewa
 
     void showError(String message, Model.Slide s) {
         hideSurfaces();
-        messageTitle.setText("Skipping this slide");
-        messageBody.setText(message);
+        messageTitle.setText(I18n.t(this, "Skipping this slide"));
+        messageBody.setText(I18n.t(this, message));
         messageCard.setVisibility(View.VISIBLE);
         synchronized (statusLock) {
             status = new Model.Status();
