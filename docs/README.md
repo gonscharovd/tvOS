@@ -1,37 +1,26 @@
-# tvOS Launcher documentation
+# testOS documentation
 
-tvOS Launcher (`com.techgenius.tvoslauncher`) replaces the Android TV home screen with one modelled on
-Apple tvOS 26. Every element was measured against Apple's own tvOS 26 screenshots and the Human
-Interface Guidelines, then tuned to run at 60 fps on a low-end Mali-450 GPU.
-
-| | |
-|---|---|
-| ![Home with suggestions](images/home-dock-glass.jpg) | ![Carousel focused](images/carousel-focused.jpg) |
-| Home: suggestions behind the glass dock | Top shelf focused: dock slides away |
-| ![Home with wallpaper](images/home-wallpaper.jpg) | ![Options menu](images/options-menu.jpg) |
-| Below the dock: launcher background | Options menu (hold OK on an app) |
+This documentation describes the current Russian-only, single-user Android TV build in this repository. Older screenshots and upstream notes may show removed features; the current implementation is the source of truth.
 
 ## Contents
 
-- **[Getting started](getting-started.md)** — install the tools, build, run on a TV or the
-  emulator, developer shortcuts, troubleshooting.
-- **[Features](features.md)** — everything tvOS Launcher does: setup, Home, carousel, weather, Control
-  Center, profiles, inputs, search, screensaver, AirPlay guard, settings, permissions.
-- **[Install and set up](install.md)** — make it the home screen, one-time permissions, undo.
-- **[Presentation mode](presentation.md)** — sending content from a browser, the TV player,
-  start on boot, and the web API.
-- **[Architecture](architecture.md)** — code map, build, design decisions and performance notes.
-- **[Contributing](../CONTRIBUTING.md)** — workflow, code style, design/performance/permission
-  rules, testing and pull requests.
+- [Features](features.md) — home screen, Control Panel, search, weather, settings, CleanYourTV, OTA and backup.
+- [Install and build](install.md) — SDK requirements, signing, installation, permissions and rollback.
+- [Architecture](architecture.md) — code map, build pipeline and performance constraints.
+- [Getting started](getting-started.md) — developer setup and useful ADB commands.
+- [Presentation mode](presentation.md) — browser upload, pairing and full-screen playback.
+- [Contributing](../CONTRIBUTING.md) — code and review rules.
 
-## At a glance
+## Current build at a glance
 
-| Area | What it does |
+| Area | Current behavior |
 |---|---|
-| Dock & grid | Frosted Liquid Glass dock; 5:3 cards, 6 per row; 1.2× focus lift; tvOS zoom-to-open |
-| Carousel | Continue Watching first, then Indian news and rotating recommendations (JustWatch, TMDB or Stremio); full screen when idle |
-| Search | Apps, settings and inputs instantly; movies and shows on every service in India with Open / Get; Hindi keyboard, dictation; hold Back to open |
-| Profiles | Up to 3, unique emoji avatars; separate layout, background and history; picker on wake |
-| Control Center | Sleep, Wi-Fi, Do Not Disturb, audio, sleep timer, Bluetooth, accessibility, settings, search |
-| Presentation | Browser upload of images/videos/webpages, looping full-screen playback, start on boot |
-| Settings | A page per section, opened from the gear in Control Center; first-time setup pages |
+| Language | Russian UI only; Russian and English keyboard layouts |
+| Users | Single-user mode; no profile picker |
+| Recommendations/news | Removed, including the associated feed engines |
+| Streaming integrations | Nuvio/Stremio cloud catalogue and sign-in removed |
+| Control Panel | Overlay retained; separate customization page removed |
+| Continue Watching | Only optional app-published Android TV provider rows; no notification-listener media service |
+| Updates | GitHub Releases OTA, signed with the persistent release key |
+| Backup | Allowlisted local preferences, validated JSON, atomic file write and merge restore |
+| CleanYourTV | On-device package management with protected-package checks |
