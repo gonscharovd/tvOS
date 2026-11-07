@@ -52,8 +52,6 @@ final class SceneHome {
     final MainActivity host;
     final Scenes.SceneView sceneView;
     final FrameLayout overlay;
-    /** Continue-watching / QR-login popups shown above the Nuvio and Stremio dock tiles. */
-    final List<WatchPopup> watchPopups = new ArrayList<>();
 
     LinearLayout whoBar;
     LinearLayout weatherBtn;
@@ -157,27 +155,15 @@ final class SceneHome {
         buildTopBar();
         buildKeepWatchingShelf();
         buildBottomDock();
-        watchPopups.add(new WatchPopup(this, new NuvioCloud(host)));
-        watchPopups.add(new WatchPopup(this, new StremioCloud(host)));
     }
 
     /** The continue-watching popup for a dock tile's app, or null when it has none. */
-    WatchPopup watchPopupFor(String pkg) {
-        for (WatchPopup p : watchPopups) if (p.owns(pkg)) return p;
-        return null;
-    }
+
 
     /** DPAD Up on a dock tile: moves into that tile's popup row, if one is open. */
-    private boolean focusWatchPopupRow(View tile) {
-        for (WatchPopup p : watchPopups) if (p.focusRow(tile)) return true;
-        return false;
-    }
 
-    void onWatchPopupsResume() {
-        // Home pressed / launcher resumed: rows reappear in place, without the entrance slide.
-        suppressCwAnimUntil = android.os.SystemClock.uptimeMillis() + 700L;
-        for (WatchPopup p : watchPopups) p.onLauncherResume();
-    }
+
+
 
     /** Uptime until which Continue Watching rows show/hide instantly (set on resume). */
     private long suppressCwAnimUntil;
@@ -186,20 +172,7 @@ final class SceneHome {
         return android.os.SystemClock.uptimeMillis() < suppressCwAnimUntil;
     }
 
-    void onWatchPopupsPause() {
-        for (WatchPopup p : watchPopups) p.onLauncherPause();
-        // Keep the shelf exactly as it is: on Home / return the focused tile is usually the same,
-        // and Android won't re-fire its focus listener, so hiding here made the row slide in again.
-        if (shelfBox != null && shelfBox.getVisibility() == View.VISIBLE) {
-            shelfBox.animate().cancel();
-            if (shelfHiding) {
-                hideShelfImmediate();
-            } else {
-                shelfBox.setAlpha(1f);
-                shelfBox.setTranslationY(0f);
-            }
-        }
-    }
+
 
     void invalidateSceneGlass() {
         if (whoBar != null) whoBar.invalidate();
@@ -207,7 +180,6 @@ final class SceneHome {
         if (moonBtn != null) moonBtn.invalidate();
         if (dockBox != null) dockBox.invalidate();
         for (View c : shelfCards) c.invalidate();
-        for (WatchPopup p : watchPopups) p.invalidateGlass();
     }
 
     private int dp(float u) {
@@ -455,7 +427,7 @@ final class SceneHome {
 
     // ---------------------------------------------------------------- Keep Watching Glass Shelf
 
-    /** Where the Keep Watching shelf sits. WatchPopup lines its row up with the same spot. */
+    /** Where the Keep Watching shelf sits. the inactive media shelf uses the same spot. */
     static final float SHELF_LEFT_DP = 40, SHELF_TOP_DP = 312, SHELF_HEADER_GAP_DP = 7;
     static final float SHELF_CARD_W_DP = 282, SHELF_CARD_H_DP = 64, SHELF_CARD_GAP_DP = 12;
 
@@ -522,10 +494,7 @@ final class SceneHome {
         for (MainActivity.AppEntry e : dockEntries) {
             if (e != null && e.pkg != null && !e.pkg.isEmpty()
                     && !GEAR_KEY.equals(e.key) && !MORE_KEY.equals(e.key)) {
-                WatchPopup p = watchPopupFor(e.pkg);
-                if (p == null) {
-                    dockPkgs.add(e.pkg);
-                }
+                dockPkgs.add(e.pkg);
             }
         }
         final int gen = ++shelfLoadGen;
@@ -555,11 +524,10 @@ final class SceneHome {
         });
     }
 
-    void onDockTileFocusForShelf(View tile, MainActivity.AppEntry a, boolean isGear, boolean isMore, WatchPopup popup, boolean has) {
+    void onDockTileFocusForShelf(View tile, MainActivity.AppEntry a, boolean isGear, boolean isMore, boolean has) {
         if (has) {
             if (isGear || isMore || a == null || a.pkg == null || a.pkg.isEmpty()
-                    || moveDockIdx >= 0 || !host.cwEnabled() || moreExpanded
-                    || (popup != null && popup.isShowing())) {
+                    || moveDockIdx >= 0 || !host.cwEnabled() || moreExpanded) {
                 hideShelf();
                 return;
             }
@@ -622,14 +590,10 @@ final class SceneHome {
     }
 
     boolean isAnyPopupShowing() {
-        for (WatchPopup p : watchPopups) if (p.isShowing()) return true;
         return false;
     }
 
-    boolean isOtherPopupShowing(WatchPopup self) {
-        for (WatchPopup p : watchPopups) if (p != self && p.isShowing()) return true;
-        return false;
-    }
+
 
     void hideShelfImmediate() {
         activeShelfTile = null;
@@ -787,7 +751,7 @@ final class SceneHome {
 
     /**
      * The Keep Watching glass card: thumbnail, app name, title, subtitle, progress bar.
-     * WatchPopup uses it too, so both rows look the same. Callers set click handling.
+     * Shared glass card renderer for the media shelf. Callers set click handling.
      */
     View watchCard(WatchCardData d, int cardW, int cardH, View.OnFocusChangeListener onFocus) {
         LinearLayout card = new LinearLayout(host) {
@@ -991,17 +955,8 @@ final class SceneHome {
      * Checks all popups, so moving from one app's tile straight to another's keeps it hidden.
      */
     void updateShelfDim() {
-        boolean dim = false;
-        for (WatchPopup p : watchPopups) dim |= p.isShowing();
-        float a = dim ? 0f : 1f;
-        if (shelfHeader != null) {
-            shelfHeader.animate().cancel();
-            shelfHeader.setAlpha(a);
-        }
-        if (shelfRow != null) {
-            shelfRow.animate().cancel();
-            shelfRow.setAlpha(a);
-        }
+        if (shelfHeader != null) shelfHeader.setAlpha(1f);
+        if (shelfRow != null) shelfRow.setAlpha(1f);
     }
 
     private void openWatchCard(WatchCardData d) {
@@ -1385,9 +1340,7 @@ final class SceneHome {
         focusRing.setStroke(dp(2.2f), Color.WHITE);
 
         tile.setOnFocusChangeListener((v, has) -> {
-            WatchPopup popup = isGear || isMore ? null : watchPopupFor(a.pkg);
-            if (popup != null) popup.onTileFocus(v, a.pkg, has && moveDockIdx < 0);
-            onDockTileFocusForShelf(v, a, isGear, isMore, popup, has);
+            onDockTileFocusForShelf(v, a, isGear, isMore, has);
             v.setPivotX(v.getWidth() > 0 ? v.getWidth() / 2f : size / 2f);
             v.setPivotY(v.getHeight() > 0 ? v.getHeight() / 2f : size / 2f);
             v.setForeground(has ? focusRing : null);
@@ -1623,15 +1576,13 @@ final class SceneHome {
         boolean alreadyFocused = tile.isFocused();
         tile.requestFocus();
         // Coming back to Home with focus still on the same dock tile fires no focus change,
-        // so the popup/shelf has to be told directly.
+        // so the shelf is refreshed directly.
         if (alreadyFocused && moveDockIdx < 0 && clamped < dockEntries.size()) {
             MainActivity.AppEntry entry = dockEntries.get(clamped);
             String pkg = entry.pkg;
             boolean isGear = GEAR_KEY.equals(entry.key);
             boolean isMore = MORE_KEY.equals(entry.key);
-            WatchPopup popup = isGear || isMore ? null : watchPopupFor(pkg);
-            if (popup != null) popup.onTileFocus(tile, pkg, true);
-            onDockTileFocusForShelf(tile, entry, isGear, isMore, popup, true);
+            onDockTileFocusForShelf(tile, entry, isGear, isMore, true);
         }
     }
 
@@ -2360,9 +2311,7 @@ final class SceneHome {
             }
             if (k == KeyEvent.KEYCODE_DPAD_UP) {
                 if (down) {
-                    if (focusWatchPopupRow(f)) {
-                        // Moved into the continue-watching popup above the tile.
-                    } else if (dIdx >= cols) {
+                    if (dIdx >= cols) {
                         focusDock(dIdx - cols);
                     } else if (shelfBox.getVisibility() == View.VISIBLE && !shelfCards.isEmpty()) {
                         shelfCards.get(0).requestFocus();
