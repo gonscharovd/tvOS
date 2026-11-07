@@ -18,6 +18,7 @@ public final class I18n {
 
     static {
         LANG_MAPS.put(LANG_RU, new HashMap<String, String>());
+
         add("m", "мин");
         add("Continue watching", "Продолжить просмотр");
         add("Resume", "Продолжить");
