@@ -9,6 +9,7 @@ on:
       - integration/2.1.63
       - feature/vpn-control-center-row
       - fix/ota-installer-launch
+      - feature/control-panel-navigation-clock-fonts
 
 permissions:
   contents: read
@@ -50,6 +51,9 @@ jobs:
 
       - name: Test OTA install flow
         run: python3 tests/test_ota_install_flow.py
+
+      - name: Test Control Panel, Russian localization and clock fonts
+        run: python3 tests/test_control_panel_russian_clock.py
 
       - name: Test cross-platform build contract
         run: python3 tests/test_build_contract.py
