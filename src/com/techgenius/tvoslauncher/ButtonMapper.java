@@ -113,6 +113,8 @@ public final class ButtonMapper {
 
     private static final Map<Integer, Integer> pendingTapCounts = new HashMap<>();
     private static final Map<Integer, Runnable> pendingTapRunnables = new HashMap<>();
+    private static Runnable pendingHomeLongPress;
+    private static volatile boolean homeLongPressTriggered;
 
     public interface KeyCaptureListener {
         void onKeyCaptured(int keyCode);
@@ -359,9 +361,12 @@ public final class ButtonMapper {
     public static void cancelPendingTaps() {
         try {
             for (Runnable r : pendingTapRunnables.values()) MAIN.removeCallbacks(r);
+            if (pendingHomeLongPress != null) MAIN.removeCallbacks(pendingHomeLongPress);
         } catch (Throwable ignored) { }
         pendingTapRunnables.clear();
         pendingTapCounts.clear();
+        pendingHomeLongPress = null;
+        homeLongPressTriggered = false;
     }
 
     private static void saveOrder(Context c, List<Integer> order) {
@@ -534,16 +539,34 @@ public final class ButtonMapper {
                 return false;
         }
 
-        // Home button fix (off by default): intercept KEYCODE_HOME via Accessibility to launch tvOS Launcher
+        // Keep the TV's native long-press Home action: when the optional Home fix is enabled,
+        // a short press opens testOS and a long press opens the TV's own Settings screen.
         if (code == KeyEvent.KEYCODE_HOME) {
-            if (isHomeFixEnabled(c)) {
-                if (action == KeyEvent.ACTION_DOWN && ev.getRepeatCount() == 0) {
-                    final Context appCtx = c.getApplicationContext();
-                    MAIN.post(() -> launchHome(appCtx));
+            if (!isHomeFixEnabled(c)) return false;
+            final Context appCtx = c.getApplicationContext();
+            if (action == KeyEvent.ACTION_DOWN) {
+                if (ev.getRepeatCount() == 0) {
+                    if (pendingHomeLongPress != null) MAIN.removeCallbacks(pendingHomeLongPress);
+                    homeLongPressTriggered = false;
+                    pendingHomeLongPress = () -> {
+                        pendingHomeLongPress = null;
+                        homeLongPressTriggered = true;
+                        ControlPanelOverlay.openTvSettings(appCtx);
+                    };
+                    MAIN.postDelayed(pendingHomeLongPress, 600L);
                 }
                 return true;
             }
-            return false;
+            if (action == KeyEvent.ACTION_UP) {
+                if (pendingHomeLongPress != null) {
+                    MAIN.removeCallbacks(pendingHomeLongPress);
+                    pendingHomeLongPress = null;
+                }
+                if (!homeLongPressTriggered) launchHome(appCtx);
+                homeLongPressTriggered = false;
+                return true;
+            }
+            return true;
         }
 
         KeyCaptureListener cap = captureListener;
