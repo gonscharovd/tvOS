@@ -55,18 +55,19 @@ routes = settings.split("private String resolvePageExtra", 1)[1].split("@Overrid
 for route in ("return HOME;", "return LOOK_SCENES;", "return WEATHER;", "return ADVANCED;", "return ABOUT;"):
     assert route in routes
 
-# Keep literal translation calls covered by the Russian dictionary.
-i18n = (ROOT / "I18n.java").read_text(encoding="utf-8")
 def java_unescape(value):
     value = re.sub(r'\\u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1), 16)), value)
-    return value.replace(r'\\n', "\\n").replace(r'\\t', "\\t").replace(r'\\"', '"').replace(r'\\\\', "\\\\")
+    escapes = {"n": "\n", "r": "\r", "t": "\t", '"': '"', "'": "'", "\\": "\\"}
+    return re.sub(r'\\([nrt"\'\\])', lambda m: escapes[m.group(1)], value)
+
+i18n = (ROOT / "I18n.java").read_text(encoding="utf-8")
 dictionary = {
     java_unescape(m.group(1))
-    for m in re.finditer(r'add\\("((?:\\\\.|[^"\\\\])*)",', i18n)
+    for m in re.finditer(r'add\("((?:\\.|[^"\\])*)",', i18n)
 }
 literal_settings_strings = {
     java_unescape(m.group(1))
-    for m in re.finditer(r'tr\\(\\s*"((?:\\\\.|[^"\\\\])*)"\\s*,', settings)
+    for m in re.finditer(r'tr\(\s*"((?:\\.|[^"\\])*)"\s*,', settings)
 }
 missing = sorted(literal_settings_strings - dictionary)
 assert not missing, "Settings strings missing Russian translations: " + repr(missing)
