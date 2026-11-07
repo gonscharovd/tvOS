@@ -70,28 +70,20 @@ for route in ('return CONTROL_PANEL;', 'return HOME;', 'return LOOK_SCENES;', 'r
 # ignores the legacy second (Turkish) argument, so missing keys otherwise fall
 # back to English even though SettingsActivity.tr() appears to supply a fallback.
 i18n = (ROOT / "I18n.java").read_text(encoding="utf-8")
-dictionary = {
-    m.group(1)
-    for m in re.finditer(r'add\("((?:\\.|[^"\\])*)",', i18n)
-}
-required_russian = [
-    "Main screen",
-    "Appearance and clock",
-    "Control panel",
-    "Advanced settings",
-    "Information",
-    "Changes the language used on the home screen, date, weather and settings.",
-    "CONTROL PANEL ACTIONS",
-    "Reset control panel actions",
-    "Reset control panel?",
-    "All custom app and activity assignments will be cleared. The built-in actions will be restored.",
-    "Control panel actions restored to defaults.",
-    "Choose which app or activity opens from each Control Panel tile. Leave an action on Default to use the TV's built-in settings.",
-    "HOME SCREEN",
-    "PEOPLE & PROFILES",
-    "DIAGNOSTICS & RECOVERY",
-]
-missing_russian = [key for key in required_russian if key not in dictionary]
-assert not missing_russian, "New Settings strings missing Russian translations: " + repr(missing_russian)
 
-print("Settings navigation grouping, legacy routes, feature placement and Russian labels passed.")
+def java_unescape(value):
+    value = re.sub(r'\\\\u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1), 16)), value)
+    return value.replace(r'\\n', "\\n").replace(r'\\t', "\\t").replace(r'\\"', '"').replace(r'\\\\', "\\\\")
+
+dictionary = {
+    java_unescape(m.group(1))
+    for m in re.finditer(r'add\\("((?:\\\\.|[^"\\\\])*)",', i18n)
+}
+literal_settings_strings = {
+    java_unescape(m.group(1))
+    for m in re.finditer(r'tr\\(\\s*"((?:\\\\.|[^"\\\\])*)"\\s*,', settings)
+}
+missing_russian = sorted(literal_settings_strings - dictionary)
+assert not missing_russian, "Settings strings missing Russian translations: " + repr(missing_russian)
+
+print("Settings navigation grouping, legacy routes, feature placement and complete literal Russian coverage passed.")
