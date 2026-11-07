@@ -42,12 +42,8 @@ import java.util.Set;
  * {@link WindowManager.LayoutParams#TYPE_ACCESSIBILITY_OVERLAY} when {@link PowerService} is active,
  * or inside {@link MainActivity} when on the Home Screen.
  *
- * Layout order:
- * 1. Wi-Fi          | 2. Bluetooth
- * 3. Memory         | 4. Do Not Disturb
- * 5. Audio          | 6. Sleep Timer
- * 7. Ambient Mode   | 8. Power Off
- * 9..12. 1x1 Icons: Inputs, VPN (Happ), Settings, Search
+ * Layout: four full-width rows (Wi-Fi, Bluetooth, Memory, Sleep Timer),
+ * followed by two square shortcuts (VPN and Settings).
  */
 public final class ControlPanelOverlay {
 
@@ -234,13 +230,10 @@ public final class ControlPanelOverlay {
                 },
                 () -> {
                     dismiss();
-                    startExternal(svcCtx, new Intent(svcCtx, SettingsActivity.class));
-                },
-                () -> {
-                    dismiss();
-                    if (!startExternal(svcCtx, new Intent(Intent.ACTION_ASSIST))) {
-                        startExternal(svcCtx, new Intent("android.search.action.GLOBAL_SEARCH"));
-                    }
+                    Intent chooser = new Intent(svcCtx, MainActivity.class)
+                            .putExtra("panel", "settings")
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                    startExternal(svcCtx, chooser);
                 });
 
         FrameLayout.LayoutParams plp = (FrameLayout.LayoutParams) panel.getLayoutParams();
@@ -280,16 +273,14 @@ public final class ControlPanelOverlay {
             float unit,
             MainActivity.LiquidGlass.Backdrop glassSource,
             List<View> outCells,
-            Runnable onInputs,
             Runnable onVpnToggle,
-            Runnable onSettings,
-            Runnable onSearch) {
+            Runnable onSettings) {
 
         int col = dp(unit, 141);
         int gap = dp(unit, 11);
         int cap = dp(unit, 56);
-        int small = (2 * col + gap - 3 * gap) / 4;
         int w = 2 * col + gap;
+        int small = (w - gap) / 2;
 
         FrameLayout panel = new FrameLayout(c);
         panel.setClipChildren(false);
@@ -312,99 +303,39 @@ public final class ControlPanelOverlay {
         }
 
         List<CapsuleSpec> capsules = new ArrayList<>();
-        if (isItemEnabled(c, ITEM_WIFI)) {
-            capsules.add(new CapsuleSpec("wifi", "Wi-Fi", () -> wifiState(c), v -> {
-                dismissAll(c);
-                openWifiSettings(c);
-            }, false));
-        }
-        if (isItemEnabled(c, ITEM_BLUETOOTH)) {
-            capsules.add(new CapsuleSpec("bluetooth", "Bluetooth", () -> bluetoothState(c), v -> {
-                dismissAll(c);
-                openBluetoothSettings(c);
-            }, false));
-        }
-        if (isItemEnabled(c, ITEM_MEMORY)) {
-            capsules.add(new CapsuleSpec("memory", I18n.s(c, "Memory", "Bellek"), () -> memoryState(c), v -> {
-                dismissAll(c);
-                RecentAppsOverlay.cleanAllNow(c);
-            }, true));
-        }
-        if (isItemEnabled(c, ITEM_DND)) {
-            capsules.add(new CapsuleSpec("moon", I18n.s(c, "Do Not Disturb", "Rahatsız Etmeyin"),
-                    () -> dndState(c), v -> toggleDnd(c), false));
-        }
-        if (isItemEnabled(c, ITEM_AUDIO)) {
-            capsules.add(new CapsuleSpec("audio", I18n.s(c, "Audio", "Ses"), () -> audioState(c), v -> {
-                dismissAll(c);
-                openSoundSettings(c);
-            }, false));
-        }
-        if (isItemEnabled(c, ITEM_TIMER)) {
-            capsules.add(new CapsuleSpec("timer", I18n.s(c, "Sleep Timer", "Uyku Zamanlayıcısı"),
-                    () -> timerState(c), v -> cycleSleepTimer(c), false));
-        }
-        if (isItemEnabled(c, ITEM_AMBIENT)) {
-            boolean lockMode = isAmbientLockScreenMode(c);
-            capsules.add(new CapsuleSpec("ambient",
-                    lockMode ? I18n.s(c, "Lock Screen", "Kilit Ekranı") : I18n.s(c, "Ambient Mode", "Ortam Modu"),
-                    () -> lockMode ? I18n.s(c, "Lock Now", "Şimdi Kilitle") : I18n.s(c, "Screensaver", "Ekran Koruyucu"),
-                    v -> {
-                        dismissAll(c);
-                        startAmbientMode(c);
-                    }, false));
-        }
-        if (isItemEnabled(c, ITEM_POWER)) {
-            capsules.add(new CapsuleSpec("power", I18n.s(c, "Power Off", "Kapat"),
-                    () -> I18n.s(c, "Screen Off", "Ekranı Kapat"),
-                    v -> {
-                        dismissAll(c);
-                        SleepReceiver.sleepNow(c);
-                    }, false));
-        }
+        capsules.add(new CapsuleSpec("wifi", "Wi-Fi", () -> wifiState(c), v -> {
+            dismissAll(c);
+            openWifiSettings(c);
+        }, false));
+        capsules.add(new CapsuleSpec("bluetooth", "Bluetooth", () -> bluetoothState(c), v -> {
+            dismissAll(c);
+            openBluetoothSettings(c);
+        }, false));
+        capsules.add(new CapsuleSpec("memory", I18n.s(c, "Memory", "Память"), () -> memoryState(c), v -> {
+            dismissAll(c);
+            RecentAppsOverlay.cleanAllNow(c);
+        }, true));
+        capsules.add(new CapsuleSpec("timer", I18n.s(c, "Sleep Timer", "Таймер сна"),
+                () -> timerState(c), v -> cycleSleepTimer(c), false));
 
+        // Four full-width status/action rows.
         for (int i = 0; i < capsules.size(); i++) {
             CapsuleSpec cs = capsules.get(i);
-            int colIdx = i % 2;
-            int rowIdx = i / 2;
-            int x = colIdx * (col + gap);
-            int y = rowIdx * (cap + gap);
-            View tile = makeTile(c, panel, x, y, col, cap, unit, screenW, screenH, glassSource,
+            int y = i * (cap + gap);
+            View tile = makeTile(c, panel, 0, y, w, cap, unit, screenW, screenH, glassSource,
                     cs.glyph, cs.title, cs.status, cs.click);
-            if (cs.isMemory) {
-                attachMemoryBar(c, tile, unit);
-            }
+            if (cs.isMemory) attachMemoryBar(c, tile, unit);
             outCells.add(tile);
         }
 
-        int capsuleRows = (capsules.size() + 1) / 2;
-        int y4 = capsuleRows > 0 ? capsuleRows * (cap + gap) : 0;
+        int y4 = capsules.size() * (cap + gap);
+        // Fixed bottom row: VPN toggle and the settings chooser.
+        outCells.add(makeTile(c, panel, 0, y4, small, small, unit, screenW, screenH, glassSource,
+                "shield", null, null, v -> { if (onVpnToggle != null) onVpnToggle.run(); }));
+        outCells.add(makeTile(c, panel, small + gap, y4, small, small, unit, screenW, screenH, glassSource,
+                "gear", null, null, v -> { if (onSettings != null) onSettings.run(); }));
 
-        String[] itemKeys = {ITEM_INPUTS, ITEM_VPN, ITEM_SETTINGS, ITEM_SEARCH};
-        String[] icons = {"input", "shield", "gear", "search"};
-        Runnable[] actions = {onInputs, onVpnToggle, onSettings, onSearch};
-        List<Integer> enabledSmallIdx = new ArrayList<>();
-        for (int i = 0; i < itemKeys.length; i++) {
-            if (isItemEnabled(c, itemKeys[i])) {
-                enabledSmallIdx.add(i);
-            }
-        }
-        if (capsules.isEmpty() && enabledSmallIdx.isEmpty()) {
-            // Never allow a completely empty panel; keep Settings accessible
-            enabledSmallIdx.add(2);
-        }
-        for (int sIdx = 0; sIdx < enabledSmallIdx.size(); sIdx++) {
-            int i = enabledSmallIdx.get(sIdx);
-            final Runnable act = actions[i];
-            outCells.add(makeTile(c, panel, sIdx * (small + gap), y4, small, small, unit, screenW, screenH, glassSource,
-                    icons[i], null, null, v -> {
-                        if (act != null) act.run();
-                    }));
-        }
-
-        int totalH = !enabledSmallIdx.isEmpty()
-                ? (y4 + small)
-                : Math.max(cap, capsuleRows * (cap + gap) - gap);
+        int totalH = y4 + small;
         FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(w, totalH, Gravity.TOP | Gravity.END);
         plp.topMargin = dp(unit, 36);
         plp.rightMargin = dp(unit, 28);
@@ -927,13 +858,11 @@ public final class ControlPanelOverlay {
     }
 
     public static void openWifiSettings(Context c) {
-        if (launchCustomAction(c, ACTION_WIFI)) return;
         startExternal(c, new Intent(Settings.ACTION_WIFI_SETTINGS), new Intent(Settings.ACTION_SETTINGS));
     }
 
     /** Opens Bluetooth or Remotes & Accessories / Connected Devices settings on Android TV / Google TV. */
     public static void openBluetoothSettings(Context c) {
-        if (launchCustomAction(c, ACTION_BLUETOOTH)) return;
         Intent connectedDevices = new Intent("com.android.tv.settings.CONNECTED_DEVICES");
         Intent googleBtServices = new Intent().setComponent(new ComponentName(
                 "com.droidlogic.android.tv.connecteddevices",
