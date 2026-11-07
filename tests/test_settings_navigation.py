@@ -72,4 +72,27 @@ literal_settings_strings = {
 missing = sorted(literal_settings_strings - dictionary)
 assert not missing, "Settings strings missing Russian translations: " + repr(missing)
 
-print("Simplified settings navigation, section placement, legacy routes and Russian translation checks passed.")
+
+# Single-user and Russian-only build: obsolete pages and cloud catalogue code are absent.
+profiles = (ROOT / "Profiles.java").read_text(encoding="utf-8")
+setup = (ROOT / "SetupActivity.java").read_text(encoding="utf-8")
+suggestions = (ROOT / "Suggestions.java").read_text(encoding="utf-8")
+search = (ROOT / "Search.java").read_text(encoding="utf-8")
+search_panel = (ROOT / "SearchPanel.java").read_text(encoding="utf-8")
+assert "static final int MAX = 1;" in profiles
+assert "static boolean canAdd(Context c) { return false; }" in profiles
+assert "static boolean askOnWake(Context c) { return false; }" in profiles
+assert "steps.add(this::profile)" not in setup
+assert "void profile()" not in setup and "void homeContent()" not in setup
+assert 'by.setText("by gonscharovd")' in setup
+for removed_file in ("News.java", "NuvioCloud.java", "StremioCloud.java", "WatchCloud.java", "WatchPopup.java"):
+    assert not (ROOT / removed_file).exists(), f"Obsolete source remains: {removed_file}"
+for removed in ("Cinemeta", "stremio", "nuvio", "SHELF_RECS", "SHELF_NEWS", "fetch("):
+    assert removed.lower() not in suggestions.lower(), f"Removed feed engine remains: {removed}"
+for removed in ("Cinemeta", "stremio", "nuvio"):
+    assert removed.lower() not in search.lower(), f"Removed streaming integration remains in Search: {removed}"
+assert "TURKISH" not in search_panel and "HINDI" not in search_panel
+assert "RUSSIAN" in search_panel and "РУС" in search_panel and "ENG" in search_panel
+assert not (Path("res/values-tr") / "strings.xml").exists()
+
+print("Simplified settings navigation, Russian-only keyboard, single-user mode and removed media integrations passed.")
