@@ -437,8 +437,7 @@ public class MainActivity extends Activity {
             avatarView.setVisibility(Profiles.list(this).size() > 1 ? View.VISIBLE : View.GONE);
         }
         // Signed in to Nuvio/Stremio: refresh continue watching in the background. Signed out: no-op.
-        ensureTvListingsPermission();
-        MediaWatchService.ensureSessionTracking(this);
+        // Continue Watching tracking is disabled in this Russian-only lightweight build.
         if (sceneHome != null) sceneHome.onWatchPopupsResume();
         if (Scenes.isScenesLook(this) && sceneHome != null) {
             sceneHome.sceneView.syncSettings();
@@ -1989,9 +1988,9 @@ public class MainActivity extends Activity {
         loadHero();
     }
 
-    /** Continue Watching can be switched off per profile (Settings -> Continue Watching); off by default. */
+    /** Continue Watching is intentionally disabled in this device-specific build. */
     boolean cwEnabled() {
-        return Profiles.homePrefs(this).getBoolean("cw_enabled", false);
+        return false;
     }
 
     /** The tab bar only appears when there are two things to switch between. */
