@@ -970,52 +970,29 @@ public class SettingsActivity extends Activity {
         section(tr("LANGUAGE", "DİL"));
         pageLanguage();
 
-        boolean scenesLook = Scenes.isScenesLook(this);
-        if (scenesLook) {
-            section(tr("DOCK", "DOCK"));
-            row(tr("Dock size", "Dock boyutu"),
-                    () -> Scenes.dockScaleLabel(this),
-                    () -> openSubMenu("dock_size"));
-            row(tr("Show app names", "Uygulama adlarını göster"),
-                    () -> Scenes.isDockNamesShown(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
-                    () -> {
-                        Scenes.setDockNamesShown(this, !Scenes.isDockNamesShown(this));
-                        refreshAll();
-                    });
-        }
-
-        section(tr("LOOK", "GÖRÜNÜM"));
-        choiceRow(
-                tr("Night scenes", "Gece sahneleri"),
-                tr("A big glass clock, scenes taking turns", "Büyük cam saat, sırayla değişen sahneler"),
-                scenesLook,
+        section(tr("DOCK", "DOCK"));
+        row(tr("Dock size", "Dock boyutu"),
+                () -> Scenes.dockScaleLabel(this),
+                () -> openSubMenu("dock_size"));
+        row(tr("Show app names", "Uygulama adlarını göster"),
+                () -> Scenes.isDockNamesShown(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
                 () -> {
-                    Scenes.setLook(this, Scenes.LOOK_SCENES);
-                    selectSection(LOOK_SCENES, true, 1);
-                });
-        choiceRow(
-                tr("Classic", "Klasik"),
-                tr("One photo and a grid of app banners", "Tek fotoğraf ve uygulama afişleri ızgarası"),
-                !scenesLook,
-                () -> {
-                    Scenes.setLook(this, Scenes.LOOK_CLASSIC);
-                    selectSection(LOOK_SCENES, true, 1);
+                    Scenes.setDockNamesShown(this, !Scenes.isDockNamesShown(this));
+                    refreshAll();
                 });
 
         section(tr("SCENES", "SAHNELER"));
         List<String> order = Scenes.getSceneOrder(this);
         for (int i = 0; i < order.size(); i++) {
             String id = order.get(i);
-            if (Scenes.isCustomId(id)) continue;
+            if (Scenes.customSlotFromId(id) > 0 || Scenes.FOLDER_SHUFFLE_ID.equals(id)) continue;
             final int sceneIdx = i;
             Scenes.Spec spec = Scenes.byId(id);
             sceneCheckRow(spec, sceneIdx, order);
         }
         for (int slot = 1; slot <= Scenes.MAX_CUSTOM_SCENES; slot++) {
             customSceneRow(slot);
-            if (!Scenes.isSceneEnabled(this, Scenes.customId(slot))) {
-                break;
-            }
+            if (!Scenes.isSceneEnabled(this, Scenes.customId(slot))) break;
         }
         folderShuffleSceneRow();
 
@@ -1034,39 +1011,18 @@ public class SettingsActivity extends Activity {
                     Scenes.cycleStaySeconds(this);
                     refreshAll();
                 });
-
         row(tr("Clock", "Saat"),
                 () -> Scenes.isClock24h(this) ? tr("24 hour", "24 saat") : tr("12 hour", "12 saat"),
                 () -> {
                     Scenes.setClock24h(this, !Scenes.isClock24h(this));
                     refreshAll();
                 });
-
         row(tr("Clock font", "Saat yazı tipi"),
                 () -> Scenes.clockStyleLabel(this),
                 () -> {
                     Scenes.cycleClockStyle(this);
                     refreshAll();
                 });
-
-        section(tr("CLASSIC BACKGROUND", "KLASİK ARKA PLAN"));
-        String curWall = Profiles.homePrefs(this).getString("wallpaper", "photo:tessellated-pavement.jpg");
-        for (int i = 0; i < Scenes.CLASSIC_PHOTOS.length; i++) {
-            final String photoFile = Scenes.CLASSIC_PHOTOS[i][0];
-            final String wallKey = "photo:" + photoFile;
-            final String label = I18n.s(this, Scenes.CLASSIC_PHOTOS[i][1], Scenes.CLASSIC_PHOTOS[i][2]);
-            classicPhotoRow(label, "backgrounds/" + photoFile, wallKey.equals(curWall), () -> {
-                Profiles.homePrefs(this).edit().putString("wallpaper", wallKey).apply();
-                rebuildMainRows();
-            });
-        }
-        row(tr("Ambient colour themes…", "Ortam renk temaları…"), () -> {
-            String k = Profiles.homePrefs(this).getString("wallpaper", "photo:tessellated-pavement.jpg");
-            int idx = Arrays.asList(MainActivity.WALL_KEYS).indexOf(k);
-            return MainActivity.wallName(this, Math.max(0, idx));
-        }, () -> openSubMenu("ambient_themes"));
-        customClassicPhotoRow("custom".equals(curWall));
-        folderShuffleClassicRow(MainActivity.FOLDER_SHUFFLE_WALL_KEY.equals(curWall));
     }
 
     void pageApps() {
@@ -3564,7 +3520,17 @@ public class SettingsActivity extends Activity {
         int tw = u(46), th = u(26);
         ImageView thumb = new ImageView(this);
         thumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        bindAssetThumbAsync(thumb, spec.bgAsset, tw * 2, th * 2);
+        if (spec.id.startsWith("grad:")) {
+            String cacheKey = "scene-gradient:" + spec.id + ":" + (tw * 2) + "x" + (th * 2);
+            Bitmap gradient = SCENE_THUMB_CACHE.get(cacheKey);
+            if (gradient == null) {
+                gradient = Scenes.createGradientBitmap(spec.id, tw * 2, th * 2);
+                SCENE_THUMB_CACHE.put(cacheKey, gradient);
+            }
+            thumb.setImageBitmap(gradient);
+        } else {
+            bindAssetThumbAsync(thumb, spec.bgAsset, tw * 2, th * 2);
+        }
         final float trad = u(5.5f);
         thumb.setOutlineProvider(new ViewOutlineProvider() {
             @Override

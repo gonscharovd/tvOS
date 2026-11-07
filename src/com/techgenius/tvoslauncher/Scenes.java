@@ -38,7 +38,6 @@ import java.util.Map;
 public final class Scenes {
 
     public static final String LOOK_SCENES = "scenes";
-    public static final String LOOK_CLASSIC = "classic";
     public static final String CUSTOM_ID = "custom";
     public static final int MAX_CUSTOM_SCENES = 5;
     public static final String[] CUSTOM_IDS = {"custom", "custom_2", "custom_3", "custom_4", "custom_5"};
@@ -138,7 +137,17 @@ public final class Scenes {
                 "backgrounds/scene-dawn.jpg", "backgrounds/scene-dawn-glass.jpg", "backgrounds/scene-dawn-fg.webp",
                 false, false, false,
                 115f, 200f, 0f,
-                88f, 0f, false)
+                88f, 0f, false),
+        new Spec("photo:tessellated-pavement.jpg", "Tessellated Pavement", "Mozaik Kıyı", "backgrounds/tessellated-pavement.jpg", null, null, false, false, false, 68f, 190f, 48f, 45f, 52f, false),
+        new Spec("photo:grose-valley.jpg", "Grose Valley", "Grose Vadisi", "backgrounds/grose-valley.jpg", null, null, false, false, false, 68f, 190f, 48f, 45f, 52f, false),
+        new Spec("photo:albury-storm.jpg", "Albury Storm", "Albury Fırtınası", "backgrounds/albury-storm.jpg", null, null, false, false, false, 68f, 190f, 48f, 45f, 52f, false),
+        new Spec("photo:aresquiers-beach.jpg", "Aresquiers Beach", "Aresquiers Plajı", "backgrounds/aresquiers-beach.jpg", null, null, false, false, false, 68f, 190f, 48f, 45f, 52f, false),
+        new Spec("photo:vang-vieng-sunset.jpg", "Vang Vieng Sunset", "Vang Vieng Gün Batımı", "backgrounds/vang-vieng-sunset.jpg", null, null, false, false, false, 68f, 190f, 48f, 45f, 52f, false),
+        new Spec("grad:aurora", "Aurora", "Kuzey Işığı", null, null, null, false, false, false, 68f, 190f, 48f, 45f, 52f, false),
+        new Spec("grad:midnight", "Midnight", "Gece Yarısı", null, null, null, false, false, false, 68f, 190f, 48f, 45f, 52f, false),
+        new Spec("grad:ocean", "Ocean", "Okyanus", null, null, null, false, false, false, 68f, 190f, 48f, 45f, 52f, false),
+        new Spec("grad:sunset", "Sunset", "Gün Batımı", null, null, null, false, false, false, 68f, 190f, 48f, 45f, 52f, false),
+        new Spec("grad:graphite", "Graphite", "Grafit", null, null, null, false, false, false, 68f, 190f, 48f, 45f, 52f, false)
     };
 
     public static final Spec CUSTOM_SPEC = new Spec(
@@ -280,16 +289,18 @@ public final class Scenes {
         return c.getSharedPreferences("settings", Context.MODE_PRIVATE);
     }
 
+    /** testOS now has one home experience: Night Scenes. */
     public static String getLook(Context c) {
-        return prefs(c).getString("look_mode", LOOK_SCENES);
+        return LOOK_SCENES;
     }
 
     public static boolean isScenesLook(Context c) {
-        return LOOK_SCENES.equals(getLook(c));
+        return true;
     }
 
+    /** Kept as a compatibility shim for older callers and restored preferences. */
     public static void setLook(Context c, String look) {
-        prefs(c).edit().putString("look_mode", LOOK_CLASSIC.equals(look) ? LOOK_CLASSIC : LOOK_SCENES).apply();
+        prefs(c).edit().remove("look_mode").apply();
     }
 
     public static int getDockScalePercent(Context c) {
@@ -350,7 +361,33 @@ public final class Scenes {
         prefs(c).edit().putString("scene_order", sb.toString()).apply();
     }
 
+    private static void migrateClassicBackgroundsToNightGallery(Context c) {
+        android.content.SharedPreferences p = prefs(c);
+        final String migrationKey = "night_gallery_classic_backgrounds_v1";
+        if (p.getBoolean(migrationKey, false)) return;
+        List<String> enabled = new ArrayList<>();
+        String raw = p.getString("scene_enabled", "night,golden,water,fog,dawn");
+        for (String part : raw.split(",")) {
+            String id = part.trim();
+            if (!id.isEmpty() && !enabled.contains(id)) enabled.add(id);
+        }
+        for (String[] row : CLASSIC_PHOTOS) {
+            String id = "photo:" + row[0];
+            if (!enabled.contains(id)) enabled.add(id);
+        }
+        for (String[] row : CLASSIC_GRADIENTS) {
+            if (!enabled.contains(row[0])) enabled.add(row[0]);
+        }
+        StringBuilder value = new StringBuilder();
+        for (String id : enabled) {
+            if (value.length() > 0) value.append(',');
+            value.append(id);
+        }
+        p.edit().putString("scene_enabled", value.toString()).putBoolean(migrationKey, true).apply();
+    }
+
     public static List<String> getEnabledSceneIds(Context c) {
+        migrateClassicBackgroundsToNightGallery(c);
         String raw = prefs(c).getString("scene_enabled", "night,golden,water,fog,dawn");
         List<String> enabled = new ArrayList<>();
         for (String part : raw.split(",")) {
@@ -483,8 +520,6 @@ public final class Scenes {
     public static List<String> getAllLockSceneCandidates() {
         List<String> all = new ArrayList<>();
         for (Spec s : ALL) all.add(s.id);
-        for (String[] row : CLASSIC_PHOTOS) all.add("photo:" + row[0]);
-        for (String[] row : CLASSIC_GRADIENTS) all.add(row[0]);
         for (String cid : CUSTOM_IDS) all.add(cid);
         all.add(LOCK_CUSTOM_ID);
         all.add(LOCK_FOLDER_SHUFFLE_ID);
