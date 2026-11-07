@@ -11,13 +11,13 @@ SOURCE = Path("src/com/techgenius/tvoslauncher/CleanYourTv.java").read_text(enco
 
 def java_pattern(name: str) -> re.Pattern:
     match = re.search(
-        rf"{re.escape(name)}\\s*=\\s*Pattern\\.compile\\((.*?)\\);",
+        rf"{re.escape(name)}\s*=\s*Pattern\.compile\((.*?)\);",
         SOURCE,
         re.DOTALL,
     )
     if not match:
         raise AssertionError(f"Could not find {name} in CleanYourTv.java")
-    literals = re.findall(r'"((?:\\\\.|[^"\\\\])*)"', match.group(1))
+    literals = re.findall(r'"((?:\\.|[^"\\])*)"', match.group(1))
     if not literals:
         raise AssertionError(f"No Java string literals found for {name}")
     return re.compile("".join(json.loads('"' + part + '"') for part in literals))
@@ -49,9 +49,10 @@ def main() -> None:
 
     allowed_exceptions = (
         "com.android.providers.tv",
+        "com.android.providers.calendar",
         "com.android.providers.contacts",
-        "com.android.printspooler",
-        "com.android.bips",
+        "com.android.providers.userdictionary",
+        "com.android.managedprovisioning",
     )
     for package in allowed_exceptions:
         assert not blocked_by_core_regex(package), f"CORE_OK exception unexpectedly blocked: {package}"
