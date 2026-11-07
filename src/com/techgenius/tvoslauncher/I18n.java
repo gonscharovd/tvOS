@@ -1488,6 +1488,23 @@ public final class I18n {
         if (en.startsWith("Signed out of ") && en.endsWith(".")) {
             return "Выполнен выход из аккаунта " + en.substring("Signed out of ".length(), en.length() - 1) + ".";
         }
+        String criticalSuffix = " is a critical system service required for your TV remote and Bluetooth connectivity.\n\nIt cannot be disabled under any circumstances.";
+        if (en.endsWith(criticalSuffix)) {
+            return en.substring(0, en.length() - criticalSuffix.length())
+                    + " — критическая системная служба, необходимая для работы пульта и Bluetooth.\n\nОтключать её нельзя ни при каких обстоятельствах.";
+        }
+        String protectedSuffix = " is protected by testOS because it may be required for Android, TV input, Device Owner, or launcher recovery. It cannot be disabled from Manual Debloat.";
+        if (en.endsWith(protectedSuffix)) {
+            return en.substring(0, en.length() - protectedSuffix.length())
+                    + " защищён testOS, поскольку может быть необходим для Android, ТВ-входов, Device Owner или восстановления лаунчера. Отключение в ручном режиме запрещено.";
+        }
+        String manualDisablePrefix = "You are about to disable ";
+        String manualDisableSuffix = ".\n\nThis is a manual operation. It may affect TV features. Continue only if you know what this package does.";
+        if (en.startsWith(manualDisablePrefix) && en.endsWith(manualDisableSuffix)) {
+            return "Вы собираетесь отключить " + en.substring(manualDisablePrefix.length(),
+                    en.length() - manualDisableSuffix.length())
+                    + ".\n\nЭто действие выполняется вручную и может повлиять на функции телевизора. Продолжайте, только если знаете назначение этого пакета.";
+        }
         if (en.startsWith("This runs 'settings put global adb_enabled 0'")) {
             return "Команда 'settings put global adb_enabled 0' будет выполнена через локальный ADB, после чего проверим, закрыт ли порт 5555.\n\n"
                     + "Если WRITE_SECURE_SETTINGS уже выдано, testOS продолжит восстанавливать специальные возможности непосредственно в приложении — ADB для этого не потребуется.\n\n"
