@@ -325,12 +325,12 @@ public final class ControlPanelOverlay {
 
         int y4 = capsules.size() * cap + Math.max(0, capsules.size() - 1) * gap;
         // Fixed bottom row: VPN toggle and the settings chooser.
-        outCells.add(makeTile(c, panel, 0, y4, small, small, unit, screenW, screenH, glassSource,
+        outCells.add(makeTile(c, panel, 0, y4, small, cap, unit, screenW, screenH, glassSource,
                 "shield", null, null, v -> { if (onVpnToggle != null) onVpnToggle.run(); }));
-        outCells.add(makeTile(c, panel, small + gap, y4, small, small, unit, screenW, screenH, glassSource,
+        outCells.add(makeTile(c, panel, small + gap, y4, small, cap, unit, screenW, screenH, glassSource,
                 "gear", null, null, v -> { if (onSettings != null) onSettings.run(); }));
 
-        int totalH = y4 + small;
+        int totalH = y4 + cap;
         FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(w, totalH, Gravity.TOP | Gravity.END);
         plp.topMargin = dp(unit, 36);
         plp.rightMargin = dp(unit, 28);
