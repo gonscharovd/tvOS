@@ -1383,7 +1383,7 @@ public class SettingsActivity extends Activity {
                             .setNegativeButton(tr("Cancel", "İptal"), null)
                             .show();
                 });
-        row(tr("Fix Home button (Launch tvOS Launcher)", "Ana Ekran tuşu düzeltmesi (tvOS Launcher'ı aç)"),
+        row(tr("Fix Home button (Launch testOS)", "Ana Ekran tuşu düzeltmesi (testOS'ı aç)"),
                 () -> ButtonMapper.isHomeFixEnabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
                 () -> {
                     boolean next = !ButtonMapper.isHomeFixEnabled(this);
@@ -1394,8 +1394,8 @@ public class SettingsActivity extends Activity {
                                 "Ana Ekran tuşu düzeltmesi açıldı — çalışması için yukarıdan Erişilebilirlik servisini de etkinleştirin."));
                     } else {
                         showStatusMsg(next
-                                ? tr("Home button fix enabled — pressing Home will launch tvOS Launcher.",
-                                     "Ana Ekran tuşu düzeltmesi etkinleştirildi — Ana Ekran tuşu tvOS Launcher'ı açacak.")
+                                ? tr("Home button fix enabled — pressing Home will launch testOS.",
+                                     "Ana Ekran tuşu düzeltmesi etkinleştirildi — Ana Ekran tuşu testOS'ı açacak.")
                                 : tr("Home button fix disabled.",
                                      "Ana Ekran tuşu düzeltmesi kapatıldı."));
                     }
@@ -1511,8 +1511,8 @@ public class SettingsActivity extends Activity {
                 () -> LocalAdb.isKeepAliveEnabled(this) ? tr("On (Default)", "Açık (Varsayılan)") : tr("Off", "Kapalı"),
                 this::toggleKeepAliveWithWarning);
 
-        infoNote(tr("Security Note: Keep Alive is enabled by default. In Secure Mode, tvOS Launcher uses WRITE_SECURE_SETTINGS to restore Accessibility directly in-process without touching ADB (even if ADB is enabled on the TV). In Persistent ADB Mode, Keep Alive can also use Local ADB on port 5555.",
-                "Güvenlik Notu: Keep Alive varsayılan olarak açıktır. Güvenli Mod'da tvOS Launcher, ADB'yi hiç kullanmadan (TV'de ADB açık olsa bile) Erişilebilirliği doğrudan WRITE_SECURE_SETTINGS ile onarır. Kalıcı ADB Modu'nda ise port 5555 üzerinden yerel ADB'yi de kullanabilir."));
+        infoNote(tr("Security Note: Keep Alive is enabled by default. In Secure Mode, testOS uses WRITE_SECURE_SETTINGS to restore Accessibility directly in-process without touching ADB (even if ADB is enabled on the TV). In Persistent ADB Mode, Keep Alive can also use Local ADB on port 5555.",
+                "Güvenlik Notu: Keep Alive varsayılan olarak açıktır. Güvenli Mod'da testOS, ADB'yi hiç kullanmadan (TV'de ADB açık olsa bile) Erişilebilirliği doğrudan WRITE_SECURE_SETTINGS ile onarır. Kalıcı ADB Modu'nda ise port 5555 üzerinden yerel ADB'yi de kullanabilir."));
 
         section(tr("CLEANYOURTV (BETA)", "CLEANYOURTV (BETA)"));
         twoLineRow(tr("Choose TV model", "TV modelini seçin"),
@@ -1678,7 +1678,7 @@ public class SettingsActivity extends Activity {
 
     void pageAbout() {
         section(tr("APPLICATION", "UYGULAMA"));
-        infoRow(tr("Home screen", "Ana ekran"), "tvOS Launcher", null);
+        infoRow(tr("Home screen", "Ana ekran"), "testOS", null);
         infoRow(tr("Developer", "Geliştirici"), "techgenius", null);
         infoRow(tr("Version", "Sürüm"), version(), null);
         infoRow(tr("Settings kept", "Ayarların saklandığı yer"), tr("On this TV", "Bu TV'de"), null);
@@ -1907,10 +1907,10 @@ public class SettingsActivity extends Activity {
         dialog(tr("Close ADB (Disable Port 5555)", "ADB'yi Kapat (Port 5555'i Kapat)"))
                 .setMessage(tr(
                         "This runs 'settings put global adb_enabled 0' over Local ADB and verifies that port 5555 is closed on your home network.\n\n"
-                        + "If WRITE_SECURE_SETTINGS is already granted, tvOS Launcher will continue repairing Accessibility in-process without needing ADB!\n\n"
+                        + "If WRITE_SECURE_SETTINGS is already granted, testOS will continue repairing Accessibility in-process without needing ADB!\n\n"
                         + "Tip: For maximum security, you can also open Developer Options and click 'Revoke USB debugging authorizations'.",
                         "Bu işlem Yerel ADB üzerinden 'settings put global adb_enabled 0' komutunu çalıştırır ve ev ağınızda port 5555'in kapandığını doğrular.\n\n"
-                        + "WRITE_SECURE_SETTINGS izni zaten verilmişse tvOS Launcher, ADB'ye ihtiyaç duymadan Erişilebilirliği doğrudan uygulama içinden onarmaya devam eder!\n\n"
+                        + "WRITE_SECURE_SETTINGS izni zaten verilmişse testOS, ADB'ye ihtiyaç duymadan Erişilebilirliği doğrudan uygulama içinden onarmaya devam eder!\n\n"
                         + "İpucu: Maksimum güvenlik için Geliştirici Seçenekleri'nden 'USB hata ayıklama yetkilerini geri al' seçeneğine de tıklayabilirsiniz."))
                 .setPositiveButton(tr("Close ADB Now", "ADB'yi Şimdi Kapat"), (d, w) -> {
                     if (LocalAdb.getAdbMode(this) != LocalAdb.ADB_MODE_SECURE_CLOSE) {
@@ -2523,7 +2523,7 @@ public class SettingsActivity extends Activity {
         backSubMenuRow();
         section(tr("DEFAULT LAUNCHER SETUP (TCL / PHILIPS / GOOGLE TV)", "VARSAYILAN BAŞLATICI KURULUMU (TCL / PHILIPS / GOOGLE TV)"));
 
-        twoLineRow(tr("1. Set tvOS Launcher as Default via Local ADB", "1. Yerel ADB ile tvOS Launcher'ı Varsayılan Yap"),
+        twoLineRow(tr("1. Set testOS as Default via Local ADB", "1. Yerel ADB ile testOS'ı Varsayılan Yap"),
                 () -> Perms.isDefaultHome(this) ? tr("Active", "Etkin") : tr("Run ROLE_HOME & set-home-activity ›", "ROLE_HOME ve set-home-activity çalıştır ›"),
                 () -> {
                     AlertDialog progress = dialog(tr("Setting Default Launcher…", "Varsayılan Başlatıcı Ayarlanıyor…"))
@@ -2549,7 +2549,7 @@ public class SettingsActivity extends Activity {
 
         twoLineRow(tr("3. Fix Home Button via Accessibility (Button Mapper)", "3. Erişilebilirlik ile Ana Ekran Tuşu Düzeltmesi"),
                 () -> ButtonMapper.isHomeFixEnabled(this)
-                        ? tr("On — Pressing Home launches tvOS Launcher", "Açık — Ana Ekran tuşu tvOS Launcher'ı açar")
+                        ? tr("On — Pressing Home launches testOS", "Açık — Ana Ekran tuşu testOS'ı açar")
                         : tr("Off — Tap to enable Home button remap", "Kapalı — Ana Ekran tuşu yönlendirmesini açmak için dokunun"),
                 () -> {
                     boolean next = !ButtonMapper.isHomeFixEnabled(this);
@@ -2564,8 +2564,8 @@ public class SettingsActivity extends Activity {
                 () -> tr("Open system selector (if supported by TV) ›", "Sistem seçicisini aç (TV destekliyorsa) ›"),
                 () -> Perms.openSystemHomeSettingsUi(this));
 
-        infoNote(tr("On TCL and Philips Android 11/12 TVs, the OEM firmware often hides the Android Default Home UI and forces the stock launcher when pressing Home. Disabling the stock launcher (Option 2) or enabling the Home Button Fix (Option 3) guarantees pressing Home always opens tvOS Launcher.",
-                "TCL ve Philips Android 11/12 TV'lerde üretici yazılımı genellikle Android Varsayılan Ana Ekran seçicisini gizler ve Home tuşuna basıldığında stok başlatıcıyı zorlar. Stok başlatıcıyı devre dışı bırakmak (2. Seçenek) veya Ana Ekran Tuşu Düzeltmesini açmak (3. Seçenek) Home tuşunun her zaman tvOS Launcher'ı açmasını sağlar."));
+        infoNote(tr("On TCL and Philips Android 11/12 TVs, the OEM firmware often hides the Android Default Home UI and forces the stock launcher when pressing Home. Disabling the stock launcher (Option 2) or enabling the Home Button Fix (Option 3) guarantees pressing Home always opens testOS.",
+                "TCL ve Philips Android 11/12 TV'lerde üretici yazılımı genellikle Android Varsayılan Ana Ekran seçicisini gizler ve Home tuşuna basıldığında stok başlatıcıyı zorlar. Stok başlatıcıyı devre dışı bırakmak (2. Seçenek) veya Ana Ekran Tuşu Düzeltmesini açmak (3. Seçenek) Home tuşunun her zaman testOS'ı açmasını sağlar."));
     }
 
     private void subMenuCheckPermissions() {
@@ -2996,7 +2996,7 @@ public class SettingsActivity extends Activity {
         }
 
         section(tr("ONE-TAP ACTIONS", "TEK DOKUNUŞ İŞLEMLERİ"));
-        twoLineRow(tr("Disable All Stock Launchers & Set tvOS Launcher as Home", "Tüm Stok Başlatıcıları Devre Dışı Bırak ve tvOS'u Ana Ekran Yap"),
+        twoLineRow(tr("Disable All Stock Launchers & Set testOS as Home", "Tüm Stok Başlatıcıları Devre Dışı Bırak ve tvOS'u Ana Ekran Yap"),
                 () -> tr("Disable all ›", "Tümünü kapat ›"),
                 () -> {
                     List<String> toDisable = new ArrayList<>();
@@ -3038,8 +3038,8 @@ public class SettingsActivity extends Activity {
                     }));
         }
 
-        infoNote(tr("Checked items are currently DISABLED. Disabling the stock system launcher (e.g. Google TV Home / LauncherX + setupwraith, Android TV Home, or TCL/Philips OEM Home) forces Android to use tvOS Launcher when pressing the Home key.",
-                "İşaretli öğeler şu anda DEVRE DIŞI bırakılmıştır. Stok sistem başlatıcısını devre dışı bırakmak, Home tuşuna basıldığında Android'in her zaman tvOS Launcher'ı kullanmasını sağlar."));
+        infoNote(tr("Checked items are currently DISABLED. Disabling the stock system launcher (e.g. Google TV Home / LauncherX + setupwraith, Android TV Home, or TCL/Philips OEM Home) forces Android to use testOS when pressing the Home key.",
+                "İşaretli öğeler şu anda DEVRE DIŞI bırakılmıştır. Stok sistem başlatıcısını devre dışı bırakmak, Home tuşuna basıldığında Android'in her zaman testOS'ı kullanmasını sağlar."));
     }
 
     private void subMenuCytManualDebloat() {
