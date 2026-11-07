@@ -20,7 +20,7 @@ command -v javac >/dev/null || { echo "javac not found — install JDK 17+ or se
 
 rm -rf build && mkdir -p build/gen build/classes build/dex
 if [ "${ASSET_OPTIMIZE:-0}" = "1" ]; then
-    python3 tools/prepare_assets.py --source assets --dest build/assets --optimize --quality 88 --max-width 1920 --max-height 1080
+    python3 tools/prepare_assets.py --source assets --dest build/assets --optimize --profile "${ASSET_PROFILE:-full}" --quality 88 --max-width 1920 --max-height 1080
 else
     cp -a assets build/assets
 fi
