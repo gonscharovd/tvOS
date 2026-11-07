@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Regression guards for the grouped Settings navigation and preserved settings."""
 from pathlib import Path
+import re
 
 ROOT = Path("src/com/techgenius/tvoslauncher")
 settings = (ROOT / "SettingsActivity.java").read_text(encoding="utf-8")
@@ -63,4 +64,34 @@ routes = settings.split("private String resolvePageExtra", 1)[1].split("@Overrid
 for route in ('return CONTROL_PANEL;', 'return HOME;', 'return LOOK_SCENES;', 'return ADVANCED;'):
     assert route in routes
 
-print("Settings navigation grouping, legacy routes and feature placement passed.")
+
+# Every new user-facing label and explanatory sentence introduced by the grouped
+# navigation must have a direct Russian dictionary entry. I18n.s() intentionally
+# ignores the legacy second (Turkish) argument, so missing keys otherwise fall
+# back to English even though SettingsActivity.tr() appears to supply a fallback.
+i18n = (ROOT / "I18n.java").read_text(encoding="utf-8")
+dictionary = {
+    m.group(1)
+    for m in re.finditer(r'add\\("((?:\\\\.|[^"\\\\])*)",', i18n)
+}
+required_russian = [
+    "Main screen",
+    "Appearance and clock",
+    "Control panel",
+    "Advanced settings",
+    "Information",
+    "Changes the language used on the home screen, date, weather and settings.",
+    "CONTROL PANEL ACTIONS",
+    "Reset control panel actions",
+    "Reset control panel?",
+    "All custom app and activity assignments will be cleared. The built-in actions will be restored.",
+    "Control panel actions restored to defaults.",
+    "Choose which app or activity opens from each Control Panel tile. Leave an action on Default to use the TV's built-in settings.",
+    "HOME SCREEN",
+    "PEOPLE & PROFILES",
+    "DIAGNOSTICS & RECOVERY",
+]
+missing_russian = [key for key in required_russian if key not in dictionary]
+assert not missing_russian, "New Settings strings missing Russian translations: " + repr(missing_russian)
+
+print("Settings navigation grouping, legacy routes, feature placement and Russian labels passed.")
