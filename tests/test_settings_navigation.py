@@ -87,3 +87,24 @@ missing_russian = sorted(literal_settings_strings - dictionary)
 assert not missing_russian, "Settings strings missing Russian translations: " + repr(missing_russian)
 
 print("Settings navigation grouping, legacy routes, feature placement and complete literal Russian coverage passed.")
+
+
+# Night Scenes is the only home mode. Former Classic wallpapers are now
+# first-class selectable entries in the rotating scene gallery.
+scenes = (ROOT / "Scenes.java").read_text(encoding="utf-8")
+assert 'return LOOK_SCENES;' in scenes
+assert 'public static boolean isScenesLook(Context c) {\n        return true;' in scenes
+assert 'LOOK_CLASSIC' not in scenes
+for scene_id in (
+    'photo:tessellated-pavement.jpg', 'photo:grose-valley.jpg',
+    'photo:albury-storm.jpg', 'photo:aresquiers-beach.jpg',
+    'photo:vang-vieng-sunset.jpg', 'grad:aurora', 'grad:midnight',
+    'grad:ocean', 'grad:sunset', 'grad:graphite',
+):
+    assert scene_id in scenes, f"Former Classic background missing from Night Scenes: {scene_id}"
+assert 'migrateClassicBackgroundsToNightGallery' in scenes
+look_page = settings.split("void pageLookAndScenes()", 1)[1].split("void pageApps()", 1)[0]
+assert 'choiceRow(' not in look_page
+assert 'CLASSIC BACKGROUND' not in look_page
+assert 'sceneCheckRow(spec, sceneIdx, order);' in look_page
+assert 'scene-gradient:' in settings
