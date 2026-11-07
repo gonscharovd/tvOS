@@ -14,7 +14,7 @@ import android.provider.Settings;
  * Permissions, asked for on screen wherever the TV allows it; adb is only the last resort.
  * - Location (Wi-Fi name): the normal runtime prompt.
  * - Notification access (Continue Watching, Do Not Disturb): the system's notification-access
- *   screen (Android 11+ opens tvOS Launcher's own switch directly).
+ *   screen (Android 11+ opens testOS's own switch directly).
  */
 final class Perms {
     static final int REQ_LOCATION = 41;
@@ -185,7 +185,7 @@ final class Perms {
     static boolean isDefaultHome(android.content.Context c) {
         if (c == null) return false;
         try {
-            // If Home Button Fix is enabled in Button Mapper and Accessibility is active, Home opens tvOS Launcher.
+            // If Home Button Fix is enabled in Button Mapper and Accessibility is active, Home opens testOS.
             if (ButtonMapper.isHomeFixEnabled(c) && ButtonMapper.isServiceEnabled(c)) {
                 return true;
             }
