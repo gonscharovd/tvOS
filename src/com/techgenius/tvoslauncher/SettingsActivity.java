@@ -1091,14 +1091,7 @@ public class SettingsActivity extends Activity {
                             .apply();
                     showStatusMsg(tr("App layout reset to default.", "Uygulama düzeni varsayılana sıfırlandı."));
                 });
-        row(tr("Classic Top Shelf suggestions", "Klasik Üst Raf önerileri"), () -> {
-            switch (Suggestions.shelf(this)) {
-                case Suggestions.SHELF_RECS: return tr("Recommendations", "Öneriler");
-                case Suggestions.SHELF_NEWS: return tr("News", "Haberler");
-                case Suggestions.SHELF_NONE: return tr("Off", "Kapalı");
-                default: return tr("Recommendations & News", "Öneriler ve Haberler");
-            }
-        }, () -> openSubMenu("top_shelf"));
+
         row(tr("Manage system apps in TV settings…", "TV ayarlarında uygulamaları yönet…"),
                 () -> "›",
                 () -> Suggestions.start(this, new Intent(Settings.ACTION_APPLICATION_SETTINGS)));
@@ -1454,7 +1447,7 @@ public class SettingsActivity extends Activity {
     }
 
     void pageMainScreen() {
-        section(tr("HOME SCREEN", "ANA EKRАН"));
+        section(tr("HOME SCREEN", "ANA EKRAN"));
         row(tr("Default home screen", "Varsayılan ana ekran"),
                 () -> Perms.isDefaultHome(this) ? tr("Active", "Etkin") : tr("Set as default…", "Varsayılan yap…"),
                 () -> Perms.requestDefaultHome(this));
@@ -1583,7 +1576,7 @@ public class SettingsActivity extends Activity {
         
         pageButtonMapper();
 
-        section(tr("BACKUP & RESTORE", "YEDEKЛЕME VE GERİ YÜКЛЕME"));
+        section(tr("BACKUP & RESTORE", "YEDEKLEME VE GERİ YÜKLEME"));
         row(tr("Backup settings to Download", "Ayarları Download klasörüne yedekle"),
                 () -> "Download/" + CustomMedia.SETTINGS_BACKUP_FILENAME,
                 () -> CustomMedia.backupSettingsToDownload(this, this::refreshAll));
