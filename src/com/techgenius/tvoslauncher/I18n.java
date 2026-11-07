@@ -2104,7 +2104,8 @@ public final class I18n {
         if (en.startsWith("⚠️ Security Warning:")) {
             return "⚠️ Предупреждение безопасности:\n\n"
                     + "Keep Alive отслеживает разрешения и восстанавливает их, если телевизор отключает их в фоновом режиме.\n\n"
-                    + "Без WRITE_SECURE_SETTINGS для работы Keep Alive должна оставаться включённой сетевая отладка (ADB на порту 5555) в домашней сети. Для большей безопасности сначала выполните «Подключить / восстановить ADB» в безопасном режиме, чтобы выдать WRITE_SECURE_SETTINGS и закрыть порт 5555.\n\n";
+                    + "Без WRITE_SECURE_SETTINGS для работы Keep Alive должна оставаться включённой сетевая отладка (ADB на порту 5555) в домашней сети. Для большей безопасности сначала выполните «Подключить / восстановить ADB» в безопасном режиме, чтобы выдать WRITE_SECURE_SETTINGS и закрыть порт 5555.\n\n"
+                    + "Всё равно включить Keep Alive?";
         }
         if (en.startsWith("WARNING: Manual Debloat lists ALL system apps installed on your TV.")) {
             return "ПРЕДУПРЕЖДЕНИЕ: в ручном режиме отображаются ВСЕ системные приложения телевизора.\n\n"
@@ -2150,6 +2151,9 @@ public final class I18n {
         if (en.startsWith("Disable Selected Packages (") && en.endsWith(")")) {
             return "Отключить выбранные пакеты (" + en.substring("Disable Selected Packages (".length(), en.length() - 1) + ")";
         }
+        if (en.startsWith("✅ Disable Selected Packages (") && en.endsWith(")")) {
+            return "✅ Отключить выбранные пакеты (" + en.substring("✅ Disable Selected Packages (".length(), en.length() - 1) + ")";
+        }
         if (en.startsWith("PACKAGES ON THIS TV (") && en.endsWith(")")) {
             return "ПАКЕТЫ НА ЭТОМ ТЕЛЕВИЗОРЕ (" + en.substring("PACKAGES ON THIS TV (".length(), en.length() - 1) + ")";
         }
@@ -2179,7 +2183,7 @@ public final class I18n {
         if (en.startsWith("Re-enable all packages in ")) {
             return "Повторно включить все пакеты профиля " + en.substring("Re-enable all packages in ".length());
         }
-        if (en.startsWith("Custom ")) return "Своё значение: " + en.substring("Custom ".length());
+        if (en.startsWith("Custom ")) return "Свой вариант " + en.substring("Custom ".length());
         if (en.startsWith("Folder shuffle enabled: ")) {
             return "Смена изображений из папки включена: " + en.substring("Folder shuffle enabled: ".length());
         }
