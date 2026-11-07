@@ -437,7 +437,7 @@ public class MainActivity extends Activity {
             avatarView.setVisibility(Profiles.list(this).size() > 1 ? View.VISIBLE : View.GONE);
         }
         // Signed in to Nuvio/Stremio: refresh continue watching in the background. Signed out: no-op.
-        // Continue Watching tracking is disabled in this Russian-only lightweight build.
+        ensureTvListingsPermission(); // retained for the optional volume-key permission repair path
         if (sceneHome != null) sceneHome.onWatchPopupsResume();
         if (Scenes.isScenesLook(this) && sceneHome != null) {
             sceneHome.sceneView.syncSettings();
