@@ -5136,7 +5136,7 @@ public class MainActivity extends Activity {
             del = l.size();
             l.add(I18n.s(this, "Delete", "Sil"));
             act.add(() -> new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle(I18n.s(this, "Delete \u201C" + prof.name + "\u201D?", "\u201C" + prof.name + "\u201D silinsin mi?"))
+                    .setTitle(I18n.s(this, "Delete profile", "Удалить профиль") + " «" + prof.name + "»?")
                     .setMessage(I18n.s(this, "Its layout and Continue Watching list will be removed.", "Düzeni ve İzlemeye Devam Et listesi kaldırılacak."))
                     .setPositiveButton(I18n.s(this, "Delete", "Sil"), (d, w) -> {
                         boolean wasCurrent = Profiles.current(this).id.equals(prof.id);
