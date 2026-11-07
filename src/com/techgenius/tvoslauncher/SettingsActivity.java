@@ -43,13 +43,14 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Couch-TV style "Home settings" screen (matching docs/screens/home-settings.jpg):
- * - Blurred scene backdrop with dark glass tint
- * - Left sidebar ("Home settings") with icon pills:
- *   Language, Location, Weather, Look and scenes, Apps, People, Quick buttons, About
- * - Right main pane with section header, rounded glass rows, scene thumbnails,
- *   green circular checkboxes, in-place hold-OK scene reordering, and bottom hint bar.
- */
+ * testOS Settings with four clear groups:
+ * - Appearance: visual style, clock, dock and weather
+ * - Basic settings: navigation sounds, hidden apps, setup and reset
+ * - Information: app identity, OTA updates and local settings backup
+ * - Advanced settings: HOME selection, remote mapping, ADB, permissions and TV cleanup
+ *
+ * The Control Panel remains available from the launcher; its separate customization screen
+ * and all multi-user settings have been removed.
 public class SettingsActivity extends Activity {
 
     static final String ROOT = "root",
