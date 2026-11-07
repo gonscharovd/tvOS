@@ -289,14 +289,12 @@ public final class ControlPanelOverlay {
             final String title;
             final Status status;
             final View.OnClickListener click;
-            final boolean isMemory;
 
-            CapsuleSpec(String glyph, String title, Status status, View.OnClickListener click, boolean isMemory) {
+            CapsuleSpec(String glyph, String title, Status status, View.OnClickListener click) {
                 this.glyph = glyph;
                 this.title = title;
                 this.status = status;
                 this.click = click;
-                this.isMemory = isMemory;
             }
         }
 
@@ -304,15 +302,15 @@ public final class ControlPanelOverlay {
         capsules.add(new CapsuleSpec("wifi", "Wi-Fi", () -> wifiState(c), v -> {
             dismissAll(c);
             openWifiSettings(c);
-        }, false));
+        }));
         capsules.add(new CapsuleSpec("bluetooth", "Bluetooth", () -> bluetoothState(c), v -> {
             dismissAll(c);
             openBluetoothSettings(c);
-        }, false));
+        }));
         capsules.add(new CapsuleSpec("shield", "VPN", () -> vpnState(c),
-                v -> { if (onVpnToggle != null) onVpnToggle.run(); }, false));
+                v -> { if (onVpnToggle != null) onVpnToggle.run(); }));
         capsules.add(new CapsuleSpec("timer", I18n.s(c, "Sleep Timer", "Таймер сна"),
-                () -> timerState(c), v -> cycleSleepTimer(c), false));
+                () -> timerState(c), v -> cycleSleepTimer(c)));
 
         // Three full-width connectivity rows.
         for (int i = 0; i < 3; i++) {
@@ -326,14 +324,14 @@ public final class ControlPanelOverlay {
         // RAM usage / cleanup and Recent Apps share one row.
         int memoryY = 3 * (cap + gap);
         View ramTile = makeTile(c, panel, 0, memoryY, small, cap, unit, screenW, screenH, glassSource,
-                "memory", "ОЗУ", () -> memoryState(c), v -> {
+                "memory", I18n.s(c, "RAM", "ОЗУ"), () -> memoryState(c), v -> {
                     dismissAll(c);
                     RecentAppsOverlay.cleanAllNow(c);
                 });
         attachMemoryBar(c, ramTile, unit);
         outCells.add(ramTile);
         outCells.add(makeTile(c, panel, small + gap, memoryY, small, cap, unit, screenW, screenH, glassSource,
-                "recents", "Недавние", null, v -> {
+                "recents", I18n.s(c, "Recent Apps", "Недавние"), null, v -> {
                     dismissAll(c);
                     RecentAppsOverlay.show(c);
                 }));
@@ -347,11 +345,11 @@ public final class ControlPanelOverlay {
         // Separate shortcuts for launcher settings and the TV's own settings.
         int settingsY = 5 * (cap + gap);
         outCells.add(makeTile(c, panel, 0, settingsY, small, cap, unit, screenW, screenH, glassSource,
-                "controls", "Лаунчер", () -> "Настройки", v -> {
+                "controls", I18n.s(c, "Launcher", "Лаунчер"), () -> I18n.s(c, "Settings", "Настройки"), v -> {
                     if (onLauncherSettings != null) onLauncherSettings.run();
                 }));
         outCells.add(makeTile(c, panel, small + gap, settingsY, small, cap, unit, screenW, screenH, glassSource,
-                "remote", "Телевизор", () -> "Настройки", v -> {
+                "remote", I18n.s(c, "TV", "Телевизор"), () -> I18n.s(c, "Settings", "Настройки"), v -> {
                     if (onTvSettings != null) onTvSettings.run();
                 }));
 
