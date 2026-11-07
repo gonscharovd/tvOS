@@ -431,7 +431,7 @@ public final class I18n {
         add("ADB Debugging Needed", "Требуется отладка ADB");
         add("Could not connect to local ADB on port 5555.\n\n1. Open Settings → System → About and click Build 7 times.\n2. Open Developer Options and turn on USB Debugging / Network Debugging.\n3. Return here and tap Pair / Repair again.", "Не удалось подключиться к локальному ADB на порту 5555.\n\n1. Откройте «Настройки → Система → Об устройстве» и нажмите на номер сборки 7 раз.\n2. Откройте параметры разработчика и включите отладку по USB / сети.\n3. Вернитесь сюда и снова нажмите «Подключить / восстановить ADB».");
         add("Remove / Revoke All Permissions", "УДАЛИТЬ / ОТОЗВАТЬ ВСЕ РАЗРЕШЕНИЯ");
-        add("This will disable Keep Alive and remove Accessibility Service, Notification Access, Default Home Role, and launcher permissions (both locally and via ADB).", "Это выключит Keep Alive и отзовёт службу специальных возможностей, доступ к уведомлениям, роль приложения «Домой» и разрешения лаунчера — локально и через ADB.");
+        add("This will disable Keep Alive and remove Accessibility Service, Do Not Disturb access, Default Home Role, and launcher permissions (both locally and via ADB).", "Это выключит Keep Alive и отзовёт службу специальных возможностей, доступ к режиму «Не беспокоить», роль приложения «Домой» и разрешения лаунчера — локально и через ADB.");
         add("Revoke All Permissions", "Отозвать все разрешения");
         add("Revoking Permissions…", "Отзыв разрешений…");
         add("Revoking all permissions…", "Отзываем все разрешения…");
@@ -781,6 +781,7 @@ public final class I18n {
         add("Cleaned · ", "Очищено · ");
         add(" free", " свободно");
         add("Do Not Disturb", "Не беспокоить");
+        add("Do Not Disturb access", "Доступ к режиму «Не беспокоить»");
         add("Audio", "Звук");
         add("Sound", "Звук");
         add("Output", "Вывод");
@@ -1493,7 +1494,7 @@ public final class I18n {
         ru.put("Switch to ", "Переключиться на ");
         ru.put("This TV does not have a built-in Accessibility Settings screen. You can enable the Button Mapper & Control Panel service automatically via Local ADB.", "На этом телевизоре нет встроенного экрана специальных возможностей. Включить службу Button Mapper и панели управления можно автоматически через локальный ADB.");
         ru.put("This runs 'settings put global adb_enabled 0' over Local ADB and verifies that port 5555 is closed on your home network.\\n\\n", "Выполняет команду 'settings put global adb_enabled 0' через локальный ADB и проверяет, что порт 5555 закрыт в домашней сети.\\n\\n");
-        ru.put("This will disable Keep Alive and remove Accessibility Service, Notification Access, Default Home Role, and launcher permissions (both locally and via ADB).", "Это отключит Keep Alive и отзовёт специальные возможности, доступ к уведомлениям, роль главного экрана и разрешения лаунчера (локально и через ADB).");
+        ru.put("This will disable Keep Alive and remove Accessibility Service, Do Not Disturb access, Default Home Role, and launcher permissions (both locally and via ADB).", "Это отключит Keep Alive и отзовёт специальные возможности, доступ к режиму «Не беспокоить», роль главного экрана и разрешения лаунчера (локально и через ADB).");
         ru.put("Tip: Hold OK on any app on the home screen dock to move or hide it.", "Совет: удерживайте OK на приложении в панели главного экрана, чтобы переместить или скрыть его.");
         ru.put("To sign in, focus the ", "Чтобы войти, выберите ");
         ru.put("Top shelf, 6-column app grid and custom wallpapers", "Верхняя карусель, сетка приложений на 6 столбцов и свои обои");
