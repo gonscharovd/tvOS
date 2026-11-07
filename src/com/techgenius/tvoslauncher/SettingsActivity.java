@@ -1755,10 +1755,9 @@ public class SettingsActivity extends Activity {
 
     private String permissionsSummaryCount() {
         int granted = 0;
-        int total = 4;
+        int total = 3;
         if (Perms.isDefaultHome(this)) granted++;
         if (ButtonMapper.isServiceEnabled(this)) granted++;
-        if (Perms.hasListener(this)) granted++;
         if (Perms.hasLocation(this)) granted++;
         return granted + " / " + total + " " + tr("active", "etkin");
     }
