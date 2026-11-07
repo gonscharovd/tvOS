@@ -56,7 +56,8 @@ public class SettingsActivity extends Activity {
             LANGUAGE = "Language",
             LOCATION = "Location",
             WEATHER = "Weather",
-            LOOK_SCENES = "Look and scenes",
+            LOOK_SCENES = "Appearance and clock",
+            CONTROL_PANEL = "Control panel",
             APPS = "Apps",
             PROFILES = "Profiles",
             BUTTON_MAPPER = "Button mapper",
@@ -71,13 +72,14 @@ public class SettingsActivity extends Activity {
             PERMS = "Permissions";
 
     private static final String[][] SIDEBAR_SECTIONS = {
+        {HOME, "house"},
         {LOOK_SCENES, "scene"},
         {WEATHER, "cloud"},
+        {CONTROL_PANEL, "controls"},
         {APPS, "apps"},
-        {BUTTON_MAPPER, "remote"},
-        {ADVANCED, "shield"},
         {UPDATES, "update"},
-        {ABOUT, "info"}
+        {ABOUT, "info"},
+        {ADVANCED, "shield"}
     };
 
     private TextView sideTitleView;
@@ -124,7 +126,7 @@ public class SettingsActivity extends Activity {
         }
     };
 
-    private String currentSection = LOOK_SCENES;
+    private String currentSection = HOME;
 
     @Override
     public void onTrimMemory(int level) {
@@ -167,29 +169,31 @@ public class SettingsActivity extends Activity {
     private int cytManualPage = 0;
 
     private String resolvePageExtra(String pg) {
-        if (pg == null || pg.isEmpty()) return LOOK_SCENES;
-        if (INPUTS.equals(pg) || "cp".equalsIgnoreCase(pg) || "control_panel".equalsIgnoreCase(pg)) {
-            return QUICK;
+        if (pg == null || pg.isEmpty()) return HOME;
+        if (INPUTS.equals(pg) || CONTROL_PANEL.equals(pg) || "cp".equalsIgnoreCase(pg) || "control_panel".equalsIgnoreCase(pg)) {
+            return CONTROL_PANEL;
         } else if (LOCATION.equals(pg) || WEATHER.equals(pg) || "weather".equalsIgnoreCase(pg)) {
             return WEATHER;
-        } else if (SHELF.equals(pg) || WATCHING.equals(pg) || HOME.equals(pg) || PERMS.equals(pg) || "quick".equalsIgnoreCase(pg)) {
-            return QUICK;
-        } else if ("look".equalsIgnoreCase(pg) || "scenes".equalsIgnoreCase(pg)) {
+        } else if (PERMS.equals(pg)) {
+            return ADVANCED;
+        } else if (SHELF.equals(pg) || WATCHING.equals(pg) || HOME.equals(pg)
+                || QUICK.equals(pg) || "quick".equalsIgnoreCase(pg)) {
+            return HOME;
+        } else if (LOOK_SCENES.equals(pg) || "Look and scenes".equalsIgnoreCase(pg)
+                || "look".equalsIgnoreCase(pg) || "scenes".equalsIgnoreCase(pg) || "language".equalsIgnoreCase(pg)) {
             return LOOK_SCENES;
-        } else if ("bm".equalsIgnoreCase(pg) || "button_mapper".equalsIgnoreCase(pg)) {
-            return BUTTON_MAPPER;
+        } else if ("bm".equalsIgnoreCase(pg) || "button_mapper".equalsIgnoreCase(pg) || BUTTON_MAPPER.equals(pg)) {
+            return ADVANCED;
         } else if ("advanced".equalsIgnoreCase(pg)) {
             return ADVANCED;
         } else if ("updates".equalsIgnoreCase(pg)) {
             return UPDATES;
-        } else if ("about".equalsIgnoreCase(pg)) {
+        } else if ("about".equalsIgnoreCase(pg) || "information".equalsIgnoreCase(pg)) {
             return ABOUT;
         } else if ("apps".equalsIgnoreCase(pg)) {
             return APPS;
-        } else if ("profiles".equalsIgnoreCase(pg) || "people".equalsIgnoreCase(pg)) {
-            return PROFILES;
-        } else if ("language".equalsIgnoreCase(pg)) {
-            return LANGUAGE;
+        } else if ("profiles".equalsIgnoreCase(pg) || "people".equalsIgnoreCase(pg) || PROFILES.equals(pg)) {
+            return HOME;
         }
         return pg;
     }
@@ -260,17 +264,19 @@ public class SettingsActivity extends Activity {
 
     private String sectionTitle(String sec) {
         switch (sec) {
-            case LOOK_SCENES: return tr("Appearance and scenes", "Görünüm ve sahneler");
+            case HOME: return tr("Main screen", "Ana ekran");
+            case LOOK_SCENES: return tr("Appearance and clock", "Görünüm ve saat");
             case LOCATION:
-            case WEATHER: return tr("Weather and location", "Hava durumu ve konum");
+            case WEATHER: return tr("Weather", "Hava durumu");
+            case CONTROL_PANEL: return tr("Control panel", "Denetim paneli");
             case APPS: return tr("Apps", "Uygulamalar");
             case PROFILES: return tr("People", "Kişiler");
             case BUTTON_MAPPER: return tr("Remote control", "Пульт и кнопки");
             case QUICK: return tr("Quick settings", "Hızlı ayarlar");
             case LANGUAGE: return tr("Language", "Dil");
-            case ADVANCED: return tr("Advanced", "Gelişmiş");
+            case ADVANCED: return tr("Advanced settings", "Gelişmiş ayarlar");
             case UPDATES: return tr("Updates", "Güncellemeler");
-            case ABOUT: return tr("About", "Hakkında");
+            case ABOUT: return tr("Information", "Bilgi");
             default: return sec;
         }
     }
@@ -822,12 +828,19 @@ public class SettingsActivity extends Activity {
                     case LANGUAGE:
                         pageLanguage();
                         break;
+                    case HOME:
+                    case QUICK:
+                        pageMainScreen();
+                        break;
                     case LOCATION:
                     case WEATHER:
                         pageWeather();
                         break;
                     case LOOK_SCENES:
                         pageLookAndScenes();
+                        break;
+                    case CONTROL_PANEL:
+                        pageControlPanel();
                         break;
                     case APPS:
                         pageApps();
@@ -837,9 +850,6 @@ public class SettingsActivity extends Activity {
                         break;
                     case BUTTON_MAPPER:
                         pageButtonMapper();
-                        break;
-                    case QUICK:
-                        pageQuickAndHome();
                         break;
                     case ADVANCED:
                         pageAdvanced();
@@ -885,11 +895,11 @@ public class SettingsActivity extends Activity {
                     () -> {
                         I18n.setLang(this, code);
                         updateSidebarTranslations();
-                        selectSection(LANGUAGE, true, idx);
+                        selectSection(LOOK_SCENES, true, 0);
                     });
         }
-        infoNote(tr("Changes the words on the home screen, date, weather and settings.",
-                "Ana ekrandaki, tarihteki, hava durumundaki ve ayarlardaki dili değiştirir."));
+        infoNote(tr("Changes the language used on the home screen, date, weather and settings.",
+                "Ana ekran, tarih, hava durumu ve ayarlarda kullanılan dili değiştirir."));
     }
 
     void pageWeather() {
@@ -957,6 +967,9 @@ public class SettingsActivity extends Activity {
      * - CLASSIC BACKGROUND: Couch-TV photos & ambient themes
      */
     void pageLookAndScenes() {
+        section(tr("LANGUAGE", "DİL"));
+        pageLanguage();
+
         boolean scenesLook = Scenes.isScenesLook(this);
         if (scenesLook) {
             section(tr("DOCK", "DOCK"));
@@ -1082,21 +1095,7 @@ public class SettingsActivity extends Activity {
                             .apply();
                     showStatusMsg(tr("App layout reset to default.", "Uygulama düzeni varsayılana sıfırlandı."));
                 });
-        row(tr("Home screen weather shortcut", "Ana ekranda hava durumu kısayolu"),
-                () -> SceneHome.isWeatherShortcutEnabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
-                () -> {
-                    boolean next = !SceneHome.isWeatherShortcutEnabled(this);
-                    SceneHome.setWeatherShortcutEnabled(this, next);
-                    refreshAll();
-                });
-        row(tr("Classic Top Shelf suggestions", "Klasik Üst Raf önerileri"), () -> {
-            switch (Suggestions.shelf(this)) {
-                case Suggestions.SHELF_RECS: return tr("Recommendations", "Öneriler");
-                case Suggestions.SHELF_NEWS: return tr("News", "Haberler");
-                case Suggestions.SHELF_NONE: return tr("Off", "Kapalı");
-                default: return tr("Recommendations & News", "Öneriler ve Haberler");
-            }
-        }, () -> openSubMenu("top_shelf"));
+
         row(tr("Manage system apps in TV settings…", "TV ayarlarında uygulamaları yönet…"),
                 () -> "›",
                 () -> Suggestions.start(this, new Intent(Settings.ACTION_APPLICATION_SETTINGS)));
@@ -1302,7 +1301,7 @@ public class SettingsActivity extends Activity {
     }
 
     void pageProfiles() {
-        section(tr("PEOPLE", "KİŞİLER"));
+        section(tr("PEOPLE & PROFILES", "KİŞİLER VE PROFİLLER"));
         List<Profiles.Profile> ps = Profiles.list(this);
         String curId = Profiles.current(this).id;
         for (int i = 0; i < ps.size(); i++) {
@@ -1365,7 +1364,7 @@ public class SettingsActivity extends Activity {
                     String n = in.getText().toString().trim();
                     if (!n.isEmpty()) {
                         Profiles.add(this, n);
-                        selectSection(PROFILES, true, Profiles.list(this).size() - 1);
+                        selectSection(HOME, true, 6 + Profiles.list(this).size() - 1);
                     }
                 })
                 .setNegativeButton(tr("Cancel", "İptal"), null)
@@ -1451,14 +1450,29 @@ public class SettingsActivity extends Activity {
                 "Для каждой кнопки пульта можно назначить действия на одно, два или три нажатия: открыть панель управления, список недавних приложений или любое установленное приложение."));
     }
 
-    void pageQuickAndHome() {
-        section(tr("HOME & PERMISSIONS", "ANA EKRAN VE İZİNLER"));
+    void pageMainScreen() {
+        section(tr("HOME SCREEN", "ANA EKRAN"));
         row(tr("Default home screen", "Varsayılan ana ekran"),
                 () -> Perms.isDefaultHome(this) ? tr("Active", "Etkin") : tr("Set as default…", "Varsayılan yap…"),
                 () -> Perms.requestDefaultHome(this));
         row(tr("Navigation click sounds", "Gezinme tıklama sesleri"),
                 () -> Clicks.enabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
                 () -> Clicks.setEnabled(this, !Clicks.enabled(this)));
+        row(tr("Home screen weather shortcut", "Ana ekranda hava durumu kısayolu"),
+                () -> SceneHome.isWeatherShortcutEnabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
+                () -> {
+                    boolean next = !SceneHome.isWeatherShortcutEnabled(this);
+                    SceneHome.setWeatherShortcutEnabled(this, next);
+                    refreshAll();
+                });
+        row(tr("Classic Top Shelf suggestions", "Klasik Üst Raf önerileri"), () -> {
+            switch (Suggestions.shelf(this)) {
+                case Suggestions.SHELF_RECS: return tr("Recommendations", "Öneriler");
+                case Suggestions.SHELF_NEWS: return tr("News", "Haberler");
+                case Suggestions.SHELF_NONE: return tr("Off", "Kapalı");
+                default: return tr("Recommendations & News", "Öneriler ve Haberler");
+            }
+        }, () -> openSubMenu("top_shelf"));
 
         row(tr("Run first-time setup again…", "İlk kurulumu tekrar çalıştır…"),
                 () -> "›",
@@ -1470,13 +1484,39 @@ public class SettingsActivity extends Activity {
                 () -> "›",
                 () -> Suggestions.start(this, new Intent(Settings.ACTION_SETTINGS)));
 
-        section(tr("BACKUP & RESTORE", "YEDEKLEME VE GERİ YÜKLEME"));
-        row(tr("Backup settings to Download", "Ayarları Download klasörüne yedekle"),
-                () -> "Download/" + CustomMedia.SETTINGS_BACKUP_FILENAME,
-                () -> CustomMedia.backupSettingsToDownload(this, this::refreshAll));
-        row(tr("Restore settings from folder…", "Klasörden ayarları geri yükle…"),
-                () -> tr("Choose folder ›", "Klasör seç ›"),
-                () -> CustomMedia.showRestoreSettingsPicker(this, this::refreshAll));
+        pageProfiles();
+    }
+
+    void pageControlPanel() {
+        section(tr("CONTROL PANEL ACTIONS", "DENETİM PANELİ EYLEMLERİ"));
+        String[] actions = {
+                ControlPanelOverlay.ACTION_WIFI,
+                ControlPanelOverlay.ACTION_BLUETOOTH,
+                ControlPanelOverlay.ACTION_SOUND,
+                ControlPanelOverlay.ACTION_INPUTS,
+                ControlPanelOverlay.ACTION_AMBIENT
+        };
+        for (String action : actions) {
+            final String actionKey = action;
+            twoLineRow(controlPanelActionTitle(actionKey),
+                    () -> ControlPanelOverlay.getActionSummary(this, actionKey),
+                    () -> openSubMenu("cp_app:" + actionKey));
+        }
+        section(tr("RESET", "SIFIRLA"));
+        row(tr("Reset control panel actions", "Denetim paneli eylemlerini sıfırla"),
+                () -> "",
+                () -> dialog(tr("Reset control panel?", "Denetim paneli sıfırlansın mı?"))
+                        .setMessage(tr("All custom app and activity assignments will be cleared. The built-in actions will be restored.",
+                                "Tüm özel uygulama ve etkinlik atamaları temizlenir. Yerleşik eylemler geri yüklenir."))
+                        .setPositiveButton(tr("Reset", "Sıfırla"), (d, w) -> {
+                            ControlPanelOverlay.clearAllCustomActions(this);
+                            rebuildMainRows();
+                            showStatusMsg(tr("Control panel actions restored to defaults.", "Denetim paneli eylemleri varsayılana döndürüldü."));
+                        })
+                        .setNegativeButton(tr("Cancel", "İptal"), null)
+                        .show());
+        infoNote(tr("Choose which app or activity opens from each Control Panel tile. Leave an action on Default to use the TV's built-in settings.",
+                "Denetim Paneli kutucuklarından hangi uygulamanın veya etkinliğin açılacağını seçin. TV'nin yerleşik ayarlarını kullanmak için Varsayılan seçeneğini bırakın."));
     }
 
     void pageAdvanced() {
@@ -1484,17 +1524,11 @@ public class SettingsActivity extends Activity {
         twoLineRow(tr("ADB operating mode", "ADB çalışma modu"),
                 () -> LocalAdb.getAdbModeLabel(this),
                 this::showAdbModeSelectorDialog);
-        row(tr("ADB connection status", "ADB bağlantı durumu"),
-                () -> LocalAdb.getStatusLabel(this),
-                this::pairOrRepairAdb);
         row(tr("Turn On / Off ADB", "ADB'yi Aç / Kapat"),
                 () -> (LocalAdb.isAdbSettingEnabled(this) || LocalAdb.portReachable)
                         ? tr("On", "Açık")
                         : tr("Off", "Kapalı"),
                 this::toggleAdbPort);
-        row(tr("Check permissions", "İzinleri kontrol et"),
-                this::permissionsSummaryCount,
-                () -> openSubMenu("check_permissions"));
         row(tr("Remove / revoke all permissions", "Tüm izinleri kaldır / geri al"),
                 () -> tr("Revoke ›", "Kaldır ›"),
                 this::confirmRevokeAllPermissions);
@@ -1543,6 +1577,25 @@ public class SettingsActivity extends Activity {
 
         infoNote(tr("CleanYourTV (Beta) runs the CleanYourTV debloat profiles directly on your TV over Local ADB without needing a PC. Choose your TV model (or scan by installed system app packages), disable stock launchers or bloatware, and restore them anytime with one tap.",
                 "CleanYourTV (Beta), bilgisayara ihtiyaç duymadan CleanYourTV debloat profillerini Yerel ADB üzerinden doğrudan TV'nizde çalıştırır. TV modelinizi seçin (veya yüklü sistem uygulaması paketlerine göre tarayın), stok başlatıcıları veya gereksiz uygulamaları devre dışı bırakın ve istediğiniz zaman tek dokunuşla geri yükleyin."));
+        
+        pageButtonMapper();
+
+        section(tr("BACKUP & RESTORE", "YEDEKLEME VE GERİ YÜKLEME"));
+        row(tr("Backup settings to Download", "Ayarları Download klasörüne yedekle"),
+                () -> "Download/" + CustomMedia.SETTINGS_BACKUP_FILENAME,
+                () -> CustomMedia.backupSettingsToDownload(this, this::refreshAll));
+        row(tr("Restore settings from folder…", "Klasörden ayarları geri yükle…"),
+                () -> tr("Choose folder ›", "Klasör seç ›"),
+                () -> CustomMedia.showRestoreSettingsPicker(this, this::refreshAll));
+
+        section(tr("DIAGNOSTICS & RECOVERY", "TANI VE KURTARMA"));
+        row(tr("ADB connection status", "ADB bağlantı durumu"),
+                () -> LocalAdb.getStatusLabel(this),
+                this::pairOrRepairAdb);
+        row(tr("Check permissions", "İzinleri kontrol et"),
+                this::permissionsSummaryCount,
+                () -> openSubMenu("check_permissions"));
+
 
         // Expensive PackageManager scans (launchers, debloat status) run off the UI thread so the
         // page's first frames aren't blocked; rows show "…" until the values arrive.
@@ -1736,14 +1789,6 @@ public class SettingsActivity extends Activity {
         infoRow(tr("Developer", "Geliştirici"), "techgenius", null);
         infoRow(tr("Version", "Sürüm"), version(), null);
         infoRow(tr("Settings kept", "Ayarların saklandığı yer"), tr("On this TV", "Bu TV'de"), null);
-
-        section(tr("BACKUP & RESTORE", "YEDEKLEME VE GERİ YÜKLEME"));
-        row(tr("Backup settings to Download", "Ayarları Download klasörüne yedekle"),
-                () -> "Download/" + CustomMedia.SETTINGS_BACKUP_FILENAME,
-                () -> CustomMedia.backupSettingsToDownload(this, this::refreshAll));
-        row(tr("Restore settings from folder…", "Klasörden ayarları geri yükle…"),
-                () -> tr("Choose folder ›", "Klasör seç ›"),
-                () -> CustomMedia.showRestoreSettingsPicker(this, this::refreshAll));
 
         section(tr("RESET", "SIFIRLAMA"));
         row(tr("Reset settings to defaults", "Ayarları varsayılana sıfırla"),

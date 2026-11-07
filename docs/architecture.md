@@ -39,6 +39,21 @@ source (Nayuki, MIT) under `src/io/nayuki/qrcodegen`.
 | `present/LegacyCss.java`, `Qr.java`, `Net.java` | `@layer` unwrapping for old WebViews, QR bitmaps, LAN URLs |
 | `assets/present/` | Browser admin app (`index.html`, `app.css`, `app.js`) |
 
+## Settings navigation
+
+The Settings sidebar is intentionally limited to eight top-level destinations, in this order:
+
+1. Main screen — default launcher, home-screen behavior, Top Shelf suggestions and viewer profiles.
+2. Appearance and clock — language, scenes, wallpaper, dock appearance and clock options.
+3. Weather — provider, units, refresh interval and location.
+4. Control panel — app/activity targets for Wi-Fi, Bluetooth, Sound, Inputs and Ambient Mode.
+5. Apps — hidden apps, app ordering and per-app Continue Watching options.
+6. Updates — OTA preferences, version check and download progress.
+7. Information — launcher version and reset-to-defaults action.
+8. Advanced settings — CleanYourTV, ADB and permissions, button remapping, backup/restore and diagnostics.
+
+Existing preference keys and feature handlers are retained when moving rows between sections. Legacy settings deep links are mapped to the new destinations so existing entry points continue to work.
+
 ## Design decisions
 
 - **Measure Apple first.** Geometry comes from Apple's tvOS 26 press screenshot scaled to

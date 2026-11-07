@@ -69,6 +69,9 @@ jobs:
       - name: Test artwork memory and Settings cleanup
         run: python3 tests/test_memory_settings_cleanup.py
 
+      - name: Test grouped Settings navigation
+        run: python3 tests/test_settings_navigation.py
+
       - name: Test OTA version comparison
         run: |
           mkdir -p /tmp/tvos-version-tests
