@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds and signs build/testOS.apk with plain SDK tools (no Gradle).
+# Builds and signs build/tvos-home.apk with plain SDK tools (no Gradle).
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -32,23 +32,33 @@ javac -encoding UTF-8 --release 11 -classpath "$JAR" \
 
 "$BT/zipalign" -f 4 build/unsigned.apk build/aligned.apk
 
-# Signing. Release builds: RELEASE_KEYSTORE + RELEASE_KEYSTORE_PASS (the private key lives in the
-# separate, private tvOS-Launcher-signing repo). Development builds: a local debug key, created on
-# first use and never committed (it's in .gitignore).
+# Signing. Release builds use RELEASE_KEYSTORE + RELEASE_KEYSTORE_PASS. Development builds reuse
+# the existing project debug key or the user's standard Android debug key, never a new repo-local key.
 if [ -n "${RELEASE_KEYSTORE:-}" ]; then
     [ -n "${RELEASE_KEYSTORE_PASS:-}" ] || { echo "Set RELEASE_KEYSTORE_PASS for $RELEASE_KEYSTORE" >&2; exit 1; }
     "$BT/apksigner" sign --ks "$RELEASE_KEYSTORE" --ks-pass env:RELEASE_KEYSTORE_PASS \
-        --ks-key-alias "${RELEASE_KEY_ALIAS:-tvos-release}" --out build/testOS.apk build/aligned.apk
+        --ks-key-alias "${RELEASE_KEY_ALIAS:-tvos-release}" --out build/tvos-home.apk build/aligned.apk
     echo "Signed with the release key"
 else
-    KS=debug.keystore
-    if [ ! -f "$KS" ]; then
-        keytool -genkeypair -keystore "$KS" -storepass android -keypass android -alias debug \
+    if [ -n "${DEBUG_KEYSTORE:-}" ]; then
+        KS="$DEBUG_KEYSTORE"
+        DEBUG_ALIAS="${DEBUG_KEY_ALIAS:-debug}"
+    elif [ -f "$PWD/debug.keystore" ]; then
+        KS="$PWD/debug.keystore"
+        DEBUG_ALIAS="${DEBUG_KEY_ALIAS:-debug}"
+    elif [ -f "$HOME/.android/debug.keystore" ]; then
+        KS="$HOME/.android/debug.keystore"
+        DEBUG_ALIAS="${DEBUG_KEY_ALIAS:-androiddebugkey}"
+    else
+        mkdir -p "$HOME/.android"
+        KS="$HOME/.android/debug.keystore"
+        DEBUG_ALIAS="${DEBUG_KEY_ALIAS:-androiddebugkey}"
+        keytool -genkeypair -keystore "$KS" -storepass android -keypass android -alias "$DEBUG_ALIAS" \
             -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=testOS debug" >/dev/null
     fi
     "$BT/apksigner" sign --ks "$KS" --ks-pass pass:android --key-pass pass:android \
-        --out build/testOS.apk build/aligned.apk
-    echo "Signed with the local debug key (development build)"
+        --ks-key-alias "$DEBUG_ALIAS" --out build/tvos-home.apk build/aligned.apk
+    echo "Signed with debug key: $KS (alias: $DEBUG_ALIAS)"
 fi
 
-echo "Built build/testOS.apk"
+echo "Built build/tvos-home.apk"

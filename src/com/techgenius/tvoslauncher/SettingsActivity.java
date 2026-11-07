@@ -3032,7 +3032,7 @@ public class SettingsActivity extends Activity {
             choiceRow(item.appLabel + badge,
                     item.pkg + "  •  " + item.description,
                     !isEnabled,
-                    () -> CleanYourTv.toggleSinglePackage(this, item.pkg, isEnabled, false, () -> {
+                    () -> CleanYourTv.toggleSinglePackage(this, item.pkg, isEnabled, () -> {
                         cytLaunchersSyncedAdb = false;
                         rebuildMainRows();
                     }));
@@ -3152,13 +3152,21 @@ public class SettingsActivity extends Activity {
                                     item.appLabel + " (" + item.pkg + ") TV kumandanız ve Bluetooth bağlantısı için gerekli kritik bir sistem servisidir.\n\nHiçbir koşulda devre dışı bırakılamaz."))
                             .setPositiveButton(tr("OK", "Tamam"), null)
                             .show();
-                } else if (isCurrentlyEnabled && item.optionalChoice) {
-                    dialog(tr("⚠️ Core System Package", "⚠️ Temel Sistem Paketi"))
+                } else if (isCurrentlyEnabled
+                        && (isCritical || !CleanYourTv.isSafeToDisable(this, item.pkg))) {
+                    dialog(tr("🛑 Protected System Package", "🛑 Korunan Sistem Paketi"))
                             .setMessage(tr(
-                                    item.appLabel + " (" + item.pkg + ") is a core system package.\n\nDisabling it may break system settings, TV inputs, or cause instability. Disable anyway?",
-                                    item.appLabel + " (" + item.pkg + ") temel bir sistem paketidir.\n\nDevre dışı bırakmak sistem ayarlarını veya TV girişlerini bozabilir. Yine de devre dışı bırakılsın mı?"))
-                            .setPositiveButton(tr("Disable Anyway", "Yine de Devre Dışı Bırak"), (d, w) -> {
-                                CleanYourTv.toggleSinglePackage(this, item.pkg, true, true, () -> {
+                                    item.appLabel + " (" + item.pkg + ") is protected by testOS because it may be required for Android, TV input, Device Owner, or launcher recovery. It cannot be disabled from Manual Debloat.",
+                                    item.appLabel + " (" + item.pkg + ") Android, TV girişi, Cihaz Sahibi veya başlatıcı kurtarma için gerekli olabileceğinden testOS tarafından korunuyor. Manuel Debloat ile devre dışı bırakılamaz."))
+                            .setPositiveButton(tr("OK", "Tamam"), null)
+                            .show();
+                } else if (isCurrentlyEnabled) {
+                    dialog(tr("Disable System App?", "Sistem Uygulaması Devre Dışı Bırakılsın mı?"))
+                            .setMessage(tr(
+                                    "You are about to disable " + item.appLabel + " (" + item.pkg + ").\n\nThis is a manual operation. It may affect TV features. Continue only if you know what this package does.",
+                                    item.appLabel + " (" + item.pkg + ") paketini devre dışı bırakmak üzeresiniz.\n\nBu manuel bir işlemdir ve TV özelliklerini etkileyebilir. Yalnızca bu paketin ne işe yaradığını biliyorsanız devam edin."))
+                            .setPositiveButton(tr("Disable", "Devre Dışı Bırak"), (d, w) -> {
+                                CleanYourTv.toggleSinglePackage(this, item.pkg, true, () -> {
                                     item.checked = false;
                                     cytCachedEnabledPkgs.remove(item.pkg);
                                     rebuildMainRows();
@@ -3167,13 +3175,9 @@ public class SettingsActivity extends Activity {
                             .setNegativeButton(tr("Cancel", "İptal"), null)
                             .show();
                 } else {
-                    CleanYourTv.toggleSinglePackage(this, item.pkg, isCurrentlyEnabled, true, () -> {
-                        item.checked = !isCurrentlyEnabled;
-                        if (item.checked) {
-                            cytCachedEnabledPkgs.add(item.pkg);
-                        } else {
-                            cytCachedEnabledPkgs.remove(item.pkg);
-                        }
+                    CleanYourTv.toggleSinglePackage(this, item.pkg, false, () -> {
+                        item.checked = true;
+                        cytCachedEnabledPkgs.add(item.pkg);
                         rebuildMainRows();
                     });
                 }

@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - feature/ram-cleaner-happ-vpn
+      - fix/verified-cleanmytv-state
 
 permissions:
   contents: read
@@ -35,18 +36,30 @@ jobs:
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
 
+      - name: Test CleanYourTV core package protection
+        run: python3 tests/test_clean_your_tv_protection.py
+
+      - name: Test OTA version comparison
+        run: |
+          mkdir -p /tmp/tvos-version-tests
+          javac --release 11 -d /tmp/tvos-version-tests src/com/techgenius/tvoslauncher/VersionComparator.java tests/VersionComparatorTest.java
+          java -cp /tmp/tvos-version-tests com.techgenius.tvoslauncher.VersionComparatorTest
+
+      - name: Test cross-platform build contract
+        run: python3 tests/test_build_contract.py
+
       - name: Build and sign development APK
         run: bash build.sh
 
       - name: Verify APK
         run: |
-          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose build/testOS.apk
-          "$ANDROID_HOME/build-tools/34.0.0/aapt" dump badging build/testOS.apk | head -n 5
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose build/tvos-home.apk
+          "$ANDROID_HOME/build-tools/34.0.0/aapt" dump badging build/tvos-home.apk | head -n 5
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: testOS-2.1.2-testOS1
-          path: build/testOS.apk
+          name: testOS-ci-debug
+          path: build/tvos-home.apk
           if-no-files-found: error
           retention-days: 14

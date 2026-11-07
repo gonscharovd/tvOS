@@ -14,10 +14,26 @@
 VERSION_CODE=62 VERSION_NAME=6.9 ./build.sh
 ```
 
-The script compiles resources (`aapt2`), Java (`javac`), dexes (`d8`), aligns and signs. Development
-builds use a local debug key; official releases are signed by the maintainers with a private key.
-Android only installs updates signed with the same key, so switching between a release and a
-development build needs an uninstall first.
+On Windows, pass the same version variables before running PowerShell:
+
+```powershell
+$env:VERSION_CODE = "62"
+$env:VERSION_NAME = "6.9"
+.\build.ps1
+```
+
+Both scripts produce `build/tvos-home.apk` (PowerShell: `build\tvos-home.apk`). They compile resources
+(`aapt2`), Java (`javac`), dexes (`d8`), align and sign.
+
+Development builds reuse an existing project `debug.keystore`; otherwise they use the standard
+user key at `~/.android/debug.keystore` (Windows: `%USERPROFILE%\.android\debug.keystore`). Set
+`DEBUG_KEYSTORE` and `DEBUG_KEY_ALIAS` to override it. Official builds use
+`RELEASE_KEYSTORE`, `RELEASE_KEYSTORE_PASS`, and optionally `RELEASE_KEY_ALIAS`.
+
+Android only permits an in-place update when the APK certificate matches the installed app. Do not
+uninstall the current launcher just to work around a signature mismatch; first verify which key
+signed the installed APK and build with that same key. CI artifacts use a temporary debug key and
+are intended for build verification, not as OTA releases.
 
 ## Install and make it the home screen
 

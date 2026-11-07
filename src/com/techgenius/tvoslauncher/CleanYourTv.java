@@ -69,7 +69,7 @@ public final class CleanYourTv {
      */
     private static final Pattern CORE_RE = Pattern.compile(
             "^(android"
-            + "|com\\.android\\.(systemui|settings|tv\\.settings|providers\\..*|inputmethod\\..*| server\\..*|permissioncontroller|packageinstaller| vending|defcontainer|shell|bluetooth|nfc|se|keychain|certinstaller|externalstorage|location\\.fused|networkstack.*|wifi.*|captiveportallogin|pacprocessor|proxyhandler|statementservice|companiondevicemanager|mms\\.service|mtp|ons|rkpdapp|sdksandbox|sharedstoragebackup|vpndialogs|wallpapercropper|htmlviewer)"
+            + "|com\\.android\\.(systemui|settings|tv\\.settings|providers\\..*|inputmethod\\..*|server(\\..*)?|permissioncontroller|packageinstaller|vending|defcontainer|shell|bluetooth|nfc|se|keychain|certinstaller|externalstorage|location\\.fused|networkstack.*|wifi.*|captiveportallogin|pacprocessor|proxyhandler|statementservice|companiondevicemanager|mms\\.service|mtp|ons|rkpdapp|sdksandbox|sharedstoragebackup|vpndialogs|wallpapercropper|htmlviewer)"
             + "|com\\.google\\.android\\.(gms|gsf|gsf\\.login|packageinstaller|permissioncontroller|ext\\.services|ext\\.shared|networkstack.*|captiveportallogin|webview|trichromelibrary|tv\\.frameworkpackagestubs|modulemetadata|ondevicepersonalization\\.services|federatedcompute|sdksandbox|adservices\\.api)"
             + ")$"
     );
@@ -105,6 +105,9 @@ public final class CleanYourTv {
         NEVER_DISABLE_EXACT.add("com.mi.bluetooth");
         NEVER_DISABLE_EXACT.add("com.xiaomi.mitv.bluetooth");
         NEVER_DISABLE_EXACT.add("com.mitv.bluetooth");
+        // Sber TV: preserve Device Owner and the stock HOME launcher as recovery fallback.
+        NEVER_DISABLE_EXACT.add("ru.sberdevices.SberDevicesServiceSystem");
+        NEVER_DISABLE_EXACT.add("ru.sberdevices.starlauncher");
     }
 
     /** Generic Google / Android bloat packages that appear on almost all TVs (weighted lower in package similarity matching). */
@@ -285,28 +288,20 @@ public final class CleanYourTv {
     }
 
     private static void saveDisabledPackages(Context c, String modelSlug, List<String> newlyDisabled) {
-        LinkedHashSet<String> merged = new LinkedHashSet<>(getSavedDisabledPackages(c));
-        merged.addAll(newlyDisabled);
-        String csv = TextUtils.join(",", merged);
-        prefs(c).edit()
-                .putString(KEY_DISABLED_PKGS, csv)
-                .putString(KEY_DEBLOAT_DONE_MODEL, modelSlug != null ? modelSlug : "")
-                .putLong(KEY_LAST_DEBLOAT_TS, System.currentTimeMillis())
-                .apply();
-
-        // Also persist to a plain text backup file
-        File f = new File(c.getFilesDir(), BACKUP_FILENAME);
-        try (FileOutputStream fos = new FileOutputStream(f, false)) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("# CleanYourTV disabled packages backup\n");
-            sb.append("# Model: ").append(modelSlug).append("\n");
-            for (String pkg : merged) {
-                sb.append(pkg).append("\n");
+        LinkedHashSet<String> verifiedDisabled = new LinkedHashSet<>();
+        for (String pkg : getSavedDisabledPackages(c)) {
+            if (Boolean.FALSE.equals(queryPackageEnabledState(c, pkg))) {
+                verifiedDisabled.add(pkg);
             }
-            fos.write(sb.toString().getBytes(StandardCharsets.UTF_8));
-            fos.flush();
-        } catch (Throwable ignored) {
         }
+        if (newlyDisabled != null) {
+            for (String pkg : newlyDisabled) {
+                if (Boolean.FALSE.equals(queryPackageEnabledState(c, pkg))) {
+                    verifiedDisabled.add(pkg);
+                }
+            }
+        }
+        replaceSavedDisabledPackages(c, modelSlug, new ArrayList<>(verifiedDisabled));
     }
 
     private static void clearSavedDisabledPackages(Context c) {
@@ -322,6 +317,41 @@ public final class CleanYourTv {
     }
 
     /**
+     * Replaces both persisted copies of the disabled-package list. Keeping the text backup
+     * in sync prevents removed entries from reappearing when SharedPreferences becomes empty.
+     */
+    private static void replaceSavedDisabledPackages(Context c, String modelSlug, List<String> packages) {
+        LinkedHashSet<String> unique = new LinkedHashSet<>();
+        if (packages != null) {
+            for (String pkg : packages) {
+                if (pkg != null && !pkg.trim().isEmpty()) unique.add(pkg.trim());
+            }
+        }
+        if (unique.isEmpty()) {
+            clearSavedDisabledPackages(c);
+            return;
+        }
+
+        String slug = modelSlug != null ? modelSlug : "";
+        prefs(c).edit()
+                .putString(KEY_DISABLED_PKGS, TextUtils.join(",", unique))
+                .putString(KEY_DEBLOAT_DONE_MODEL, slug)
+                .putLong(KEY_LAST_DEBLOAT_TS, System.currentTimeMillis())
+                .apply();
+
+        File f = new File(c.getFilesDir(), BACKUP_FILENAME);
+        try (FileOutputStream fos = new FileOutputStream(f, false)) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("# CleanYourTV disabled packages backup\n");
+            sb.append("# Model: ").append(slug).append("\n");
+            for (String pkg : unique) sb.append(pkg).append("\n");
+            fos.write(sb.toString().getBytes(StandardCharsets.UTF_8));
+            fos.flush();
+        } catch (Throwable ignored) {
+        }
+    }
+
+    /**
      * Decides whether debloat is Done or Not done based on the selected TV model
      * and the actual disabled state of packages from that model on the TV.
      */
@@ -332,6 +362,11 @@ public final class CleanYourTv {
         String doneModel = prefs(c).getString(KEY_DEBLOAT_DONE_MODEL, "");
         List<String> saved = getSavedDisabledPackages(c);
         if (slug.equalsIgnoreCase(doneModel) && !saved.isEmpty()) {
+            for (String pkg : saved) {
+                if (!Boolean.FALSE.equals(queryPackageEnabledState(c, pkg))) {
+                    return false;
+                }
+            }
             return true;
         }
 
@@ -946,6 +981,21 @@ public final class CleanYourTv {
         } catch (Throwable ignored) {
         }
         return ai == null || ai.enabled;
+    }
+
+    /**
+     * Returns the current enabled state for an installed package. Null means that the
+     * PackageManager state could not be queried, so callers must not treat it as success.
+     */
+    private static Boolean queryPackageEnabledState(Context c, String pkg) {
+        if (c == null || pkg == null || pkg.isEmpty()) return null;
+        try {
+            PackageManager pm = c.getPackageManager();
+            ApplicationInfo ai = pm.getApplicationInfo(pkg, PackageManager.MATCH_DISABLED_COMPONENTS);
+            return isPackageCurrentlyEnabled(pm, pkg, ai);
+        } catch (Throwable ignored) {
+            return null;
+        }
     }
 
     // ================================================================ UI Flows: Choose TV Model
@@ -1756,10 +1806,10 @@ public final class CleanYourTv {
 
     /**
      * Enables or disables a single package via ADB (used by Manual Debloat and Disable System Launchers).
-     * When {@code allowAnySystemApp} is true (Manual Debloat), allows disabling any package except tvOS Launcher itself.
+     * Hard-protected Android/TV/Sber packages are never disabled, including from Manual Debloat.
      */
     public static void toggleSinglePackage(Activity activity, String pkg, boolean disable,
-                                           boolean allowAnySystemApp, Runnable onDone) {
+                                           Runnable onDone) {
         if (pkg == null || pkg.isEmpty() || pkg.equals(activity.getPackageName())) return;
         String resolvedLabel = resolvePackageLabel(activity, pkg);
         if (disable && isCriticalProtectedService(pkg, resolvedLabel)) {
@@ -1771,7 +1821,7 @@ public final class CleanYourTv {
                     .show();
             return;
         }
-        if (disable && !allowAnySystemApp && !isSafeToDisable(activity, pkg)) {
+        if (disable && !isSafeToDisable(activity, pkg)) {
             dialog(activity, tr(activity, "Protected Core Package", "Korunan Temel Paket"))
                     .setMessage(tr(activity,
                             pkg + " is a protected core system package and cannot be disabled automatically.",
@@ -1801,14 +1851,17 @@ public final class CleanYourTv {
             cmds.add("sync");
 
             boolean connected = LocalAdb.execShellSequential(activity, cmds, null);
-            if (connected) {
+            Boolean enabledNow = connected ? queryPackageEnabledState(activity, pkg) : null;
+            boolean verified = connected && enabledNow != null && enabledNow.booleanValue() == !disable;
+            if (verified) {
                 if (disable) {
                     String slug = getSelectedModelSlug(activity);
                     saveDisabledPackages(activity, slug.isEmpty() ? "manual" : slug, Collections.singletonList(pkg));
                 } else {
                     List<String> remaining = new ArrayList<>(getSavedDisabledPackages(activity));
                     remaining.remove(pkg);
-                    prefs(activity).edit().putString(KEY_DISABLED_PKGS, TextUtils.join(",", remaining)).apply();
+                    String savedModel = prefs(activity).getString(KEY_DEBLOAT_DONE_MODEL, "");
+                    replaceSavedDisabledPackages(activity, savedModel, remaining);
                 }
             }
 
@@ -1823,6 +1876,17 @@ public final class CleanYourTv {
                             .setMessage(tr(activity,
                                     "Could not connect to local ADB on port 5555.\nPlease enable USB / Network Debugging in Developer Options and tap Pair / Repair ADB first.",
                                     "Port 5555 üzerinden yerel ADB'ye bağlanılamadı.\nLütfen Geliştirici Seçenekleri'nden USB / Ağ Hata Ayıklamayı açın ve önce ADB Eşleştir / Onar'a basın."))
+                            .setPositiveButton(tr(activity, "OK", "Tamam"), null)
+                            .show();
+                } else if (!verified) {
+                    dialog(activity, tr(activity, "Package State Not Verified", "Paket Durumu Doğrulanamadı"))
+                            .setMessage(tr(activity,
+                                    "The command was sent, but Android did not confirm that " + pkg
+                                            + (disable ? " is disabled." : " is enabled.")
+                                            + "\nThe restore list was not changed.",
+                                    "Komut gönderildi ancak Android " + pkg
+                                            + " paketinin " + (disable ? "devre dışı" : "etkin")
+                                            + " olduğunu doğrulamadı.\nGeri yükleme listesi değiştirilmedi."))
                             .setPositiveButton(tr(activity, "OK", "Tamam"), null)
                             .show();
                 }
@@ -1856,7 +1920,7 @@ public final class CleanYourTv {
         dialog(activity, tr(activity, "Disable System Launchers", "Sistem Başlatıcılarını Devre Dışı Bırak"))
                 .setItems(labels, (d, which) -> {
                     DebloatItem picked = launchers.get(which);
-                    toggleSinglePackage(activity, picked.pkg, picked.checked, false, onChanged);
+                    toggleSinglePackage(activity, picked.pkg, picked.checked, onChanged);
                 })
                 .setPositiveButton(tr(activity, "Disable All Stock Launchers", "Tüm Stok Başlatıcıları Devre Dışı Bırak"), (d, w) -> {
                     List<String> toDisable = new ArrayList<>();
@@ -2265,24 +2329,24 @@ public final class CleanYourTv {
             boolean connected = LocalAdb.execShellSequential(activity, commands, (idx, total, cmd, output) -> {
                 if (cmd.startsWith("pm disable-user --user 0 ")) {
                     String pkg = cmd.substring("pm disable-user --user 0 ".length()).trim();
-                    if (output != null && (output.contains("disabled-user") || output.contains("new state"))) {
+                    Boolean enabledNow = queryPackageEnabledState(activity, pkg);
+                    if (Boolean.FALSE.equals(enabledNow)) {
                         succeededPkgs.add(pkg);
                     } else {
-                        // Even if output was terse, check PackageManager state
-                        succeededPkgs.add(pkg);
+                        failedPkgs.add(pkg);
                     }
                     activity.runOnUiThread(() -> {
                         if (!activity.isFinishing()) {
                             progress.setMessage(tr(activity,
-                                    "Disabling (" + idx + "/" + (total - 1) + "):\n" + pkg,
-                                    "Devre dışı bırakılıyor (" + idx + "/" + (total - 1) + "):\n" + pkg));
+                                    "Disabling (" + Math.max(1, idx - 1) + "/" + safePkgs.size() + "):\n" + pkg,
+                                    "Devre dışı bırakılıyor (" + Math.max(1, idx - 1) + "/" + safePkgs.size() + "):\n" + pkg));
                         }
                     });
                 }
             });
 
-            if (connected) {
-                saveDisabledPackages(activity, model.slug, safePkgs);
+            if (connected && !succeededPkgs.isEmpty()) {
+                saveDisabledPackages(activity, model.slug, succeededPkgs);
             }
 
             activity.runOnUiThread(() -> {
@@ -2303,15 +2367,24 @@ public final class CleanYourTv {
                     return;
                 }
 
-                dialog(activity, tr(activity, "Debloat Complete", "Debloat Tamamlandı"))
-                        .setMessage(tr(activity,
-                                "Successfully disabled " + safePkgs.size() + " packages for " + model.title + ".\n\n"
-                                + "• Saved disabled app list (" + getSavedDisabledPackages(activity).size() + " apps) for one-tap Restore.\n"
-                                + "• Flushed package state to disk (sync).",
-                                model.title + " için " + safePkgs.size() + " paket başarıyla devre dışı bırakıldı.\n\n"
-                                + "• Tek dokunuşla Geri Yükleme için devre dışı bırakılan uygulama listesi ("
-                                + getSavedDisabledPackages(activity).size() + " uygulama) kaydedildi.\n"
-                                + "• Paket durumu diske yazıldı (sync)."))
+                String resultTitle = failedPkgs.isEmpty()
+                        ? tr(activity, "Debloat Complete", "Debloat Tamamlandı")
+                        : (succeededPkgs.isEmpty()
+                                ? tr(activity, "Debloat Failed", "Debloat Başarısız")
+                                : tr(activity, "Debloat Partially Complete", "Debloat Kısmen Tamamlandı"));
+                String resultMessage = tr(activity,
+                        "Verified disabled: " + succeededPkgs.size() + " of " + safePkgs.size() + " packages for " + model.title + ".\n"
+                                + "Failed or unverified: " + failedPkgs.size() + ".\n"
+                                + "Saved restore list: " + getSavedDisabledPackages(activity).size() + " packages.",
+                        model.title + " için " + safePkgs.size() + " paketten " + succeededPkgs.size()
+                                + " tanesinin devre dışı olduğu doğrulandı.\n"
+                                + "Başarısız veya doğrulanamayan: " + failedPkgs.size() + ".\n"
+                                + "Geri yükleme listesine kaydedilen: " + getSavedDisabledPackages(activity).size() + " paket.");
+                if (!failedPkgs.isEmpty()) {
+                    resultMessage += "\n\n" + TextUtils.join("\n", failedPkgs);
+                }
+                dialog(activity, resultTitle)
+                        .setMessage(resultMessage)
                         .setPositiveButton(tr(activity, "Done", "Tamam"), null)
                         .show();
             });
@@ -2461,34 +2534,36 @@ public final class CleanYourTv {
             }
             commands.add("sync");
 
+            final List<String> enabledPkgs = new ArrayList<>();
+            final List<String> failedPkgs = new ArrayList<>();
             boolean connected = LocalAdb.execShellSequential(activity, commands, (idx, total, cmd, output) -> {
                 if (cmd.startsWith("pm enable --user 0 ")) {
                     String pkg = cmd.substring("pm enable --user 0 ".length()).trim();
+                    Boolean enabledNow = queryPackageEnabledState(activity, pkg);
+                    if (Boolean.TRUE.equals(enabledNow)) enabledPkgs.add(pkg);
+                    else failedPkgs.add(pkg);
                     activity.runOnUiThread(() -> {
                         if (!activity.isFinishing()) {
                             progress.setMessage(tr(activity,
-                                    "Enabling (" + idx + "/" + Math.max(1, total - 1) + "):\n" + pkg,
-                                    "Etkinleştiriliyor (" + idx + "/" + Math.max(1, total - 1) + "):\n" + pkg));
+                                    "Enabling (" + Math.max(1, idx) + "/" + Math.max(1, total - 1) + "):\n" + pkg,
+                                    "Etkinleştiriliyor (" + Math.max(1, idx) + "/" + Math.max(1, total - 1) + "):\n" + pkg));
                         }
                     });
                 }
             });
 
             if (connected) {
-                if (clearRecordOnSuccess) {
+                List<String> remaining = new ArrayList<>(getSavedDisabledPackages(activity));
+                remaining.removeAll(enabledPkgs);
+                if (clearRecordOnSuccess && failedPkgs.isEmpty()) {
                     clearSavedDisabledPackages(activity);
                 } else {
-                    List<String> remaining = new ArrayList<>(getSavedDisabledPackages(activity));
-                    remaining.removeAll(packagesToEnable);
-                    if (remaining.isEmpty()) {
-                        clearSavedDisabledPackages(activity);
-                    } else {
-                        prefs(activity).edit().putString(KEY_DISABLED_PKGS, TextUtils.join(",", remaining)).apply();
-                    }
+                    String savedModel = prefs(activity).getString(KEY_DEBLOAT_DONE_MODEL, "");
+                    replaceSavedDisabledPackages(activity, savedModel, remaining);
                 }
             }
 
-            final int enabledCount = Math.max(0, commands.size() - 1);
+            final int enabledCount = enabledPkgs.size();
             activity.runOnUiThread(() -> {
                 if (activity.isFinishing()) return;
                 try {
@@ -2507,10 +2582,20 @@ public final class CleanYourTv {
                     return;
                 }
 
-                dialog(activity, tr(activity, "Restore Complete", "Geri Yükleme Tamamlandı"))
-                        .setMessage(tr(activity,
-                                "Re-enabled " + enabledCount + " packages on this TV and flushed state to disk (sync).",
-                                "Bu TV'de " + enabledCount + " paket yeniden etkinleştirildi ve durum diske yazıldı (sync)."))
+                String resultTitle = failedPkgs.isEmpty()
+                        ? tr(activity, "Restore Complete", "Geri Yükleme Tamamlandı")
+                        : (enabledPkgs.isEmpty()
+                                ? tr(activity, "Restore Failed", "Geri Yükleme Başarısız")
+                                : tr(activity, "Restore Partially Complete", "Geri Yükleme Kısmen Tamamlandı"));
+                String resultMessage = tr(activity,
+                        "Verified enabled: " + enabledCount + ". Failed or unverified: " + failedPkgs.size()
+                                + ". Remaining in restore list: " + getSavedDisabledPackages(activity).size() + ".",
+                        "Etkin olduğu doğrulanan: " + enabledCount + ". Başarısız veya doğrulanamayan: "
+                                + failedPkgs.size() + ". Geri yükleme listesinde kalan: "
+                                + getSavedDisabledPackages(activity).size() + ".");
+                if (!failedPkgs.isEmpty()) resultMessage += "\n\n" + TextUtils.join("\n", failedPkgs);
+                dialog(activity, resultTitle)
+                        .setMessage(resultMessage)
                         .setPositiveButton(tr(activity, "Done", "Tamam"), null)
                         .show();
             });
