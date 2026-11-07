@@ -1579,6 +1579,101 @@ public final class I18n {
         Map<String, String> map = LANG_MAPS.get(LANG_RU);
         String direct = map != null ? map.get(en) : null;
         if (direct != null) return direct;
+        // Dynamic labels shared by launcher screens and dialogs.
+        if (en.startsWith("You are up to date (v") && en.endsWith(")")) {
+            return "У вас установлена последняя версия (v"
+                    + en.substring("You are up to date (v".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("Changelog — v")) return "Список изменений — v" + en.substring("Changelog — v".length());
+        if (en.startsWith("Downloading update v") && en.endsWith("…")) {
+            return "Загружается обновление v" + en.substring("Downloading update v".length());
+        }
+        if (en.startsWith("RAM ") && en.contains(" used of ")) {
+            int split = en.indexOf(" used of ");
+            return "ОЗУ: " + en.substring("RAM ".length(), split) + " из "
+                    + en.substring(split + " used of ".length());
+        }
+        if (en.startsWith("Closed ") && en.contains(" app")) {
+            int appEnd = en.indexOf(" app");
+            String count = en.substring("Closed ".length(), appEnd);
+            String result = "Закрыто приложений: " + count;
+            int freedAt = en.indexOf(" · freed ", appEnd);
+            if (freedAt >= 0 && en.endsWith(" MB")) {
+                result += " · освобождено " + en.substring(freedAt + " · freed ".length(),
+                        en.length() - " MB".length()) + " МБ";
+            }
+            return result;
+        }
+        if (en.startsWith("Move ") && en.endsWith("  ·  Left/Right, OK when done")) {
+            return "Переместить " + en.substring("Move ".length(),
+                    en.length() - "  ·  Left/Right, OK when done".length())
+                    + " · влево/вправо, OK — готово";
+        }
+        if (en.startsWith("Off in ") && en.endsWith(" min")) {
+            return "Выключение через " + en.substring("Off in ".length(), en.length() - " min".length()) + " мин";
+        }
+        if (en.endsWith(" is not installed on this TV.")) {
+            return "Приложение " + en.substring(0, en.length() - " is not installed on this TV.".length())
+                    + " не установлено на этом телевизоре";
+        }
+        if (en.endsWith(" is not installed on this TV")) {
+            return en.substring(0, en.length() - " is not installed on this TV".length())
+                    + " не установлено на этом телевизоре";
+        }
+        if (en.startsWith("Open in ")) return "Открыть в " + en.substring("Open in ".length());
+        if (en.startsWith("▶  Open in ")) return "▶  Открыть в " + en.substring("▶  Open in ".length());
+        if (en.startsWith("Get ")) return "Скачать " + en.substring("Get ".length());
+        if (en.startsWith("Sign in to ")) return "Войти в " + en.substring("Sign in to ".length());
+        if (en.startsWith("Couldn't reach ") && en.endsWith(". Focus the tile again to retry.")) {
+            return "Не удалось связаться с " + en.substring("Couldn't reach ".length(),
+                    en.length() - ". Focus the tile again to retry.".length())
+                    + ". Чтобы повторить попытку, снова выделите плитку.";
+        }
+        if (en.startsWith("Couldn't reach ")) return "Не удалось связаться с " + en.substring("Couldn't reach ".length());
+        if (en.startsWith("Can't open ")) return "Не удалось открыть " + en.substring("Can't open ".length());
+        if (en.endsWith(" moved to Other Apps")) {
+            return "Перемещено в «Другие приложения»: "
+                    + en.substring(0, en.length() - " moved to Other Apps".length());
+        }
+        if (en.endsWith(" is back on Home")) {
+            return "Возвращено на главный экран: " + en.substring(0, en.length() - " is back on Home".length());
+        }
+        if (en.endsWith(" hidden (Settings > Apps > Hidden apps)")) {
+            return "Скрыто: " + en.substring(0, en.length() - " hidden (Settings > Apps > Hidden apps)".length())
+                    + " (Настройки > Приложения > Скрытые приложения)";
+        }
+        if (en.startsWith("Can't switch to ")) {
+            return "Не удалось переключиться на " + en.substring("Can't switch to ".length());
+        }
+        if (en.startsWith("No image files (") && en.endsWith(") in this folder")) {
+            return "В этой папке нет файлов изображений ("
+                    + en.substring("No image files (".length(), en.length() - ") in this folder".length()) + ")";
+        }
+        if (en.startsWith("Select this folder & shuffle (") && en.endsWith(" images)")) {
+            return "Выбрать эту папку и менять изображения (" + en.substring("Select this folder & shuffle (".length(),
+                    en.length() - " images)".length()) + " изображений)";
+        }
+        if (en.startsWith("Your current tvOS Launcher settings have been saved to:\n\n")) {
+            return "Текущие настройки tvOS Launcher сохранены по адресу:\n\n"
+                    + en.substring("Your current tvOS Launcher settings have been saved to:\n\n".length());
+        }
+        if (en.startsWith("Could not write to Download/") && en.endsWith("Please allow storage access and try again.")) {
+            String detail = en.substring("Could not write to ".length(),
+                    en.length() - "\n\nPlease allow storage access and try again.".length());
+            return "Не удалось записать файл:\n" + detail + "\n\nРазрешите доступ к хранилищу и повторите попытку.";
+        }
+        if (en.startsWith("Restore from Download/")) return "Восстановить из Download/" + en.substring("Restore from Download/".length());
+        if (en.startsWith("Restore from this folder (") && en.endsWith(")")) {
+            return "Восстановить из этой папки (" + en.substring("Restore from this folder (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("Settings were successfully restored from:\n")) {
+            return "Настройки успешно восстановлены из файла:\n"
+                    + en.substring("Settings were successfully restored from:\n".length());
+        }
+        if (en.startsWith("Could not restore settings from:\n")) {
+            return "Не удалось восстановить настройки из файла:\n"
+                    + en.substring("Could not restore settings from:\n".length());
+        }
         // Dynamic SettingsActivity messages. The legacy second argument to tr()
         // is Turkish, so dynamic English expressions must be translated here.
         if (en.endsWith(" restored to Home Screen.")) {
