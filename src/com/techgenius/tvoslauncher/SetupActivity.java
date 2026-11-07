@@ -514,121 +514,47 @@ public class SetupActivity extends Activity {
     }
 
     /** Step 1: Choose Appearance (Night scenes vs Classic). Step 2: Choose Scenes or Classic Background. */
+    /** First-run appearance setup: Night Scenes is the only supported home experience. */
     void look() {
-        boolean scenesMode = Scenes.isScenesLook(this);
-        String curWall = Profiles.homePrefs(this).getString("wallpaper", "photo:tessellated-pavement.jpg");
-        if (lookSubStep == 0) {
-            title(tr("Appearance", "G\u00f6r\u00fcn\u00fcm"));
-            TextView s = subtitle(tr("Choose how you want your Home Screen to look.",
-                    "Ana Ekran\u0131n\u0131z\u0131n nas\u0131l g\u00f6r\u00fcnmesini istedi\u011finizi se\u00e7in."));
-            ((LinearLayout.LayoutParams) s.getLayoutParams()).bottomMargin = u(16);
-            setBackdrop(scenesMode ? "scenes" : curWall);
-            LinearLayout l = list();
-            View scenesRow = option(l, tr("Night scenes", "Gece sahneleri"),
-                    tr("Rotating nature scenes with a glass clock and bottom dock", "Cam saat ve alt dock ile d\u00f6n\u00fc\u015f\u00fcml\u00fc do\u011fa sahneleri"),
-                    scenesMode, () -> {
-                        Scenes.setLook(this, Scenes.LOOK_SCENES);
-                        lookSubStep = 1;
-                        show(index, 1);
-                    });
-            View.OnFocusChangeListener scenesBase = scenesRow.getOnFocusChangeListener();
-            scenesRow.setOnFocusChangeListener((v, has) -> {
-                scenesBase.onFocusChange(v, has);
-                if (has) setBackdrop("scenes");
-            });
-
-            View classicRow = option(l, tr("Classic", "Klasik"),
-                    tr("Top shelf, 6-column app grid and custom wallpapers", "\u00dcst raf, 6 s\u00fctunlu uygulama \u0131zgaras\u0131 ve \u00f6zel duvar ka\u011f\u0131tlar\u0131"),
-                    !scenesMode, () -> {
-                        Scenes.setLook(this, Scenes.LOOK_CLASSIC);
-                        lookSubStep = 2;
-                        show(index, 1);
-                    });
-            View.OnFocusChangeListener classicBase = classicRow.getOnFocusChangeListener();
-            classicRow.setOnFocusChangeListener((v, has) -> {
-                classicBase.onFocusChange(v, has);
-                if (has) setBackdrop(curWall);
-            });
-            if (scenesMode) scenesRow.requestFocus();
-            else classicRow.requestFocus();
-            dots();
-            return;
-        }
-
-        if (lookSubStep == 1) {
-            title(tr("Choose Your Scenes", "Sahnelerinizi Se\u00e7in"));
-            TextView s = subtitle(tr("Choose which scenes take turns behind the glass clock.",
-                    "Cam saatin arkas\u0131nda hangi sahnelerin s\u0131rayla g\u00f6r\u00fcnece\u011fini se\u00e7in."));
-            ((LinearLayout.LayoutParams) s.getLayoutParams()).bottomMargin = u(16);
-            setBackdrop("scene_asset:" + Scenes.ALL[0].bgAsset);
-            LinearLayout l = scrollableList();
-            for (int i = 0; i < Scenes.ALL.length; i++) {
-                final Scenes.Spec spec = Scenes.ALL[i];
-                boolean on = Scenes.isSceneEnabled(this, spec.id);
-                final View[] rowRef = new View[1];
-                View r = option(l, spec.title(this),
-                        on ? tr("Included in rotation", "D\u00f6ng\u00fcye dahil") : tr("Off", "Kapal\u0131"),
-                        on, () -> {
-                            if (Scenes.toggleScene(this, spec.id)) {
-                                boolean nowOn = Scenes.isSceneEnabled(this, spec.id);
-                                if (rowRef[0] instanceof ViewGroup) {
-                                    ViewGroup vg = (ViewGroup) rowRef[0];
-                                    if (vg.getChildCount() >= 2) {
-                                        View texts = vg.getChildAt(0);
-                                        if (texts instanceof ViewGroup && ((ViewGroup) texts).getChildCount() >= 2) {
-                                            TextView d = (TextView) ((ViewGroup) texts).getChildAt(1);
-                                            d.setText(nowOn ? tr("Included in rotation", "D\u00f6ng\u00fcye dahil") : tr("Off", "Kapal\u0131"));
-                                        }
-                                        View tick = vg.getChildAt(1);
-                                        if (tick instanceof TextView) {
-                                            ((TextView) tick).setText(nowOn ? "\u2713" : "");
-                                        }
+        title(tr("Choose Your Scenes", "Sahnelerinizi Seçin"));
+        TextView s = subtitle(tr("Choose which scenes take turns behind the glass clock.",
+                "Cam saatin arkasında hangi sahnelerin sırayla görüneceğini seçin."));
+        ((LinearLayout.LayoutParams) s.getLayoutParams()).bottomMargin = u(16);
+        setBackdrop("scene_asset:" + Scenes.ALL[0].bgAsset);
+        LinearLayout l = scrollableList();
+        for (int i = 0; i < Scenes.ALL.length; i++) {
+            final Scenes.Spec spec = Scenes.ALL[i];
+            boolean on = Scenes.isSceneEnabled(this, spec.id);
+            final View[] rowRef = new View[1];
+            View r = option(l, spec.title(this),
+                    on ? tr("Included in rotation", "Döngüye dahil") : tr("Off", "Kapalı"),
+                    on, () -> {
+                        if (Scenes.toggleScene(this, spec.id)) {
+                            boolean nowOn = Scenes.isSceneEnabled(this, spec.id);
+                            if (rowRef[0] instanceof ViewGroup) {
+                                ViewGroup vg = (ViewGroup) rowRef[0];
+                                if (vg.getChildCount() >= 2) {
+                                    View texts = vg.getChildAt(0);
+                                    if (texts instanceof ViewGroup && ((ViewGroup) texts).getChildCount() >= 2) {
+                                        TextView d = (TextView) ((ViewGroup) texts).getChildAt(1);
+                                        d.setText(nowOn ? tr("Included in rotation", "Döngüye dahil") : tr("Off", "Kapalı"));
                                     }
+                                    View tick = vg.getChildAt(1);
+                                    if (tick instanceof TextView) ((TextView) tick).setText(nowOn ? "✓" : "");
                                 }
                             }
-                        });
-                rowRef[0] = r;
-                View.OnFocusChangeListener base = r.getOnFocusChangeListener();
-                r.setOnFocusChangeListener((v, has) -> {
-                    base.onFocusChange(v, has);
-                    if (has) setBackdrop("scene_asset:" + spec.bgAsset);
-                });
-                if (i == 0) r.requestFocus();
-            }
-            option(l, tr("Continue", "Devam Et"), null, false, () -> {
-                lookSubStep = 0;
-                next();
-            });
-            dots();
-            return;
-        }
-
-        // lookSubStep == 2: Classic Backgrounds
-        title(tr("Choose a Background", "Bir Arka Plan Se\u00e7in"));
-        TextView s = subtitle(tr("Choose a photo or ambient colour theme behind your apps.",
-                "Uygulamalar\u0131n\u0131z\u0131n arkas\u0131nda bir foto\u011fraf veya ortam renk temas\u0131 se\u00e7in."));
-        ((LinearLayout.LayoutParams) s.getLayoutParams()).bottomMargin = u(16);
-        setBackdrop(curWall);
-        LinearLayout l = scrollableList();
-        for (int i = 0; i < MainActivity.WALL_KEYS.length; i++) {
-            String key = MainActivity.WALL_KEYS[i];
-            String name = MainActivity.wallName(this, i);
-            boolean checked = key.equals(curWall);
-            View r = option(l, name,
-                    key.startsWith("photo:") ? tr("Classic photo", "Klasik foto\u011fraf") : tr("Classic look", "Klasik g\u00f6r\u00fcn\u00fcm"),
-                    checked, () -> {
-                        Scenes.setLook(this, Scenes.LOOK_CLASSIC);
-                        Profiles.homePrefs(this).edit().putString("wallpaper", key).apply();
-                        lookSubStep = 0;
-                        next();
+                        }
                     });
+            rowRef[0] = r;
             View.OnFocusChangeListener base = r.getOnFocusChangeListener();
             r.setOnFocusChangeListener((v, has) -> {
                 base.onFocusChange(v, has);
-                if (has) setBackdrop(key);
+                if (has) setBackdrop(spec.bgAsset != null
+                        ? "scene_asset:" + spec.bgAsset : "scenes");
             });
-            if (checked) r.requestFocus();
+            if (i == 0) r.requestFocus();
         }
+        option(l, tr("Continue", "Devam Et"), null, false, this::next);
         dots();
     }
 
