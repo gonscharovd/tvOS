@@ -50,6 +50,9 @@ public final class AppUpdater {
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static volatile boolean checking = false;
     private static volatile boolean downloading = false;
+    private static volatile long downloadBytes = 0L;
+    private static volatile long downloadTotalBytes = -1L;
+    private static volatile String downloadStatus = "";
     private static volatile java.lang.ref.WeakReference<android.app.Dialog> activeUpdateDialogRef;
 
     public interface CheckCallback {
@@ -100,6 +103,25 @@ public final class AppUpdater {
 
     public static boolean isDownloading() {
         return downloading;
+    }
+
+    public static long getDownloadedBytes() {
+        return downloadBytes;
+    }
+
+    public static long getDownloadTotalBytes() {
+        return downloadTotalBytes;
+    }
+
+    /** Returns -1 while the server does not provide a usable content length. */
+    public static int getDownloadProgressPercent() {
+        long total = downloadTotalBytes;
+        if (total <= 0L) return -1;
+        return (int) Math.max(0L, Math.min(100L, downloadBytes * 100L / total));
+    }
+
+    public static String getDownloadStatus() {
+        return downloadStatus;
     }
 
     public static String cleanVersion(String v) {
@@ -527,6 +549,9 @@ public final class AppUpdater {
             Runnable onUiRefresh) {
         if (activity == null || downloading) return;
         downloading = true;
+        downloadBytes = 0L;
+        downloadTotalBytes = -1L;
+        downloadStatus = "Downloading";
         if (onUiRefresh != null) MAIN.post(onUiRefresh);
         final Context appCtx = activity.getApplicationContext();
 
@@ -562,15 +587,19 @@ public final class AppUpdater {
                 if (conn == null || conn.getResponseCode() != 200) {
                     throw new Exception("Download failed");
                 }
+                downloadTotalBytes = conn.getContentLengthLong();
+                downloadBytes = 0L;
                 try (InputStream in = conn.getInputStream();
                      FileOutputStream fos = new FileOutputStream(apkFile)) {
                     byte[] buf = new byte[32768];
                     int r;
                     while ((r = in.read(buf)) > 0) {
                         fos.write(buf, 0, r);
+                        downloadBytes += r;
                     }
                     fos.flush();
                 }
+                downloadStatus = "Download complete";
                 if (!apkFile.exists() || apkFile.length() < 10_000) {
                     throw new Exception("Downloaded APK invalid");
                 }
@@ -606,6 +635,7 @@ public final class AppUpdater {
                 MAIN.post(() -> installWithPackageInstaller(activity, apkFile));
             } catch (Throwable t) {
                 downloading = false;
+                downloadStatus = "Download failed";
                 if (onUiRefresh != null) MAIN.post(onUiRefresh);
                 MAIN.post(() -> Toast.makeText(appCtx,
                         I18n.s(appCtx, "Update download failed.", "Güncelleme indirilemedi."),
