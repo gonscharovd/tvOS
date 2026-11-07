@@ -71,15 +71,13 @@ public class SettingsActivity extends Activity {
             HOME = "Home",
             PERMS = "Permissions";
 
+    // Third column is an optional non-clickable group heading.
     private static final String[][] SIDEBAR_SECTIONS = {
-        {HOME, "house"},
-        {LOOK_SCENES, "scene"},
-        {WEATHER, "cloud"},
-        {CONTROL_PANEL, "controls"},
-        {APPS, "apps"},
-        {UPDATES, "update"},
-        {ABOUT, "info"},
-        {ADVANCED, "shield"}
+        {LOOK_SCENES, "scene", "ВНЕШНИЙ ВИД"},
+        {WEATHER, "cloud", ""},
+        {HOME, "house", "ОСНОВНЫЕ НАСТРОЙКИ"},
+        {ABOUT, "info", "ИНФОРМАЦИЯ"},
+        {ADVANCED, "shield", "РАСШИРЕННЫЕ НАСТРОЙКИ"}
     };
 
     private TextView sideTitleView;
@@ -170,31 +168,17 @@ public class SettingsActivity extends Activity {
 
     private String resolvePageExtra(String pg) {
         if (pg == null || pg.isEmpty()) return HOME;
-        if (INPUTS.equals(pg) || CONTROL_PANEL.equals(pg) || "cp".equalsIgnoreCase(pg) || "control_panel".equalsIgnoreCase(pg)) {
-            return CONTROL_PANEL;
-        } else if (LOCATION.equals(pg) || WEATHER.equals(pg) || "weather".equalsIgnoreCase(pg)) {
-            return WEATHER;
-        } else if (PERMS.equals(pg)) {
-            return ADVANCED;
-        } else if (SHELF.equals(pg) || WATCHING.equals(pg) || HOME.equals(pg)
-                || QUICK.equals(pg) || "quick".equalsIgnoreCase(pg)) {
-            return HOME;
-        } else if (LOOK_SCENES.equals(pg) || "Look and scenes".equalsIgnoreCase(pg)
-                || "look".equalsIgnoreCase(pg) || "scenes".equalsIgnoreCase(pg) || "language".equalsIgnoreCase(pg)) {
-            return LOOK_SCENES;
-        } else if ("bm".equalsIgnoreCase(pg) || "button_mapper".equalsIgnoreCase(pg) || BUTTON_MAPPER.equals(pg)) {
-            return ADVANCED;
-        } else if ("advanced".equalsIgnoreCase(pg)) {
-            return ADVANCED;
-        } else if ("updates".equalsIgnoreCase(pg)) {
-            return UPDATES;
-        } else if ("about".equalsIgnoreCase(pg) || "information".equalsIgnoreCase(pg)) {
-            return ABOUT;
-        } else if ("apps".equalsIgnoreCase(pg)) {
-            return APPS;
-        } else if ("profiles".equalsIgnoreCase(pg) || "people".equalsIgnoreCase(pg) || PROFILES.equals(pg)) {
-            return HOME;
-        }
+        if (INPUTS.equals(pg) || CONTROL_PANEL.equals(pg) || "cp".equalsIgnoreCase(pg)
+                || "control_panel".equalsIgnoreCase(pg) || "apps".equalsIgnoreCase(pg) || APPS.equals(pg)
+                || "profiles".equalsIgnoreCase(pg) || "people".equalsIgnoreCase(pg) || PROFILES.equals(pg)
+                || QUICK.equals(pg) || "quick".equalsIgnoreCase(pg)) return HOME;
+        if (LOCATION.equals(pg) || WEATHER.equals(pg) || "weather".equalsIgnoreCase(pg)) return WEATHER;
+        if (PERMS.equals(pg) || "bm".equalsIgnoreCase(pg) || "button_mapper".equalsIgnoreCase(pg)
+                || BUTTON_MAPPER.equals(pg) || "advanced".equalsIgnoreCase(pg)) return ADVANCED;
+        if (LOOK_SCENES.equals(pg) || "Look and scenes".equalsIgnoreCase(pg) || "look".equalsIgnoreCase(pg)
+                || "scenes".equalsIgnoreCase(pg) || "language".equalsIgnoreCase(pg)) return LOOK_SCENES;
+        if ("updates".equalsIgnoreCase(pg) || UPDATES.equals(pg) || "about".equalsIgnoreCase(pg)
+                || "information".equalsIgnoreCase(pg) || ABOUT.equals(pg)) return ABOUT;
         return pg;
     }
 
@@ -264,19 +248,13 @@ public class SettingsActivity extends Activity {
 
     private String sectionTitle(String sec) {
         switch (sec) {
-            case HOME: return tr("Main screen", "Ana ekran");
-            case LOOK_SCENES: return tr("Appearance and clock", "Görünüm ve saat");
+            case HOME: return "Основные настройки";
+            case LOOK_SCENES: return "Внешний вид и часы";
             case LOCATION:
-            case WEATHER: return tr("Weather", "Hava durumu");
-            case CONTROL_PANEL: return tr("Control panel", "Denetim paneli");
-            case APPS: return tr("Apps", "Uygulamalar");
-            case PROFILES: return tr("People", "Kişiler");
-            case BUTTON_MAPPER: return tr("Remote control", "Пульт и кнопки");
-            case QUICK: return tr("Quick settings", "Hızlı ayarlar");
-            case LANGUAGE: return tr("Language", "Dil");
-            case ADVANCED: return tr("Advanced settings", "Gelişmiş ayarlar");
-            case UPDATES: return tr("Updates", "Güncellemeler");
-            case ABOUT: return tr("Information", "Bilgi");
+            case WEATHER: return "Погода";
+            case ADVANCED: return "Расширенные настройки";
+            case UPDATES:
+            case ABOUT: return "Информация";
             default: return sec;
         }
     }
@@ -533,7 +511,20 @@ public class SettingsActivity extends Activity {
         for (int i = 0; i < SIDEBAR_SECTIONS.length; i++) {
             final String secKey = SIDEBAR_SECTIONS[i][0];
             final String glyphName = SIDEBAR_SECTIONS[i][1];
-
+            if (SIDEBAR_SECTIONS[i].length > 2 && !SIDEBAR_SECTIONS[i][2].isEmpty()) {
+                TextView group = new TextView(this);
+                group.setText(SIDEBAR_SECTIONS[i][2]);
+                group.setTextColor(0x80FFFFFF);
+                group.setTypeface(Ui.font(this, "semibold"));
+                group.setLetterSpacing(0.08f);
+                Ui.textSize(group, 10.5f);
+                LinearLayout.LayoutParams groupLp = new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                groupLp.leftMargin = u(13);
+                groupLp.topMargin = u(i == 0 ? 0 : 13);
+                groupLp.bottomMargin = u(5);
+                sideList.addView(group, groupLp);
+            }
             LinearLayout row = new LinearLayout(this);
             row.setOrientation(LinearLayout.HORIZONTAL);
             row.setGravity(Gravity.CENTER_VERTICAL);
@@ -726,7 +717,7 @@ public class SettingsActivity extends Activity {
         } else if (!inRows) {
             hintView.setText(tr("Up and down to browse, OK to change, Back to close",
                     "Gezinmek için Yukarı ve Aşağı, değiştirmek için OK, kapatmak için Geri"));
-        } else if (APPS.equals(currentSection) && showingHiddenApps) {
+        } else if (HOME.equals(currentSection) && showingHiddenApps) {
             hintView.setText(tr("OK to open  ·  Hold OK to restore  ·  Back to go back",
                     "Açmak için OK  ·  Geri yüklemek için OK'e basılı tutun  ·  Dönmek için Geri"));
         } else if (movableRow) {
@@ -825,9 +816,6 @@ public class SettingsActivity extends Activity {
                 renderSubMenu(activeSubMenu);
             } else {
                 switch (currentSection) {
-                    case LANGUAGE:
-                        pageLanguage();
-                        break;
                     case HOME:
                     case QUICK:
                         pageMainScreen();
@@ -838,18 +826,6 @@ public class SettingsActivity extends Activity {
                         break;
                     case LOOK_SCENES:
                         pageLookAndScenes();
-                        break;
-                    case CONTROL_PANEL:
-                        pageControlPanel();
-                        break;
-                    case APPS:
-                        pageApps();
-                        break;
-                    case PROFILES:
-                        pageProfiles();
-                        break;
-                    case BUTTON_MAPPER:
-                        pageButtonMapper();
                         break;
                     case ADVANCED:
                         pageAdvanced();
@@ -881,80 +857,47 @@ public class SettingsActivity extends Activity {
 
     // ================================================================ Section Pages
 
-    void pageLanguage() {
-        String cur = I18n.getLang(this);
-        for (int i = 0; i < I18n.LANGUAGES.length; i++) {
-            final int idx = i;
-            final String code = I18n.LANGUAGES[i][0];
-            final String title = I18n.LANGUAGES[i][1];
-            final String sub = I18n.LANGUAGES[i][2];
-            choiceRow(
-                    title,
-                    sub,
-                    code.equals(cur),
-                    () -> {
-                        I18n.setLang(this, code);
-                        updateSidebarTranslations();
-                        selectSection(LOOK_SCENES, true, 0);
-                    });
-        }
-        infoNote(tr("Changes the language used on the home screen, date, weather and settings.",
-                "Ana ekran, tarih, hava durumu ve ayarlarda kullanılan dili değiştirir."));
-    }
+
 
     void pageWeather() {
-        section(tr("WEATHER", "HAVA DURUMU"));
-        row(tr("Weather on the home screen", "Ana ekranda hava durumu"),
-                () -> Weather.enabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
-                () -> {
+        section("ПОГОДА");
+        row("Показывать погоду на главном экране",
+                () -> Weather.enabled(this) ? "Включена" : "Выключена", () -> {
                     Weather.prefs(this).edit().putBoolean(Weather.K_ENABLED, !Weather.enabled(this)).apply();
                     Weather.changed(this);
+                    refreshAll();
                 });
-        row(tr("Temperature", "Sıcaklık birimi"), () -> {
-            String u = Weather.prefs(this).getString(Weather.K_UNITS, "c");
-            return u.equals("f") ? "°F (Fahrenheit)" : "°C (Celsius)";
-        }, () -> {
+        row("Кнопка погоды на главном экране",
+                () -> SceneHome.isWeatherShortcutEnabled(this) ? "Включена" : "Выключена", () -> {
+                    boolean next = !SceneHome.isWeatherShortcutEnabled(this);
+                    SceneHome.setWeatherShortcutEnabled(this, next);
+                    refreshAll();
+                });
+        row("Единицы температуры", () -> Weather.prefs(this).getString(Weather.K_UNITS, "c").equals("f")
+                ? "°F (Фаренгейт)" : "°C (Цельсий)", () -> {
             String cur = Weather.prefs(this).getString(Weather.K_UNITS, "c");
-            String next = "f".equals(cur) ? "c" : "f";
-            Weather.prefs(this).edit().putString(Weather.K_UNITS, next).apply();
+            Weather.prefs(this).edit().putString(Weather.K_UNITS, "f".equals(cur) ? "c" : "f").apply();
             Weather.changed(this);
+            refreshAll();
         });
-        row(tr("Update every", "Güncelleme sıklığı"),
-                () -> Weather.refreshMinutes(this) + tr(" minutes", " dakika"),
-                () -> {
-                    int cur = Weather.refreshMinutes(this);
-                    int next = cur == 15 ? 30 : cur == 30 ? 60 : 15;
-                    Weather.prefs(this).edit().putInt(Weather.K_REFRESH, next).apply();
-                });
-        row(tr("Weather source", "Hava durumu kaynağı"),
-                () -> Weather.sourceName(Weather.source(this)),
-                () -> openSubMenu("weather_source"));
-        infoRow(tr("Weather from", "Hava durumu sağlayıcısı"),
-                "Open-Meteo",
-                tr("Free forecast service, no account needed", "Ücretsiz hava tahmini servisi, hesap gerekmez"));
-
-        section(tr("LOCATION", "KONUM"));
+        row("Обновлять каждые", () -> Weather.refreshMinutes(this) + " мин.", () -> {
+            int cur = Weather.refreshMinutes(this);
+            Weather.prefs(this).edit().putInt(Weather.K_REFRESH, cur == 15 ? 30 : cur == 30 ? 60 : 15).apply();
+        });
+        row("Источник погоды", () -> Weather.sourceName(Weather.source(this)), () -> openSubMenu("weather_source"));
+        infoRow("Поставщик прогноза", "Open-Meteo", "Бесплатный сервис, аккаунт не нужен");
+        section("МЕСТОПОЛОЖЕНИЕ");
         String city = Weather.place(this);
         boolean isManual = Weather.manual(this);
-        infoRow(tr("Current place", "Geçerli konum"),
-                city.isEmpty() ? tr("Automatic (from internet)", "Otomatik (internetten)") : city,
-                isManual ? tr("Set manually", "Elle ayarlandı") : tr("Detected automatically", "Otomatik algılandı"));
-
-        row(tr("Search for a city or town…", "Şehir veya ilçe ara…"),
-                () -> isManual ? city : "›",
-                this::searchCity);
-
-        if (isManual) {
-            row(tr("Use automatic location", "Otomatik konumu kullan"), () -> "", () -> {
-                Weather.setPlace(this, null);
-                Weather.refresh(this, true, this::rebuildMainRows);
-                rebuildMainRows();
-                focusRowAtIndex(4);
-            });
-        }
-
-        infoNote(tr("Used for the weather on the home screen and local headlines.",
-                "Ana ekrandaki hava durumu ve yerel haberler için kullanılır."));
+        infoRow("Текущий город", city.isEmpty() ? "Автоматически" : city,
+                isManual ? "Указан вручную" : "Определён автоматически");
+        row("Найти город…", () -> isManual ? city : "›", this::searchCity);
+        if (isManual) row("Использовать автоматическое определение", () -> "", () -> {
+            Weather.setPlace(this, null);
+            Weather.refresh(this, true, this::rebuildMainRows);
+            rebuildMainRows();
+            focusRowAtIndex(4);
+        });
     }
 
     /**
@@ -967,89 +910,54 @@ public class SettingsActivity extends Activity {
      * - CLASSIC BACKGROUND: Couch-TV photos & ambient themes
      */
     void pageLookAndScenes() {
-        section(tr("LANGUAGE", "DİL"));
-        pageLanguage();
-
         boolean scenesLook = Scenes.isScenesLook(this);
         if (scenesLook) {
-            section(tr("DOCK", "DOCK"));
-            row(tr("Dock size", "Dock boyutu"),
-                    () -> Scenes.dockScaleLabel(this),
-                    () -> openSubMenu("dock_size"));
-            row(tr("Show app names", "Uygulama adlarını göster"),
-                    () -> Scenes.isDockNamesShown(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
-                    () -> {
-                        Scenes.setDockNamesShown(this, !Scenes.isDockNamesShown(this));
-                        refreshAll();
-                    });
+            section("ПАНЕЛЬ ПРИЛОЖЕНИЙ");
+            row("Размер панели приложений", () -> Scenes.dockScaleLabel(this), () -> openSubMenu("dock_size"));
+            row("Показывать названия приложений",
+                    () -> Scenes.isDockNamesShown(this) ? "Включены" : "Выключены", () -> {
+                Scenes.setDockNamesShown(this, !Scenes.isDockNamesShown(this));
+                refreshAll();
+            });
         }
-
-        section(tr("LOOK", "GÖRÜNÜM"));
-        choiceRow(
-                tr("Night scenes", "Gece sahneleri"),
-                tr("A big glass clock, scenes taking turns", "Büyük cam saat, sırayla değişen sahneler"),
-                scenesLook,
-                () -> {
-                    Scenes.setLook(this, Scenes.LOOK_SCENES);
-                    selectSection(LOOK_SCENES, true, 1);
-                });
-        choiceRow(
-                tr("Classic", "Klasik"),
-                tr("One photo and a grid of app banners", "Tek fotoğraf ve uygulama afişleri ızgarası"),
-                !scenesLook,
-                () -> {
-                    Scenes.setLook(this, Scenes.LOOK_CLASSIC);
-                    selectSection(LOOK_SCENES, true, 1);
-                });
-
-        section(tr("SCENES", "SAHNELER"));
+        section("РЕЖИМ ОТОБРАЖЕНИЯ");
+        choiceRow("Ночные сцены", "Природные сцены, стеклянные часы и нижняя панель", scenesLook, () -> {
+            Scenes.setLook(this, Scenes.LOOK_SCENES);
+            selectSection(LOOK_SCENES, true, 0);
+        });
+        choiceRow("Классический", "Обои и сетка приложений", !scenesLook, () -> {
+            Scenes.setLook(this, Scenes.LOOK_CLASSIC);
+            selectSection(LOOK_SCENES, true, 0);
+        });
+        section("СЦЕНЫ");
         List<String> order = Scenes.getSceneOrder(this);
         for (int i = 0; i < order.size(); i++) {
             String id = order.get(i);
-            if (Scenes.isCustomId(id)) continue;
-            final int sceneIdx = i;
-            Scenes.Spec spec = Scenes.byId(id);
-            sceneCheckRow(spec, sceneIdx, order);
+            if (!Scenes.isCustomId(id)) sceneCheckRow(Scenes.byId(id), i, order);
         }
         for (int slot = 1; slot <= Scenes.MAX_CUSTOM_SCENES; slot++) {
             customSceneRow(slot);
-            if (!Scenes.isSceneEnabled(this, Scenes.customId(slot))) {
-                break;
-            }
+            if (!Scenes.isSceneEnabled(this, Scenes.customId(slot))) break;
         }
         folderShuffleSceneRow();
-
-        if (Scenes.isAnyCustomSceneEnabled(this)) {
-            row(tr("Clock position", "Saat konumu"),
-                    () -> Scenes.customClockPosLabel(this),
-                    () -> {
-                        Scenes.cycleCustomClockPos(this);
-                        refreshAll();
-                    });
-        }
-
-        row(tr("Each scene stays", "Her sahne süresi"),
-                () -> Scenes.getStaySeconds(this) + tr(" seconds", " saniye"),
-                () -> {
-                    Scenes.cycleStaySeconds(this);
+        if (Scenes.isAnyCustomSceneEnabled(this)) row("Положение часов",
+                () -> Scenes.customClockPosLabel(this), () -> {
+                    Scenes.cycleCustomClockPos(this);
                     refreshAll();
                 });
-
-        row(tr("Clock", "Saat"),
-                () -> Scenes.isClock24h(this) ? tr("24 hour", "24 saat") : tr("12 hour", "12 saat"),
-                () -> {
-                    Scenes.setClock24h(this, !Scenes.isClock24h(this));
-                    refreshAll();
-                });
-
-        row(tr("Clock font", "Saat yazı tipi"),
-                () -> Scenes.clockStyleLabel(this),
-                () -> {
-                    Scenes.cycleClockStyle(this);
-                    refreshAll();
-                });
-
-        section(tr("CLASSIC BACKGROUND", "KLASİK ARKA PLAN"));
+        row("Длительность сцены", () -> Scenes.getStaySeconds(this) + " сек.", () -> {
+            Scenes.cycleStaySeconds(this);
+            refreshAll();
+        });
+        row("Формат часов", () -> Scenes.isClock24h(this) ? "24 часа" : "12 часов", () -> {
+            Scenes.setClock24h(this, !Scenes.isClock24h(this));
+            refreshAll();
+        });
+        row("Шрифт часов", () -> Scenes.clockStyleLabel(this), () -> {
+            Scenes.cycleClockStyle(this);
+            refreshAll();
+        });
+        section("КЛАССИЧЕСКИЙ ФОН");
         String curWall = Profiles.homePrefs(this).getString("wallpaper", "photo:tessellated-pavement.jpg");
         for (int i = 0; i < Scenes.CLASSIC_PHOTOS.length; i++) {
             final String photoFile = Scenes.CLASSIC_PHOTOS[i][0];
@@ -1060,7 +968,7 @@ public class SettingsActivity extends Activity {
                 rebuildMainRows();
             });
         }
-        row(tr("Ambient colour themes…", "Ortam renk temaları…"), () -> {
+        row("Цветовые темы…", () -> {
             String k = Profiles.homePrefs(this).getString("wallpaper", "photo:tessellated-pavement.jpg");
             int idx = Arrays.asList(MainActivity.WALL_KEYS).indexOf(k);
             return MainActivity.wallName(this, Math.max(0, idx));
@@ -1074,48 +982,29 @@ public class SettingsActivity extends Activity {
             pageHiddenApps();
             return;
         }
-        row(tr("Hidden apps", "Gizlenen uygulamalar"),
-                () -> {
-                    Set<String> hidden = Profiles.homePrefs(this).getStringSet(MainActivity.PREF_HIDDEN, Collections.emptySet());
-                    int count = hidden != null ? hidden.size() : 0;
-                    return (count > 0 ? count + "  " : "") + "›";
-                },
-                () -> {
-                    showingHiddenApps = true;
-                    rebuildMainRows();
-                    focusFirstRow();
-                });
-        row(tr("Reset app order & unhide all", "Uygulama sırasını sıfırla ve gizlenenleri göster"),
-                () -> "",
-                () -> {
-                    Profiles.homePrefs(this).edit()
-                            .remove(MainActivity.PREF_ORDER)
-                            .remove(MainActivity.PREF_OTHER)
-                            .remove(MainActivity.PREF_HIDDEN)
-                            .apply();
-                    showStatusMsg(tr("App layout reset to default.", "Uygulama düzeni varsayılana sıfırlandı."));
-                });
-
-        row(tr("Manage system apps in TV settings…", "TV ayarlarında uygulamaları yönet…"),
-                () -> "›",
+        section("ПРИЛОЖЕНИЯ");
+        row("Скрытые приложения", () -> {
+            Set<String> hidden = Profiles.homePrefs(this).getStringSet(MainActivity.PREF_HIDDEN, Collections.emptySet());
+            int count = hidden != null ? hidden.size() : 0;
+            return (count > 0 ? count + "  " : "") + "›";
+        }, () -> {
+            showingHiddenApps = true;
+            rebuildMainRows();
+            focusFirstRow();
+        });
+        row("Сбросить порядок приложений", () -> "›", () ->
+                dialog("Сбросить порядок приложений?")
+                        .setMessage("Порядок приложений будет восстановлен, а скрытые приложения снова появятся на главном экране.")
+                        .setPositiveButton("Сбросить", (d, w) -> {
+                            Profiles.homePrefs(this).edit().remove(MainActivity.PREF_ORDER)
+                                    .remove(MainActivity.PREF_OTHER).remove(MainActivity.PREF_HIDDEN).apply();
+                            showStatusMsg("Порядок приложений сброшен.");
+                            rebuildMainRows();
+                        })
+                        .setNegativeButton("Отмена", null).show());
+        row("Управление приложениями Android TV", () -> "›",
                 () -> Suggestions.start(this, new Intent(Settings.ACTION_APPLICATION_SETTINGS)));
-        infoNote(tr("Tip: Hold OK on any app on the home screen dock to move or hide it.",
-                "İpucu: Ana ekran dock'undaki herhangi bir uygulamayı taşımak veya gizlemek için OK tuşuna basılı tutun."));
-
-        // One section per streaming app with a continue-watching popup on its dock tile.
-        for (WatchCloud cloud : new WatchCloud[]{new NuvioCloud(this), new StremioCloud(this)}) {
-            section(cloud.name().toUpperCase(java.util.Locale.ROOT));
-            row(tr("Continue Watching on dock", "Dock'ta İzlemeye Devam Et"),
-                    () -> cloud.popupEnabled() ? tr("On", "Açık") : tr("Off", "Kapalı"),
-                    () -> {
-                        cloud.setPopupEnabled(!cloud.popupEnabled());
-                        refreshAll();
-                    });
-            row(tr("Account", "Hesap"),
-                    () -> cloud.isSignedIn() ? tr("Signed in · Sign out", "Giriş yapıldı · Çıkış yap")
-                            : tr("Not signed in", "Giriş yapılmadı"),
-                    () -> confirmWatchSignOut(cloud));
-        }
+        infoNote("Чтобы переместить или скрыть приложение, зажмите OK на его значке на главном экране.");
     }
 
     static final class HiddenAppItem {
@@ -1300,30 +1189,7 @@ public class SettingsActivity extends Activity {
         list.addView(r, lp);
     }
 
-    void pageProfiles() {
-        section(tr("PEOPLE & PROFILES", "KİŞİLER VE PROFİLLER"));
-        List<Profiles.Profile> ps = Profiles.list(this);
-        String curId = Profiles.current(this).id;
-        for (int i = 0; i < ps.size(); i++) {
-            final Profiles.Profile p = ps.get(i);
-            boolean isActive = p.id.equals(curId);
-            choiceRow(
-                    I18n.profileName(this, p.name),
-                    isActive ? tr("Watching now · OK to switch or rename", "Şu an izliyor · Değiştirmek veya yeniden adlandırmak için OK")
-                             : tr("OK to switch or edit", "Geçiş yapmak veya düzenlemek için OK"),
-                    isActive,
-                    () -> openSubMenu("profile_actions:" + p.id));
-        }
-        if (Profiles.canAdd(this)) {
-            row(tr("Add a person…", "Kişi ekle…"), () -> "›", this::promptAddPerson);
-        }
-        section(tr("OPTIONS", "SEÇENEKLER"));
-        row(tr("Ask who is watching on wake", "TV açıldığında kimin izlediğini sor"),
-                () -> Profiles.askOnWake(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
-                () -> Profiles.setAskOnWake(this, !Profiles.askOnWake(this)));
-        infoNote(tr("Each person keeps their own Keep Watching row and app order.",
-                "Her kişi kendi İzlemeye Devam Et satırını ve uygulama düzenini korur."));
-    }
+
 
     private void promptRenamePerson(Profiles.Profile p, int rowIdx) {
         android.widget.EditText in = new android.widget.EditText(this);
@@ -1451,75 +1317,35 @@ public class SettingsActivity extends Activity {
     }
 
     void pageMainScreen() {
-        section(tr("HOME SCREEN", "ANA EKRAN"));
-        row(tr("Default home screen", "Varsayılan ana ekran"),
-                () -> Perms.isDefaultHome(this) ? tr("Active", "Etkin") : tr("Set as default…", "Varsayılan yap…"),
-                () -> Perms.requestDefaultHome(this));
-        row(tr("Navigation click sounds", "Gezinme tıklama sesleri"),
-                () -> Clicks.enabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
-                () -> Clicks.setEnabled(this, !Clicks.enabled(this)));
-        row(tr("Home screen weather shortcut", "Ana ekranda hava durumu kısayolu"),
-                () -> SceneHome.isWeatherShortcutEnabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
+        section("ОБЩИЕ");
+        row("Звуки навигации",
+                () -> Clicks.enabled(this) ? "Включены" : "Выключены",
                 () -> {
-                    boolean next = !SceneHome.isWeatherShortcutEnabled(this);
-                    SceneHome.setWeatherShortcutEnabled(this, next);
+                    Clicks.setEnabled(this, !Clicks.enabled(this));
                     refreshAll();
                 });
-        row(tr("Classic Top Shelf suggestions", "Klasik Üst Raf önerileri"), () -> {
-            switch (Suggestions.shelf(this)) {
-                case Suggestions.SHELF_RECS: return tr("Recommendations", "Öneriler");
-                case Suggestions.SHELF_NEWS: return tr("News", "Haberler");
-                case Suggestions.SHELF_NONE: return tr("Off", "Kapalı");
-                default: return tr("Recommendations & News", "Öneriler ve Haberler");
-            }
-        }, () -> openSubMenu("top_shelf"));
-
-        row(tr("Run first-time setup again…", "İlk kurulumu tekrar çalıştır…"),
-                () -> "›",
-                () -> {
-                    getSharedPreferences("setup", MODE_PRIVATE).edit().putInt("cur_step", 0).apply();
-                    startActivity(new Intent(this, SetupActivity.class).putExtra("step", 0));
-                });
-        row(tr("Open Android TV Settings…", "Android TV Ayarlarını Aç…"),
-                () -> "›",
+        row("Повторить первоначальную настройку", () -> "›", () -> {
+            getSharedPreferences("setup", MODE_PRIVATE).edit().putInt("cur_step", 0).apply();
+            startActivity(new Intent(this, SetupActivity.class).putExtra("step", 0));
+        });
+        row("Системные настройки Android TV", () -> "›",
                 () -> Suggestions.start(this, new Intent(Settings.ACTION_SETTINGS)));
-
-        pageProfiles();
+        section("СБРОС");
+        row("Сбросить настройки testOS", () -> "›",
+                () -> dialog("Сбросить настройки?")
+                        .setMessage("Настройки внешнего вида, часов, погоды и приложений будут возвращены к значениям по умолчанию. После сброса откроется первоначальная настройка.")
+                        .setPositiveButton("Сбросить", (d, w) -> resetAllAppDataAndReturnToSetup())
+                        .setNegativeButton("Отмена", null).show());
+        pageApps();
     }
 
-    void pageControlPanel() {
-        section(tr("CONTROL PANEL ACTIONS", "DENETİM PANELİ EYLEMLERİ"));
-        String[] actions = {
-                ControlPanelOverlay.ACTION_WIFI,
-                ControlPanelOverlay.ACTION_BLUETOOTH,
-                ControlPanelOverlay.ACTION_SOUND,
-                ControlPanelOverlay.ACTION_INPUTS,
-                ControlPanelOverlay.ACTION_AMBIENT
-        };
-        for (String action : actions) {
-            final String actionKey = action;
-            twoLineRow(controlPanelActionTitle(actionKey),
-                    () -> ControlPanelOverlay.getActionSummary(this, actionKey),
-                    () -> openSubMenu("cp_app:" + actionKey));
-        }
-        section(tr("RESET", "SIFIRLA"));
-        row(tr("Reset control panel actions", "Denetim paneli eylemlerini sıfırla"),
-                () -> "",
-                () -> dialog(tr("Reset control panel?", "Denetim paneli sıfırlansın mı?"))
-                        .setMessage(tr("All custom app and activity assignments will be cleared. The built-in actions will be restored.",
-                                "Tüm özel uygulama ve etkinlik atamaları temizlenir. Yerleşik eylemler geri yüklenir."))
-                        .setPositiveButton(tr("Reset", "Sıfırla"), (d, w) -> {
-                            ControlPanelOverlay.clearAllCustomActions(this);
-                            rebuildMainRows();
-                            showStatusMsg(tr("Control panel actions restored to defaults.", "Denetim paneli eylemleri varsayılana döndürüldü."));
-                        })
-                        .setNegativeButton(tr("Cancel", "İptal"), null)
-                        .show());
-        infoNote(tr("Choose which app or activity opens from each Control Panel tile. Leave an action on Default to use the TV's built-in settings.",
-                "Denetim Paneli kutucuklarından hangi uygulamanın veya etkinliğin açılacağını seçin. TV'nin yerleşik ayarlarını kullanmak için Varsayılan seçeneğini bırakın."));
-    }
+
 
     void pageAdvanced() {
+        section("ГЛАВНЫЙ ЭКРАН И ПУЛЬТ");
+        row("Выбор лаунчера по умолчанию",
+                () -> Perms.isDefaultHome(this) ? "testOS активен" : "Выбрать лаунчер…",
+                () -> Perms.requestDefaultHome(this));
         section(tr("ADB & SECURITY MODE", "ADB VE GÜVENLİK MODU"));
         twoLineRow(tr("ADB operating mode", "ADB çalışma modu"),
                 () -> LocalAdb.getAdbModeLabel(this),
@@ -1579,14 +1405,6 @@ public class SettingsActivity extends Activity {
                 "CleanYourTV (Beta), bilgisayara ihtiyaç duymadan CleanYourTV debloat profillerini Yerel ADB üzerinden doğrudan TV'nizde çalıştırır. TV modelinizi seçin (veya yüklü sistem uygulaması paketlerine göre tarayın), stok başlatıcıları veya gereksiz uygulamaları devre dışı bırakın ve istediğiniz zaman tek dokunuşla geri yükleyin."));
         
         pageButtonMapper();
-
-        section(tr("BACKUP & RESTORE", "YEDEKLEME VE GERİ YÜKLEME"));
-        row(tr("Backup settings to Download", "Ayarları Download klasörüne yedekle"),
-                () -> "Download/" + CustomMedia.SETTINGS_BACKUP_FILENAME,
-                () -> CustomMedia.backupSettingsToDownload(this, this::refreshAll));
-        row(tr("Restore settings from folder…", "Klasörden ayarları geri yükle…"),
-                () -> tr("Choose folder ›", "Klasör seç ›"),
-                () -> CustomMedia.showRestoreSettingsPicker(this, this::refreshAll));
 
         section(tr("DIAGNOSTICS & RECOVERY", "TANI VE KURTARMA"));
         row(tr("ADB connection status", "ADB bağlantı durumu"),
@@ -1784,51 +1602,25 @@ public class SettingsActivity extends Activity {
     }
 
     void pageAbout() {
-        section(tr("APPLICATION", "UYGULAMA"));
-        infoRow(tr("Home screen", "Ana ekran"), "testOS", null);
-        infoRow(tr("Developer", "Geliştirici"), "techgenius", null);
-        infoRow(tr("Version", "Sürüm"), version(), null);
-        infoRow(tr("Settings kept", "Ayarların saklandığı yer"), tr("On this TV", "Bu TV'de"), null);
-
-        section(tr("RESET", "SIFIRLAMA"));
-        row(tr("Reset settings to defaults", "Ayarları varsayılana sıfırla"),
-                () -> "",
-                () -> new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                        .setTitle(tr("Reset settings?", "Ayarlar sıfırlansın mı?"))
-                        .setMessage(tr("This resets look, scenes, clock and language settings back to defaults.",
-                                "Bu işlem görünüm, sahne, saat ve dil ayarlarını varsayılana sıfırlar."))
-                        .setPositiveButton(tr("Reset", "Sıfırla"), (d, w) -> resetAllAppDataAndReturnToSetup())
-                        .setNegativeButton(tr("Cancel", "İptal"), null)
-                        .show());
+        section("ПРИЛОЖЕНИЕ");
+        infoRow("Название", "testOS", null);
+        infoRow("Разработчик", "gonscharovd", null);
+        infoRow("Версия", version(), null);
+        infoRow("Хранение настроек", "Память телевизора", null);
+        pageUpdates();
+        section("РЕЗЕРВНАЯ КОПИЯ");
+        row("Сохранить настройки в память ТВ",
+                () -> "Download/" + CustomMedia.SETTINGS_BACKUP_FILENAME,
+                () -> CustomMedia.backupSettingsToDownload(this, this::refreshAll));
+        row("Восстановить настройки", () -> "Выбрать файл ›",
+                () -> CustomMedia.showRestoreSettingsPicker(this, this::refreshAll));
     }
 
     /**
      * Signs the dock's continue-watching popup out of Nuvio/Stremio. Only the launcher's session
      * ends; the app itself stays signed in. Signing back in is the QR on the app's dock tile.
      */
-    private void confirmWatchSignOut(WatchCloud cloud) {
-        if (!cloud.isSignedIn()) {
-            showStatusMsg(tr("To sign in, focus the " + cloud.name() + " tile on the Home screen and scan the QR code.",
-                    "Giriş yapmak için Ana ekranda " + cloud.name() + " simgesine gel ve QR kodu tara."));
-            return;
-        }
-        new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(tr("Sign out of " + cloud.name() + "?", cloud.name() + " hesabından çıkılsın mı?"))
-                .setMessage(tr("Continue watching on the dock will stop showing your " + cloud.name()
-                                + " titles. The " + cloud.name() + " app itself stays signed in.",
-                        "Dock'taki izlemeye devam et artık " + cloud.name() + " içeriklerini göstermeyecek. "
-                                + cloud.name() + " uygulamasının kendisinde oturum açık kalır."))
-                .setPositiveButton(tr("Sign out", "Çıkış yap"), (d, w) -> new Thread(() -> {
-                    cloud.signOut();  // tells the server too, so it can take a moment
-                    runOnUiThread(() -> {
-                        if (isFinishing()) return;
-                        refreshAll();
-                        showStatusMsg(tr("Signed out of " + cloud.name() + ".", cloud.name() + " hesabından çıkıldı."));
-                    });
-                }, "watch-sign-out").start())
-                .setNegativeButton(tr("Cancel", "İptal"), null)
-                .show();
-    }
+
 
     private void resetAllAppDataAndReturnToSetup() {
         try {
