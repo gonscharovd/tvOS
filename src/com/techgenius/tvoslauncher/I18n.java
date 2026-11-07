@@ -1456,6 +1456,138 @@ public final class I18n {
         Map<String, String> map = LANG_MAPS.get(LANG_RU);
         String direct = map != null ? map.get(en) : null;
         if (direct != null) return direct;
+        // Dynamic SettingsActivity messages. The legacy second argument to tr()
+        // is Turkish, so dynamic English expressions must be translated here.
+        if (en.endsWith(" restored to Home Screen.")) {
+            return en.substring(0, en.length() - " restored to Home Screen.".length())
+                    + " восстановлено на главном экране.";
+        }
+        if (en.startsWith("To sign in, focus the ") && en.endsWith(" tile on the Home screen and scan the QR code.")) {
+            String app = en.substring("To sign in, focus the ".length(),
+                    en.length() - " tile on the Home screen and scan the QR code.".length());
+            return "Чтобы войти, выделите плитку " + app + " на главном экране и отсканируйте QR-код.";
+        }
+        if (en.startsWith("Sign out of ") && en.endsWith("?")) {
+            String app = en.substring("Sign out of ".length(), en.length() - 1);
+            return "Выйти из аккаунта " + app + "?";
+        }
+        if (en.startsWith("Continue watching on the dock will stop showing your ")) {
+            String prefix = "Continue watching on the dock will stop showing your ";
+            String middle = " titles. The ";
+            String suffix = " app itself stays signed in.";
+            int split = en.indexOf(middle, prefix.length());
+            if (split > prefix.length() && en.endsWith(suffix)) {
+                String app = en.substring(prefix.length(), split);
+                String appAgain = en.substring(split + middle.length(), en.length() - suffix.length());
+                if (app.equals(appAgain)) {
+                    return "Раздел «Продолжить просмотр» на панели больше не будет показывать материалы " + app
+                            + ". В самом приложении " + app + " вход останется выполнен.";
+                }
+            }
+        }
+        if (en.startsWith("Signed out of ") && en.endsWith(".")) {
+            return "Выполнен выход из аккаунта " + en.substring("Signed out of ".length(), en.length() - 1) + ".";
+        }
+        if (en.startsWith("This runs 'settings put global adb_enabled 0'")) {
+            return "Команда 'settings put global adb_enabled 0' будет выполнена через локальный ADB, после чего проверим, закрыт ли порт 5555.\n\n"
+                    + "Если WRITE_SECURE_SETTINGS уже выдано, testOS продолжит восстанавливать специальные возможности непосредственно в приложении — ADB для этого не потребуется.\n\n"
+                    + "Для дополнительной безопасности можно также открыть параметры разработчика и выбрать «Отозвать разрешения на отладку по USB».";
+        }
+        if (en.startsWith("Keep Alive monitors the Accessibility Service and automatically restores it")) {
+            return "Keep Alive следит за службой специальных возможностей и автоматически восстанавливает её, если телевизор отключает её.\n\n"
+                    + "✓ Поскольку этому телевизору выдано WRITE_SECURE_SETTINGS, Keep Alive восстанавливает службу непосредственно в приложении. Сетевой ADB (порт 5555) оставлять включённым не нужно.";
+        }
+        if (en.startsWith("⚠️ Security Warning:")) {
+            return "⚠️ Предупреждение безопасности:\n\n"
+                    + "Keep Alive отслеживает разрешения и восстанавливает их, если телевизор отключает их в фоновом режиме.\n\n"
+                    + "Без WRITE_SECURE_SETTINGS для работы Keep Alive должна оставаться включённой сетевая отладка (ADB на порту 5555) в домашней сети. Для большей безопасности сначала выполните «Подключить / восстановить ADB» в безопасном режиме, чтобы выдать WRITE_SECURE_SETTINGS и закрыть порт 5555.\n\n";
+        }
+        if (en.startsWith("WARNING: Manual Debloat lists ALL system apps installed on your TV.")) {
+            return "ПРЕДУПРЕЖДЕНИЕ: в ручном режиме отображаются ВСЕ системные приложения телевизора.\n\n"
+                    + "• Отключайте пакеты, только если точно знаете их назначение.\n"
+                    + "• Отключение основных служб Android, служб ТВ-входов / тюнера или настроек может нарушить работу HDMI, Wi-Fi, пульта или привести к циклической перезагрузке.\n\n"
+                    + "Продолжить на свой риск?";
+        }
+        if (en.startsWith("Dock size set to ") && en.endsWith("%.")) {
+            return "Размер панели установлен: " + en.substring("Dock size set to ".length());
+        }
+        if (en.startsWith("Removed remap for ") && en.endsWith(".")) {
+            return "Удалено переназначение кнопки " + en.substring("Removed remap for ".length(), en.length() - 1) + ".";
+        }
+        if (en.startsWith("No direct model name match for ") && en.endsWith(" Use Scan Installed System Apps via ADB above to find the closest TV profile.")) {
+            String prefix = "No direct model name match for ";
+            String suffix = " Use Scan Installed System Apps via ADB above to find the closest TV profile.";
+            return "Точное совпадение по названию модели не найдено: "
+                    + en.substring(prefix.length(), en.length() - suffix.length())
+                    + ". Используйте расположенную выше команду «Сканировать системные приложения через ADB», чтобы подобрать ближайший профиль телевизора.";
+        }
+        if (en.startsWith("Selected model: ")) return "Выбрана модель: " + en.substring("Selected model: ".length());
+        if (en.startsWith("CLOSEST MATCHES (") && en.endsWith(" APPS SCANNED)")) {
+            return "БЛИЖАЙШИЕ СОВПАДЕНИЯ (" + en.substring("CLOSEST MATCHES (".length(), en.length() - " APPS SCANNED)".length()) + " ПРИЛОЖЕНИЙ ПРОВЕРЕНО)";
+        }
+        if (en.startsWith("PAGE ") && en.contains(" OF ")) {
+            return en.replace("PAGE ", "СТРАНИЦА ").replace(" OF ", " ИЗ ");
+        }
+        if (en.startsWith("MODELS (") && en.endsWith(")")) {
+            return "МОДЕЛИ (" + en.substring("MODELS (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("Page ") && en.contains(" of ")) {
+            return en.replace("Page ", "Страница ").replace(" of ", " из ");
+        }
+        if (en.startsWith("Checking installed packages over ADB for ") && en.endsWith("…")) {
+            return "Проверяем установленные пакеты через ADB для "
+                    + en.substring("Checking installed packages over ADB for ".length());
+        }
+        if (en.startsWith("None of the packages listed in ") && en.endsWith(" are installed on this TV.")) {
+            return "На этом телевизоре не установлено ни одного пакета из списка модели "
+                    + en.substring("None of the packages listed in ".length(),
+                    en.length() - " are installed on this TV.".length()) + ".";
+        }
+        if (en.startsWith("Disable Selected Packages (") && en.endsWith(")")) {
+            return "Отключить выбранные пакеты (" + en.substring("Disable Selected Packages (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("PACKAGES ON THIS TV (") && en.endsWith(")")) {
+            return "ПАКЕТЫ НА ЭТОМ ТЕЛЕВИЗОРЕ (" + en.substring("PACKAGES ON THIS TV (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("INSTALLED SYSTEM LAUNCHERS ON THIS TV (") && en.endsWith(")")) {
+            return "УСТАНОВЛЕННЫЕ СИСТЕМНЫЕ ЛАУНЧЕРЫ (" + en.substring("INSTALLED SYSTEM LAUNCHERS ON THIS TV (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("All (") && en.endsWith(")")) {
+            return "Все (" + en.substring("All (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("ALL SYSTEM APPS (") && en.endsWith(" — TAP TO DISABLE / ENABLE)")) {
+            return "ВСЕ СИСТЕМНЫЕ ПРИЛОЖЕНИЯ (" + en.substring("ALL SYSTEM APPS (".length(),
+                    en.length() - " — TAP TO DISABLE / ENABLE)".length()) + " — НАЖМИТЕ, ЧТОБЫ ОТКЛЮЧИТЬ / ВКЛЮЧИТЬ)";
+        }
+        if (en.startsWith("Restore All Saved Packages (") && en.endsWith(")")) {
+            return "Восстановить все сохранённые пакеты (" + en.substring("Restore All Saved Packages (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("Restore Saved Disabled Apps (") && en.endsWith(" packages)")) {
+            return "Восстановить сохранённые отключённые приложения ("
+                    + en.substring("Restore Saved Disabled Apps (".length(), en.length() - " packages)".length()) + " пакетов)";
+        }
+        if (en.startsWith("Restore Selected Model Profile (") && en.endsWith(" packages)")) {
+            String value = en.substring("Restore Selected Model Profile (".length(), en.length() - " packages)".length());
+            return "Восстановить профиль выбранной модели (" + value + " пакетов)";
+        }
+        if (en.startsWith("Re-enable all packages in ")) {
+            return "Повторно включить все пакеты профиля " + en.substring("Re-enable all packages in ".length());
+        }
+        if (en.startsWith("Custom ")) return "Своё значение: " + en.substring("Custom ".length());
+        if (en.startsWith("Folder shuffle enabled: ")) {
+            return "Смена изображений из папки включена: " + en.substring("Folder shuffle enabled: ".length());
+        }
+        if (en.startsWith("Lock Screen folder shuffle enabled: ")) {
+            return "Смена изображений из папки для экрана блокировки включена: "
+                    + en.substring("Lock Screen folder shuffle enabled: ".length());
+        }
+        if (en.startsWith("No place found for “") && en.endsWith("”.")) {
+            return "Место «" + en.substring("No place found for “".length(), en.length() - "”. ".length() + 1) + "» не найдено.";
+        }
+        if (en.startsWith("Location set to ") && en.endsWith(".")) {
+            return "Местоположение задано: " + en.substring("Location set to ".length(), en.length() - 1) + ".";
+        }
+        if (en.startsWith("Switch to ")) return "Переключиться на " + en.substring("Switch to ".length());
         if (en.endsWith("% used · Recent Apps")) {
             String num = en.substring(0, en.length() - "% used · Recent Apps".length());
             return num + "% · " + map.getOrDefault("Recent Apps", "Недавние приложения");
