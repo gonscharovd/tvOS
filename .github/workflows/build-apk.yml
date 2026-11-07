@@ -8,6 +8,7 @@ on:
       - fix/verified-cleanmytv-state
       - integration/2.1.63
       - feature/vpn-control-center-row
+      - fix/ota-installer-launch
 
 permissions:
   contents: read
@@ -46,6 +47,9 @@ jobs:
           mkdir -p /tmp/tvos-version-tests
           javac --release 11 -d /tmp/tvos-version-tests src/com/techgenius/tvoslauncher/VersionComparator.java tests/VersionComparatorTest.java
           java -cp /tmp/tvos-version-tests com.techgenius.tvoslauncher.VersionComparatorTest
+
+      - name: Test OTA install flow
+        run: python3 tests/test_ota_install_flow.py
 
       - name: Test cross-platform build contract
         run: python3 tests/test_build_contract.py
