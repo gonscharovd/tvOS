@@ -3770,9 +3770,8 @@ public class MainActivity extends Activity {
     // ---------------------------------------------------------------- Control Center
 
     /**
-     * tvOS 26 Control Center (per Apple's reference): glass tiles under the status row \u2014
-     * a square Power tile, Wi-Fi and Do Not Disturb capsules, Audio and Sleep Timer capsules,
-     * and a row of round shortcuts. Geometry in design units: 141-wide columns, 13 gaps.
+     * Control Center: full-width Wi-Fi, Bluetooth, VPN and Sleep Timer rows,
+     * with paired RAM / Recent Apps and Launcher / TV Settings shortcuts.
      */
     void showControlCenter() {
         ControlPanelOverlay.dismiss();
