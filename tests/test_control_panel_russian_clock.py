@@ -10,7 +10,6 @@ scenes = (ROOT / "Scenes.java").read_text(encoding="utf-8")
 ui = (ROOT / "Ui.java").read_text(encoding="utf-8")
 i18n = (ROOT / "I18n.java").read_text(encoding="utf-8")
 
-# The full-width VPN row must lead to RAM, not skip diagonally to Sleep Timer.
 assert 'layer.setTag("control_panel")' in panel
 assert 'layer.setTag("control_panel")' in main
 assert "moveControlPanelFocus(pickerCells, keyCode)" in main
@@ -20,13 +19,11 @@ assert "case 3: return up ? 2 : right ? 4 : down ? 5 : -1;" in panel
 assert "case 4: return up ? 2 : left ? 3 : down ? 5 : -1;" in panel
 assert "case 5: return up ? 3 : down ? 6 : -1;" in panel
 
-# Existing three styles plus six Android system families.
 for style in ("DUO", "ROUNDED", "TALL", "CLASSIC", "SERIF", "DIGITAL", "CONDENSED", "THIN", "BOLD"):
     assert f"CLOCK_STYLE_{style}" in scenes, f"Missing clock style: {style}"
 for family in ("sans-serif", "serif", "monospace", "sans-serif-condensed", "sans-serif-thin", "sans-serif-black"):
     assert family in ui, f"Missing clock typeface family: {family}"
 
-# Every literal I18n key used by launcher Java screens must exist in the Russian dictionary.
 def unescape_java(value: str) -> str:
     value = value.replace(r"\n", "\n").replace(r"\t", "\t").replace(r'\"', '"').replace(r"\\", "\\")
     return re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), value)
@@ -46,10 +43,9 @@ for source in ROOT.glob("*.java"):
         if tail.startswith("+") or key.startswith(dynamic_prefixes):
             continue
         if key.endswith("% used  ·  Clean"):
-            continue  # translated by I18n.translateOther's numeric suffix handler
+            continue
         if key not in dictionary:
             untranslated.append(f"{source.name}: {key!r}")
 
 assert not untranslated, "Untranslated I18n keys: " + "; ".join(untranslated)
-
 print("Control Panel navigation, clock font choices and Russian localization checks passed.")
