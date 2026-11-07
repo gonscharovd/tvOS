@@ -22,11 +22,11 @@ $env:VERSION_NAME = "6.9"
 .\build.ps1
 ```
 
-Both scripts produce `build/tvos-home.apk` (PowerShell: `build\\tvos-home.apk`). They compile resources
+Both scripts produce `build/tvos-home.apk` (PowerShell: `build\tvos-home.apk`). They compile resources
 (`aapt2`), Java (`javac`), dexes (`d8`), align and sign.
 
 Development builds reuse an existing project `debug.keystore`; otherwise they use the standard
-user key at `~/.android/debug.keystore` (Windows: `%USERPROFILE%\\.android\\debug.keystore`). Set
+user key at `~/.android/debug.keystore` (Windows: `%USERPROFILE%\.android\debug.keystore`). Set
 `DEBUG_KEYSTORE` and `DEBUG_KEY_ALIAS` to override it. Official builds use
 `RELEASE_KEYSTORE`, `RELEASE_KEYSTORE_PASS`, and optionally `RELEASE_KEY_ALIAS`.
 
