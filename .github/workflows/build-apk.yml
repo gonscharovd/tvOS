@@ -1,4 +1,4 @@
-name: Build testOS APK
+name: Build and release testOS APK
 
 on:
   workflow_dispatch:
@@ -8,7 +8,7 @@ on:
       - feature/testos-ui-cleanup
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -36,18 +36,60 @@ jobs:
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
 
-      - name: Build and sign development APK
+      - name: Prepare persistent release signing key
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_KEYSTORE_PASS: ${{ secrets.RELEASE_KEYSTORE_PASS }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          test -n "$RELEASE_KEYSTORE_BASE64" || { echo "Missing RELEASE_KEYSTORE_BASE64 secret" >&2; exit 1; }
+          test -n "$RELEASE_KEYSTORE_PASS" || { echo "Missing RELEASE_KEYSTORE_PASS secret" >&2; exit 1; }
+          test -n "$RELEASE_KEY_ALIAS" || { echo "Missing RELEASE_KEY_ALIAS secret" >&2; exit 1; }
+          printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/tvos-release.jks"
+          test -s "$RUNNER_TEMP/tvos-release.jks"
+          echo "RELEASE_KEYSTORE=$RUNNER_TEMP/tvos-release.jks" >> "$GITHUB_ENV"
+          echo "RELEASE_KEYSTORE_PASS=$RELEASE_KEYSTORE_PASS" >> "$GITHUB_ENV"
+          echo "RELEASE_KEY_ALIAS=$RELEASE_KEY_ALIAS" >> "$GITHUB_ENV"
+
+      - name: Set release version
+        run: |
+          VERSION_CODE=$((15 + GITHUB_RUN_NUMBER))
+          VERSION_NAME="2.1.${GITHUB_RUN_NUMBER}"
+          echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
+          echo "Building testOS $VERSION_NAME (versionCode $VERSION_CODE)"
+
+      - name: Build release APK
         run: bash build.sh
 
-      - name: Verify APK
+      - name: Verify APK signature and package
         run: |
-          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose build/testOS.apk
+          set -euo pipefail
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose --print-certs build/testOS.apk
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs build/testOS.apk | grep -qi '5d:bf:88:46:d9:bb:76:a7:64:92:8d:a8:c8:a8:33:a8:37:b4:4b:a0:0f:4a:7c:0b:60:dc:77:49:03:19:b1:0a'
           "$ANDROID_HOME/build-tools/34.0.0/aapt" dump badging build/testOS.apk | head -n 5
+          cp build/testOS.apk build/tvos-home.apk
 
-      - name: Upload APK
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: testOS-2.1.2-testOS1
-          path: build/testOS.apk
+          name: testOS-${{ github.run_number }}
+          path: build/tvos-home.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Publish GitHub Release
+        if: github.ref == 'refs/heads/feature/testos-ui-cleanup'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION_NAME }}
+          name: testOS ${{ env.VERSION_NAME }}
+          generate_release_notes: true
+          files: build/tvos-home.apk
+          fail_on_unmatched_files: true
+          make_latest: true
+
+      - name: Remove signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/tvos-release.jks"
