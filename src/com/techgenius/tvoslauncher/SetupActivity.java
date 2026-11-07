@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * First-time setup, in the style of Apple TV's own setup: one question per page, a large title
  * and a short line of help at the top, choices as a centred list (white when focused), OK moves
- * on and Back goes back. Pages: Welcome, profile, look, weather, home screen & permissions,
+ * on and Back goes back. Pages: Welcome, look, weather, home screen & permissions,
  * default home, button mapping, and finish. Shown once; Settings can run it again.
  */
 public class SetupActivity extends Activity {
@@ -537,8 +537,6 @@ public class SetupActivity extends Activity {
         }
         dots();
     }
-
-    /** This profile's Home Screen: recommendations and/or news on the top shelf, as two switches. */
 
 
     /** After re-building a page, put focus back on the row that was pressed. */
