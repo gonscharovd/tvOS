@@ -1865,7 +1865,7 @@ public class SettingsActivity extends Activity {
     private void confirmRevokeAllPermissions() {
         dialog(tr("Remove / Revoke All Permissions", "Tüm İzinleri Kaldır / Geri Al"))
                 .setMessage(tr(
-                        "This will disable Keep Alive and remove Accessibility Service, Notification Access, Default Home Role, and launcher permissions (both locally and via ADB).",
+                        "This will disable Keep Alive and remove Accessibility Service, Do Not Disturb access, Default Home Role, and launcher permissions (both locally and via ADB).",
                         "Bu işlem Keep Alive'ı kapatır ve Erişilebilirlik Servisi, Bildirim Erişimi, Varsayılan Ana Ekran ve tüm başlatıcı izinlerini (hem yerel olarak hem ADB üzerinden) kaldırır."))
                 .setPositiveButton(tr("Revoke All Permissions", "Tüm İzinleri Kaldır"), (d, w) -> {
                     AlertDialog progress = dialog(tr("Revoking Permissions…", "İzinler Kaldırılıyor…"))
