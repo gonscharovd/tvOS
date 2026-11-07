@@ -1259,7 +1259,7 @@ final class SceneHome {
         Set<String> seenPkgs = new HashSet<>();
         for (MainActivity.AppEntry e : host.apps) {
             if (MainActivity.SETTINGS_KEY.equals(e.key) || MainActivity.TV_SETTINGS.equals(e.pkg)) {
-                continue; // Settings has its own dedicated Gear tile in the dock
+                continue; // Settings are opened from the Control Center chooser
             }
             homePool.add(e);
             if (e.pkg != null) seenPkgs.add(e.pkg);
@@ -1276,9 +1276,8 @@ final class SceneHome {
             }
         }
 
-        // Determine if Other Apps (...) button is needed:
-        // Hidden when otherPool is empty AND all homePool apps + Gear fit in a single row (cols).
-        boolean hasAnyOtherOrOverflow = !otherPool.isEmpty() || (homePool.size() + 1 > cols);
+        // Show Other Apps (...) only when needed; no dedicated Settings tile occupies a dock slot.
+        boolean hasAnyOtherOrOverflow = !otherPool.isEmpty() || (homePool.size() > cols);
         if (!hasAnyOtherOrOverflow && moreExpanded) {
             moreExpanded = false;
             if (shelfBox != null) {
@@ -1286,7 +1285,7 @@ final class SceneHome {
             }
         }
 
-        int maxFirstRowApps = hasAnyOtherOrOverflow ? Math.max(1, cols - 2) : Math.max(1, cols - 1);
+        int maxFirstRowApps = hasAnyOtherOrOverflow ? Math.max(1, cols - 1) : cols;
         currentMaxSingleRowApps = maxFirstRowApps;
 
         List<MainActivity.AppEntry> visibleApps;
@@ -1299,12 +1298,6 @@ final class SceneHome {
         }
 
         dockEntries.addAll(visibleApps);
-
-        // Add Gear tile
-        MainActivity.AppEntry gearEntry = new MainActivity.AppEntry();
-        gearEntry.key = GEAR_KEY;
-        gearEntry.label = I18n.s(host, "Settings", "Ayarlar");
-        dockEntries.add(gearEntry);
 
         // Only show Other Apps (...) tile if there are apps in Other Apps or overflow apps from the dock
         if (hasAnyOtherOrOverflow) {
