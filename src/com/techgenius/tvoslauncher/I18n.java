@@ -1111,10 +1111,15 @@ public final class I18n {
     public static void resetCache() { cachedLang = null; }
 
     public static String getLang(Context c) {
-        if (c != null) c.getSharedPreferences("settings", Context.MODE_PRIVATE)
-                .edit().putString("lang", LANG_RU).putBoolean("lang_user_selected", true).apply();
+        if (cachedLang != null) return cachedLang;
+        if (c != null) {
+            android.content.SharedPreferences p = c.getSharedPreferences("settings", Context.MODE_PRIVATE);
+            if (!LANG_RU.equals(p.getString("lang", null)) || !p.getBoolean("lang_user_selected", false)) {
+                p.edit().putString("lang", LANG_RU).putBoolean("lang_user_selected", true).apply();
+            }
+        }
         cachedLang = LANG_RU;
-        return LANG_RU;
+        return cachedLang;
     }
 
     public static boolean isDefault24hForLang(String lang) { return true; }
