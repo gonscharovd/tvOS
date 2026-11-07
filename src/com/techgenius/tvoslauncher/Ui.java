@@ -63,7 +63,7 @@ public final class Ui {
                     t = android.graphics.Typeface.createFromAsset(c.getAssets(), "fonts/" + file + ".ttf");
                 } catch (RuntimeException e) {
                     try {
-                        t = android.graphics.Typeface.createFromAsset(c.getAssets(), "fonts\\\\" + file + ".ttf");
+                        t = android.graphics.Typeface.createFromAsset(c.getAssets(), "fonts\\" + file + ".ttf");
                     } catch (RuntimeException e2) {
                         t = android.graphics.Typeface.DEFAULT;
                     }
