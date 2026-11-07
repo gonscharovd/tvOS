@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Multi-language localization support for tvOS Launcher:
+ * Multi-language localization support for testOS:
  * English (en), Turkish (tr), Swedish (sv), Hindi/Indian (hi), Spanish (es), French (fr),
  * German (de), Italian (it), Russian (ru), Portuguese (pt), Arabic (ar),
  * Japanese (ja), and Chinese (zh).
@@ -34,20 +34,20 @@ public final class I18n {
     public static final String LANG_KO = "ko";
 
     public static final String[][] LANGUAGES = {
-        {LANG_EN, "English", "Use tvOS Launcher in English"},
-        {LANG_TR, "Türkçe", "tvOS Launcher'ı Türkçe kullanın"},
-        {LANG_SV, "Svenska", "Använd tvOS Launcher på svenska"},
-        {LANG_HI, "हिन्दी (Indian)", "tvOS Launcher का उपयोग हिन्दी में करें"},
-        {LANG_ES, "Español", "Usar tvOS Launcher en español"},
-        {LANG_FR, "Français", "Utiliser tvOS Launcher en français"},
-        {LANG_DE, "Deutsch", "tvOS Launcher auf Deutsch verwenden"},
-        {LANG_IT, "Italiano", "Usa tvOS Launcher in italiano"},
-        {LANG_RU, "Русский", "Использовать tvOS Launcher на русском"},
-        {LANG_PT, "Português", "Usar o tvOS Launcher em português"},
-        {LANG_AR, "العربية", "استخدم tvOS Launcher باللغة العربية"},
-        {LANG_JA, "日本語", "tvOS Launcher を日本語で使用する"},
-        {LANG_ZH, "中文", "使用中文版 tvOS Launcher"},
-        {LANG_KO, "한국어", "tvOS Launcher를 한국어로 사용"}
+        {LANG_EN, "English", "Use testOS in English"},
+        {LANG_TR, "Türkçe", "testOS'ı Türkçe kullanın"},
+        {LANG_SV, "Svenska", "Använd testOS på svenska"},
+        {LANG_HI, "हिन्दी (Indian)", "testOS का उपयोग हिन्दी में करें"},
+        {LANG_ES, "Español", "Usar testOS en español"},
+        {LANG_FR, "Français", "Utiliser testOS en français"},
+        {LANG_DE, "Deutsch", "testOS auf Deutsch verwenden"},
+        {LANG_IT, "Italiano", "Usa testOS in italiano"},
+        {LANG_RU, "Русский", "Использовать testOS на русском"},
+        {LANG_PT, "Português", "Usar o testOS em português"},
+        {LANG_AR, "العربية", "استخدم testOS باللغة العربية"},
+        {LANG_JA, "日本語", "testOS を日本語で使用する"},
+        {LANG_ZH, "中文", "使用中文版 testOS"},
+        {LANG_KO, "한국어", "testOS를 한국어로 사용"}
     };
 
     private static final Set<String> SUPPORTED = new HashSet<>(Arrays.asList(
@@ -242,7 +242,7 @@ public final class I18n {
         add("Next", "अगला", "Siguiente", "Suivant", "Weiter", "Avanti", "Далее", "Seguinte", "التالي", "次へ", "下一步");
         add("Continue", "जारी रखें", "Continuar", "Continuer", "Weiter", "Continua", "Продолжить", "Continuar", "متابعة", "続ける", "继续");
         add("Get Started", "शुरू करें", "Empezar", "Commencer", "Los geht's", "Inizia", "Начать", "Começar", "البدء", "はじめる", "开始使用");
-        add("Let’s set up tvOS Launcher.", "आइए tvOS Launcher सेट करें।", "Configuremos tvOS Launcher.", "Configurons tvOS Launcher.", "Richten wir tvOS Launcher ein.", "Configuriamo tvOS Launcher.", "Давайте настроим tvOS Launcher.", "Vamos configurar o tvOS Launcher.", "لنقم بإعداد tvOS Launcher.", "tvOS Launcher をセットアップしましょう。", "让我们开始设置 tvOS Launcher。");
+        add("Let’s set up testOS.", "आइए testOS सेट करें।", "Configuremos testOS.", "Configurons testOS.", "Richten wir testOS ein.", "Configuriamo testOS.", "Давайте настроим testOS.", "Vamos configurar o testOS.", "لنقم بإعداد testOS.", "testOS をセットアップしましょう。", "让我们开始设置 testOS。");
         add("Choose a look", "एक रूप चुनें", "Elige una apariencia", "Choisissez une apparence", "Aussehen wählen", "Scegli un aspetto", "Выберите вид", "Escolha uma aparência", "اختر مظهراً", "外観を選択", "选择外观");
         add("Use My Location", "मेरा स्थान उपयोग करें", "Usar mi ubicación", "Utiliser ma position", "Meinen Standort verwenden", "Usa la mia posizione", "Использовать моё местоположение", "Usar a minha localização", "استخدام موقعي", "現在地を使用", "使用我的位置");
         add("Choose a City…", "शहर चुनें…", "Elegir una ciudad…", "Choisir une ville…", "Stadt auswählen…", "Scegli una città…", "Выбрать город…", "Escolher uma cidade…", "اختر مدينة…", "都市を選択…", "选择城市…");
@@ -256,7 +256,7 @@ public final class I18n {
         add("Enable ADB Debugging", "ADB डीबगिंग सक्षम करें", "Activar depuración ADB", "Activer le débogage ADB", "ADB-Debugging aktivieren", "Attiva debug ADB", "Включите отладку ADB", "Ativar depuração ADB", "تفعيل تصحيح أخطاء ADB", "ADBデバッグを有効化", "启用 ADB 调试");
         add("Grant Permissions Now", "अभी अनुमतियां दें", "Conceder permisos ahora", "Accorder les autorisations maintenant", "Berechtigungen jetzt erteilen", "Concedi autorizzazioni ora", "Предоставить разрешения сейчас", "Conceder permissões agora", "منح الأذونات الآن", "今すぐ権限を付与", "立即授予权限");
         add("Switch to Manual Setup", "मैन्युअल सेटअप पर स्विच करें", "Cambiar a configuración manual", "Passer à la configuration manuelle", "Zur manuellen Einrichtung wechseln", "Passa alla configurazione manuale", "Перейти к ручной настройке", "Mudar para configuração manual", "التبديل إلى الإعداد اليدوي", "手動設定に切り替え", "切换到手动设置");
-        add("Make tvOS Launcher the Home Screen", "tvOS Launcher को होम स्क्रीन बनाएं", "Hacer que tvOS Launcher sea la pantalla de inicio", "Définir tvOS Launcher comme écran d'accueil", "tvOS Launcher als Startbildschirm festlegen", "Imposta tvOS Launcher come schermata Home", "Сделать tvOS Launcher главным экраном", "Tornar o tvOS Launcher o ecrã inicial", "اجعل tvOS Launcher الشاشة الرئيسية", "tvOS Launcher をホーム画面にする", "将 tvOS Launcher 设为主屏幕");
+        add("Make testOS the Home Screen", "testOS को होम स्क्रीन बनाएं", "Hacer que testOS sea la pantalla de inicio", "Définir testOS comme écran d'accueil", "testOS als Startbildschirm festlegen", "Imposta testOS come schermata Home", "Сделать testOS главным экраном", "Tornar o testOS o ecrã inicial", "اجعل testOS الشاشة الرئيسية", "testOS をホーム画面にする", "将 testOS 设为主屏幕");
         add("Button Mapper & Control Panel", "बटन मैपर और कंट्रोल पैनल", "Asignador de botones y Panel de control", "Boutons télécommande et Centre de contrôle", "Tastenbelegung & Kontrollzentrum", "Mappatura tasti e Pannello di controllo", "Кнопки пульта и Панель управления", "Mapeador de botões e Painel de controlo", "تعيين الأزرار ولوحة التحكم", "ボタン割り当てとコントロールパネル", "按键映射与控制中心");
         add("Active in Accessibility", "एक्सेसिबिलिटी में सक्रिय", "Activo en Accesibilidad", "Actif dans Accessibilité", "In Bedienungshilfen aktiv", "Attivo in Accessibilità", "Включено в Спец. возможностях", "Ativo na Acessibilidade", "نشط في تسهيلات الاستخدام", "ユーザー補助で有効", "已在无障碍中启用");
         add("Enable in Accessibility so remapped buttons work in all apps", "एक्सेसिबिलिटी में सक्षम करें ताकि रीमैप किए गए बटन सभी ऐप्स में काम करें", "Activar en Accesibilidad para que los botones funcionen en todas las apps", "Activer dans Accessibilité pour que les boutons fonctionnent partout", "In Bedienungshilfen aktivieren, damit Tasten in allen Apps funktionieren", "Attiva in Accessibilità per usare i tasti rimappati in tutte le app", "Включить в Спец. возможностях для работы кнопок во всех приложениях", "Ativar na Acessibilidade para funcionar em todas as aplicações", "تفعيل في تسهيلات الاستخدام لتعمل الأزرار في كل التطبيقات", "すべてのアプリでボタン割り当てを使うにはユーザー補助で有効化", "在无障碍中启用以在所有应用中使用映射按键");
@@ -359,7 +359,7 @@ public final class I18n {
         add("Press the button on your remote that you want to remap…\n\n(D-pad navigation, OK and Back are kept for normal navigation.)", "अपने रिमोट पर वह बटन दबाएं जिसे आप रीमैप करना चाहते हैं…\n\n(सामान्य नेविगेशन के लिए डी-पैड, OK और Back सुरक्षित हैं।)", "Pulsa el botón del mando que quieras reasignar…\n\n(La cruceta, OK y Atrás se mantienen para la navegación normal.)", "Appuyez sur le bouton de la télécommande à réattribuer…\n\n(Les flèches, OK et Retour restent réservés à la navigation.)", "Drücken Sie die Taste auf Ihrer Fernbedienung, die Sie neu belegen möchten…\n\n(Steuerkreuz, OK und Zurück bleiben für die normale Navigation erhalten.)", "Premi il tasto del telecomando che vuoi rimappare…\n\n(Le frecce direzionali, OK e Indietro restano per la navigazione normale.)", "Нажмите кнопку на пульте, которую хотите переназначить…\n\n(Стрелки, OK и Назад сохраняются для обычной навигации.)", "Prima o botão do comando que pretende mapear…\n\n(As setas, OK e Voltar são mantidos para a navegação normal.)", "اضغط على الزر الذي تريد إعادة تعيينه في جهاز التحكم…\n\n(تظل أزرار الاتجاهات وموافق ورجوع للتنقل العادي.)", "割り当てたいリモコンのボタンを押してください…\n\n（十字キー、決定、戻るボタンは通常操作のため維持されます）", "请按下遥控器上要重新映射的按键…\n\n（方向键、OK 键和返回键保留用于正常导航。）");
         add("Change what this button opens…", "बदलें कि यह बटन क्या खोलता है…", "Cambiar qué abre este botón…", "Modifier l'action de ce bouton…", "Ändern, was diese Taste öffnet…", "Cambia cosa apre questo tasto…", "Изменить действие кнопки…", "Alterar o que este botão abre…", "تغيير ما يفتحه هذا الزر…", "このボタンで開く項目を変更…", "更改此按键打开的内容…");
         add("Remove button remap", "बटन रीमैप हटाएं", "Eliminar asignación de botón", "Supprimer l'attribution", "Tastenbelegung entfernen", "Rimuovi mappatura tasto", "Удалить переназначение", "Remover mapeamento do botão", "إزالة تعيين الزر", "ボタンの割り当てを解除", "移除按键映射");
-        add("Enable tvOS Launcher in Android TV Accessibility Settings so remapped remote buttons and the Control Panel overlay work over any app.", "Android TV एक्सेसिबिलिटी सेटिंग्स में tvOS Launcher सक्षम करें ताकि रीमैप किए गए बटन और कंट्रोल पैनल किसी भी ऐप के ऊपर काम कर सकें।", "Activa tvOS Launcher en los Ajustes de accesibilidad de Android TV para que los botones reasignados y el Panel de control funcionen sobre cualquier aplicación.", "Activez tvOS Launcher dans les paramètres d'accessibilité Android TV pour utiliser les boutons réattribués et le Centre de contrôle sur n'importe quelle application.", "Aktivieren Sie tvOS Launcher in den Android TV-Bedienungshilfen, damit neu belegte Tasten und das Kontrollzentrum über jeder App funktionieren.", "Attiva tvOS Launcher nelle Impostazioni di accessibilità di Android TV affinché i tasti rimappati e il Pannello di controllo funzionino su qualsiasi app.", "Включите tvOS Launcher в специальных возможностях Android TV, чтобы переназначенные кнопки и Панель управления работали поверх любых приложений.", "Ative o tvOS Launcher nas definições de acessibilidade da Android TV para que os botões mapeados e o Painel de controlo funcionem sobre qualquer aplicação.", "قم بتفعيل tvOS Launcher في إعدادات تسهيلات الاستخدام في Android TV ليعمل تعيين الأزرار ولوحة التحكم فوق أي تطبيق.", "Android TVのユーザー補助設定でtvOS Launcherを有効にすると、どのアプリの上でもボタン割り当てとコントロールパネルが機能します。", "请在 Android TV 无障碍设置中启用 tvOS Launcher，以便映射按键和控制中心可在任何应用上方正常使用。");
+        add("Enable testOS in Android TV Accessibility Settings so remapped remote buttons and the Control Panel overlay work over any app.", "Android TV एक्सेसिबिलिटी सेटिंग्स में testOS सक्षम करें ताकि रीमैप किए गए बटन और कंट्रोल पैनल किसी भी ऐप के ऊपर काम कर सकें।", "Activa testOS en los Ajustes de accesibilidad de Android TV para que los botones reasignados y el Panel de control funcionen sobre cualquier aplicación.", "Activez testOS dans les paramètres d'accessibilité Android TV pour utiliser les boutons réattribués et le Centre de contrôle sur n'importe quelle application.", "Aktivieren Sie testOS in den Android TV-Bedienungshilfen, damit neu belegte Tasten und das Kontrollzentrum über jeder App funktionieren.", "Attiva testOS nelle Impostazioni di accessibilità di Android TV affinché i tasti rimappati e il Pannello di controllo funzionino su qualsiasi app.", "Включите testOS в специальных возможностях Android TV, чтобы переназначенные кнопки и Панель управления работали поверх любых приложений.", "Ative o testOS nas definições de acessibilidade da Android TV para que os botões mapeados e o Painel de controlo funcionem sobre qualquer aplicação.", "قم بتفعيل testOS في إعدادات تسهيلات الاستخدام في Android TV ليعمل تعيين الأزرار ولوحة التحكم فوق أي تطبيق.", "Android TVのユーザー補助設定でtestOSを有効にすると、どのアプリの上でもボタン割り当てとコントロールパネルが機能します。", "请在 Android TV 无障碍设置中启用 testOS，以便映射按键和控制中心可在任何应用上方正常使用。");
 
         // Home & System & About
         add("HOME & PERMISSIONS", "होम और अनुमतियां", "INICIO Y PERMISOS", "ACCUEIL ET AUTORISATIONS", "STARTSEITE & BERECHTIGUNGEN", "HOME E AUTORIZZAZIONI", "ГЛАВНЫЙ ЭКРАН И РАЗРЕШЕНИЯ", "INÍCIO E PERMISSÕES", "الشاشة الرئيسية والأذونات", "ホームと権限", "主页与权限");
@@ -444,7 +444,7 @@ public final class I18n {
         add("Port 5555 open (Tap to pair)", "पोर्ट 5555 खुला है (पेयर करने के लिए टैप करें)", "Puerto 5555 abierto (toca para vincular)", "Port 5555 ouvert (appuyez pour jumeler)", "Port 5555 offen (zum Koppeln tippen)", "Porta 5555 aperta (tocca per associare)", "Порт 5555 открыт (нажмите для привязки)", "Porta 5555 aberta (toque para emparelhar)", "المنفذ 5555 مفتوح (اضغط للإقران)", "ポート5555開放（タップしてペアリング）", "端口 5555 已开启（点击配对）");
         add("Not paired (ADB off)", "पेयर नहीं है (ADB बंद)", "No vinculado (ADB desactivado)", "Non jumelé (ADB désactivé)", "Nicht gekoppelt (ADB aus)", "Non associato (ADB disattivato)", "Не подключено (ADB выкл.)", "Não emparelhado (ADB desligado)", "غير مقترن (ADB متوقف)", "未ペアリング（ADBオフ）", "未配对（ADB 未开启）");
         add("active", "सक्रिय", "activos", "actifs", "aktiv", "attivi", "активно", "ativos", "نشط", "有効", "已启用");
-        add("Some TVs disable Accessibility or other permissions automatically in the background. When Keep Alive is on, tvOS Launcher lightly checks permission status in the background without extra RAM or CPU load and automatically restores any disabled permissions via ADB.", "कुछ टीवी पृष्ठभूमि में एक्सेसिबिलिटी या अन्य अनुमतियों को स्वचालित रूप से अक्षम कर देते हैं। जब कीप अलाइव चालू होता है, तो tvOS Launcher बिना अतिरिक्त RAM या CPU लोड के ADB के माध्यम से बंद अनुमतियों को स्वचालित रूप से बहाल कर देता है।", "Algunos televisores desactivan la Accesibilidad u otros permisos en segundo plano. Cuando Keep Alive está activo, tvOS Launcher comprueba ligeramente los permisos sin carga extra de RAM o CPU y los restaura automáticamente por ADB.", "Certains téléviseurs désactivent l'accessibilité en arrière-plan. Lorsque Keep Alive est activé, tvOS Launcher vérifie légèrement l'état des autorisations sans surcharger la RAM ou le processeur et les restaure automatiquement via ADB.", "Einige Fernseher deaktivieren die Bedienungshilfen im Hintergrund von selbst. Wenn Keep Alive aktiviert ist, prüft tvOS Launcher ressourcenschonend im Hintergrund den Status und stellt deaktivierte Berechtigungen per ADB automatisch wieder her.", "Alcune TV disattivano l'Accessibilità in background. Quando Keep Alive è attivo, tvOS Launcher controlla lo stato delle autorizzazioni senza consumare RAM o CPU e le ripristina automaticamente via ADB.", "Некоторые ТВ сами отключают Спец. возможности в фоне. Когда функция Keep Alive включена, tvOS Launcher без нагрузки на память и процессор проверяет разрешения и автоматически восстанавливает их через ADB.", "Algumas TVs desativam a Acessibilidade automaticamente em segundo plano. Com o Keep Alive ativo, o tvOS Launcher verifica as permissões sem gastar RAM ou CPU e restaura-as automaticamente via ADB.", "تقوم بعض أجهزة التلفزيون بتعطيل تسهيلات الاستخدام تلقائياً في الخلفية. عند تفعيل Keep Alive، يتحقق المشغل بخفة دون استهلاك للذاكرة أو المعالج ويعيد تفعيل الأذونات تلقائياً عبر ADB.", "一部のテレビではバックグラウンドでユーザー補助などの権限が自動的に無効化されることがあります。Keep Aliveをオンにすると、RAMやCPUに負荷をかけずに権限を監視し、ADB経由で自動修復します。", "部分电视会在后台自动关闭无障碍等权限。开启 Keep Alive 后，tvOS Launcher 会在不增加内存或 CPU 负担的情况下轻量检测权限状态，并通过 ADB 自动恢复被关闭的权限。");
+        add("Some TVs disable Accessibility or other permissions automatically in the background. When Keep Alive is on, testOS lightly checks permission status in the background without extra RAM or CPU load and automatically restores any disabled permissions via ADB.", "कुछ टीवी पृष्ठभूमि में एक्सेसिबिलिटी या अन्य अनुमतियों को स्वचालित रूप से अक्षम कर देते हैं। जब कीप अलाइव चालू होता है, तो testOS बिना अतिरिक्त RAM या CPU लोड के ADB के माध्यम से बंद अनुमतियों को स्वचालित रूप से बहाल कर देता है।", "Algunos televisores desactivan la Accesibilidad u otros permisos en segundo plano. Cuando Keep Alive está activo, testOS comprueba ligeramente los permisos sin carga extra de RAM o CPU y los restaura automáticamente por ADB.", "Certains téléviseurs désactivent l'accessibilité en arrière-plan. Lorsque Keep Alive est activé, testOS vérifie légèrement l'état des autorisations sans surcharger la RAM ou le processeur et les restaure automatiquement via ADB.", "Einige Fernseher deaktivieren die Bedienungshilfen im Hintergrund von selbst. Wenn Keep Alive aktiviert ist, prüft testOS ressourcenschonend im Hintergrund den Status und stellt deaktivierte Berechtigungen per ADB automatisch wieder her.", "Alcune TV disattivano l'Accessibilità in background. Quando Keep Alive è attivo, testOS controlla lo stato delle autorizzazioni senza consumare RAM o CPU e le ripristina automaticamente via ADB.", "Некоторые ТВ сами отключают Спец. возможности в фоне. Когда функция Keep Alive включена, testOS без нагрузки на память и процессор проверяет разрешения и автоматически восстанавливает их через ADB.", "Algumas TVs desativam a Acessibilidade automaticamente em segundo plano. Com o Keep Alive ativo, o testOS verifica as permissões sem gastar RAM ou CPU e restaura-as automaticamente via ADB.", "تقوم بعض أجهزة التلفزيون بتعطيل تسهيلات الاستخدام تلقائياً في الخلفية. عند تفعيل Keep Alive، يتحقق المشغل بخفة دون استهلاك للذاكرة أو المعالج ويعيد تفعيل الأذونات تلقائياً عبر ADB.", "一部のテレビではバックグラウンドでユーザー補助などの権限が自動的に無効化されることがあります。Keep Aliveをオンにすると、RAMやCPUに負荷をかけずに権限を監視し、ADB経由で自動修復します。", "部分电视会在后台自动关闭无障碍等权限。开启 Keep Alive 后，testOS 会在不增加内存或 CPU 负担的情况下轻量检测权限状态，并通过 ADB 自动恢复被关闭的权限。");
 
         // CleanYourTV (Beta)
         add("CLEANYOURTV (BETA)", "CLEANYOURTV (बीटा)", "CLEANYOURTV (BETA)", "CLEANYOURTV (BÊTA)", "CLEANYOURTV (BETA)", "CLEANYOURTV (BETA)", "CLEANYOURTV (БЕТА)", "CLEANYOURTV (BETA)", "CLEANYOURTV (تجريبي)", "CLEANYOURTV (ベータ)", "CLEANYOURTV（测试版）");
@@ -528,7 +528,7 @@ public final class I18n {
 
     /**
      * Russian additions for the custom Sber TV build.
-     * Keep technical product names (ADB, Wi-Fi, Happ, tvOS Launcher) unchanged.
+     * Keep technical product names (ADB, Wi-Fi, Happ, testOS) unchanged.
      */
     private static void initRussianExtras() {
         Map<String, String> ru = LANG_MAPS.get(LANG_RU);
@@ -629,7 +629,7 @@ public final class I18n {
         ru.put("Keep Alive disabled.", "Keep Alive выключен.");
         ru.put("STARTUP & KEEP ALIVE", "АВТОЗАПУСК И KEEP ALIVE");
         ru.put("Launch automatically on system boot", "Запускать автоматически при включении телевизора");
-        ru.put("tvOS Launcher will launch immediately on system boot.", "tvOS Launcher будет запускаться сразу после включения телевизора.");
+        ru.put("testOS will launch immediately on system boot.", "testOS будет запускаться сразу после включения телевизора.");
         ru.put("CLEANYOURTV (BETA)", "CLEANYOURTV (БЕТА)");
         ru.put("Choose TV model", "Выбрать модель телевизора");
         ru.put("Debloat status", "Состояние очистки системы");
@@ -768,7 +768,7 @@ public final class I18n {
 
 
         // Remaining dialogs, remote-key names, icon editor and update flow.
-        ru.put("A new version of tvOS Launcher is available on GitHub.\\n", "На GitHub доступна новая версия tvOS Launcher.\\n");
+        ru.put("A new version of testOS is available on GitHub.\\n", "На GitHub доступна новая версия testOS.\\n");
         ru.put("ADB install failed, opening package installer…", "Не удалось установить через ADB, открываем системный установщик…");
         ru.put("ADB is active — selecting Install will download and install the update automatically.", "ADB включён — при выборе «Установить» обновление будет скачано и установлено автоматически.");
         ru.put("ADB is turned off (Secure Mode) — selecting Install will download the update and open the system package installer.", "ADB выключен (безопасный режим) — при выборе «Установить» обновление будет скачано и откроется системный установщик.");
@@ -832,7 +832,7 @@ public final class I18n {
         ru.put("Pink", "Розовый");
         ru.put("Play", "Воспроизвести");
         ru.put("Play / Pause", "Воспроизведение / пауза");
-        ru.put("Please allow 'Install unknown apps' for tvOS Launcher.", "Разрешите tvOS Launcher устанавливать неизвестные приложения.");
+        ru.put("Please allow 'Install unknown apps' for testOS.", "Разрешите testOS устанавливать неизвестные приложения.");
         ru.put("Previous Track", "Предыдущая дорожка");
         ru.put("Purple", "Фиолетовый");
         ru.put("Record Button", "Кнопка записи");
@@ -865,7 +865,7 @@ public final class I18n {
         ru.put("Yellow", "Жёлтый");
         ru.put("Yellow Button", "Жёлтая кнопка");
         ru.put("You are up to date (v", "У вас установлена последняя версия (v");
-        ru.put("Your current tvOS Launcher settings have been saved to:\\n\\n", "Текущие настройки tvOS Launcher сохранены в:\\n\\n");
+        ru.put("Your current testOS settings have been saved to:\\n\\n", "Текущие настройки testOS сохранены в:\\n\\n");
         ru.put("Zoom", "Масштаб");
         ru.put("Zoom in", "Увеличить");
         ru.put("Zoom out", "Уменьшить");
@@ -885,7 +885,7 @@ public final class I18n {
         ru.put("Delete “", "Удалить «");
         ru.put("Granting permissions via local ADB…\n\nIf an “Allow USB debugging?” prompt appears on screen, check “Always allow” and press Allow.", "Выдача разрешений через локальный ADB…\n\nЕсли появится запрос «Разрешить отладку по USB?», отметьте «Всегда разрешать» и нажмите «Разрешить».");
         ru.put("Keep Alive monitors the Accessibility Service and automatically restores it if your TV turns it off.\n\n", "Keep Alive следит за службой специальных возможностей и автоматически восстанавливает её, если телевизор отключит её.\n\n");
-        ru.put("Let’s set up tvOS Launcher.", "Настроим tvOS Launcher.");
+        ru.put("Let’s set up testOS.", "Настроим testOS.");
         ru.put("No place found for “", "Место не найдено: «");
         ru.put("Open Developer Options / TV Settings…", "Открыть параметры разработчика / настройки ТВ…");
         ru.put("Open on a phone or computer on the same Wi-Fi:\n\n", "Откройте на телефоне или компьютере в той же сети Wi-Fi:\n\n");
@@ -899,7 +899,7 @@ public final class I18n {
 
         ru.put("% used  \\u00b7  Clean", "% использовано  ·  Очистить");
         ru.put("1. Open TV Settings \\u2192 System \\u2192 About and click Build 7 times to unlock Developer Options.\\n", "1. Откройте настройки ТВ → Система → О телевизоре и нажмите на номер сборки 7 раз, чтобы открыть параметры разработчика.\\n");
-        ru.put("1. Set tvOS Launcher as Default via Local ADB", "1. Назначить tvOS Launcher главным экраном через локальный ADB");
+        ru.put("1. Set testOS as Default via Local ADB", "1. Назначить testOS главным экраном через локальный ADB");
         ru.put("2. Disable System Launchers (Google TV / Android TV / OEM)", "2. Отключить системные лаунчеры (Google TV / Android TV / производителя)");
         ru.put("3. Fix Home Button via Accessibility (Button Mapper)", "3. Настроить кнопку Home через специальные возможности (Button Mapper)");
         ru.put("4. Open Android System Home Settings", "4. Открыть системные настройки главного экрана Android");
@@ -910,9 +910,9 @@ public final class I18n {
         ru.put("ADB paired and all permissions granted!", "ADB подключён, все разрешения выданы!");
         ru.put("Back to return   \\u00b7   Hold OK for options", "Назад — вернуться   ·   Удерживайте OK для параметров");
         ru.put("Change any of this later in Settings, from the gear in Control Center.", "Все эти параметры можно изменить позже в настройках, открыв шестерёнку в центре управления.");
-        ru.put("Checked items are currently DISABLED. Disabling the stock system launcher (e.g. Google TV Home / LauncherX + setupwraith, Android TV Home, or TCL/Philips OEM Home) forces Android to use tvOS Launcher when pressing the Home key.", "Отмеченные элементы сейчас ОТКЛЮЧЕНЫ. Отключение штатного системного лаунчера (например, Google TV Home / LauncherX + setupwraith, Android TV Home или лаунчера TCL/Philips) заставляет Android открывать tvOS Launcher при нажатии Home.");
+        ru.put("Checked items are currently DISABLED. Disabling the stock system launcher (e.g. Google TV Home / LauncherX + setupwraith, Android TV Home, or TCL/Philips OEM Home) forces Android to use testOS when pressing the Home key.", "Отмеченные элементы сейчас ОТКЛЮЧЕНЫ. Отключение штатного системного лаунчера (например, Google TV Home / LauncherX + setupwraith, Android TV Home или лаунчера TCL/Philips) заставляет Android открывать testOS при нажатии Home.");
         ru.put("Checking installed packages over ADB for ", "Проверка установленных пакетов через ADB для ");
-        ru.put("Checks GitHub Releases (techgenius1/tvOS-Launcher) for the latest APK and installs updates directly on your TV.", "Проверяет GitHub Releases проекта tvOS Launcher на наличие новой APK и устанавливает обновления прямо на телевизор.");
+        ru.put("Checks GitHub Releases (techgenius1/tvOS-Launcher) for the latest APK and installs updates directly on your TV.", "Проверяет GitHub Releases проекта testOS на наличие новой APK и устанавливает обновления прямо на телевизор.");
         ru.put("Choose a City\\u2026", "Выберите город…");
         ru.put("Choose custom background image", "Выбрать изображение для своего фона");
         ru.put("Choose custom scene image", "Выбрать изображение для своей сцены");
@@ -935,7 +935,7 @@ public final class I18n {
         ru.put("Grants WRITE_SECURE_SETTINGS & closes port 5555 when done", "Выдаёт WRITE_SECURE_SETTINGS и закрывает порт 5555 после завершения");
         ru.put("Grants WRITE_SECURE_SETTINGS once to self-repair Accessibility, then closes port 5555", "Один раз выдаёт WRITE_SECURE_SETTINGS для восстановления специальных возможностей, затем закрывает порт 5555");
         ru.put("Home button fix enabled — please also enable Accessibility service above so Home key can be intercepted.", "Исправление кнопки Home включено — также включите службу специальных возможностей выше, чтобы перехватывать кнопку Home.");
-        ru.put("Home button fix enabled — pressing Home will launch tvOS Launcher.", "Исправление кнопки Home включено — нажатие Home будет запускать tvOS Launcher.");
+        ru.put("Home button fix enabled — pressing Home will launch testOS.", "Исправление кнопки Home включено — нажатие Home будет запускать testOS.");
         ru.put("Images, videos and webpages sent from any phone or computer on the same Wi-Fi. For everyone on this TV.", "Фотографии, видео и веб-страницы, отправленные с телефона или компьютера в той же сети Wi-Fi. Доступно всем пользователям этого ТВ.");
         ru.put("In Control Center (needs location access)", "В центре управления (требуется доступ к местоположению)");
         ru.put("Its layout and Continue Watching list will be removed.", "Расположение приложений и список «Продолжить просмотр» будут удалены.");
@@ -943,7 +943,7 @@ public final class I18n {
         ru.put("Keep Alive monitors the Accessibility Service and automatically restores it if your TV turns it off.\\n\\n", "Keep Alive следит за службой специальных возможностей и автоматически восстанавливает её, если телевизор отключит её.\\n\\n");
         ru.put("Keep Screen Awake", "Не выключать экран");
         ru.put("Keeps network ADB enabled for CleanYourTV debloating (Note: leaves port 5555 open on LAN)", "Оставляет сетевой ADB включённым для очистки ТВ через CleanYourTV (порт 5555 остаётся открытым в локальной сети)");
-        ru.put("Let\\u2019s set up tvOS Launcher.", "Настроим tvOS Launcher.");
+        ru.put("Let\\u2019s set up testOS.", "Настроим testOS.");
         ru.put("Location set to ", "Местоположение задано: ");
         ru.put("Lock Screen folder shuffle enabled: ", "Случайная смена обоев экрана блокировки включена: ");
         ru.put("Long-press volume fix disabled (using native TV volume).", "Исправление долгого нажатия громкости отключено (используется штатное управление ТВ).");
@@ -958,10 +958,10 @@ public final class I18n {
         ru.put("No screensaver or sleep while presenting", "Не включать заставку и спящий режим во время презентации");
         ru.put("None of the packages listed in ", "Ни один из пакетов в списке ");
         ru.put("On Google TV, if you disable setupwraith, make sure your Wi-Fi network was re-added in Wi-Fi Settings.", "На Google TV перед отключением setupwraith убедитесь, что ваша сеть Wi-Fi заново добавлена в настройках Wi-Fi.");
-        ru.put("On TCL and Philips Android 11/12 TVs, the OEM firmware often hides the Android Default Home UI and forces the stock launcher when pressing Home. Disabling the stock launcher (Option 2) or enabling the Home Button Fix (Option 3) guarantees pressing Home always opens tvOS Launcher.", "На телевизорах TCL и Philips с Android 11/12 прошивка производителя часто скрывает системный выбор главного экрана и принудительно запускает штатный лаунчер по кнопке Home. Отключение штатного лаунчера (вариант 2) или включение исправления кнопки Home (вариант 3) гарантирует запуск tvOS Launcher.");
-        ru.put("On TCL, Philips, and Google TVs, OEM firmware often forces the stock launcher when pressing Home. Follow the steps below so pressing Home always opens tvOS Launcher, then click Continue.", "На телевизорах TCL, Philips и Google прошивка производителя может принудительно запускать штатный лаунчер по кнопке Home. Выполните шаги ниже, чтобы кнопка Home всегда открывала tvOS Launcher, затем нажмите «Продолжить».");
+        ru.put("On TCL and Philips Android 11/12 TVs, the OEM firmware often hides the Android Default Home UI and forces the stock launcher when pressing Home. Disabling the stock launcher (Option 2) or enabling the Home Button Fix (Option 3) guarantees pressing Home always opens testOS.", "На телевизорах TCL и Philips с Android 11/12 прошивка производителя часто скрывает системный выбор главного экрана и принудительно запускает штатный лаунчер по кнопке Home. Отключение штатного лаунчера (вариант 2) или включение исправления кнопки Home (вариант 3) гарантирует запуск testOS.");
+        ru.put("On TCL, Philips, and Google TVs, OEM firmware often forces the stock launcher when pressing Home. Follow the steps below so pressing Home always opens testOS, then click Continue.", "На телевизорах TCL, Philips и Google прошивка производителя может принудительно запускать штатный лаунчер по кнопке Home. Выполните шаги ниже, чтобы кнопка Home всегда открывала testOS, затем нажмите «Продолжить».");
         ru.put("On the Lock Screen, only Clock, Date, and Greeting are shown above your selected backgrounds. Pressing any remote button returns to where you were before.", "На экране блокировки поверх выбранных обоев отображаются только часы, дата и приветствие. Нажатие любой кнопки пульта возвращает к предыдущему экрану.");
-        ru.put("On — Pressing Home launches tvOS Launcher", "Включено — нажатие Home запускает tvOS Launcher");
+        ru.put("On — Pressing Home launches testOS", "Включено — нажатие Home запускает testOS");
         ru.put("Open Developer Options / TV Settings…", "Открыть параметры разработчика / настройки ТВ…");
         ru.put("Open Developer Options and turn on USB Debugging / Network Debugging to complete switching to Persistent ADB Mode.", "Откройте параметры разработчика и включите отладку по USB / сети, чтобы завершить переход в постоянный режим ADB.");
         ru.put("Open on a phone or computer on the same Wi-Fi:\\n\\n", "Откройте на телефоне или компьютере в той же сети Wi-Fi:\\n\\n");
@@ -980,7 +980,7 @@ public final class I18n {
         ru.put("Run ROLE_HOME & set-home-activity over Local ADB ›", "Выполнить ROLE_HOME и set-home-activity через локальный ADB ›");
         ru.put("Running settings put global adb_enabled 0 and verifying port 5555…", "Выполняется settings put global adb_enabled 0 и проверяется закрытие порта 5555…");
         ru.put("Secure Mode selected — ADB will grant WRITE_SECURE_SETTINGS and close port 5555 when paired.", "Выбран безопасный режим — ADB выдаст WRITE_SECURE_SETTINGS и закроется после подключения.");
-        ru.put("Security Note: Keep Alive is enabled by default. In Secure Mode, tvOS Launcher uses WRITE_SECURE_SETTINGS to restore Accessibility directly in-process without touching ADB (even if ADB is enabled on the TV). In Persistent ADB Mode, Keep Alive can also use Local ADB on port 5555.", "Безопасность: Keep Alive включён по умолчанию. В безопасном режиме tvOS Launcher использует WRITE_SECURE_SETTINGS для восстановления специальных возможностей без обращения к ADB. В постоянном режиме Keep Alive также может использовать локальный ADB на порту 5555.");
+        ru.put("Security Note: Keep Alive is enabled by default. In Secure Mode, testOS uses WRITE_SECURE_SETTINGS to restore Accessibility directly in-process without touching ADB (even if ADB is enabled on the TV). In Persistent ADB Mode, Keep Alive can also use Local ADB on port 5555.", "Безопасность: Keep Alive включён по умолчанию. В безопасном режиме testOS использует WRITE_SECURE_SETTINGS для восстановления специальных возможностей без обращения к ADB. В постоянном режиме Keep Alive также может использовать локальный ADB на порту 5555.");
         ru.put("Select a usage mode for permissions (Button Mapper Accessibility, Continue Watching, and Wi-Fi). Pick ONE usage mode below:", "Выберите режим выдачи разрешений (специальные возможности Button Mapper, продолжение просмотра и Wi-Fi). Ниже выберите ОДИН режим:");
         ru.put("Send Key Code (Remote / Media / System)…", "Отправить код кнопки (пульт / мультимедиа / система)…");
         ru.put("Send any Android KeyEvent keycode without 3rd-party apps", "Отправлять любой код Android KeyEvent без сторонних приложений");
@@ -989,7 +989,7 @@ public final class I18n {
         ru.put("Sign out of ", "Выйти из ");
         ru.put("Signed out of ", "Выполнен выход из ");
         ru.put("Step 1 complete: Default home launcher set via ADB!", "Шаг 1 завершён: главный экран назначен через ADB!");
-        ru.put("Step 1: Set tvOS Launcher as Default via Local ADB", "Шаг 1: назначить tvOS Launcher главным экраном через локальный ADB");
+        ru.put("Step 1: Set testOS as Default via Local ADB", "Шаг 1: назначить testOS главным экраном через локальный ADB");
         ru.put("Step 2: Disable System Launchers (Google TV / Android TV / OEM)", "Шаг 2: отключить системные лаунчеры (Google TV / Android TV / производителя)");
         ru.put("Step 3: Fix Home Button via Accessibility (Button Mapper)", "Шаг 3: настроить кнопку Home через специальные возможности (Button Mapper)");
         ru.put("Step 4: Open Android System Home Settings", "Шаг 4: открыть системные настройки главного экрана Android");
@@ -1010,7 +1010,7 @@ public final class I18n {
         ru.put("Who\\u2019s Watching?", "Кто смотрит?");
         ru.put("You need the ADB mode enabled for this troubleshooting step. You can always change the ADB mode from Settings later.\\n\\nWould you like to enable ADB now or skip this step?", "Для этого шага диагностики необходимо включить режим ADB. Позже его можно изменить в настройках.\\n\\nВключить ADB сейчас или пропустить этот шаг?");
         ru.put("Your name and an avatar. Each profile keeps its own apps, background and Home Screen. Up to three people can have one.", "Ваше имя и аватар. У каждого профиля свои приложения, фон и главный экран. Можно создать до трёх профилей.");
-        ru.put("tvOS Launcher works best as the home screen. Allow these once; anything this TV doesn't support is skipped.", "tvOS Launcher лучше всего работает в качестве главного экрана. Разрешите доступ один раз — неподдерживаемые этим ТВ возможности будут пропущены.");
+        ru.put("testOS works best as the home screen. Allow these once; anything this TV doesn't support is skipped.", "testOS лучше всего работает в качестве главного экрана. Разрешите доступ один раз — неподдерживаемые этим ТВ возможности будут пропущены.");
         ru.put("⚠️ Security Warning:\\n\\n", "⚠️ Предупреждение безопасности:\\n\\n");
         ru.put("⚠️ Your Wi-Fi network is currently owned by setupwraith. Before disabling setupwraith, open Wi-Fi Settings, Forget your Wi-Fi network, and re-connect so Wi-Fi stays saved.", "⚠️ Сейчас управление сетью Wi-Fi связано с setupwraith. Перед отключением setupwraith откройте настройки Wi-Fi, забудьте свою сеть и подключитесь к ней заново, чтобы она сохранилась.");
         ru.put("✅ Disable Selected Packages (", "✅ Отключить выбранные пакеты (");
@@ -1074,7 +1074,7 @@ public final class I18n {
         ru.put("Choose a City…", "Выберите город…");
         ru.put("Choose background folder to shuffle", "Выберите папку для смены фона");
         ru.put("Choose folder…", "Выберите папку…");
-        ru.put("Choose tvOS Launcher when asked", "При запросе выберите tvOS Launcher");
+        ru.put("Choose testOS when asked", "При запросе выберите testOS");
         ru.put("Choose wallpaper folder to shuffle", "Выберите папку для случайной смены обоев");
         ru.put("City name, e.g. Istanbul", "Название города, например Челябинск");
         ru.put("Classic Top Shelf", "Карусель рекомендаций");
@@ -1108,7 +1108,7 @@ public final class I18n {
         ru.put("Default App Launch (Main Activity)", "Запуск приложения по умолчанию (главный экран)");
         ru.put("Default Home Screen", "Главный экран по умолчанию");
         ru.put("Delete “", "Удалить «");
-        ru.put("Disable All Stock Launchers & Set tvOS Launcher as Home", "Отключить штатные лаунчеры и назначить tvOS Launcher главным экраном");
+        ru.put("Disable All Stock Launchers & Set testOS as Home", "Отключить штатные лаунчеры и назначить testOS главным экраном");
         ru.put("Disable Anyway", "Всё равно отключить");
         ru.put("Disable all ›", "Отключить все ›");
         ru.put("Disable system launchers…", "Отключить системные лаунчеры…");
@@ -1127,7 +1127,7 @@ public final class I18n {
         ru.put("Filter System Apps", "Фильтр системных приложений");
         ru.put("Filter TV Models", "Фильтр моделей телевизоров");
         ru.put("Filter ›", "Фильтр ›");
-        ru.put("Fix Home button (Launch tvOS Launcher)", "Исправить кнопку Home (запуск tvOS Launcher)");
+        ru.put("Fix Home button (Launch testOS)", "Исправить кнопку Home (запуск testOS)");
         ru.put("Folder shuffle", "Случайная смена изображений из папки");
         ru.put("Found from your internet connection", "Определено по интернет-подключению");
         ru.put("Free forecast service, no account needed", "Бесплатный прогноз погоды, регистрация не нужна");
@@ -1143,14 +1143,14 @@ public final class I18n {
         ru.put("Just your background for now", "Пока только ваш фон");
         ru.put("LOCK SCREEN OPTIONS", "НАСТРОЙКИ ЭКРАНА БЛОКИРОВКИ");
         ru.put("Larger dock — extra apps automatically move to Other apps if needed", "Увеличенная панель — лишние приложения автоматически перемещаются в «Другие приложения»");
-        ru.put("Let’s set up tvOS Launcher.", "Давайте настроим tvOS Launcher.");
+        ru.put("Let’s set up testOS.", "Давайте настроим testOS.");
         ru.put("Lock screen settings", "Настройки экрана блокировки");
         ru.put("Lock screen settings…", "Настройки экрана блокировки…");
         ru.put("MATCHING MODELS FOR ", "ПОДХОДЯЩИЕ МОДЕЛИ ДЛЯ ");
         ru.put("MODELS (", "МОДЕЛИ (");
         ru.put("Make Home Screen", "Назначить главным экраном");
-        ru.put("Make tvOS Launcher Default Home", "Назначить tvOS Launcher главным экраном");
-        ru.put("Make tvOS Launcher your home screen?", "Сделать tvOS Launcher главным экраном?");
+        ru.put("Make testOS Default Home", "Назначить testOS главным экраном");
+        ru.put("Make testOS your home screen?", "Сделать testOS главным экраном?");
         ru.put("Manual debloat (All system apps)…", "Ручная очистка (все системные приложения)…");
         ru.put("Mode: Manual Setup (Without ADB)", "Режим: ручная настройка (без ADB)");
         ru.put("Mode: Persistent ADB Setup (Keep ADB Open)", "Режим: постоянный ADB (оставить включённым)");
@@ -1211,8 +1211,8 @@ public final class I18n {
         ru.put("TAP ACTIONS", "ДЕЙСТВИЯ ПО НАЖАТИЮ");
         ru.put("TARGET ACTION / APPLICATION", "ДЕЙСТВИЕ / ПРИЛОЖЕНИЕ");
         ru.put("TOP SHELF CONTENT", "СОДЕРЖИМОЕ ВЕРХНЕЙ КАРУСЕЛИ");
-        ru.put("The Home button on the remote will open tvOS Launcher.", "Кнопка Home на пульте будет открывать tvOS Launcher.");
-        ru.put("The Home button opens tvOS Launcher", "Кнопка Home открывает tvOS Launcher");
+        ru.put("The Home button on the remote will open testOS.", "Кнопка Home на пульте будет открывать testOS.");
+        ru.put("The Home button opens testOS", "Кнопка Home открывает testOS");
         ru.put("This TV has no inputs", "На этом телевизоре нет доступных входов");
         ru.put("Turn off Custom image", "Выключить своё изображение");
         ru.put("Turn off Folder shuffle", "Выключить случайную смену изображений из папки");
@@ -1381,7 +1381,7 @@ public final class I18n {
         sv("Download & Install", "Ladda ner och installera");
         sv("Up to Date", "Uppdaterad");
         sv("You are running the latest version.", "Du använder den senaste versionen.");
-        sv("Updating tvOS Launcher", "Uppdaterar tvOS Launcher");
+        sv("Updating testOS", "Uppdaterar testOS");
         sv("Downloading latest APK from GitHub…", "Laddar ner senaste APK från GitHub…");
         sv("Installing update…", "Installerar uppdatering…");
         sv("Update Failed", "Uppdatering misslyckades");
@@ -1416,7 +1416,7 @@ public final class I18n {
         sv("Get Started", "Kom igång");
         sv("Skip Setup", "Hoppa över inställning");
         sv("Select your language to begin", "Välj ditt språk för att börja");
-        sv("Let’s set up tvOS Launcher.", "Låt oss ställa in tvOS Launcher.");
+        sv("Let’s set up testOS.", "Låt oss ställa in testOS.");
         sv("Choose a look", "Välj ett utseende");
         sv("Choose how you want your Home Screen to look.", "Välj hur du vill att hemskärmen ska se ut.");
         sv("Choose Your Scenes", "Välj dina scener");
@@ -1438,7 +1438,7 @@ public final class I18n {
         sv("Enable ADB Debugging", "Aktivera ADB-felsökning");
         sv("Grant Permissions Now", "Ge behörigheter nu");
         sv("Switch to Manual Setup", "Byt till manuell inställning");
-        sv("Make tvOS Launcher the Home Screen", "Gör tvOS Launcher till hemskärm");
+        sv("Make testOS the Home Screen", "Gör testOS till hemskärm");
         sv("Button Mapper & Control Panel", "Knappmappare och kontrollpanel");
         sv("Active in Accessibility", "Aktiv i Tillgänglighet");
         sv("Enable in Accessibility so remapped buttons work in all apps", "Aktivera i Tillgänglighet så att omprogrammerade knappar fungerar i alla appar");
@@ -1736,7 +1736,7 @@ public final class I18n {
         ko("Download & Install", "다운로드 및 설치");
         ko("Up to Date", "최신 상태");
         ko("You are running the latest version.", "최신 버전을 사용 중입니다.");
-        ko("Updating tvOS Launcher", "tvOS Launcher 업데이트 중");
+        ko("Updating testOS", "testOS 업데이트 중");
         ko("Downloading latest APK from GitHub…", "GitHub에서 최신 APK를 다운로드하는 중…");
         ko("Installing update…", "업데이트 설치 중…");
         ko("Update Failed", "업데이트 실패");
@@ -1771,7 +1771,7 @@ public final class I18n {
         ko("Get Started", "시작하기");
         ko("Skip Setup", "설정 건너뛰기");
         ko("Select your language to begin", "시작하려면 언어를 선택하세요");
-        ko("Let’s set up tvOS Launcher.", "tvOS Launcher 설정을 시작합니다.");
+        ko("Let’s set up testOS.", "testOS 설정을 시작합니다.");
         ko("Choose a look", "외관 선택");
         ko("Choose how you want your Home Screen to look.", "홈 화면의 스타일을 선택하세요.");
         ko("Choose Your Scenes", "장면 선택");
@@ -1793,7 +1793,7 @@ public final class I18n {
         ko("Enable ADB Debugging", "ADB 디버깅 활성화");
         ko("Grant Permissions Now", "지금 권한 부여");
         ko("Switch to Manual Setup", "수동 설정으로 전환");
-        ko("Make tvOS Launcher the Home Screen", "tvOS Launcher를 기본 홈 화면으로 설정");
+        ko("Make testOS the Home Screen", "testOS를 기본 홈 화면으로 설정");
         ko("Button Mapper & Control Panel", "버튼 매퍼 및 제어판");
         ko("Active in Accessibility", "접근성에서 활성화됨");
         ko("Enable in Accessibility so remapped buttons work in all apps", "모든 앱에서 리모컨 버튼 매핑이 작동하도록 접근성에서 활성화하세요");
