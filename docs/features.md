@@ -16,10 +16,10 @@ Night Scenes can display a compact row of content that installed TV apps publish
 
 ## Search
 
-- Searches installed apps and launcher settings.
+- Searches installed apps and launcher settings immediately; title lookup remains available through JustWatch.
 - Supports Russian and English keyboard layouts, digits and the TV's available voice-input service.
 - Search history is local to the device.
-- No Nuvio, Stremio or Cinemeta catalogue lookup is performed.
+- No Nuvio, Stremio or Cinemeta catalogue lookup is performed, and search does not populate a recommendation feed.
 
 ## Weather
 
