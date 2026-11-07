@@ -697,6 +697,33 @@ public final class I18n {
         ru.put("Couldn't search. Check the internet connection.", "Не удалось выполнить поиск. Проверьте подключение к интернету.");
         ru.put("TMDB connected", "TMDB подключён");
 
+        // Weather, profiles and streaming sign-in labels.
+        ru.put(" and enter:", " и введите:");
+        ru.put("5-DAY FORECAST", "ПРОГНОЗ НА 5 ДНЕЙ");
+        ru.put("Couldn't reach ", "Не удалось связаться с ");
+        ru.put("Getting the weather…", "Загрузка погоды…");
+        ru.put("H:", "В:");
+        ru.put("HOURLY FORECAST", "ПОЧАСОВОЙ ПРОГНОЗ");
+        ru.put("Humidity ", "Влажность ");
+        ru.put("L:", "Н:");
+        ru.put("My Location", "Моё местоположение");
+        ru.put("Nothing to continue yet", "Пока нечего продолжать");
+        ru.put("Now", "Сейчас");
+        ru.put("Or open ", "Или откройте ");
+        ru.put("Preparing QR code…", "Подготовка QR-кода…");
+        ru.put("Profile ", "Профиль ");
+        ru.put("Scan with your phone and approve.", "Отсканируйте телефоном и подтвердите вход.");
+        ru.put("Sign in to ", "Войти в ");
+        ru.put("Tall Glass", "Высокие стеклянные часы");
+        ru.put("Today", "Сегодня");
+        ru.put("Up next", "Далее");
+        ru.put("Updated ", "Обновлено ");
+        ru.put("Waiting for approval…", "Ожидание подтверждения…");
+        ru.put("Wind ", "Ветер ");
+        ru.put("iPhone Rounded", "Округлый iPhone");
+        ru.put("min", "мин");
+
+
         // Search, voice input, ADB status and media-provider labels.
         ru.put("ADB Enabled · Not Paired", "ADB включён · не сопряжено");
         ru.put("Accessibility", "Специальные возможности");
