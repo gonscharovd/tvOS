@@ -397,7 +397,7 @@ public class SetupActivity extends Activity {
             handler.postDelayed(cycle[0], 2200);
         };
         handler.postDelayed(cycle[0], 2400);
-        TextView s = subtitle(tr("Let\u2019s set up tvOS Launcher.", "tvOS Launcher\u2019\u0131 kural\u0131m."));
+        TextView s = subtitle(tr("Let\u2019s set up testOS.", "testOS\u2019\u0131 kural\u0131m."));
         Ui.textSize(s, 16);
         ((LinearLayout.LayoutParams) s.getLayoutParams()).bottomMargin = u(16);
         LinearLayout l = scrollableList();
@@ -878,13 +878,13 @@ public class SetupActivity extends Activity {
             handler.postDelayed(() -> Perms.requestLocation(this), 600);
         }
         title(tr("Finish Setting Up", "Kurulumu Tamamla"));
-        TextView s = subtitle(tr("tvOS Launcher works best as the home screen. Allow these once; anything this TV doesn't support is skipped.",
-                "tvOS Launcher en iyi ana ekran olarak \u00e7al\u0131\u015f\u0131r. Bunlara bir kez izin verin; bu TV'nin desteklemedi\u011fi \u00f6zellikler atlan\u0131r."));
+        TextView s = subtitle(tr("testOS works best as the home screen. Allow these once; anything this TV doesn't support is skipped.",
+                "testOS en iyi ana ekran olarak \u00e7al\u0131\u015f\u0131r. Bunlara bir kez izin verin; bu TV'nin desteklemedi\u011fi \u00f6zellikler atlan\u0131r."));
         ((LinearLayout.LayoutParams) s.getLayoutParams()).bottomMargin = u(16);
         LinearLayout l = scrollableList();
         boolean home = Perms.isDefaultHome(this);
-        option(l, tr("Make tvOS Launcher the Home Screen", "tvOS Launcher'\u0131 Ana Ekran Yap"),
-                home ? tr("The Home button opens tvOS Launcher", "Ana Ekran d\u00fc\u011fmesi tvOS Launcher'\u0131 a\u00e7ar") : tr("Choose tvOS Launcher when asked", "Soruldu\u011funda tvOS Launcher'\u0131 se\u00e7in"), home,
+        option(l, tr("Make testOS the Home Screen", "testOS'\u0131 Ana Ekran Yap"),
+                home ? tr("The Home button opens testOS", "Ana Ekran d\u00fc\u011fmesi testOS'\u0131 a\u00e7ar") : tr("Choose testOS when asked", "Soruldu\u011funda testOS'\u0131 se\u00e7in"), home,
                 () -> Perms.requestDefaultHome(this));
         if (!Perms.hasLocation(this)) {
             option(l, tr("Show the Wi-Fi Name", "Wi-Fi Ad\u0131n\u0131 G\u00f6ster"),
@@ -915,18 +915,18 @@ public class SetupActivity extends Activity {
         dots();
     }
 
-    /** Dedicated page right after permissions: Make tvOS Launcher Default Home (with sequential troubleshooting steps). */
+    /** Dedicated page right after permissions: Make testOS Default Home (with sequential troubleshooting steps). */
     void defaultHomeSetup() {
-        title(tr("Make tvOS Launcher Default Home", "tvOS Launcher'ı Varsayılan Ana Ekran Yap"));
+        title(tr("Make testOS Default Home", "testOS'ı Varsayılan Ana Ekran Yap"));
         TextView s = subtitle(tr(
-                "On TCL, Philips, and Google TVs, OEM firmware often forces the stock launcher when pressing Home. Follow the steps below so pressing Home always opens tvOS Launcher, then click Continue.",
-                "TCL, Philips ve Google TV'lerde üretici yazılımı genellikle Home tuşuna basıldığında stok başlatıcıyı zorlar. Home tuşunun her zaman tvOS Launcher'ı açması için aşağıdaki adımları uygulayın ve ardından Devam Et'e basın."));
+                "On TCL, Philips, and Google TVs, OEM firmware often forces the stock launcher when pressing Home. Follow the steps below so pressing Home always opens testOS, then click Continue.",
+                "TCL, Philips ve Google TV'lerde üretici yazılımı genellikle Home tuşuna basıldığında stok başlatıcıyı zorlar. Home tuşunun her zaman testOS'ı açması için aşağıdaki adımları uygulayın ve ardından Devam Et'e basın."));
         ((LinearLayout.LayoutParams) s.getLayoutParams()).width = u(620);
         ((LinearLayout.LayoutParams) s.getLayoutParams()).bottomMargin = u(14);
         LinearLayout l = scrollableList();
 
         boolean isDef = Perms.isDefaultHome(this);
-        option(l, tr("Step 1: Set tvOS Launcher as Default via Local ADB", "1. Adım: Yerel ADB ile tvOS Launcher'ı Varsayılan Yap"),
+        option(l, tr("Step 1: Set testOS as Default via Local ADB", "1. Adım: Yerel ADB ile testOS'ı Varsayılan Yap"),
                 isDef ? tr("Active — Set as default home launcher", "Etkin — Varsayılan ana ekran olarak ayarlandı")
                       : tr("Run ROLE_HOME & set-home-activity over Local ADB ›", "Yerel ADB üzerinden ROLE_HOME ve set-home-activity çalıştır ›"),
                 isDef,
@@ -940,7 +940,7 @@ public class SetupActivity extends Activity {
         boolean homeFixOn = ButtonMapper.isHomeFixEnabled(this);
         option(l, tr("Step 3: Fix Home Button via Accessibility (Button Mapper)", "3. Adım: Erişilebilirlik ile Ana Ekran Tuşu Düzeltmesi"),
                 homeFixOn
-                        ? tr("On — Pressing Home launches tvOS Launcher", "Açık — Ana Ekran tuşu tvOS Launcher'ı açar")
+                        ? tr("On — Pressing Home launches testOS", "Açık — Ana Ekran tuşu testOS'ı açar")
                         : tr("Off — Tap to enable Home button remap", "Kapalı — Ana Ekran tuşu yönlendirmesini açmak için dokunun"),
                 homeFixOn,
                 () -> {
