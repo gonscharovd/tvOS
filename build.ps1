@@ -21,8 +21,8 @@ New-Item -ItemType Directory -Force -Path "build\gen", "build\classes", "build\d
 & "$BT\aapt2.exe" compile --dir res -o build\res.zip
 if ($LASTEXITCODE -ne 0) { throw "aapt2 compile failed" }
 
-$versionCode = if ($env:VERSION_CODE) { $env:VERSION_CODE } else { "13" }
-$versionName = if ($env:VERSION_NAME) { $env:VERSION_NAME } else { "2.1.2-custom1" }
+$versionCode = if ($env:VERSION_CODE) { $env:VERSION_CODE } else { "85" }
+$versionName = if ($env:VERSION_NAME) { $env:VERSION_NAME } else { "2.1.70" }
 
 & "$BT\aapt2.exe" link -o build\unsigned.apk -I "$JAR" --manifest AndroidManifest.xml --rename-manifest-package "com.gonscharovd.tvoslauncher" `
     --java build\gen --min-sdk-version 24 --target-sdk-version 34 `
