@@ -74,6 +74,7 @@ public class SettingsActivity extends Activity {
         {LOOK_SCENES, "scene"},
         {WEATHER, "cloud"},
         {APPS, "apps"},
+        {BUTTON_MAPPER, "remote"},
         {ADVANCED, "shield"},
         {UPDATES, "update"},
         {ABOUT, "info"}
@@ -249,7 +250,7 @@ public class SettingsActivity extends Activity {
             case WEATHER: return tr("Weather and location", "Hava durumu ve konum");
             case APPS: return tr("Apps", "Uygulamalar");
             case PROFILES: return tr("People", "Kişiler");
-            case BUTTON_MAPPER: return tr("Button mapper", "Düğme eşleyici");
+            case BUTTON_MAPPER: return tr("Remote control", "Пульт и кнопки");
             case QUICK: return tr("Quick settings", "Hızlı ayarlar");
             case LANGUAGE: return tr("Language", "Dil");
             case ADVANCED: return tr("Advanced", "Gelişmiş");
@@ -1359,82 +1360,80 @@ public class SettingsActivity extends Activity {
     }
 
     void pageButtonMapper() {
-        section(tr("ACCESSIBILITY SERVICE", "ERİŞİLEBİLİRLİK SERVİSİ"));
-        row(tr("Button Mapper accessibility service", "Düğme Eşleyici erişilebilirlik servisi"),
+        section(tr("ACCESSIBILITY SERVICE", "СЛУЖБА СПЕЦИАЛЬНЫХ ВОЗМОЖНОСТЕЙ"));
+        row(tr("Button Mapper accessibility service", "Служба переназначения кнопок"),
                 () -> ButtonMapper.isServiceEnabled(this)
-                        ? tr("Active (works in all apps)", "Etkin (tüm uygulamalarda çalışır)")
-                        : tr("Enable in Accessibility…", "Erişilebilirlik'te etkinleştir…"),
+                        ? tr("Active (works in all apps)", "Активна (работает во всех приложениях)")
+                        : tr("Enable in Accessibility…", "Включить в специальных возможностях…"),
                 () -> {
                     Intent acc = Perms.accessibilityScreen(this);
                     if (acc != null && Suggestions.start(this, acc)) {
                         return;
                     }
-                    dialog(tr("Accessibility Service", "Erişilebilirlik Servisi"))
+                    dialog(tr("Accessibility Service", "Служба специальных возможностей"))
                             .setMessage(tr(
                                     "This TV does not have a built-in Accessibility Settings screen. You can enable the Button Mapper & Control Panel service automatically via Local ADB.",
-                                    "Bu TV'de yerleşik bir Erişilebilirlik Ayarları ekranı bulunmuyor. Düğme Eşleyici ve Denetim Paneli servisini Yerel ADB üzerinden otomatik olarak etkinleştirebilirsiniz."))
-                            .setPositiveButton(tr("Enable via ADB", "ADB ile Etkinleştir"), (d, w) -> pairOrRepairAdb())
-                            .setNeutralButton(tr("TV Settings", "TV Ayarları"), (d, w) -> Suggestions.start(this, new Intent(Settings.ACTION_SETTINGS)))
-                            .setNegativeButton(tr("Cancel", "İptal"), null)
+                                    "На этом телевизоре нет встроенного экрана специальных возможностей. Службу переназначения кнопок и панели управления можно включить через локальный ADB."))
+                            .setPositiveButton(tr("Enable via ADB", "Включить через ADB"), (d, w) -> pairOrRepairAdb())
+                            .setNeutralButton(tr("TV Settings", "Настройки телевизора"), (d, w) -> Suggestions.start(this, new Intent(Settings.ACTION_SETTINGS)))
+                            .setNegativeButton(tr("Cancel", "Отмена"), null)
                             .show();
                 });
-        row(tr("Fix Home button (Launch testOS)", "Ana Ekran tuşu düzeltmesi (testOS'ı aç)"),
-                () -> ButtonMapper.isHomeFixEnabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
+        row(tr("Fix Home button (Launch testOS)", "Короткое нажатие кнопки Домой открывает testOS"),
+                () -> ButtonMapper.isHomeFixEnabled(this) ? tr("On", "Включено") : tr("Off", "Выключено"),
                 () -> {
                     boolean next = !ButtonMapper.isHomeFixEnabled(this);
                     ButtonMapper.setHomeFixEnabled(this, next);
                     refreshAll();
-                    if (next && !ButtonMapper.isServiceEnabled(this)) {
-                        showStatusMsg(tr("Home button fix enabled — please also enable Accessibility service above so Home key can be intercepted.",
-                                "Ana Ekran tuşu düzeltmesi açıldı — çalışması için yukarıdan Erişilebilirlik servisini de etkinleştirin."));
-                    } else {
-                        showStatusMsg(next
-                                ? tr("Home button fix enabled — pressing Home will launch testOS.",
-                                     "Ana Ekran tuşu düzeltmesi etkinleştirildi — Ana Ekran tuşu testOS'ı açacak.")
-                                : tr("Home button fix disabled.",
-                                     "Ana Ekran tuşu düzeltmesi kapatıldı."));
-                    }
+                    showStatusMsg(next
+                            ? tr("Short press Home opens testOS; long press opens TV Settings.",
+                                 "Короткое нажатие Домой открывает testOS, долгое — настройки телевизора.")
+                            : tr("Home button is handled by the TV system.",
+                                 "Кнопка Домой обрабатывается самой системой телевизора."));
                 });
-        row(tr("Long-press volume button fix", "Uzun basış ses tuşu düzeltmesi"),
-                () -> ButtonMapper.isVolumeHoldFixEnabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
+        infoNote(tr("When the Home fix is enabled, a short press opens testOS and a long press opens the TV's own Settings. With the fix disabled, Home is handled by the TV system.",
+                "Если исправление кнопки Домой включено, короткое нажатие открывает testOS, а долгое — настройки телевизора. Если выключено, кнопкой управляет сама система ТВ."));
+
+        row(tr("Long-press volume button fix", "Исправление долгого нажатия кнопки громкости"),
+                () -> ButtonMapper.isVolumeHoldFixEnabled(this) ? tr("On", "Включено") : tr("Off", "Выключено"),
                 () -> {
                     boolean next = !ButtonMapper.isVolumeHoldFixEnabled(this);
                     ButtonMapper.setVolumeHoldFixEnabled(this, next);
                     refreshAll();
                     showStatusMsg(next
                             ? tr("Long-press volume fix enabled (for TVs where holding volume stops repeating).",
-                                 "Uzun basış ses tuşu düzeltmesi etkinleştirildi.")
+                                 "Исправление долгого нажатия громкости включено.")
                             : tr("Long-press volume fix disabled (using native TV volume).",
-                                 "Uzun basış ses tuşu düzeltmesi kapatıldı (varsayılan TV sesi kullanılıyor)."));
+                                 "Исправление выключено, используется штатная регулировка громкости."));
                 });
-        row(tr("Volume button fix mode", "Ses tuşu düzeltme modu"),
+        row(tr("Volume button fix mode", "Режим исправления кнопок громкости"),
                 () -> ButtonMapper.getVolumeHoldFixModeLabel(this),
                 this::showVolumeFixModeSelectorDialog);
 
-        section(tr("BUTTON REMAPPING", "DÜĞME YENİDEN EŞLEME"));
-        row(tr("Add new button to remap", "Yeniden eşlemek için yeni düğme ekle"),
+        section(tr("BUTTON REMAPPING", "ПЕРЕНАЗНАЧЕНИЕ КНОПОК"));
+        row(tr("Add new button to remap", "Добавить кнопку для переназначения"),
                 () -> "＋",
                 () -> ButtonMapper.showCaptureAndConfigureDialog(this, this::rebuildMainRows));
 
         List<Integer> mappedKeys = ButtonMapper.getMappedKeys(this);
         if (!mappedKeys.isEmpty()) {
-            section(tr("REMAPPED BUTTONS (1X / 2X / 3X TAP)", "EŞLENMİŞ DÜĞMELER (1X / 2X / 3X BASIŞ)"));
+            section(tr("REMAPPED BUTTONS (1X / 2X / 3X TAP)", "НАЗНАЧЕННЫЕ КНОПКИ (1 / 2 / 3 НАЖАТИЯ)"));
             for (final int keyCode : mappedKeys) {
                 twoLineRow(ButtonMapper.keyLabel(this, keyCode),
                         () -> ButtonMapper.keySummaryLabel(this, keyCode),
                         () -> openButtonKeySubMenu(keyCode));
             }
-            row(tr("Clear all remapped buttons", "Tüm eşlenmiş düğmeleri temizle"),
+            row(tr("Clear all remapped buttons", "Сбросить все переназначения"),
                     () -> "",
                     () -> {
                         ButtonMapper.clearAll(this);
                         rebuildMainRows();
-                        showStatusMsg(tr("All button mappings cleared.", "Tüm düğme eşlemeleri temizlendi."));
+                        showStatusMsg(tr("All button mappings cleared.", "Все переназначения кнопок сброшены."));
                     });
         }
 
         infoNote(tr("Assign Single Tap (1x), Double Tap (2x) and Triple Tap (3x) actions for each remote button — such as opening the Control Panel overlay, the Recent Apps Switcher overlay, or any installed app.",
-                "Her kumanda düğmesi için Tek Basış (1x), Çift Basış (2x) ve Üçlü Basış (3x) eylemleri atayın — örneğin Denetim Paneli katmanını, Son Uygulamalar Değiştiricisi katmanını veya yüklü herhangi bir uygulamayı açın."));
+                "Для каждой кнопки пульта можно назначить действия на одно, два или три нажатия: открыть панель управления, список недавних приложений или любое установленное приложение."));
     }
 
     void pageQuickAndHome() {

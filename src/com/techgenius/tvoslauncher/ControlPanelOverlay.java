@@ -42,8 +42,8 @@ import java.util.Set;
  * {@link WindowManager.LayoutParams#TYPE_ACCESSIBILITY_OVERLAY} when {@link PowerService} is active,
  * or inside {@link MainActivity} when on the Home Screen.
  *
- * Layout: four full-width rows (Wi-Fi, Bluetooth, Memory, Sleep Timer),
- * followed by two square shortcuts (VPN and Settings).
+ * Layout: full-width Wi-Fi, Bluetooth, VPN and Sleep Timer rows, with paired
+ * half-width RAM / Recent Apps and Launcher / TV Settings shortcuts.
  */
 public final class ControlPanelOverlay {
 
@@ -225,10 +225,12 @@ public final class ControlPanelOverlay {
                 },
                 () -> {
                     dismiss();
-                    Intent chooser = new Intent(svcCtx, MainActivity.class)
-                            .putExtra("panel", "settings")
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-                    startExternal(svcCtx, chooser);
+                    startExternal(svcCtx, new Intent(svcCtx, SettingsActivity.class)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                },
+                () -> {
+                    dismiss();
+                    openTvSettings(svcCtx);
                 });
 
         FrameLayout.LayoutParams plp = (FrameLayout.LayoutParams) panel.getLayoutParams();
@@ -269,7 +271,8 @@ public final class ControlPanelOverlay {
             MainActivity.LiquidGlass.Backdrop glassSource,
             List<View> outCells,
             Runnable onVpnToggle,
-            Runnable onSettings) {
+            Runnable onLauncherSettings,
+            Runnable onTvSettings) {
 
         int col = dp(unit, 141);
         int gap = dp(unit, 11);
@@ -286,14 +289,12 @@ public final class ControlPanelOverlay {
             final String title;
             final Status status;
             final View.OnClickListener click;
-            final boolean isMemory;
 
-            CapsuleSpec(String glyph, String title, Status status, View.OnClickListener click, boolean isMemory) {
+            CapsuleSpec(String glyph, String title, Status status, View.OnClickListener click) {
                 this.glyph = glyph;
                 this.title = title;
                 this.status = status;
                 this.click = click;
-                this.isMemory = isMemory;
             }
         }
 
@@ -301,36 +302,58 @@ public final class ControlPanelOverlay {
         capsules.add(new CapsuleSpec("wifi", "Wi-Fi", () -> wifiState(c), v -> {
             dismissAll(c);
             openWifiSettings(c);
-        }, false));
+        }));
         capsules.add(new CapsuleSpec("bluetooth", "Bluetooth", () -> bluetoothState(c), v -> {
             dismissAll(c);
             openBluetoothSettings(c);
-        }, false));
-        capsules.add(new CapsuleSpec("memory", I18n.s(c, "Memory", "Память"), () -> memoryState(c), v -> {
-            dismissAll(c);
-            RecentAppsOverlay.cleanAllNow(c);
-        }, true));
+        }));
+        capsules.add(new CapsuleSpec("shield", "VPN", () -> vpnState(c),
+                v -> { if (onVpnToggle != null) onVpnToggle.run(); }));
         capsules.add(new CapsuleSpec("timer", I18n.s(c, "Sleep Timer", "Таймер сна"),
-                () -> timerState(c), v -> cycleSleepTimer(c), false));
+                () -> timerState(c), v -> cycleSleepTimer(c)));
 
-        // Four full-width status/action rows.
-        for (int i = 0; i < capsules.size(); i++) {
+        // Three full-width connectivity rows.
+        for (int i = 0; i < 3; i++) {
             CapsuleSpec cs = capsules.get(i);
             int y = i * (cap + gap);
             View tile = makeTile(c, panel, 0, y, w, cap, unit, screenW, screenH, glassSource,
                     cs.glyph, cs.title, cs.status, cs.click);
-            if (cs.isMemory) attachMemoryBar(c, tile, unit);
             outCells.add(tile);
         }
 
-        int y4 = capsules.size() * (cap + gap);
-        // Fixed bottom row: VPN toggle and the settings chooser.
-        outCells.add(makeTile(c, panel, 0, y4, small, cap, unit, screenW, screenH, glassSource,
-                "shield", null, null, v -> { if (onVpnToggle != null) onVpnToggle.run(); }));
-        outCells.add(makeTile(c, panel, small + gap, y4, small, cap, unit, screenW, screenH, glassSource,
-                "gear", null, null, v -> { if (onSettings != null) onSettings.run(); }));
+        // RAM usage / cleanup and Recent Apps share one row.
+        int memoryY = 3 * (cap + gap);
+        View ramTile = makeTile(c, panel, 0, memoryY, small, cap, unit, screenW, screenH, glassSource,
+                "memory", I18n.s(c, "RAM", "ОЗУ"), () -> memoryState(c), v -> {
+                    dismissAll(c);
+                    RecentAppsOverlay.cleanAllNow(c);
+                });
+        attachMemoryBar(c, ramTile, unit);
+        outCells.add(ramTile);
+        outCells.add(makeTile(c, panel, small + gap, memoryY, small, cap, unit, screenW, screenH, glassSource,
+                "recents", I18n.s(c, "Recent Apps", "Недавние"), null, v -> {
+                    dismissAll(c);
+                    RecentAppsOverlay.show(c);
+                }));
 
-        int totalH = y4 + cap;
+        // Sleep Timer remains a full-width row.
+        int timerY = 4 * (cap + gap);
+        CapsuleSpec timer = capsules.get(3);
+        outCells.add(makeTile(c, panel, 0, timerY, w, cap, unit, screenW, screenH, glassSource,
+                timer.glyph, timer.title, timer.status, timer.click));
+
+        // Separate shortcuts for launcher settings and the TV's own settings.
+        int settingsY = 5 * (cap + gap);
+        outCells.add(makeTile(c, panel, 0, settingsY, small, cap, unit, screenW, screenH, glassSource,
+                "controls", I18n.s(c, "Launcher", "Лаунчер"), () -> I18n.s(c, "Settings", "Настройки"), v -> {
+                    if (onLauncherSettings != null) onLauncherSettings.run();
+                }));
+        outCells.add(makeTile(c, panel, small + gap, settingsY, small, cap, unit, screenW, screenH, glassSource,
+                "remote", I18n.s(c, "TV", "Телевизор"), () -> I18n.s(c, "Settings", "Настройки"), v -> {
+                    if (onTvSettings != null) onTvSettings.run();
+                }));
+
+        int totalH = settingsY + cap;
         FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(w, totalH, Gravity.TOP | Gravity.END);
         plp.topMargin = dp(unit, 36);
         plp.rightMargin = dp(unit, 28);
@@ -381,7 +404,8 @@ public final class ControlPanelOverlay {
 
         int gs = iconOnly ? dp(unit, 26) : dp(unit, 25);
         ImageView gi = new ImageView(c);
-        int baseIconColor = ("wifi".equals(glyph) || "bluetooth".equals(glyph)) ? 0xFF0A84FF
+        boolean vpnActive = "shield".equals(glyph) && VpnController.isVpnActive(c);
+        int baseIconColor = ("wifi".equals(glyph) || "bluetooth".equals(glyph) || vpnActive) ? 0xFF0A84FF
                 : "ambient".equals(glyph) ? 0xFFFFD60A
                 : "power".equals(glyph) ? 0xFFFF453A
                 : Color.WHITE;
@@ -426,7 +450,7 @@ public final class ControlPanelOverlay {
         white.setCornerRadius(radius);
         white.setColor(0xF7FFFFFF);
 
-        final int focusIconColor = ("wifi".equals(glyph) || "bluetooth".equals(glyph)) ? 0xFF0A84FF
+        final int focusIconColor = ("wifi".equals(glyph) || "bluetooth".equals(glyph) || vpnActive) ? 0xFF0A84FF
                 : "ambient".equals(glyph) ? 0xFFD97706
                 : "power".equals(glyph) ? 0xFFD7372A
                 : 0xFF111114;
@@ -506,6 +530,12 @@ public final class ControlPanelOverlay {
 
     // ---------------------------------------------------------------- Live States & Actions
 
+    public static String vpnState(Context c) {
+        return VpnController.isVpnActive(c)
+                ? I18n.s(c, "Connected", "Подключён")
+                : I18n.s(c, "Disconnected", "Отключён");
+    }
+
     public static String wifiState(Context c) {
         try {
             ConnectivityManager cm = c.getSystemService(ConnectivityManager.class);
@@ -557,7 +587,17 @@ public final class ControlPanelOverlay {
     }
 
     public static String memoryState(Context c) {
-        return Math.round(memoryUsed(c) * 100) + I18n.s(c, "% used · Recent Apps", "% kullanımda · Son Uygulamalar");
+        try {
+            ActivityManager am = c.getSystemService(ActivityManager.class);
+            if (am == null) return "—";
+            ActivityManager.MemoryInfo mi = new ActivityManager.MemoryInfo();
+            am.getMemoryInfo(mi);
+            double used = Math.max(0L, mi.totalMem - mi.availMem) / 1073741824.0;
+            double total = mi.totalMem / 1073741824.0;
+            return String.format(java.util.Locale.US, "%.1f / %.1f ГБ", used, total);
+        } catch (Throwable ignored) {
+            return "—";
+        }
     }
 
     private static void attachMemoryBar(Context c, View tile, float unit) {
@@ -803,6 +843,10 @@ public final class ControlPanelOverlay {
             }
         }
         return false;
+    }
+
+    public static boolean openTvSettings(Context c) {
+        return startExternal(c, new Intent(Settings.ACTION_SETTINGS));
     }
 
     public static void openWifiSettings(Context c) {
