@@ -1990,8 +1990,8 @@ public final class I18n {
         if (en.startsWith("Found saved disabled-app data (") && en.endsWith(" saved packages over ADB?")) {
             String count = en.substring("Found saved disabled-app data (".length(),
                     en.indexOf(" packages)."));
-            return "Найдены сохранённые данные об отключённых приложениях (" + count + " пакетов).\n\n"
-                    + "Повторно включить все " + count + " сохранённых пакетов через ADB?";
+            return "Найдены сохранённые данные об отключённых приложениях (пакетов: " + count + ").\n\n"
+                    + "Повторно включить все сохранённые пакеты (" + count + ") через ADB?";
         }
         if (en.startsWith("Restore Saved (") && en.endsWith(")")) {
             return "Восстановить сохранённые (" + en.substring("Restore Saved (".length(), en.length() - 1) + ")";
@@ -2011,8 +2011,8 @@ public final class I18n {
             if (start >= 0 && end > start && countEnd > end) {
                 return "Сохранённый список отключённых приложений не найден.\n\n"
                         + "Для восстановления будет использована выбранная модель телевизора ("
-                        + en.substring(start + prefix.length(), end) + "). Будут повторно включены "
-                        + en.substring(end + ") and re-enable its ".length(), countEnd) + " пакетов через ADB.";
+                        + en.substring(start + prefix.length(), end) + "). Будут повторно включены пакеты: "
+                        + en.substring(end + ") and re-enable its ".length(), countEnd) + " через ADB.";
             }
         }
         if (en.startsWith("Restore (") && en.endsWith(" pkgs)")) {
