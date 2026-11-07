@@ -107,6 +107,9 @@ public final class I18n {
         add("A new version of testOS is available on GitHub.", "На GitHub доступна новая версия testOS.");
         add("Current version:", "Текущая версия:");
         add("New version:", "Новая версия:");
+        add("✕  Remove", "✕  Удалить");
+        add("▶  Resume", "▶  Продолжить");
+        add("Emoji", "Эмодзи");
         add("iPhone Duo", "iPhone Duo");
         add("iPhone Rounded", "iPhone Rounded");
         add("Tall Glass", "Высокий");
