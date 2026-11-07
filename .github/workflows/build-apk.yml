@@ -1,4 +1,4 @@
-name: Build custom tvOS APK
+name: Build testOS APK
 
 on:
   workflow_dispatch:
@@ -40,13 +40,13 @@ jobs:
 
       - name: Verify APK
         run: |
-          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose build/tvos-home.apk
-          "$ANDROID_HOME/build-tools/34.0.0/aapt" dump badging build/tvos-home.apk | head -n 5
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose build/testOS.apk
+          "$ANDROID_HOME/build-tools/34.0.0/aapt" dump badging build/testOS.apk | head -n 5
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: tvos-custom-2.1.2-custom2
-          path: build/tvos-home.apk
+          name: testOS-2.1.2-testOS1
+          path: build/testOS.apk
           if-no-files-found: error
           retention-days: 14
