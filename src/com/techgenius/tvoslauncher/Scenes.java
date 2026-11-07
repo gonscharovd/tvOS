@@ -54,7 +54,17 @@ public final class Scenes {
     public static final String CLOCK_STYLE_DUO = "duo";
     public static final String CLOCK_STYLE_ROUNDED = "rounded";
     public static final String CLOCK_STYLE_TALL = "tall";
-    public static final String[] CLOCK_STYLES = {CLOCK_STYLE_DUO, CLOCK_STYLE_ROUNDED, CLOCK_STYLE_TALL};
+    public static final String CLOCK_STYLE_CLASSIC = "classic";
+    public static final String CLOCK_STYLE_SERIF = "serif";
+    public static final String CLOCK_STYLE_DIGITAL = "digital";
+    public static final String CLOCK_STYLE_CONDENSED = "condensed";
+    public static final String CLOCK_STYLE_THIN = "thin";
+    public static final String CLOCK_STYLE_BOLD = "bold";
+    public static final String[] CLOCK_STYLES = {
+            CLOCK_STYLE_DUO, CLOCK_STYLE_ROUNDED, CLOCK_STYLE_TALL,
+            CLOCK_STYLE_CLASSIC, CLOCK_STYLE_SERIF, CLOCK_STYLE_DIGITAL,
+            CLOCK_STYLE_CONDENSED, CLOCK_STYLE_THIN, CLOCK_STYLE_BOLD
+    };
 
     public static final int[] STAY_OPTIONS = {10, 15, 20, 30, 45, 60, 120};
     public static final int[] LOCK_IDLE_OPTIONS = {0, 2, 5, 10, 15, 30, 60};
@@ -666,8 +676,14 @@ public final class Scenes {
 
     public static String clockStyleLabel(Context c) {
         String st = getClockStyle(c);
-        if (CLOCK_STYLE_ROUNDED.equals(st)) return I18n.s(c, "iPhone Rounded", "iPhone Yuvarlak");
-        if (CLOCK_STYLE_TALL.equals(st)) return I18n.s(c, "Tall Glass", "Uzun Cam");
+        if (CLOCK_STYLE_ROUNDED.equals(st)) return I18n.s(c, "iPhone Rounded", "iPhone Rounded");
+        if (CLOCK_STYLE_TALL.equals(st)) return I18n.s(c, "Tall Glass", "Высокий");
+        if (CLOCK_STYLE_CLASSIC.equals(st)) return I18n.s(c, "Classic", "Классический");
+        if (CLOCK_STYLE_SERIF.equals(st)) return I18n.s(c, "Serif", "С засечками");
+        if (CLOCK_STYLE_DIGITAL.equals(st)) return I18n.s(c, "Digital", "Цифровой");
+        if (CLOCK_STYLE_CONDENSED.equals(st)) return I18n.s(c, "Condensed", "Узкий");
+        if (CLOCK_STYLE_THIN.equals(st)) return I18n.s(c, "Thin", "Тонкий");
+        if (CLOCK_STYLE_BOLD.equals(st)) return I18n.s(c, "Bold", "Жирный");
         return I18n.s(c, "iPhone Duo", "iPhone Duo");
     }
 
@@ -1212,11 +1228,16 @@ public final class Scenes {
             boolean isRounded = CLOCK_STYLE_ROUNDED.equals(style);
 
             // Duo uses Bahnschrift Condensed ('wght' 345, 'wdth' 75) with rounded corners matching screen_duo12.png
-            android.graphics.Typeface tf = isDuo
-                    ? Ui.font(ctx, "clock_duo")
-                    : isRounded
-                    ? Ui.font(ctx, "clock_rounded")
-                    : Ui.font(ctx, "clock");
+            android.graphics.Typeface tf;
+            if (isDuo) tf = Ui.font(ctx, "clock_duo");
+            else if (isRounded) tf = Ui.font(ctx, "clock_rounded");
+            else if (CLOCK_STYLE_CLASSIC.equals(style)) tf = Ui.font(ctx, "clock_classic");
+            else if (CLOCK_STYLE_SERIF.equals(style)) tf = Ui.font(ctx, "clock_serif");
+            else if (CLOCK_STYLE_DIGITAL.equals(style)) tf = Ui.font(ctx, "clock_digital");
+            else if (CLOCK_STYLE_CONDENSED.equals(style)) tf = Ui.font(ctx, "clock_condensed");
+            else if (CLOCK_STYLE_THIN.equals(style)) tf = Ui.font(ctx, "clock_thin");
+            else if (CLOCK_STYLE_BOLD.equals(style)) tf = Ui.font(ctx, "clock_bold");
+            else tf = Ui.font(ctx, "clock");
             clockFillPaint.setTypeface(tf);
             clockWetPaint.setTypeface(tf);
             clockFrostPaint.setTypeface(tf);
