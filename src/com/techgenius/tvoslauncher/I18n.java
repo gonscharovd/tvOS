@@ -1808,7 +1808,7 @@ public final class I18n {
                     + " не установлено на этом телевизоре";
         }
         if (en.endsWith(" is not installed on this TV")) {
-            return en.substring(0, en.length() - " is not installed on this TV".length())
+            return "Приложение " + en.substring(0, en.length() - " is not installed on this TV".length())
                     + " не установлено на этом телевизоре";
         }
         if (en.startsWith("Open in ")) return "Открыть в " + en.substring("Open in ".length());
