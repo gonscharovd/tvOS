@@ -94,7 +94,7 @@ final class Suggestions {
                 if (in == null) return null;
                 byte[] data = readAll(in);
                 if (data == null || data.length == 0) return null;
-                BitmapFactory.Options o = bounds(data);
+                BitmapFactory.Options o = bounds(data, maxWidth);
                 return BitmapFactory.decodeByteArray(data, 0, data.length, o);
             } catch (Exception e) {
                 return null;
@@ -127,12 +127,12 @@ final class Suggestions {
         }
     }
 
-    private static BitmapFactory.Options bounds(byte[] data) {
+    private static BitmapFactory.Options bounds(byte[] data, int maxWidth) {
         BitmapFactory.Options o = new BitmapFactory.Options();
         o.inJustDecodeBounds = true;
         BitmapFactory.decodeByteArray(data, 0, data.length, o);
         o.inSampleSize = 1;
-        while (o.outWidth / (o.inSampleSize * 2) >= 1) o.inSampleSize *= 2;
+        while (o.outWidth / (o.inSampleSize * 2) >= maxWidth) o.inSampleSize *= 2;
         o.inJustDecodeBounds = false;
         return o;
     }
