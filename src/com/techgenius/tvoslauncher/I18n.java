@@ -126,6 +126,7 @@ public final class I18n {
         add("One scene has to stay on.", "Хотя бы одна сцена должна оставаться включенной.");
         add("Keep watching", "Продолжить просмотр");
         add("Continue Watching", "Продолжить просмотр");
+        add("System playback history is not available in this build.", "История воспроизведения Android недоступна в этой сборке.");
         add("More apps", "Все приложения");
         add("More Apps", "Все приложения");
         add("Inputs", "Входы");
