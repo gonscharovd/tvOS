@@ -283,7 +283,7 @@ function uploadOne(file, onProgress) {
       const data = safeJson(xhr.responseText);
       if (xhr.status >= 200 && xhr.status < 300) return resolve(data);
       if (xhr.status === 401) forgetPairing();
-      reject(new Error(data.error || (data.errors || []).join("; ") || `Upload failed (${xhr.status})`));
+      reject(new Error(data.error || (data.errors || []).join("; ") || `Не удалось загрузить файл (HTTP ${xhr.status})`));
     };
     xhr.onerror = () => reject(new Error("Не удалось загрузить файл. Убедитесь, что телевизор включён и подключён к той же сети."));
     xhr.send(form);
@@ -717,7 +717,7 @@ async function api(path, opts = {}) {
   const text = await res.text();
   const data = text ? safeJson(text) : {};
   if (!res.ok) {
-    const err = new Error(data.error || (data.errors || []).join("; ") || `Request failed (${res.status})`);
+    const err = new Error(data.error || (data.errors || []).join("; ") || `Запрос не выполнен (HTTP ${res.status})`);
     err.status = res.status;
     throw err;
   }
