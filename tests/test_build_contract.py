@@ -18,6 +18,11 @@ assert "build/tvos-home.apk" in build_sh
 assert "build/testOS.apk" not in build_sh
 assert "path: build/tvos-home.apk" in workflow
 assert "tvos-home.apk" in updater
+assert "Prepare persistent preview signing key" in workflow
+assert "VERSION_NAME=2.1.70" in workflow and "VERSION_CODE=85" in workflow
+assert "testOS-preview-signed" in workflow
+assert "5dbf8846d9bb76a764928da8c8a833a837b44ba00f4a7c0b60dc77490319b10a" in workflow
+assert "softprops/action-gh-release" not in workflow
 
 for name, source in (("PowerShell", build_ps), ("Bash", build_sh)):
     for setting in ("RELEASE_KEYSTORE", "RELEASE_KEYSTORE_PASS", "RELEASE_KEY_ALIAS",
