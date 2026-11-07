@@ -329,13 +329,10 @@ public final class AppUpdater {
                 : I18n.s(activity,
                         "ADB is turned off (Secure Mode) — selecting Install will download the update and open the system package installer.",
                         "ADB kapalı (Güvenli Mod) — Yükle'yi seçtiğinizde güncelleme indirilecek ve sistem paket yükleyicisi açılacaktır.");
-        msgTv.setText(I18n.s(activity,
-                "A new version of testOS is available on GitHub.\n"
-                        + "Current version: v" + cur + "  →  New version: v" + latestVersion + "\n\n"
-                        + modeNote,
-                "GitHub'da yeni bir testOS sürümü mevcut.\n"
-                        + "Mevcut sürüm: v" + cur + "  →  Yeni sürüm: v" + latestVersion + "\n\n"
-                        + modeNote));
+        msgTv.setText(I18n.s(activity, "A new version of testOS is available on GitHub.", "На GitHub доступна новая версия testOS.")
+                + "\\n" + I18n.s(activity, "Current version:", "Текущая версия:") + " v" + cur
+                + "  →  " + I18n.s(activity, "New version:", "Новая версия:") + " v" + latestVersion
+                + "\\n\\n" + modeNote);
         msgTv.setTextColor(0xCCFFFFFF);
         msgTv.setTextSize(android.util.TypedValue.COMPLEX_UNIT_SP, 14);
         msgTv.setTypeface(android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL));
