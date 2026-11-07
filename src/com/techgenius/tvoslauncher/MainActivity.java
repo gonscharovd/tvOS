@@ -3798,7 +3798,19 @@ public class MainActivity extends Activity {
                     popoverReturn = null;
                     VpnController.toggleHappWithFeedback(this);
                 },
-                this::showSettingsChooser);
+                () -> {
+                    dropPicker();
+                    pickerLayer = null;
+                    popoverReturn = null;
+                    returningFromSettings = true;
+                    startActivity(new Intent(this, SettingsActivity.class));
+                },
+                () -> {
+                    dropPicker();
+                    pickerLayer = null;
+                    popoverReturn = null;
+                    ControlPanelOverlay.openTvSettings(this);
+                });
 
         FrameLayout.LayoutParams plp = (FrameLayout.LayoutParams) panel.getLayoutParams();
         plp.gravity = Gravity.TOP | Gravity.END;
