@@ -676,7 +676,6 @@ public final class I18n {
         add("Who’s Watching?", "Кто смотрит?");
         add("Delete profile", "Удалить профиль");
         add("Getting the weather…", "Загружаем погоду…");
-        add("Continue Watching & Do Not Disturb", "Продолжить просмотр и режим «Не беспокоить»");
         add("Set Default via Local ADB (Recommended)", "Назначить по умолчанию через локальный ADB (рекомендуется)");
         add("Disable Stock TV Launchers (TCL / Philips / Google TV)", "Отключить штатные лаунчеры ТВ (TCL / Philips / Google TV)");
         add("Enable Home Button Fix (Accessibility Remap)", "Включить перехват кнопки «Домой» (спец. возможности)");
@@ -866,7 +865,6 @@ public final class I18n {
         add("Default home screen", "Главный экран по умолчанию");
         add("Set as default…", "Сделать по умолчанию…");
         add("Power Off & Sleep Timer permission", "Разрешение на выключение и таймер сна");
-        add("Continue Watching & DND permission", "Разрешение для «Продолжить просмотр» и «Не беспокоить»");
         add("Allowed", "Разрешено");
         add("Allow…", "Разрешить…");
         add("Not on this TV", "Недоступно на этом ТВ");
@@ -1584,7 +1582,6 @@ public final class I18n {
         ru.put("Closed ", "Закрыто: ");
         ru.put("Closing ADB…", "Выключение ADB…");
         ru.put("Colour", "Цвет");
-        ru.put("Continue Watching & DND (Notification Access)", "Продолжение просмотра и «Не беспокоить» (доступ к уведомлениям)");
         ru.put("Continue Watching cleared.", "История просмотра очищена.");
         ru.put("Continue Watching on dock", "Продолжение просмотра в панели приложений");
         ru.put("Continue watching", "Продолжить просмотр");
