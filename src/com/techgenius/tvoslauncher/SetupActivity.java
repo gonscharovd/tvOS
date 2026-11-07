@@ -25,8 +25,8 @@ import java.util.List;
 /**
  * First-time setup, in the style of Apple TV's own setup: one question per page, a large title
  * and a short line of help at the top, choices as a centred list (white when focused), OK moves
- * on and Back goes back. Pages: Welcome (in many languages), your profile, look, top shelf, weather, presentation,
- * home screen & permissions, done. Shown once; Settings \u2192 Home \u2192 Run Setup Again repeats it.
+ * on and Back goes back. Pages: Welcome, profile, look, weather, home screen & permissions,
+ * default home, button mapping, and finish. Shown once; Settings can run it again.
  */
 public class SetupActivity extends Activity {
     static final String K_DONE = "setup_done";
@@ -113,7 +113,6 @@ public class SetupActivity extends Activity {
         steps.add(this::profile);
         steps.add(this::look);
         steps.add(this::weather);
-        steps.add(this::presentation);
         steps.add(this::homeAndPermissions);
         steps.add(this::defaultHomeSetup);
         steps.add(this::buttonMapperSetup);
@@ -127,7 +126,15 @@ public class SetupActivity extends Activity {
         if (initLang != null && !initLang.isEmpty()) {
             I18n.setLang(this, initLang);
         }
-        int savedStep = getSharedPreferences("setup", MODE_PRIVATE).getInt("cur_step", 0);
+        android.content.SharedPreferences setupPrefs = getSharedPreferences("setup", MODE_PRIVATE);
+        if (!setupPrefs.getBoolean("testos_setup_step_migrated", false)) {
+            int oldStep = setupPrefs.getInt("cur_step", 0);
+            if (!setupPrefs.getBoolean(K_DONE, false) && oldStep >= 5) {
+                setupPrefs.edit().putInt("cur_step", oldStep - 1).apply();
+            }
+            setupPrefs.edit().putBoolean("testos_setup_step_migrated", true).apply();
+        }
+        int savedStep = setupPrefs.getInt("cur_step", 0);
         show(getIntent().getIntExtra("step", savedStep), 0);  // adb: --ei step N opens a page directly
     }
 
@@ -143,7 +150,7 @@ public class SetupActivity extends Activity {
         int target = intent.getIntExtra("step", savedStep);
         if (target != index || (lang != null && !lang.isEmpty())) {
             show(target, 0);
-        } else if (index == 5 || index == 6 || index == 7) {
+        } else if (index == 4 || index == 5 || index == 6) {
             show(index, 0);
         }
     }
@@ -183,7 +190,7 @@ public class SetupActivity extends Activity {
             show(2, -1);
             return;
         }
-        if (index == 5 && permMode != 0) {
+        if (index == 4 && permMode != 0) {
             permMode = 0;
             show(5, -1);
             return;
@@ -194,13 +201,13 @@ public class SetupActivity extends Activity {
 
     @Override
     public void onRequestPermissionsResult(int code, String[] p, int[] r) {
-        if (index == 5 || index == 6) show(index, 0);  // refresh the ticks
+        if (index == 4 || index == 5) show(index, 0);  // refresh the ticks
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        if (index == 5 || index == 6 || index == 7) show(index, 0);
+        if (index == 4 || index == 5 || index == 6) show(index, 0);
     }
 
     // ---------------------------------------------------------------- building blocks
@@ -776,48 +783,6 @@ public class SetupActivity extends Activity {
                 })
                 .setNegativeButton(tr("Cancel", "\u0130ptal"), null)
                 .show();
-    }
-
-    /** Presentation is for the whole TV: switch it on and choose its options here, once. */
-    void presentation() {
-        ImageView icon = new ImageView(this);
-        icon.setImageBitmap(com.techgenius.tvoslauncher.present.PresentIcon.banner(u(90) * 2, u(54) * 2));
-        icon.setClipToOutline(true);
-        GradientDrawable shape = new GradientDrawable();
-        shape.setCornerRadius(u(9));
-        icon.setBackground(shape);
-        LinearLayout.LayoutParams ilp = new LinearLayout.LayoutParams(u(90), u(54));
-        ilp.bottomMargin = u(10);
-        page.addView(icon, ilp);
-        title(tr("Presentation", "Sunum"));
-        subtitle(tr("Images, videos and webpages sent from any phone or computer on the same Wi-Fi. For everyone on this TV.",
-                "Ayn\u0131 Wi-Fi a\u011f\u0131ndaki herhangi bir telefon veya bilgisayardan g\u00f6nderilen g\u00f6rseller, videolar ve web sayfalar\u0131."));
-        boolean on = com.techgenius.tvoslauncher.present.Presenter.enabled(this);
-        LinearLayout l = list();
-        option(l, tr("Use Presentation", "Sunumu Kullan"),
-                on ? tr("Adds a Presentation card to Home", "Ana Ekrana bir Sunum kart\u0131 ekler") : tr("Off", "Kapal\u0131"), on, () -> {
-            com.techgenius.tvoslauncher.present.Presenter.set(this, com.techgenius.tvoslauncher.present.Presenter.KEY_ENABLED, !on);
-            show(index, 0);
-            focusRow(0);
-        });
-        if (on) {
-            boolean boot = com.techgenius.tvoslauncher.present.Presenter.startOnBoot(this),
-                    awake = com.techgenius.tvoslauncher.present.Presenter.keepAwake(this);
-            option(l, tr("Start with the TV", "TV ile Ba\u015flat"),
-                    tr("Play as soon as the TV turns on (signage)", "TV a\u00e7\u0131l\u0131r a\u00e7\u0131lmaz oynatmaya ba\u015fla (tabela modu)"), boot, () -> {
-                com.techgenius.tvoslauncher.present.Presenter.set(this, com.techgenius.tvoslauncher.present.Presenter.KEY_BOOT, !boot);
-                show(index, 0);
-                focusRow(1);
-            });
-            option(l, tr("Keep Screen Awake", "Ekran\u0131 A\u00e7\u0131k Tut"),
-                    tr("No screensaver or sleep while presenting", "Sunum s\u0131ras\u0131nda ekran koruyucu veya uyku yok"), awake, () -> {
-                com.techgenius.tvoslauncher.present.Presenter.set(this, com.techgenius.tvoslauncher.present.Presenter.KEY_AWAKE, !awake);
-                show(index, 0);
-                focusRow(2);
-            });
-        }
-        option(l, tr("Continue", "Devam Et"), null, false, this::next);
-        dots();
     }
 
     boolean askedLocation;
