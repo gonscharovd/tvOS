@@ -1846,6 +1846,14 @@ public final class I18n {
             return "Проверяем установленные пакеты и состояние Wi-Fi через ADB для "
                     + en.substring("Checking installed packages and Wi-Fi status over ADB for ".length());
         }
+        if (en.startsWith("On Google TV sets, Wi-Fi networks saved during initial setup belong to com.google.android.tungsten.setupwraith.")) {
+            return "На телевизорах Google TV сети Wi-Fi, сохранённые при первоначальной настройке, принадлежат пакету com.google.android.tungsten.setupwraith. "
+                    + "Отключение setupwraith, необходимое для блокировки штатного лаунчера Google TV, удалит сохранённую этим пакетом сеть Wi-Fi.\n\n"
+                    + "Перед отключением setupwraith:\n"
+                    + "1. Откройте настройки Wi-Fi, выберите свою сеть и нажмите «Забыть сеть».\n"
+                    + "2. Подключитесь к сети заново (теперь она будет сохранена пакетом com.android.tv.settings).\n"
+                    + "3. Вернитесь сюда и нажмите «Я забыл сеть и подключился снова — продолжить».";
+        }
         if (en.startsWith("⚠️ Detected: Your current Wi-Fi network IS owned by setupwraith")
                 || en.startsWith("ℹ️ Google TV Notice (setupwraith Wi-Fi check):")) {
             String status = en.startsWith("⚠️")
