@@ -57,7 +57,7 @@ def main() -> None:
     for package in allowed_exceptions:
         assert not blocked_by_core_regex(package), f"CORE_OK exception unexpectedly blocked: {package}"
 
-    protected_exact = set(re.findall(r'NEVER_DISABLE_EXACT\\.add\\("([^"]+)"\\)', SOURCE))
+    protected_exact = set(re.findall(r'NEVER_DISABLE_EXACT\.add\("([^"]+)"\)', SOURCE))
     assert "ru.sberdevices.SberDevicesServiceSystem" in protected_exact
     assert "ru.sberdevices.starlauncher" in protected_exact
     assert "if (NEVER_DISABLE_EXACT.contains(pkg) || isCriticalProtectedService(pkg, null))" in SOURCE
