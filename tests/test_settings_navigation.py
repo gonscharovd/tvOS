@@ -72,16 +72,16 @@ for route in ('return CONTROL_PANEL;', 'return HOME;', 'return LOOK_SCENES;', 'r
 i18n = (ROOT / "I18n.java").read_text(encoding="utf-8")
 
 def java_unescape(value):
-    value = re.sub(r'\\\\u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1), 16)), value)
-    return value.replace(r'\\n', "\\n").replace(r'\\t', "\\t").replace(r'\\"', '"').replace(r'\\\\', "\\\\")
+    value = re.sub(r'\\u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1), 16)), value)
+    return value.replace(r'\n', "\n").replace(r'\t', "\t").replace(r'\"', '"').replace(r'\\', "\\")
 
 dictionary = {
     java_unescape(m.group(1))
-    for m in re.finditer(r'add\\("((?:\\\\.|[^"\\\\])*)",', i18n)
+    for m in re.finditer(r'add\("((?:\\.|[^"\\])*)",', i18n)
 }
 literal_settings_strings = {
     java_unescape(m.group(1))
-    for m in re.finditer(r'tr\\(\\s*"((?:\\\\.|[^"\\\\])*)"\\s*,', settings)
+    for m in re.finditer(r'tr\(\s*"((?:\\.|[^"\\])*)"\s*,', settings)
 }
 missing_russian = sorted(literal_settings_strings - dictionary)
 assert not missing_russian, "Settings strings missing Russian translations: " + repr(missing_russian)
