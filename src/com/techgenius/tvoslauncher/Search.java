@@ -13,7 +13,6 @@ import org.json.JSONObject;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -25,9 +24,8 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Search data: titles from JustWatch (every service in India, with each service's link) and
- * Stremio's Cinemeta catalogue, plus the generic matching of a streaming service to the app that
- * plays it. Nothing here touches views; network calls block and run off the UI thread.
+ * Search data: titles from JustWatch (service offers and links) plus matching offers to installed apps.
+ * Nothing here touches views; network calls block and run off the UI thread.
  */
 final class Search {
 
@@ -64,7 +62,6 @@ final class Search {
                 case "ADS": return "Free with ads";
                 case "RENT": return "Rent";
                 case "BUY": return "Buy";
-                case "STREMIO": return "Add-ons";
                 default: return "";
             }
         }
@@ -78,7 +75,7 @@ final class Search {
     }
 
     static SharedPreferences prefs(Context c) {
-        return Suggestions.prefs(c);
+        return c.getSharedPreferences("search", Context.MODE_PRIVATE);
     }
 
     static boolean titlesEnabled(Context c) {
@@ -193,7 +190,6 @@ final class Search {
                 raw.add(of);
             }
             t.offers = group(c, raw, apps);
-            if (!t.imdb.isEmpty()) addStremio(c, t);
             out.add(t);
         }
         return out;
@@ -203,53 +199,12 @@ final class Search {
      * Stremio's catalogue search (Cinemeta), for titles JustWatch doesn't list. Only used when
      * Stremio or Nuvio is installed, since those are the only apps that can open them.
      */
-    static List<Title> stremio(Context c, String q) throws Exception {
-        List<Title> out = new ArrayList<>();
-        String enc = URLEncoder.encode(q, "UTF-8").replace("+", "%20");
-        for (String kind : new String[]{"movie", "series"}) {
-            JSONObject res = get("https://v3-cinemeta.strem.io/catalog/" + kind + "/top/search=" + enc + ".json");
-            JSONArray metas = res.optJSONArray("metas");
-            for (int i = 0; metas != null && i < metas.length() && i < 10; i++) {
-                JSONObject m = metas.getJSONObject(i);
-                String id = m.optString("id");
-                if (!id.startsWith("tt")) continue;
-                Title t = new Title();
-                t.title = m.optString("name");
-                t.type = kind.equals("series") ? "tv" : "movie";
-                String yr = m.optString("releaseInfo", m.optString("year"));
-                t.year = yr.length() >= 4 ? yr.substring(0, 4) : "";
-                t.overview = m.optString("description");
-                t.poster = m.optString("poster");
-                t.backdrop = m.optString("background");
-                t.imdb = id;
-                t.rating = m.optDouble("imdbRating", 0);
-                if (Double.isNaN(t.rating)) t.rating = 0;
-                JSONArray g = m.optJSONArray("genres");
-                List<String> gn = new ArrayList<>();
-                for (int j = 0; g != null && j < g.length() && gn.size() < 2; j++) gn.add(g.optString(j));
-                t.genres = String.join(", ", gn);
-                addStremio(c, t);
-                out.add(t);
-            }
-        }
-        return out;
-    }
 
-    static boolean hasStremioApp(Context c) {
-        return Suggestions.installed(c, Suggestions.STREMIO.pkg) || Suggestions.installed(c, Suggestions.NUVIO.pkg);
-    }
+
+
 
     /** "Open in Stremio" (or Nuvio) by IMDb id, after the services, when one of them is installed. */
-    static void addStremio(Context c, Title t) {
-        if (!hasStremioApp(c)) return;
-        Suggestions.Provider p = Suggestions.stremioApp(c);
-        Offer o = new Offer();
-        o.service = p.name;
-        o.tech = "stremio";
-        o.monetization = "STREMIO";
-        o.pkg = p.pkg;
-        t.offers.add(o);
-    }
+
 
     static String tidyService(String s) {
         return s.replace(" Free with Ads", "").replace(" with Ads", "").replace(" Amazon Channel", "").trim();
@@ -335,16 +290,9 @@ final class Search {
         }
         if (o.pkg.isEmpty()) o.pkg = byName(o.service, apps);
         if (o.pkg.isEmpty()) {
-            // Known services from the recommendations list, by JustWatch's own technical name.
-            for (Suggestions.Provider p : Suggestions.PROVIDERS) {
-                if (p.jwTech.equals(o.tech) && Suggestions.installed(c, p.pkg)) o.pkg = p.pkg;
-            }
         }
         if (!o.pkg.isEmpty()) prefs(c).edit().putString(K_APP + o.tech, o.pkg).apply();
         o.getPkg = o.pkg.isEmpty() ? named : o.pkg;
-        if (o.getPkg.isEmpty()) {
-            for (Suggestions.Provider p : Suggestions.PROVIDERS) if (p.jwTech.equals(o.tech)) o.getPkg = p.pkg;
-        }
         RESOLVED.put(o.tech, o.pkg + "|" + o.getPkg);
     }
 
@@ -368,14 +316,6 @@ final class Search {
      * service (in the app), JustWatch's Android TV link, the app's own search, or the app itself.
      */
     static void open(Context c, Title t, Offer o) {
-        if (o.monetization.equals("STREMIO")) {
-            Suggestions.Item it = new Suggestions.Item();
-            it.type = t.type;
-            it.link = t.imdb;
-            it.providerId = Suggestions.STREMIO_ID;
-            Suggestions.openStremio(c, it, Suggestions.stremioApp(c));
-            return;
-        }
         PackageManager pm = c.getPackageManager();
         List<Intent> tries = new ArrayList<>();
         if (!o.web.isEmpty()) tries.add(Suggestions.view(o.web, o.pkg));
@@ -435,15 +375,5 @@ final class Search {
         }
     }
 
-    static JSONObject get(String url) throws Exception {
-        HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
-        con.setConnectTimeout(4000);
-        con.setReadTimeout(6000);
-        try {
-            if (con.getResponseCode() != 200) throw new IllegalStateException("HTTP " + con.getResponseCode());
-            return new JSONObject(new String(Suggestions.readAll(con.getInputStream()), StandardCharsets.UTF_8));
-        } finally {
-            con.disconnect();
-        }
-    }
+
 }
