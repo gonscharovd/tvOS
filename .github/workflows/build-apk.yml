@@ -6,6 +6,7 @@ on:
     branches:
       - feature/ram-cleaner-happ-vpn
       - fix/verified-cleanmytv-state
+      - integration/2.1.63
 
 permissions:
   contents: read
