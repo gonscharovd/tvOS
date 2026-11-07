@@ -42,8 +42,8 @@ import java.util.Set;
  * {@link WindowManager.LayoutParams#TYPE_ACCESSIBILITY_OVERLAY} when {@link PowerService} is active,
  * or inside {@link MainActivity} when on the Home Screen.
  *
- * Layout: four full-width rows (Wi-Fi, Bluetooth, Memory, Sleep Timer),
- * followed by two square shortcuts (VPN and Settings).
+ * Layout: five full-width rows (Wi-Fi, Bluetooth, Memory, Sleep Timer, VPN),
+ * followed by a centered compact Settings shortcut.
  */
 public final class ControlPanelOverlay {
 
