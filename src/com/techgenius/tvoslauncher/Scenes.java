@@ -520,8 +520,6 @@ public final class Scenes {
     public static List<String> getAllLockSceneCandidates() {
         List<String> all = new ArrayList<>();
         for (Spec s : ALL) all.add(s.id);
-        for (String[] row : CLASSIC_PHOTOS) all.add("photo:" + row[0]);
-        for (String[] row : CLASSIC_GRADIENTS) all.add(row[0]);
         for (String cid : CUSTOM_IDS) all.add(cid);
         all.add(LOCK_CUSTOM_ID);
         all.add(LOCK_FOLDER_SHUFFLE_ID);
