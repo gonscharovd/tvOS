@@ -9,7 +9,7 @@ A lightweight, Russian-only Android TV home screen based on the tvOS-inspired la
 - Two home-screen looks: Classic and Night Scenes, with custom wallpapers, a clock, weather and an app dock/grid.
 - Remote-first navigation with D-pad focus, app launch, folders, hidden apps and custom app names.
 - Universal Control Panel overlay, Recent Apps switcher and remote Button Mapper.
-- Search for installed apps and settings; Russian and English input layouts and TV voice input.
+- Search for installed apps, settings and titles via JustWatch; Russian and English input layouts and TV voice input.
 - Weather from Open-Meteo, MET Norway or wttr.in.
 - CleanYourTV: on-device model detection, protected package lists, debloat status, restore and AdGuard DNS.
 - Advanced controls: default HOME selection, ADB status/setup, permissions, Keep Alive and system settings.
