@@ -413,6 +413,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        AppUpdater.resumePendingInstallIfAllowed(this);
         if (!I18n.getLang(this).equals(activeLang) || !Scenes.getLook(this).equals(activeLook)) {
             recreate();
             return;
