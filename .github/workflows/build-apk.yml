@@ -2,6 +2,9 @@ name: Build testOS APK
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - feature/ram-cleaner-happ-vpn
