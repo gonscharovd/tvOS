@@ -83,7 +83,12 @@ final class SceneHome {
     final List<View> shelfCards = new ArrayList<>();
     private static final int MAX_SHELF_ITEMS = 5;
     private final Map<String, List<WatchCardData>> pkgWatchCache = new java.util.concurrent.ConcurrentHashMap<>();
-    private final android.util.LruCache<String, Bitmap> shelfThumbs = new android.util.LruCache<>(32);
+    private final android.util.LruCache<String, Bitmap> shelfThumbs =
+            new android.util.LruCache<String, Bitmap>(3 * 1024 * 1024) {
+                @Override protected int sizeOf(String key, Bitmap value) {
+                    return value == null || value.isRecycled() ? 0 : Math.max(1, value.getAllocationByteCount());
+                }
+            };
     private View activeShelfTile;
     private String activeShelfPkg;
     private int shelfLoadGen = 0;
@@ -94,7 +99,12 @@ final class SceneHome {
     final List<View> dockTiles = new ArrayList<>();
     final List<MainActivity.AppEntry> dockEntries = new ArrayList<>();
 
-    private final Map<String, Bitmap> logoCache = new HashMap<>();
+    private final android.util.LruCache<String, Bitmap> logoCache =
+            new android.util.LruCache<String, Bitmap>(2 * 1024 * 1024) {
+                @Override protected int sizeOf(String key, Bitmap value) {
+                    return value == null || value.isRecycled() ? 0 : Math.max(1, value.getAllocationByteCount());
+                }
+            };
     private Bitmap demoArt1, demoArt2, demoArt3;
 
     boolean moreExpanded = false;
@@ -664,36 +674,8 @@ final class SceneHome {
     }
 
     private List<WatchCardData> loadWatchCardsForPackage(String pkg) {
-        List<WatchCardData> out = new ArrayList<>();
-        if (pkg == null || pkg.isEmpty()) return out;
-        List<Suggestions.Item> cw = MediaWatchService.Store.listForPackage(host, pkg, MAX_SHELF_ITEMS);
-        String appName = host.appLabel(pkg);
-        for (Suggestions.Item it : cw) {
-            if (out.size() >= MAX_SHELF_ITEMS) break;
-            WatchCardData c = new WatchCardData();
-            c.key = it.key;
-            c.pkg = pkg;
-            c.appName = appName;
-            c.title = it.title;
-            if (it.remainingMin > 0 && it.overview != null && !it.overview.isEmpty() && !it.overview.equals(it.title)) {
-                c.subtitle = it.overview + " · " + it.remainingMin + I18n.s(host, " min left", " dk kaldı");
-            } else if (it.remainingMin > 0) {
-                c.subtitle = it.remainingMin + I18n.s(host, " min left", " dk kaldı");
-            } else if (it.overview != null && !it.overview.isEmpty()) {
-                c.subtitle = it.overview;
-            } else {
-                c.subtitle = I18n.s(host, "Resume playback", "Oynatmaya devam et");
-            }
-            c.progress = it.progress > 0 ? it.progress : 0.08f;
-            c.backdropUrl = it.backdrop;
-            c.sourceItem = it;
-            c.removable = true;
-            if (it.backdrop != null && !it.backdrop.isEmpty()) {
-                c.thumb = shelfThumbs.get(it.backdrop);
-            }
-            out.add(c);
-        }
-        return out;
+        // Android playback-history integration is intentionally unavailable in this build.
+        return new ArrayList<>();
     }
 
     private String lastWatchSig = "";
@@ -1062,7 +1044,6 @@ final class SceneHome {
             destructive = labels.size();
             labels.add(I18n.s(host, "Remove from Keep Watching", "İzlemeye Devam Et'ten Kaldır"));
             actions.add(() -> {
-                MediaWatchService.Store.remove(host, d.key);
                 if (d.pkg != null) pkgWatchCache.remove(d.pkg);
                 refreshKeepWatching();
             });
@@ -1663,6 +1644,25 @@ final class SceneHome {
         if (a.pkg != null) logoCache.remove(a.pkg);
     }
 
+    /** Drop transient artwork when Android hides the launcher under memory pressure. */
+    void releaseTransientCaches() {
+        shelfLoadGen++;
+        pkgWatchCache.clear();
+        shelfThumbs.evictAll();
+        logoCache.evictAll();
+        lastWatchSig = "";
+        if (shelfRow != null) {
+            shelfRow.removeAllViews();
+            shelfCards.clear();
+        }
+        if (shelfBox != null) {
+            shelfBox.animate().cancel();
+            shelfBox.setVisibility(View.GONE);
+            shelfBox.setAlpha(0f);
+            shelfBox.setTranslationY(0f);
+        }
+    }
+
     Bitmap getSquareAppIcon(MainActivity.AppEntry a) {
         if (a == null) return null;
         if (CustomMedia.hasCustomAppIcon(host, a.key, a.pkg)) {
@@ -1675,14 +1675,13 @@ final class SceneHome {
             }
         }
         String cacheKey = a.key != null ? a.key : a.pkg;
-        if (cacheKey != null && logoCache.containsKey(cacheKey)) {
-            return logoCache.get(cacheKey);
-        }
+        Bitmap cached = cacheKey == null ? null : logoCache.get(cacheKey);
+        if (cached != null && !cached.isRecycled()) return cached;
         Bitmap bmp = getSquareAppLogo(a.pkg);
         if (bmp == null) {
             bmp = buildFullSquareIcon(a);
         }
-        if (cacheKey != null) {
+        if (cacheKey != null && bmp != null && !bmp.isRecycled()) {
             logoCache.put(cacheKey, bmp);
         }
         return bmp;
@@ -1815,7 +1814,8 @@ final class SceneHome {
 
     Bitmap getSquareAppLogo(String pkg) {
         if (pkg == null || pkg.isEmpty()) return null;
-        if (logoCache.containsKey(pkg)) return logoCache.get(pkg);
+        Bitmap cached = logoCache.get(pkg);
+        if (cached != null && !cached.isRecycled()) return cached;
         String assetName = mapPkgToLogoAsset(pkg);
         Bitmap bmp = null;
         if (assetName != null) {
@@ -1841,7 +1841,7 @@ final class SceneHome {
                 bmp = out;
             }
         }
-        logoCache.put(pkg, bmp);
+        if (bmp != null && !bmp.isRecycled()) logoCache.put(pkg, bmp);
         return bmp;
     }
 
