@@ -14,9 +14,13 @@ jobs:
     env:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      ASSET_OPTIMIZE: "1"
     steps:
       - name: Check out release source
         uses: actions/checkout@v5
+
+      - name: Install Pillow for asset optimization
+        run: python3 -m pip install --disable-pip-version-check Pillow
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
@@ -68,6 +72,10 @@ jobs:
         run: python3 tests/test_clean_your_tv_protection.py
       - name: Test artwork memory and Settings cleanup
         run: python3 tests/test_memory_settings_cleanup.py
+      - name: Test bitmap decode memory policy
+        run: python3 tests/test_bitmap_decode_config.py
+      - name: Test build-time asset optimization
+        run: python3 tests/test_asset_optimizer.py
 
       - name: Test grouped Settings navigation
         run: python3 tests/test_settings_navigation.py
