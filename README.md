@@ -208,6 +208,16 @@ powershell -ExecutionPolicy Bypass -File .\build.ps1
 # Output APK -> build/tvos-home.apk
 ```
 
+### Version and signing
+Both build scripts accept the same `VERSION_CODE` and `VERSION_NAME` environment variables.
+Development builds reuse an existing project `debug.keystore`, or the user's standard
+`~/.android/debug.keystore` when no project key exists. Override the path/alias with
+`DEBUG_KEYSTORE` and `DEBUG_KEY_ALIAS`.
+
+Official builds can use `RELEASE_KEYSTORE`, `RELEASE_KEYSTORE_PASS`, and
+`RELEASE_KEY_ALIAS`. Never commit signing keys or passwords. Android only permits an in-place
+update when the APK certificate matches the installed app; a CI debug artifact is not a release APK.
+
 ### Install via ADB
 ```sh
 adb connect <tv-ip>:5555
