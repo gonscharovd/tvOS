@@ -30,12 +30,14 @@ assert "void pageLanguage()" not in settings
 assert "NuvioCloud" not in settings and "StremioCloud" not in settings
 assert "pageUpdates();" in settings
 
-for source in (main, scene, settings, power):
-    assert "MediaWatchService.Store" not in source
-    assert "MediaWatchService.pollActiveSessions" not in source
+perms = (ROOT / "Perms.java").read_text(encoding="utf-8")
+manifest = Path("AndroidManifest.xml").read_text(encoding="utf-8")
+assert not (ROOT / "MediaWatchService.java").exists()
+for source in (main, scene, settings, power, perms, manifest):
+    assert "MediaWatchService" not in source
+assert "requestDndAccess(this)" in main
+assert "setInterruptionFilter(" in main
+assert "NotificationListenerService" not in perms
+assert "WRITE_EPG_DATA" not in manifest
 
-media = (ROOT / "MediaWatchService.java").read_text(encoding="utf-8")
-assert "static final class Store" not in media
-assert "pollActiveSessions" not in media
-
-print("Bounded artwork caches, memory-trim hooks, Settings de-duplication and dead media-hook cleanup passed.")
+print("Bounded artwork caches, memory-trim hooks, Settings de-duplication and unused media-service removal passed.")
