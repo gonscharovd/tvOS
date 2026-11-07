@@ -105,6 +105,9 @@ public final class CleanYourTv {
         NEVER_DISABLE_EXACT.add("com.mi.bluetooth");
         NEVER_DISABLE_EXACT.add("com.xiaomi.mitv.bluetooth");
         NEVER_DISABLE_EXACT.add("com.mitv.bluetooth");
+        // Sber TV: preserve Device Owner and the stock HOME launcher as recovery fallback.
+        NEVER_DISABLE_EXACT.add("ru.sberdevices.SberDevicesServiceSystem");
+        NEVER_DISABLE_EXACT.add("ru.sberdevices.starlauncher");
     }
 
     /** Generic Google / Android bloat packages that appear on almost all TVs (weighted lower in package similarity matching). */
@@ -1818,7 +1821,7 @@ public final class CleanYourTv {
                     .show();
             return;
         }
-        if (disable && !allowAnySystemApp && !isSafeToDisable(activity, pkg)) {
+        if (disable && !isSafeToDisable(activity, pkg)) {
             dialog(activity, tr(activity, "Protected Core Package", "Korunan Temel Paket"))
                     .setMessage(tr(activity,
                             pkg + " is a protected core system package and cannot be disabled automatically.",
