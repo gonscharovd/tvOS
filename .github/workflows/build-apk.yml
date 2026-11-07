@@ -69,7 +69,7 @@ jobs:
       - name: Test dynamic Russian translations
         run: |
           mkdir -p /tmp/tvos-i18n-tests
-          javac --release 11 -cp "$ANDROID_HOME/platforms/android-34/android.jar" -d /tmp/tvos-i18n-tests src/com/techgenius/tvoslauncher/I18n.java src/com/techgenius/tvoslauncher/Scenes.java tests/I18nDynamicTranslationTest.java
+          javac --release 11 -cp "$ANDROID_HOME/platforms/android-34/android.jar" -d /tmp/tvos-i18n-tests src/com/techgenius/tvoslauncher/I18n.java tests/i18n_stubs/com/techgenius/tvoslauncher/Scenes.java tests/I18nDynamicTranslationTest.java
           java -cp "/tmp/tvos-i18n-tests:$ANDROID_HOME/platforms/android-34/android.jar" com.techgenius.tvoslauncher.I18nDynamicTranslationTest
 
       - name: Test cross-platform build contract
