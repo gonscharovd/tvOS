@@ -86,64 +86,65 @@ final class Suggestions {
             path = Uri.parse(path).getPath();
             if (path == null || path.isEmpty()) return null;
         }
-        if (path.startsWith("/")) {  // local artwork (Continue Watching)
-            BitmapFactory.Options o = new BitmapFactory.Options();
-            o.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(path, o);
-            o.inSampleSize = 1;
-            while (o.outWidth / (o.inSampleSize * 2) >= maxWidth) o.inSampleSize *= 2;
-            o.inJustDecodeBounds = false;
-            return BitmapFactory.decodeFile(path, o);
+        if (path.startsWith("/")) {
+            return decodeLocal(path, maxWidth);
         }
         if (path.startsWith("content://") || path.startsWith("android.resource://")) {
             try (InputStream in = c.getContentResolver().openInputStream(Uri.parse(path))) {
                 if (in == null) return null;
                 byte[] data = readAll(in);
                 if (data == null || data.length == 0) return null;
-                BitmapFactory.Options o = new BitmapFactory.Options();
-                o.inJustDecodeBounds = true;
-                BitmapFactory.decodeByteArray(data, 0, data.length, o);
-                o.inSampleSize = 1;
-                while (o.outWidth / (o.inSampleSize * 2) >= maxWidth) o.inSampleSize *= 2;
-                o.inJustDecodeBounds = false;
+                BitmapFactory.Options o = bounds(data);
                 return BitmapFactory.decodeByteArray(data, 0, data.length, o);
             } catch (Exception e) {
                 return null;
             }
         }
+        if (!path.startsWith("http://") && !path.startsWith("https://")) return null;
         try {
-            File dir = new File(c.getCacheDir(), "tmdb");
+            File dir = new File(c.getCacheDir(), "artwork");
             dir.mkdirs();
-            boolean abs = path.startsWith("http");
-            File f = new File(dir, (abs ? "u" + Integer.toHexString(path.hashCode()) : size + "_" + path.replace("/", "")) + ".img");
+            File f = new File(dir, "u" + Integer.toHexString(path.hashCode()) + ".img");
             if (!f.exists()) {
-                HttpURLConnection con = (HttpURLConnection) new URL(abs ? path : "https://image.tmdb.org/t/p/" + size + path).openConnection();
+                HttpURLConnection con = (HttpURLConnection) new URL(path).openConnection();
                 con.setInstanceFollowRedirects(true);
                 con.setConnectTimeout(8000);
                 con.setReadTimeout(15000);
-                con.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 11; Android TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36");
+                con.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android TV) AppleWebKit/537.36 Chrome/122 Safari/537.36");
                 try {
                     if (con.getResponseCode() != 200) return null;
                     byte[] data = readAll(con.getInputStream());
                     File tmp = new File(dir, f.getName() + ".part");
-                    try (OutputStream os = new FileOutputStream(tmp)) {
-                        os.write(data);
-                    }
-                    tmp.renameTo(f);
+                    try (OutputStream os = new FileOutputStream(tmp)) { os.write(data); }
+                    if (!tmp.renameTo(f)) tmp.delete();
                 } finally {
                     con.disconnect();
                 }
             }
-            BitmapFactory.Options o = new BitmapFactory.Options();
-            o.inJustDecodeBounds = true;
-            BitmapFactory.decodeFile(f.getPath(), o);
-            o.inSampleSize = 1;
-            while (o.outWidth / (o.inSampleSize * 2) >= maxWidth) o.inSampleSize *= 2;
-            o.inJustDecodeBounds = false;
-            return BitmapFactory.decodeFile(f.getPath(), o);
+            return decodeLocal(f.getPath(), maxWidth);
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private static BitmapFactory.Options bounds(byte[] data) {
+        BitmapFactory.Options o = new BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+        BitmapFactory.decodeByteArray(data, 0, data.length, o);
+        o.inSampleSize = 1;
+        while (o.outWidth / (o.inSampleSize * 2) >= 1) o.inSampleSize *= 2;
+        o.inJustDecodeBounds = false;
+        return o;
+    }
+
+    private static Bitmap decodeLocal(String path, int maxWidth) {
+        BitmapFactory.Options o = new BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(path, o);
+        o.inSampleSize = 1;
+        while (o.outWidth / (o.inSampleSize * 2) >= maxWidth) o.inSampleSize *= 2;
+        o.inJustDecodeBounds = false;
+        return BitmapFactory.decodeFile(path, o);
     }
 
         static byte[] readAll(InputStream in) throws Exception {
