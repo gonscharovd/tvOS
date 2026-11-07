@@ -1,98 +1,74 @@
 # Architecture
 
-## Build
+## Build pipeline
 
-No Gradle and no runtime libraries. `build.sh` runs `aapt2` (resources + assets) → `javac
---release 11` against `android.jar` (API 34) → `d8` (min API 24) → `zipalign` → `apksigner` (local debug key, or the private release key via
-`RELEASE_KEYSTORE`).
-Fonts (Inter, OFL) and the Presentation web app are plain assets; the QR encoder is vendored
-source (Nayuki, MIT) under `src/io/nayuki/qrcodegen`.
+The project uses Android SDK command-line tools rather than Gradle:
+
+1. `aapt2` compiles resources and links the manifest.
+2. `javac --release 11` compiles Java against Android API 34.
+3. `d8` creates dex bytecode for min API 24.
+4. `zipalign` aligns the APK.
+5. `apksigner` signs with either a development key or the persistent release key.
+
+`build.sh` and `build.ps1` both output `build/tvos-home.apk` and use the same default version (2.1.70 / versionCode 85). Override with `VERSION_NAME` and `VERSION_CODE`.
 
 ## Code map
 
 | Path | Responsibility |
 |---|---|
-| `MainActivity.java` | Home screen: grid/dock, focus & move, launch zoom, carousel (Continue Watching + news + recommendations), status row, Liquid Glass, Control Center (incl. Memory/Clean), profile switcher, idle mode, menus |
-| `SetupActivity.java` | First-time setup pages (Apple-style, one question per page) |
-| `SettingsActivity.java` | All settings, tvOS list layout |
-| `Suggestions.java` | JustWatch / TMDB / Stremio (Cinemeta) recommendations: fetch, cache, artwork, deep links |
-| `Search.java` | Search data: JustWatch title search (every service in India) and Cinemeta, matching each service to its installed app, Open / Get, recent searches |
-| `SearchPanel.java` | The search screen: one-row keyboard (English, digits, Hindi, voice), Apps & Settings and Movies & TV rows, the How to Watch sheet |
-| `MediaWatchService.java` | Notification listener → media sessions → Continue Watching store; DND access |
-| `Profiles.java` | Profiles (max 3), unique emoji avatars, per-profile storage names |
-| `SleepReceiver.java` | Sleep via device admin (or PowerService); sleep timer alarm |
-| `Inputs.java` | TV inputs from the TV input framework; switching via the passthrough channel URI |
-| `News.java` | News for the top shelf: Indian newsrooms' RSS (India, local city, world), images, freshness |
-| `Perms.java` | On-screen permission and default-home requests, with adb only as a last resort |
-| `Weather.java` | Forecast from Open-Meteo, MET Norway or wttr.in (with fallback) in one format, IP location / city search, cache, refresh schedule |
-| `WeatherView.java`, `WeatherIcons.java` | Weather overview card and forecast panel (drawn in code), multicolour weather icons |
-| `Clicks.java` | Navigation sounds (Android TV system sound effects at 60%) |
-| `PowerService.java` | Accessibility service the user turns on: sleep (Power Off / Sleep Timer) where device admin is unavailable; Force stop for Clean |
-| `AirPlayGuard.java` | Keeps the AirPlay receiver app visible: mDNS check, restart via its settings / start-up receivers |
-| `Glyphs.java` | Line glyphs drawn in code (Control Center, Presentation tile, inputs, refresh) |
-| `Ui.java` | Resolution-based sizing (960×540 design grid), fonts |
-| `present/Presenter.java` | Presentation entry point: settings, server lifecycle, player bridge, boot start |
-| `present/AdminServer.java` | HTTP server (port 8080), API, streaming multipart uploads |
-| `present/Repo.java`, `Model.java`, `Pairing.java` | SQLite storage, slide model & validation, pairing tokens |
-| `present/PresentationActivity.java` | Full-screen player (images, MediaPlayer video, WebView with auto-scroll) |
-| `present/PresentIcon.java` | The Presentation tile icon (drawn in code; `assets/present/icon.svg` is the same design) |
-| `present/LegacyCss.java`, `Qr.java`, `Net.java` | `@layer` unwrapping for old WebViews, QR bitmaps, LAN URLs |
-| `assets/present/` | Browser admin app (`index.html`, `app.css`, `app.js`) |
+| `MainActivity.java` | Home screen, app grid/dock, focus, launch transitions, weather/status, Control Panel entry, Recent Apps and idle behavior |
+| `SceneHome.java`, `Scenes.java` | Night Scenes layout, clock, dock and optional app-published TV Continue Watching row |
+| `SettingsActivity.java` | Four-group settings navigation, D-pad focus, OTA progress, CleanYourTV menus and backup/restore entry points |
+| `SetupActivity.java` | First-run setup; no language or profile step |
+| `I18n.java` | Russian-only UI dictionary and dynamic Russian labels |
+| `Search.java`, `SearchPanel.java` | App/settings search, voice input and Russian/English keyboard layouts |
+| `Suggestions.java` | Small shared utilities for safe activity launch, URL intents, cached artwork and stream reading; no recommendation/news engine |
+| `AppUpdater.java`, `VersionComparator.java` | GitHub Release discovery, version comparison, download progress and PackageInstaller flow |
+| `CleanYourTv.java` | TV model detection, protected package policy, package-state verification, backup and restore |
+| `LocalAdb.java` | Local ADB setup/status and accessibility permission repair |
+| `Perms.java` | Location, DND policy access, HOME selection and system-settings fallbacks |
+| `ButtonMapper.java`, `PowerService.java` | Remote-button remapping and accessibility service |
+| `ControlPanelOverlay.java` | Universal Control Panel overlay |
+| `RecentAppsOverlay.java` | Recent-app switcher |
+| `Weather.java`, `WeatherView.java`, `WeatherIcons.java` | Forecast sources, cache, overview card and forecast panel |
+| `CustomMedia.java` | Custom icons/wallpapers and validated settings backup/restore |
+| `AirPlayGuard.java` | Optional AirPlay receiver visibility/recovery |
+| `Inputs.java`, `SleepReceiver.java`, `Clicks.java` | TV inputs, sleep timer and navigation sounds |
+| `present/` | Optional browser-based presentation server and full-screen player |
+| `assets/` | Fonts, wallpaper artwork, CleanYourTV model data and presentation web app |
+
+Removed source files include the news feed, Nuvio/Stremio cloud clients, cloud watch-history clients and notification-listener media service.
 
 ## Settings navigation
 
-The Settings sidebar is intentionally limited to eight top-level destinations, in this order:
+The sidebar contains four groups:
 
-1. Main screen — default launcher, home-screen behavior, Top Shelf suggestions and viewer profiles.
-2. Appearance and clock — language, scenes, wallpaper, dock appearance and clock options.
-3. Weather — provider, units, refresh interval and location.
-4. Control panel — app/activity targets for Wi-Fi, Bluetooth, Sound, Inputs and Ambient Mode.
-5. Apps — hidden apps, app ordering and per-app Continue Watching options.
-6. Updates — OTA preferences, version check and download progress.
-7. Information — launcher version and reset-to-defaults action.
-8. Advanced settings — CleanYourTV, ADB and permissions, button remapping, backup/restore and diagnostics.
+1. **Appearance** — appearance and clock, sizing, wallpapers, scenes and weather.
+2. **Basic settings** — navigation sounds, hidden apps, setup restart, reset and Android TV settings.
+3. **Information** — app identity, OTA update state and local settings backup/restore.
+4. **Advanced settings** — default HOME, Button Mapper, ADB, permissions, Keep Alive, CleanYourTV and AdGuard DNS.
 
-Existing preference keys and feature handlers are retained when moving rows between sections. Legacy settings deep links are mapped to the new destinations so existing entry points continue to work.
+The Control Panel overlay is independent of Settings and remains available. Its former customization page is not part of the navigation.
 
-## Design decisions
+D-pad behavior is handled in `SettingsActivity.dispatchKeyEvent`: Up/Down move within the active pane, Right enters the content pane, Left/Back returns to the sidebar or closes a submenu, and scrolling preserves focus.
 
-- **Measure Apple first.** Geometry comes from Apple's tvOS 26 press screenshot scaled to
-  1920×1080 (dock 48 px from the edges, 248×148 px cards, 51 px gaps, dock top at 73%, focus 1.2×)
-  and the HIG (60/80 pt safe area, 800×480 icons, focus/pressed states).
-- **Liquid Glass without a backdrop-blur API.** The launcher knows what is behind its glass (its
-  wallpaper or the carousel artwork), so it bakes a small blurred, saturation-boosted copy once per
-  background and the GPU draws glass as shader-filled rounded rectangles aligned to the surface's
-  screen position, plus magnified edge bands (lensing) and a gradient specular rim.
-- **Recommendations without system access.** Android's preview/Watch Next rows need a
-  system-signature permission (verified: 0 rows readable), so the top shelf uses JustWatch/TMDB
-  and Continue Watching uses published media sessions.
+## Data and safety
 
-- **Search without a list of services.** JustWatch says which services in India have a title and
-  gives each one's links; tvOS Launcher finds the app for each service itself (the package in the Android
-  TV link, an installed non-browser handler of the web link, a remembered match, or an installed
-  app with the same name), so new services need no update. Android 11+ hides other apps unless
-  declared, so the manifest's `<queries>` lists launcher apps, voice input, the speech service
-  and https handlers.
-- **Search stays light.** It is an overlay in `MainActivity` (no new activity): apps match from
-  the list already in memory on each key press; titles are fetched 350 ms after typing pauses with
-  the previous request cut off, the last 20 searches are cached, posters are decoded at card size
-  into a heap-capped LRU, and while Search is open the Home layers under it stop drawing and the
-  carousel pauses. Typing measured p50 6 ms / p90 11 ms per frame on the 1 GB Android 9 TV.
-- **Dictation.** `SpeechRecognizer` (Google's TV voice service) with partial results fills the
-  field live after Android's microphone prompt; otherwise `RecognizerIntent` opens the TV's voice
-  prompt. The remotes' Assistant key is routed by Android to Google Assistant before apps, so the
-  remote shortcut is holding Back for 1 s (Back is replayed when released sooner).
+- User-facing preferences are stored in SharedPreferences.
+- Backup exports only an explicit allowlist. It excludes ADB credentials/state, package-disable backups, search history, OTA runtime state and obsolete integrations.
+- Restore accepts supported backup versions, validates package/format/types/size before applying, and merges known keys instead of clearing whole preference files.
+- Backup writes use Android `AtomicFile` so a failed write does not leave a truncated JSON file.
+- CleanYourTV confirms package state after every operation and protects critical Sber/Android packages.
+- The app does not require root and does not write to `/system` or `/vendor`.
 
-## Performance (Mi Box, Mali-450 MP, GLES 2.0)
+## Performance constraints
 
-- Startup: the app list (package manager, banners, icon colours) and the wallpaper are prepared on
-  background threads while the window's views are built: cold start ~1.0 s → ~0.86 s on a 1 GHz
-  Android 9 TV.
+The target device is a low-memory Android 9 TV with a Mali-class GPU. Keep the UI thread free of network, package scanning and large bitmap decoding. Use bounded bitmap caches, downsampled artwork, background executors and memory-trim eviction. Avoid perpetual animations and full-screen overdraw.
 
-- No perpetual animations (no wallpaper drift, no idle sway): idle draws 0 frames.
-- Nothing is rendered in software on the UI thread during transitions (the original glass cache
-  caused ~1 s freezes moving to/from the dock).
-- Legibility gradients are baked into the wallpaper and artwork; the window background is removed
-  to avoid hidden full-screen fills.
-- Measure with `adb shell dumpsys gfxinfo com.techgenius.tvoslauncher` — dock navigation runs at a 16 ms
-  median; full-screen transitions are limited by the GPU's fill rate (~30 fps on this box).
+Useful device-side measurements:
+
+```sh
+adb shell dumpsys gfxinfo com.gonscharovd.tvoslauncher
+adb shell top -m 10
+adb shell dumpsys meminfo com.gonscharovd.tvoslauncher
+```
