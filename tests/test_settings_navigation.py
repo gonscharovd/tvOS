@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression guards for the grouped Settings navigation and preserved settings."""
+"""Regression guards for the simplified Russian-only Settings navigation."""
 from pathlib import Path
 import re
 
@@ -8,82 +8,67 @@ settings = (ROOT / "SettingsActivity.java").read_text(encoding="utf-8")
 
 sidebar = settings.split("private static final String[][] SIDEBAR_SECTIONS = {", 1)[1].split("};", 1)[0]
 expected = [
-    '{HOME, "house"}',
-    '{LOOK_SCENES, "scene"}',
-    '{WEATHER, "cloud"}',
-    '{CONTROL_PANEL, "controls"}',
-    '{APPS, "apps"}',
-    '{UPDATES, "update"}',
-    '{ABOUT, "info"}',
-    '{ADVANCED, "shield"}',
+    '{LOOK_SCENES, "scene", "ВНЕШНИЙ ВИД"}',
+    '{WEATHER, "cloud", ""}',
+    '{HOME, "house", "ОСНОВНЫЕ НАСТРОЙКИ"}',
+    '{ABOUT, "info", "ИНФОРМАЦИЯ"}',
+    '{ADVANCED, "shield", "РАСШИРЕННЫЕ НАСТРОЙКИ"}',
 ]
 positions = [sidebar.find(item) for item in expected]
-assert all(pos >= 0 for pos in positions), "A requested settings category is missing"
-assert positions == sorted(positions), "Settings categories are not in the requested order"
-assert "{BUTTON_MAPPER," not in sidebar
+assert all(pos >= 0 for pos in positions), "A settings section is missing"
+assert positions == sorted(positions), "Settings sections are not in the requested order"
+assert "CONTROL_PANEL" not in sidebar and "UPDATES" not in sidebar and "PROFILES" not in sidebar
 assert "private String currentSection = HOME;" in settings
 
-assert "case HOME:" in settings and "pageMainScreen();" in settings
-assert "case CONTROL_PANEL:" in settings and "pageControlPanel();" in settings
 assert "void pageMainScreen()" in settings
-assert "void pageControlPanel()" in settings
-assert "void pageLookAndScenes()" in settings and "pageLanguage();" in settings
-assert "void pageWeather()" in settings
-assert "void pageApps()" in settings
+assert "Звуки навигации" in settings
+assert "Повторить первоначальную настройку" in settings
+assert "Сбросить настройки testOS" in settings
+assert "void pageLookAndScenes()" in settings and "pageLanguage();" not in settings
+assert "Размер панели приложений" in settings
+assert "void pageWeather()" in settings and "Кнопка погоды на главном экране" in settings
+assert "void pageApps()" in settings and "Скрытые приложения" in settings
 assert "void pageUpdates()" in settings
-assert "void pageAbout()" in settings
+assert "void pageAbout()" in settings and "gonscharovd" in settings
+assert "Сохранить настройки в память ТВ" in settings
+assert "void pageAdvanced()" in settings
+assert "Выбор лаунчера по умолчанию" in settings
+assert "CleanYourTv.getSelectedModelSummary" in settings
+assert "pageButtonMapper();" in settings
+assert "Keep Alive (Auto-repair Accessibility)" in settings
+assert "Ad-blocking Private DNS (AdGuard)" in settings
+assert "ADB connection status" in settings and "Check permissions" in settings
 
-main_page = settings.split("void pageMainScreen()", 1)[1].split("void pageControlPanel()", 1)[0]
-assert "Default home screen" in main_page
-assert "pageProfiles();" in main_page
-assert "Home screen weather shortcut" in main_page
-assert "Classic Top Shelf suggestions" in main_page
-
-apps_page = settings.split("void pageApps()", 1)[1].split("static final class HiddenAppItem", 1)[0]
-assert "Home screen weather shortcut" not in apps_page
-assert "Classic Top Shelf suggestions" not in apps_page
-
-control_page = settings.split("void pageControlPanel()", 1)[1].split("void pageAdvanced()", 1)[0]
-for action in ("ACTION_WIFI", "ACTION_BLUETOOTH", "ACTION_SOUND", "ACTION_INPUTS", "ACTION_AMBIENT"):
-    assert f"ControlPanelOverlay.{action}" in control_page
-assert "ControlPanelOverlay.getActionSummary(this, actionKey)" in control_page
-assert 'openSubMenu("cp_app:" + actionKey)' in control_page
-assert "clearAllCustomActions(this)" in control_page
+for removed in ("void pageLanguage()", "void pageProfiles()", "void pageControlPanel()",
+                "Classic Top Shelf suggestions", "confirmWatchSignOut(WatchCloud"):
+    assert removed not in settings, f"Removed settings feature still present: {removed}"
 
 advanced = settings.split("void pageAdvanced()", 1)[1].split("private volatile String advLaunchersSummary", 1)[0]
-for feature in ("CleanYourTv.getSelectedModelSummary", "pageButtonMapper();",
-                "Backup settings to Download", "Restore settings from folder",
-                "DIAGNOSTICS & RECOVERY", "ADB connection status", "Check permissions"):
-    assert feature in advanced, f"Advanced settings missing: {feature}"
-
-about = settings.split("void pageAbout()", 1)[1].split("private void confirmWatchSignOut", 1)[0]
-assert "BACKUP & RESTORE" not in about
-assert "Reset settings to defaults" in about
+assert "Backup settings to Download" not in advanced
+assert "Restore settings from folder" not in advanced
+about = settings.split("void pageAbout()", 1)[1].split("private void resetAllAppDataAndReturnToSetup", 1)[0]
+assert "pageUpdates();" in about
+assert "Сохранить настройки в память ТВ" in about
+assert "Восстановить настройки" in about
 
 routes = settings.split("private String resolvePageExtra", 1)[1].split("@Override", 1)[0]
-for route in ('return CONTROL_PANEL;', 'return HOME;', 'return LOOK_SCENES;', 'return ADVANCED;'):
+for route in ("return HOME;", "return LOOK_SCENES;", "return WEATHER;", "return ADVANCED;", "return ABOUT;"):
     assert route in routes
 
-
-# Every new user-facing label and explanatory sentence introduced by the grouped
-# navigation must have a direct Russian dictionary entry. I18n.s() intentionally
-# ignores the legacy second (Turkish) argument, so missing keys otherwise fall
-# back to English even though SettingsActivity.tr() appears to supply a fallback.
+# Keep literal translation calls covered by the Russian dictionary.
 i18n = (ROOT / "I18n.java").read_text(encoding="utf-8")
-
 def java_unescape(value):
     value = re.sub(r'\\u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1), 16)), value)
-    return value.replace(r'\n', "\n").replace(r'\t', "\t").replace(r'\"', '"').replace(r'\\', "\\")
-
+    return value.replace(r'\\n', "\\n").replace(r'\\t', "\\t").replace(r'\\"', '"').replace(r'\\\\', "\\\\")
 dictionary = {
     java_unescape(m.group(1))
-    for m in re.finditer(r'add\("((?:\\.|[^"\\])*)",', i18n)
+    for m in re.finditer(r'add\\("((?:\\\\.|[^"\\\\])*)",', i18n)
 }
 literal_settings_strings = {
     java_unescape(m.group(1))
-    for m in re.finditer(r'tr\(\s*"((?:\\.|[^"\\])*)"\s*,', settings)
+    for m in re.finditer(r'tr\\(\\s*"((?:\\\\.|[^"\\\\])*)"\\s*,', settings)
 }
-missing_russian = sorted(literal_settings_strings - dictionary)
-assert not missing_russian, "Settings strings missing Russian translations: " + repr(missing_russian)
+missing = sorted(literal_settings_strings - dictionary)
+assert not missing, "Settings strings missing Russian translations: " + repr(missing)
 
-print("Settings navigation grouping, legacy routes, feature placement and complete literal Russian coverage passed.")
+print("Simplified settings navigation, section placement, legacy routes and Russian translation checks passed.")
