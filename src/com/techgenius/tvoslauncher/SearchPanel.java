@@ -586,7 +586,6 @@ final class SearchPanel {
         setItems(titleRow, cards);
     }
 
-    /** Titles only Stremio's catalogue has (JustWatch lists the rest with their services). */
 
 
     // ---------------------------------------------------------------- cards
