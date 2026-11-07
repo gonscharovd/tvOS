@@ -1806,10 +1806,10 @@ public final class CleanYourTv {
 
     /**
      * Enables or disables a single package via ADB (used by Manual Debloat and Disable System Launchers).
-     * When {@code allowAnySystemApp} is true (Manual Debloat), allows disabling any package except tvOS Launcher itself.
+     * Hard-protected Android/TV/Sber packages are never disabled, including from Manual Debloat.
      */
     public static void toggleSinglePackage(Activity activity, String pkg, boolean disable,
-                                           boolean allowAnySystemApp, Runnable onDone) {
+                                           Runnable onDone) {
         if (pkg == null || pkg.isEmpty() || pkg.equals(activity.getPackageName())) return;
         String resolvedLabel = resolvePackageLabel(activity, pkg);
         if (disable && isCriticalProtectedService(pkg, resolvedLabel)) {
@@ -1920,7 +1920,7 @@ public final class CleanYourTv {
         dialog(activity, tr(activity, "Disable System Launchers", "Sistem Başlatıcılarını Devre Dışı Bırak"))
                 .setItems(labels, (d, which) -> {
                     DebloatItem picked = launchers.get(which);
-                    toggleSinglePackage(activity, picked.pkg, picked.checked, false, onChanged);
+                    toggleSinglePackage(activity, picked.pkg, picked.checked, onChanged);
                 })
                 .setPositiveButton(tr(activity, "Disable All Stock Launchers", "Tüm Stok Başlatıcıları Devre Dışı Bırak"), (d, w) -> {
                     List<String> toDisable = new ArrayList<>();
