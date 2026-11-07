@@ -1637,7 +1637,7 @@ final class SceneHome {
 
     void invalidateAppLogoCache(MainActivity.AppEntry a) {
         if (a == null) {
-            logoCache.clear();
+            logoCache.evictAll();
             return;
         }
         if (a.key != null) logoCache.remove(a.key);

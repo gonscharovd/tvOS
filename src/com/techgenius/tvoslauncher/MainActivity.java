@@ -4056,8 +4056,15 @@ public class MainActivity extends Activity {
     }
 
     void toggleDnd() {
-        // System notification-listener integration is not part of this lightweight build.
-        Perms.requestListener(this);
+        MediaWatchService svc = MediaWatchService.instance;
+        if (svc == null) {
+            Perms.requestListener(this);
+            return;
+        }
+        android.app.NotificationManager nm = getSystemService(android.app.NotificationManager.class);
+        boolean on = nm.getCurrentInterruptionFilter() > android.app.NotificationManager.INTERRUPTION_FILTER_ALL;
+        svc.requestInterruptionFilter(on ? NotificationListenerService.INTERRUPTION_FILTER_ALL
+                : NotificationListenerService.INTERRUPTION_FILTER_PRIORITY);
     }
 
     String audioOutput() {

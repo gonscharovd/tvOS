@@ -26,6 +26,11 @@ assert 'row(tr("Classic Top Shelf content"' not in settings
 assert 'row(tr("Classic Top Shelf suggestions"' in settings
 
 for source in (main, scene, settings, power):
-    assert "MediaWatchService" not in source
+    assert "MediaWatchService.Store" not in source
+    assert "MediaWatchService.pollActiveSessions" not in source
+
+media = (ROOT / "MediaWatchService.java").read_text(encoding="utf-8")
+assert "static final class Store" not in media
+assert "pollActiveSessions" not in media
 
 print("Bounded artwork caches, memory-trim hooks, Settings de-duplication and dead media-hook cleanup passed.")
