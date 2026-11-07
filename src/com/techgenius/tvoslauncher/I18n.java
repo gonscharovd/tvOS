@@ -18,6 +18,596 @@ public final class I18n {
 
     static {
         LANG_MAPS.put(LANG_RU, new HashMap<String, String>());
+        add("Create Your Profile", "Создайте свой профиль");
+        add("Your name and an avatar. Each profile keeps its own apps, background and Home Screen. Up to three people can have one.", "Имя и аватар. У каждого профиля свои приложения, фон и главный экран. Можно создать до трёх профилей.");
+        add("Your name", "Ваше имя");
+        add("Appearance", "Внешний вид");
+        add("Rotating nature scenes with a glass clock and bottom dock", "Смена природных сцен, стеклянные часы и нижняя панель приложений");
+        add("Top shelf, 6-column app grid and custom wallpapers", "Верхняя полка, сетка приложений на 6 столбцов и собственные обои");
+        add("Included in rotation", "Включено в ротацию");
+        add("Classic photo", "Классическая фотография");
+        add("Classic look", "Классический вид");
+        add("Your Home Screen", "Ваш главный экран");
+        add("What appears at the top of Home, behind your apps. Choose any, all or none.", "То, что отображается в верхней части главного экрана за приложениями. Выберите любой вариант, все или ни одного.");
+        add("Popular movies and series on your streaming services", "Популярные фильмы и сериалы из ваших стриминговых сервисов");
+        add("Headlines from your city and the world", "Новости вашего города и мира");
+        add("Just your background for now", "Пока только ваш фон");
+        add("A small weather display on Home, with a 5-day forecast.", "Небольшой блок погоды на главном экране с прогнозом на 5 дней.");
+        add("Found from your internet connection", "Определено по вашему интернет-подключению");
+        add("Looks like ", "Похоже на ");
+        add("Select a usage mode for permissions (Button Mapper Accessibility and Wi-Fi). Pick ONE usage mode below:", "Выберите режим выдачи разрешений (специальные возможности Button Mapper и Wi-Fi). Выберите ОДИН режим ниже:");
+        add("Mode: Secure Auto Setup & Close ADB (Recommended)", "Режим: безопасная автоматическая настройка и закрытие ADB (рекомендуется)");
+        add("Grants WRITE_SECURE_SETTINGS once to self-repair Accessibility, then closes port 5555", "Один раз выдаёт WRITE_SECURE_SETTINGS для автоматического восстановления специальных возможностей, затем закрывает порт 5555");
+        add("Mode: Persistent ADB Setup (Keep ADB Open)", "Режим: постоянный ADB (оставить ADB включённым)");
+        add("Keeps network ADB enabled for CleanYourTV debloating (Note: leaves port 5555 open on LAN)", "Оставляет сетевой ADB включённым для очистки через CleanYourTV (порт 5555 остаётся открытым в локальной сети)");
+        add("Mode: Manual Setup (Without ADB)", "Режим: ручная настройка (без ADB)");
+        add("Grant permissions one by one manually through Android TV Settings", "Выдавайте разрешения по одному вручную через настройки Android TV");
+        add("Open Developer Options / TV Settings…", "Открыть параметры разработчика / настройки ТВ…");
+        add("Enable USB / Network Debugging in Developer Options", "Включите отладку по USB / сети в параметрах разработчика");
+        add("Grant Permissions & Close ADB Now", "Выдать разрешения и закрыть ADB");
+        add("Grant Permissions Now (Keep ADB Open)", "Выдать разрешения сейчас (оставить ADB включённым)");
+        add("Grants WRITE_SECURE_SETTINGS & closes port 5555 when done", "Выдаёт WRITE_SECURE_SETTINGS и закрывает порт 5555 после завершения");
+        add("Uses local ADB to grant permissions and keeps ADB open", "Использует локальный ADB для выдачи разрешений и оставляет ADB включённым");
+        add("Back to Usage Mode Selection", "Назад к выбору режима");
+        add("Switch between Secure Auto Setup, Persistent ADB, or Manual Setup", "Переключение между безопасной автоматической, постоянной ADB- и ручной настройкой");
+        add("testOS works best as the home screen. Allow these once; anything this TV doesn't support is skipped.", "testOS лучше всего работает в качестве главного экрана. Выдайте эти разрешения один раз; неподдерживаемые телевизором разрешения будут пропущены.");
+        add("The Home button opens testOS", "Кнопка «Домой» открывает testOS");
+        add("Choose testOS when asked", "При запросе выберите testOS");
+        add("Show the Wi-Fi Name", "Показывать название сети Wi-Fi");
+        add("In Control Center (needs location access)", "В центре управления (требуется доступ к местоположению)");
+        add("Make testOS Default Home", "Назначить testOS главным экраном");
+        add("On TCL, Philips, and Google TVs, OEM firmware often forces the stock launcher when pressing Home. Follow the steps below so pressing Home always opens testOS, then click Continue.", "На телевизорах TCL, Philips и Google прошивка производителя часто принудительно запускает штатный лаунчер при нажатии «Домой». Выполните шаги ниже, чтобы кнопка всегда открывала testOS, затем нажмите «Продолжить».");
+        add("Step 1: Set testOS as Default via Local ADB", "Шаг 1. Назначить testOS главным экраном через локальный ADB");
+        add("Active — Set as default home launcher", "Активно — назначить лаунчером по умолчанию");
+        add("Run ROLE_HOME & set-home-activity over Local ADB ›", "Выполнить ROLE_HOME и set-home-activity через локальный ADB ›");
+        add("Step 2: Disable System Launchers (Google TV / Android TV / OEM)", "Шаг 2. Отключить системные лаунчеры (Google TV / Android TV / производителя)");
+        add("Step 3: Fix Home Button via Accessibility (Button Mapper)", "Шаг 3. Переназначить кнопку «Домой» через специальные возможности (Button Mapper)");
+        add("Step 4: Open Android System Home Settings", "Шаг 4. Открыть системные настройки главного экрана Android");
+        add("Proceed to the next setup step when you are done here", "Когда закончите, перейдите к следующему шагу настройки");
+        add("Step 1 complete: Default home launcher set via ADB!", "Шаг 1 завершён: главный экран по умолчанию назначен через ADB!");
+        add("Could not connect to ADB — enable USB/Network Debugging or use Step 3 / Step 4.", "Не удалось подключиться к ADB — включите отладку по USB / сети или используйте шаг 3 / шаг 4.");
+        add("ADB Mode Required", "Требуется режим ADB");
+        add("You need the ADB mode enabled for this troubleshooting step. You can always change the ADB mode from Settings later.\n\nWould you like to enable ADB now or skip this step?", "Для этого шага диагностики необходимо включить режим ADB. Позже его можно изменить в настройках.\n\nВключить ADB сейчас или пропустить этот шаг?");
+        add("Enable ADB Now", "Включить ADB сейчас");
+        add("Enabling ADB…", "Включение ADB…");
+        add("Turning on ADB debugging for this troubleshooting step…", "Включаем отладку ADB для этого шага диагностики…");
+        add("Please enable USB Debugging / Network Debugging in Developer Options, then return here to run this step.", "Включите отладку по USB / сети в параметрах разработчика, затем вернитесь сюда и повторите этот шаг.");
+        add("Skip This Step", "Пропустить этот шаг");
+        add("Secure Setup (ADB)", "Безопасная настройка (ADB)");
+        add("Persistent ADB Setup", "Настройка постоянного ADB");
+        add("Granting permissions via local ADB…\n\nIf an “Allow USB debugging?” prompt appears on screen, check “Always allow” and press Allow.", "Выдаём разрешения через локальный ADB…\n\nЕсли на экране появится запрос «Разрешить отладку по USB?», отметьте «Всегда разрешать» и нажмите «Разрешить».");
+        add("Permissions Granted & ADB Closed", "Разрешения выданы, ADB закрыт");
+        add("All permissions granted automatically!", "Все разрешения выданы автоматически!");
+        add("Could not connect to local ADB on port 5555.\n\nPlease make sure USB Debugging / Network Debugging is turned ON in Developer Options, then try again — or choose Manual Setup.", "Не удалось подключиться к локальному ADB на порту 5555.\n\nУбедитесь, что отладка по USB / сети включена в параметрах разработчика, и повторите попытку или выберите ручную настройку.");
+        add("Enable Button Mapper in Accessibility…", "Включить Button Mapper в специальных возможностях…");
+        add("Required so mapped buttons work over every app", "Необходимо, чтобы переназначенные кнопки работали во всех приложениях");
+        add("You can also configure buttons later in Settings", "Кнопки также можно настроить позже в разделе «Настройки»");
+        add("Change any of this later in Settings, from the gear in Control Center.", "Все эти параметры можно изменить позже в настройках, открыв значок шестерёнки в центре управления.");
+        add("Nothing to continue yet", "Пока нечего продолжать");
+        add("Preparing QR code…", "Подготовка QR-кода…");
+        add("Scan with your phone and approve.", "Отсканируйте код телефоном и подтвердите вход.");
+        add("Or open ", "Или откройте ");
+        add(" and enter:", " и введите:");
+        add("Waiting for approval…", "Ожидание подтверждения…");
+        add("Up next", "Далее");
+        add("Resume playback", "Продолжить воспроизведение");
+        add("Profile ", "Профиль ");
+        add("H:", "Макс.:");
+        add("L:", "Мин.:");
+        add("My Location", "Моё местоположение");
+        add("HOURLY FORECAST", "ПОЧАСОВОЙ ПРОГНОЗ");
+        add("Humidity ", "Влажность ");
+        add("Wind ", "Ветер ");
+        add("5-DAY FORECAST", "ПРОГНОЗ НА 5 ДНЕЙ");
+        add("Updated ", "Обновлено ");
+        add("Exact model match", "Точное совпадение модели");
+        add("Exact model code match", "Точное совпадение кода модели");
+        add("Similar model name", "Похожее название модели");
+        add("Generic Android TV / Google TV profile", "Общий профиль Android TV / Google TV");
+        add("TV Model Matched", "Модель телевизора определена");
+        add("Change Model…", "Изменить модель…");
+        add("Pull full app list from ADB and match models by system/OEM package names", "Получить полный список приложений через ADB и сопоставить модели по системным пакетам и пакетам производителя");
+        add("📋 Browse All 341 TV Models", "📋 Просмотреть все 341 модели телевизоров");
+        add("Scanning TV System Apps…", "Сканирование системных приложений телевизора…");
+        add("Pulling full package list from ADB and comparing system/OEM package names across 341 TV models…", "Получаем полный список пакетов через ADB и сравниваем системные пакеты и пакеты производителей с 341 моделью телевизоров…");
+        add("e.g. tcl, sony, hisense, xiaomi, philips, skyworth…", "например: TCL, Sony, Hisense, Xiaomi, Philips, Skyworth…");
+        add("Search TV Model or Brand", "Поиск модели или бренда телевизора");
+        add("Google Assistant / Voice Search (optional)", "Google Assistant / голосовой поиск (необязательно)");
+        add("YouTube Music (optional)", "YouTube Music (необязательно)");
+        add("Google Play Games (optional)", "Google Play Games (необязательно)");
+        add("Android Accessibility Suite / TalkBack (optional)", "Android Accessibility Suite / TalkBack (необязательно)");
+        add("Chromecast built-in / Google Cast receiver (optional — keep if you Cast from phone)", "Встроенный Chromecast / приёмник Google Cast (необязательно — оставьте, если транслируете с телефона)");
+        add("Android TV Remote Service (optional — keep if you use Google TV phone remote)", "Android TV Remote Service (необязательно — оставьте, если используете пульт Google TV на телефоне)");
+        add("System home launcher detected on this TV", "На этом телевизоре обнаружен системный главный экран (лаунчер)");
+        add("None found", "Ничего не найдено");
+        add("🛑 Critical system service — protected (cannot be disabled)", "🛑 Критическая системная служба — защищена (отключение запрещено)");
+        add("⚠️ Core system package — disabling may affect system stability", "⚠️ Основной системный пакет — отключение может нарушить стабильность системы");
+        add("Protected Core Package", "Защищённый системный пакет");
+        add("Disabling Package…", "Отключение пакета…");
+        add("Enabling Package…", "Включение пакета…");
+        add("ADB Connection Required", "Требуется подключение ADB");
+        add("Could not connect to local ADB on port 5555.\nPlease enable USB / Network Debugging in Developer Options and tap Pair / Repair ADB first.", "Не удалось подключиться к локальному ADB на порту 5555.\nВключите отладку по USB / сети в параметрах разработчика и сначала нажмите «Подключить / восстановить ADB».");
+        add("Package State Not Verified", "Состояние пакета не подтверждено");
+        add("No stock Android TV / Google TV launcher packages were detected on this TV.", "На этом телевизоре не обнаружены пакеты штатных лаунчеров Android TV / Google TV.");
+        add("Disable System Launchers", "Отключить системные лаунчеры");
+        add("Disable All Stock Launchers", "Отключить все штатные лаунчеры");
+        add("Stock Google TV Home & banner ads", "Штатный главный экран Google TV и рекламные баннеры");
+        add("Google TV setup wizard & launcher watchdog", "Мастер первоначальной настройки Google TV и служба контроля лаунчера");
+        add("Stock Android TV Home & sponsored rows", "Штатный главный экран Android TV и рекламные блоки");
+        add("Google telemetry & diagnostics", "Телеметрия и диагностика Google");
+        add("Google TV store / Movies & TV", "Магазин Google TV / Фильмы и ТВ");
+        add("Bloatware / background service", "Ненужное ПО / фоновая служба");
+        add("Preparing CleanYourTV…", "Подготовка CleanYourTV…");
+        add("⚠️ Detected: Your current Wi-Fi network IS owned by setupwraith (cname=com.google.android.tungsten.setupwraith).\n\n", "⚠️ Обнаружено: текущая сеть Wi-Fi принадлежит setupwraith (cname=com.google.android.tungsten.setupwraith).\n\n");
+        add("ℹ️ Google TV Notice (setupwraith Wi-Fi check):\n\n", "ℹ️ Предупреждение Google TV (проверка Wi-Fi setupwraith):\n\n");
+        add("No Matching Apps Found", "Подходящие приложения не найдены");
+        add("Scan Installed Apps", "Сканировать установленные приложения");
+        add("Debloating TV…", "Очистка телевизора…");
+        add("Could not connect to local ADB on port 5555.\nPlease make sure USB / Network Debugging is enabled in Developer Options and tap Pair / Repair ADB first.", "Не удалось подключиться к локальному ADB на порту 5555.\nУбедитесь, что отладка по USB / сети включена в параметрах разработчика, и сначала нажмите «Подключить / восстановить ADB».");
+        add("Debloat Failed", "Не удалось выполнить очистку");
+        add("Debloat Partially Complete", "Очистка выполнена частично");
+        add("Disabled Apps Record", "Список отключённых приложений");
+        add("Restore Debloated Apps", "Восстановить отключённые приложения");
+        add("Select TV Model First", "Сначала выберите модель телевизора");
+        add("Choose TV Model…", "Выбрать модель телевизора…");
+        add("Restore by Selected TV Model", "Восстановить по выбранной модели телевизора");
+        add("Restoring Apps…", "Восстановление приложений…");
+        add("Could not connect to local ADB on port 5555.", "Не удалось подключиться к локальному ADB на порту 5555.");
+        add("Restore Partially Complete", "Восстановление выполнено частично");
+        add("Custom 2", "Свой вариант 2");
+        add("Custom 3", "Свой вариант 3");
+        add("Custom 4", "Свой вариант 4");
+        add("Custom 5", "Свой вариант 5");
+        add("Folder Shuffle", "Смена изображений из папки");
+        add("Custom Lock Image", "Своё изображение экрана блокировки");
+        add("Tessellated Pavement", "Мозаичный берег");
+        add("Grose Valley", "Долина Гроуз");
+        add("Albury Storm", "Гроза в Олбери");
+        add("Aresquiers Beach", "Пляж Арескьер");
+        add("Vang Vieng Sunset", "Закат в Ванг-Вьенге");
+        add("Aurora", "Северное сияние");
+        add("Midnight", "Полночь");
+        add("Ocean", "Океан");
+        add("Sunset", "Закат");
+        add("Graphite", "Графит");
+
+        add("m", "мин");
+        add("Continue watching", "Продолжить просмотр");
+        add("Resume", "Продолжить");
+        add("Remove from Keep Watching", "Убрать из «Продолжить просмотр»");
+        add(" min", " мин");
+        add("Control Center", "Панель управления");
+        add("Weather Forecast", "Прогноз погоды");
+        add("space", "пробел");
+        add("clear", "Очистить");
+        add("Say a movie, show or app", "Назовите фильм, сериал или приложение");
+        add("Voice input isn't available on this TV", "Голосовой ввод недоступен на этом телевизоре");
+        add("Voice needs the internet", "Для голосового поиска нужен интернет");
+        add("Didn’t catch that — press the mic to try again", "Не удалось распознать — нажмите на микрофон, чтобы повторить");
+        add("Listening…", "Слушаем…");
+        add("Search apps, settings and inputs", "Поиск приложений, настроек и ТВ-входов");
+        add("Apps & Settings", "Приложения и настройки");
+        add("No results", "Ничего не найдено");
+        add("Recent Searches", "Недавние запросы");
+        add("Type to search apps, settings and inputs", "Введите название приложения, настройки или ТВ-входа");
+        add("Display", "Экран");
+        add("Screen Saver", "Заставка");
+        add("Date & Time", "Дата и время");
+        add("Accessibility", "Специальные возможности");
+        add("Storage", "Хранилище");
+        add("No movies or shows found", "Фильмы или сериалы не найдены");
+        add("On ", "В ");
+        add("", "");
+        add("Series", "Сериал");
+        add("Movie", "Фильм");
+        add("HOW TO WATCH", "КАК СМОТРЕТЬ");
+        add("Not streaming right now.", "Сейчас недоступно для просмотра.");
+        add("Not installed", "Не установлено");
+        add("Update download failed.", "Не удалось загрузить обновление.");
+        add("Send Key Code…", "Отправить код клавиши…");
+        add("Custom Key Code (Enter Number…)", "Свой код клавиши (введите число…)");
+        add("Send Key Code", "Отправить код клавиши");
+        add("e.g. 85 (Play/Pause), 164 (Mute), 178 (TV Input)", "например, 85 (воспроизведение/пауза), 164 (звук), 178 (вход ТВ)");
+        add("Enter Android Key Code", "Введите код клавиши Android");
+        add("min", "мин");
+        add("Now", "Сейчас");
+        add("Today", "Сегодня");
+        add("Could not check for updates.", "Не удалось проверить наличие обновлений.");
+        add("ADB is active — selecting Install will download and install the update automatically.", "ADB включён — при выборе «Установить» обновление будет загружено и установлено автоматически.");
+        add("ADB is turned off (Secure Mode) — selecting Install will download the update and open the system package installer.", "ADB выключен (безопасный режим) — при выборе «Установить» обновление будет загружено, после чего откроется системный установщик пакетов.");
+        add("Show Changelog", "Показать список изменений");
+        add("Install", "Установить");
+        add("No changelog text provided for this release.", "Для этого выпуска список изменений не предоставлен.");
+        add("Could not start installer.", "Не удалось запустить установщик.");
+        add("Update installed!", "Обновление установлено!");
+        add("Mute / Unmute (164)", "Отключить / включить звук (164)");
+        add("Volume Up (24)", "Увеличить громкость (24)");
+        add("Volume Down (25)", "Уменьшить громкость (25)");
+        add("Audio Track (222)", "Аудиодорожка (222)");
+        add("Back (4)", "Назад (4)");
+        add("Home (3)", "Домой (3)");
+        add("App Switch / Recents (187)", "Переключение приложений / Недавние (187)");
+        add("Notifications (83)", "Уведомления (83)");
+        add("Sleep / Standby (223)", "Сон / ожидание (223)");
+        add("Mode 2 (HY320 / Projector)", "Режим 2 (HY320 / проектор)");
+        add("Mode 1 (Standard · Default)", "Режим 1 (стандартный · по умолчанию)");
+        add("Red Button", "Красная кнопка");
+        add("Green Button", "Зелёная кнопка");
+        add("Yellow Button", "Жёлтая кнопка");
+        add("Blue Button", "Синяя кнопка");
+        add("Menu Button", "Кнопка меню");
+        add("Guide Button", "Кнопка телепрограммы");
+        add("Info Button", "Кнопка информации");
+        add("Subtitles / CC", "Субтитры / скрытые субтитры");
+        add("TV Input / Source", "Вход / источник сигнала ТВ");
+        add("Channel Up", "Следующий канал");
+        add("Channel Down", "Предыдущий канал");
+        add("Bookmark / Favorite", "Закладка / избранное");
+        add("Last Channel", "Предыдущий канал");
+        add("Settings Button", "Кнопка настроек");
+        add("Search Button", "Кнопка поиска");
+        add("Play / Pause", "Воспроизведение / пауза");
+        add("Play", "Воспроизвести");
+        add("Pause", "Пауза");
+        add("Stop", "Остановить");
+        add("Rewind", "Перемотка назад");
+        add("Fast Forward", "Перемотка вперёд");
+        add("Next Track", "Следующая дорожка");
+        add("Previous Track", "Предыдущая дорожка");
+        add("Record Button", "Кнопка записи");
+        add("Key: ", "Клавиша: ");
+        add("Not Connected", "Не подключено");
+        add(" paired", " сопряжено");
+        add("No apps to close", "Нет приложений для закрытия");
+        add("TV Speakers", "Динамики телевизора");
+        add(" min left", " мин осталось");
+        add("Auto", "Авто");
+        add("Dark", "Тёмный");
+        add("Black", "Чёрный");
+        add("White", "Белый");
+        add("Gray", "Серый");
+        add("Red", "Красный");
+        add("Orange", "Оранжевый");
+        add("Yellow", "Жёлтый");
+        add("Green", "Зелёный");
+        add("Teal", "Бирюзовый");
+        add("Blue", "Синий");
+        add("Indigo", "Индиго");
+        add("Purple", "Фиолетовый");
+        add("Pink", "Розовый");
+        add("App Icon Editor", "Редактор значков приложений");
+        add("Preview", "Предпросмотр");
+        add("Background color", "Цвет фона");
+        add("Zoom", "Масштаб");
+        add("Zoom out", "Уменьшить");
+        add("Zoom in", "Увеличить");
+        add("Move icon", "Переместить значок");
+        add("Up", "Вверх");
+        add("Down", "Вниз");
+        add("Apply", "Применить");
+        add("Not selected", "Не выбрано");
+        add("images", "изображений");
+        add("Open System File Picker…", "Открыть системный выбор файлов…");
+        add("No system file picker available on this TV.", "На этом телевизоре нет системного выбора файлов.");
+        add("Grant All Files Access…", "Предоставить доступ ко всем файлам…");
+        add("Back to folders", "Назад к папкам");
+        add("Could not decode image file.", "Не удалось прочитать файл изображения.");
+        add("No images in this folder (open a subfolder below)", "В этой папке нет изображений (откройте вложенную папку ниже)");
+        add("Back to parent folder", "Назад к родительской папке");
+        add("Settings Backed Up", "Резервная копия настроек создана");
+        add("Backup Failed", "Не удалось создать резервную копию");
+        add("Grant Storage Access…", "Предоставить доступ к хранилищу…");
+        add("No settings backup (.json) found in this folder", "В этой папке не найдена резервная копия настроек (.json)");
+        add("Choose Folder to Restore Settings", "Выберите папку для восстановления настроек");
+        add("Settings Restored", "Настройки восстановлены");
+        add("Restore Failed", "Не удалось восстановить настройки");
+        add("Persistent ADB Mode (Keep port 5555 open)", "Постоянный режим ADB (оставить порт 5555 открытым)");
+        add("Secure Mode — WRITE_SECURE_SETTINGS & Close ADB (Recommended)", "Безопасный режим — WRITE_SECURE_SETTINGS и закрытие ADB (рекомендуется)");
+        add("Secure Mode Active (ADB Not Used · Self-Repair Ready)", "Безопасный режим активен (ADB не используется · самовосстановление готово)");
+        add("Secure Mode (Needs One-Time Pair to Grant Permissions)", "Безопасный режим (требуется однократное подключение для выдачи разрешений)");
+        add("Connected & Paired (Port 5555 Open)", "Подключено и сопряжено (порт 5555 открыт)");
+        add("Port 5555 Open · Ready to Pair", "Порт 5555 открыт · готово к сопряжению");
+        add("Paired · ADB Enabled", "Сопряжено · ADB включён");
+        add("ADB Enabled · Not Paired", "ADB включён · сопряжение не выполнено");
+        add("Disconnected (ADB Off)", "Отключено (ADB выключен)");
+        add("Make testOS your home screen?", "Сделать testOS главным экраном?");
+        add("The Home button on the remote will open testOS.", "Кнопка «Домой» на пульте будет открывать testOS.");
+        add("Make Home Screen", "Назначить главным экраном");
+        add("Not Now", "Не сейчас");
+        add("App icon reset to default", "Значок приложения сброшен.");
+        add("App icon updated", "Значок приложения обновлён.");
+        add("Show on Home Screen", "Показать на главном экране");
+        add("Hide", "Скрыть");
+        add("App Info", "О приложении");
+        add("Reset Layout", "Сбросить расположение");
+        add("testOS Settings", "Настройки testOS");
+        add("% used  ·  Clean", "% использовано  ·  Очистить");
+        add("This TV has no inputs", "У этого телевизора нет входов");
+        add("Not connected", "Не подключено");
+        add("Switch Profile", "Сменить профиль");
+        add("Add User", "Добавить пользователя");
+        add("New Profile", "Новый профиль");
+        add("Change Emoji", "Изменить эмодзи");
+        add("Change Colour", "Изменить цвет");
+        add("Colour", "Цвет");
+        add("Delete", "Удалить");
+        add("Its layout and Continue Watching list will be removed.", "Его расположение приложений и список «Продолжить просмотр» будут удалены.");
+        add("Weather from", "Погода от");
+        add("Free forecast service, no account needed", "Бесплатный прогноз погоды, регистрация не требуется");
+        add("LANGUAGE", "ЯЗЫК");
+        add("DOCK", "ПАНЕЛЬ ПРИЛОЖЕНИЙ");
+        add("Dock size", "Размер панели приложений");
+        add("Show app names", "Показывать названия приложений");
+        add(" seconds", " сек.");
+        add("Reset app order & unhide all", "Сбросить порядок приложений и показать все");
+        add("App layout reset to default.", "Расположение приложений сброшено.");
+        add("Manage system apps in TV settings…", "Управление системными приложениями в настройках ТВ…");
+        add("Tip: Hold OK on any app on the home screen dock to move or hide it.", "Совет: удерживайте OK на приложении в панели главного экрана, чтобы переместить или скрыть его.");
+        add("Continue Watching on dock", "Раздел «Продолжить просмотр» на панели");
+        add("Account", "Аккаунт");
+        add("Signed in · Sign out", "Вход выполнен · Выйти");
+        add("Not signed in", "Вход не выполнен");
+        add("Watching now · OK to switch or rename", "Сейчас смотрит · OK — сменить или переименовать");
+        add("OK to switch or edit", "Нажмите OK, чтобы переключить или изменить");
+        add("Add a person…", "Добавить пользователя…");
+        add("OPTIONS", "ПАРАМЕТРЫ");
+        add("Ask who is watching on wake", "Спрашивать, кто смотрит, при включении ТВ");
+        add("Each person keeps their own Keep Watching row and app order.", "У каждого пользователя свои раздел «Продолжить просмотр» и порядок приложений.");
+        add("Rename person", "Переименовать пользователя");
+        add("Button Mapper accessibility service", "Служба специальных возможностей Button Mapper");
+        add("Active (works in all apps)", "Активна (работает во всех приложениях)");
+        add("Accessibility Service", "Служба специальных возможностей");
+        add("This TV does not have a built-in Accessibility Settings screen. You can enable the Button Mapper & Control Panel service automatically via Local ADB.", "На этом телевизоре нет встроенного экрана специальных возможностей. Службу Button Mapper и панели управления можно включить автоматически через локальный ADB.");
+        add("Enable via ADB", "Включить через ADB");
+        add("Fix Home button (Launch testOS)", "Исправление кнопки «Домой» (запуск testOS)");
+        add("Short press Home opens testOS; long press opens TV Settings.", "Короткое нажатие «Домой» открывает testOS, долгое — настройки телевизора.");
+        add("Home button is handled by the TV system.", "Кнопка «Домой» обрабатывается системой телевизора.");
+        add("When the Home fix is enabled, a short press opens testOS and a long press opens the TV's own Settings. With the fix disabled, Home is handled by the TV system.", "Если исправление включено, короткое нажатие «Домой» открывает testOS, а долгое — настройки телевизора. Если исправление выключено, кнопкой управляет система ТВ.");
+        add("Long-press volume fix enabled (for TVs where holding volume stops repeating).", "Исправление долгого нажатия громкости включено (для телевизоров, где удержание кнопки не повторяет нажатия).");
+        add("Long-press volume fix disabled (using native TV volume).", "Исправление долгого нажатия громкости выключено (используется штатная регулировка ТВ).");
+        add("Volume button fix mode", "Режим исправления кнопок громкости");
+        add("BUTTON REMAPPING", "ПЕРЕНАЗНАЧЕНИЕ КНОПОК");
+        add("REMAPPED BUTTONS (1X / 2X / 3X TAP)", "ПЕРЕНАЗНАЧЕННЫЕ КНОПКИ (1 / 2 / 3 НАЖАТИЯ)");
+        add("Clear all remapped buttons", "Очистить все переназначения кнопок");
+        add("All button mappings cleared.", "Все переназначения кнопок очищены.");
+        add("Home screen weather shortcut", "Ярлык погоды на главном экране");
+        add("Classic Top Shelf suggestions", "Рекомендации классической верхней полки");
+        add("ADB & SECURITY MODE", "ADB И РЕЖИМ БЕЗОПАСНОСТИ");
+        add("ADB operating mode", "Режим работы ADB");
+        add("Turn On / Off ADB", "Включить / выключить ADB");
+        add("Remove / revoke all permissions", "Удалить / отозвать все разрешения");
+        add("Revoke ›", "Отозвать ›");
+        add("STARTUP & KEEP ALIVE", "ЗАПУСК И KEEP ALIVE");
+        add("Keep Alive (Auto-repair Accessibility)", "Keep Alive (автовосстановление специальных возможностей)");
+        add("On (Default)", "Включено (по умолчанию)");
+        add("Security Note: Keep Alive is enabled by default. In Secure Mode, testOS uses WRITE_SECURE_SETTINGS to restore Accessibility directly in-process without touching ADB (even if ADB is enabled on the TV). In Persistent ADB Mode, Keep Alive can also use Local ADB on port 5555.", "Безопасность: Keep Alive включён по умолчанию. В безопасном режиме testOS восстанавливает специальные возможности напрямую через WRITE_SECURE_SETTINGS, не используя ADB, даже если он включён на ТВ. В режиме постоянного ADB Keep Alive также может использовать локальный ADB на порту 5555.");
+        add("Disable system launchers…", "Отключить системные лаунчеры…");
+        add("Manual debloat (All system apps)…", "Ручное отключение (все системные приложения)…");
+        add("Advanced ›", "Дополнительно ›");
+        add("CleanYourTV (Beta) runs the CleanYourTV debloat profiles directly on your TV over Local ADB without needing a PC. Choose your TV model (or scan by installed system app packages), disable stock launchers or bloatware, and restore them anytime with one tap.", "CleanYourTV (бета) применяет профили очистки непосредственно на телевизоре через локальный ADB — компьютер не нужен. Выберите модель ТВ (или выполните поиск по установленным системным пакетам), отключайте штатные лаунчеры и ненужные приложения, а при необходимости восстанавливайте их одним нажатием.");
+        add("BACKUP & RESTORE", "РЕЗЕРВНОЕ КОПИРОВАНИЕ И ВОССТАНОВЛЕНИЕ");
+        add("Backup settings to Download", "Сохранить настройки в папку «Download»");
+        add("Restore settings from folder…", "Восстановить настройки из папки…");
+        add("Choose folder ›", "Выбрать папку ›");
+        add("Automatic updates enabled.", "Автоматическое обновление включено.");
+        add("Automatic updates disabled.", "Автоматическое обновление выключено.");
+        add("Tap Check for updates", "Нажмите «Проверить обновления»");
+        add("Checks GitHub Releases (techgenius1/tvOS-Launcher) for the latest APK and installs updates directly on your TV.", "Проверяет GitHub Releases (techgenius1/tvOS-Launcher), загружает последнюю версию APK и устанавливает обновление прямо на телевизор.");
+        add("Downloading update", "Загрузка обновления");
+        add("Update download failed", "Не удалось загрузить обновление");
+        add("Download complete — opening installer", "Загрузка завершена — открываем установщик");
+        add("Mode 1 — Standard (Default, for most Android TVs & IR remotes)", "Режим 1 — стандартный (по умолчанию для большинства Android TV и ИК-пультов)");
+        add("Mode 2 — HY320 / Projector (AudioService & IR pulse-burst mode)", "Режим 2 — HY320 / проектор (AudioService и импульсный режим ИК)");
+        add("Volume Button Fix Mode", "Режим исправления кнопок громкости");
+        add("Volume Fix Mode 1 (Standard) selected.", "Выбран режим исправления громкости 1 (стандартный).");
+        add("Volume Fix Mode 2 (HY320 / Projector) selected.", "Выбран режим исправления громкости 2 (HY320 / проектор).");
+        add("Sign out", "Выйти");
+        add("Secure Mode — Grant WRITE_SECURE_SETTINGS & Close ADB (Recommended)", "Безопасный режим — выдать WRITE_SECURE_SETTINGS и закрыть ADB (рекомендуется)");
+        add("Persistent ADB Mode — Keep Network ADB Open (Optional)", "Режим постоянного ADB — оставить сетевой ADB включённым (необязательно)");
+        add("ADB Operating Mode", "РЕЖИМ РАБОТЫ ADB");
+        add("Enable ADB for Persistent Mode?", "Включить ADB для постоянного режима?");
+        add("ADB debugging is currently turned off. Persistent ADB Mode requires ADB to be enabled.\n\nWould you like to enable ADB and switch to Persistent ADB Mode?", "Отладка ADB сейчас выключена. Для постоянного режима необходимо включить ADB.\n\nВключить ADB и перейти в постоянный режим?");
+        add("Enable ADB & Switch", "Включить ADB и переключить режим");
+        add("Turning On ADB…", "Включение ADB…");
+        add("Enabling ADB debugging and switching to Persistent ADB Mode…", "Включаем отладку ADB и переходим в постоянный режим…");
+        add("ADB enabled and switched to Persistent ADB Mode.", "ADB включён, выбран постоянный режим.");
+        add("Turn On ADB Debugging", "Включить отладку ADB");
+        add("Open Developer Options and turn on USB Debugging / Network Debugging to complete switching to Persistent ADB Mode.", "Откройте параметры разработчика и включите отладку по USB / сети, чтобы завершить переход в постоянный режим ADB.");
+        add("Open Developer Options…", "Открыть параметры разработчика…");
+        add("Secure Mode selected — ADB will grant WRITE_SECURE_SETTINGS and close port 5555 when paired.", "Выбран безопасный режим — после сопряжения ADB выдаст WRITE_SECURE_SETTINGS и закроет порт 5555.");
+        add("Persistent ADB Mode selected — Port 5555 stays open for CleanYourTV & ADB tools.", "Выбран постоянный режим ADB — порт 5555 останется открытым для CleanYourTV и инструментов ADB.");
+        add("Enabling ADB debugging…", "Включение отладки ADB…");
+        add("ADB debugging enabled.", "Отладка ADB включена.");
+        add("Open Developer Options and turn on USB Debugging / Network Debugging.", "Откройте параметры разработчика и включите отладку по USB / сети.");
+        add("Close ADB (Disable Port 5555)", "Закрыть ADB (отключить порт 5555)");
+        add("Close ADB Now", "Закрыть ADB сейчас");
+        add("Closing ADB…", "Закрытие ADB…");
+        add("Running settings put global adb_enabled 0 and verifying port 5555…", "Выполняется settings put global adb_enabled 0 и проверяется порт 5555…");
+        add("Developer Options…", "Параметры разработчика…");
+        add("Keep Alive disabled.", "Keep Alive выключен.");
+        add("Enable Keep Alive?", "Включить Keep Alive?");
+        add("Enable Keep Alive", "Включить Keep Alive");
+        add("Keep Alive enabled.", "Keep Alive включён.");
+        add("Pair / Repair ADB", "Подключить / восстановить ADB");
+        add("Connecting to local ADB on port 5555 and granting permissions…\n\nIf an “Allow USB debugging?” prompt appears, check “Always allow” and press Allow.", "Подключаемся к локальному ADB на порту 5555 и выдаём разрешения…\n\nЕсли появится запрос «Разрешить отладку по USB?», отметьте «Всегда разрешать» и нажмите «Разрешить».");
+        add("ADB paired and all permissions granted!", "ADB подключён, все разрешения выданы!");
+        add("ADB Debugging Needed", "Требуется отладка ADB");
+        add("Could not connect to local ADB on port 5555.\n\n1. Open Settings → System → About and click Build 7 times.\n2. Open Developer Options and turn on USB Debugging / Network Debugging.\n3. Return here and tap Pair / Repair again.", "Не удалось подключиться к локальному ADB на порту 5555.\n\n1. Откройте «Настройки → Система → Об устройстве» и нажмите на номер сборки 7 раз.\n2. Откройте параметры разработчика и включите отладку по USB / сети.\n3. Вернитесь сюда и снова нажмите «Подключить / восстановить ADB».");
+        add("Remove / Revoke All Permissions", "УДАЛИТЬ / ОТОЗВАТЬ ВСЕ РАЗРЕШЕНИЯ");
+        add("This will disable Keep Alive and remove Accessibility Service, Notification Access, Default Home Role, and launcher permissions (both locally and via ADB).", "Это выключит Keep Alive и отзовёт службу специальных возможностей, доступ к уведомлениям, роль приложения «Домой» и разрешения лаунчера — локально и через ADB.");
+        add("Revoke All Permissions", "Отозвать все разрешения");
+        add("Revoking Permissions…", "Отзыв разрешений…");
+        add("Revoking all permissions…", "Отзываем все разрешения…");
+        add("⚠️ Manual Debloat Warning", "⚠️ Предупреждение о ручном отключении");
+        add("I Understand — Open Manual Debloat", "Понятно — открыть ручное отключение");
+        add("Back", "Назад");
+        add("DOCK SCALE (-50% TO +50%)", "МАСШТАБ ПАНЕЛИ (-50% ДО +50%)");
+        add("Default", "По умолчанию");
+        add("Larger dock — extra apps automatically move to Other apps if needed", "Увеличенная панель — лишние приложения при необходимости перемещаются в «Другие приложения»");
+        add("Smaller, more compact dock", "Уменьшенная, компактная панель");
+        add("Standard Apple tvOS dock size", "Стандартный размер панели Apple tvOS");
+        add("Ambient colour themes", "Цветовые темы фонового режима");
+        add("AMBIENT THEMES", "ТЕМЫ ФОНОВОГО РЕЖИМА");
+        add("FORECAST PROVIDER", "ИСТОЧНИК ПРОГНОЗА");
+        add("Classic Top Shelf", "Классическая верхняя полка");
+        add("TOP SHELF CONTENT", "СОДЕРЖИМОЕ ВЕРХНЕЙ ПОЛКИ");
+        add("Remove person", "Удалить пользователя");
+        add("Wi-Fi", "Wi-Fi");
+        add("Bluetooth", "Bluetooth");
+        add("Choose Action", "Выбрать действие");
+        add("TARGET ACTION / APPLICATION", "ЦЕЛЕВОЕ ДЕЙСТВИЕ / ПРИЛОЖЕНИЕ");
+        add("Default (Ambient Mode)", "По умолчанию (фоновый режим)");
+        add("Default (Automatic)", "По умолчанию (автоматически)");
+        add("Open TV Ambient Mode / Screensaver (or built-in fallback)", "Открыть фоновый режим / заставку телевизора (или встроенный резервный вариант)");
+        add("Use built-in Android TV shortcut", "Использовать встроенную команду Android TV");
+        add("Lock Screen", "Экран блокировки");
+        add("Show Clock, Date & Greeting over your chosen wallpaper (press any key to return)", "Показывать часы, дату и приветствие поверх выбранных обоев (нажмите любую кнопку для возврата)");
+        add("Choose Activity", "Выбрать действие");
+        add("ACTIVITIES IN ", "ДЕЙСТВИЯ В ");
+        add("Default App Launch (Main Activity)", "Запуск приложения по умолчанию (главная активность)");
+        add("TAP ACTIONS", "ДЕЙСТВИЯ ПО НАЖАТИЮ");
+        add("REMOVE", "УДАЛИТЬ");
+        add("BUILT-IN ACTIONS", "ВСТРОЕННЫЕ ДЕЙСТВИЯ");
+        add("None (No action)", "Нет (без действия)");
+        add("Ambient Mode / StandBy", "Фоновый режим / ожидание");
+        add("Power Off (Screen Off)", "Выключить экран");
+        add("Send Key Code (Remote / Media / System)…", "Отправить код клавиши (пульт / мультимедиа / система)…");
+        add("Send any Android KeyEvent keycode without 3rd-party apps", "Отправить любой код клавиши Android KeyEvent без сторонних приложений");
+        add("INSTALLED APPS", "УСТАНОВЛЕННЫЕ ПРИЛОЖЕНИЯ");
+        add("DEFAULT LAUNCHER SETUP (TCL / PHILIPS / GOOGLE TV)", "НАСТРОЙКА ЛАУНЧЕРА ПО УМОЛЧАНИЮ (TCL / PHILIPS / GOOGLE TV)");
+        add("1. Set testOS as Default via Local ADB", "1. Назначить testOS лаунчером по умолчанию через локальный ADB");
+        add("Run ROLE_HOME & set-home-activity ›", "Выполнить ROLE_HOME и set-home-activity ›");
+        add("Setting Default Launcher…", "Назначение лаунчера по умолчанию…");
+        add("Setting ROLE_HOME and default home activity over Local ADB…", "Назначение ROLE_HOME и главной активности через локальный ADB…");
+        add("2. Disable System Launchers (Google TV / Android TV / OEM)", "2. Отключить системные лаунчеры (Google TV / Android TV / OEM)");
+        add("3. Fix Home Button via Accessibility (Button Mapper)", "3. Исправить кнопку «Домой» через специальные возможности (Button Mapper)");
+        add("On — Pressing Home launches testOS", "Включено — нажатие «Домой» запускает testOS");
+        add("Off — Tap to enable Home button remap", "Выключено — нажмите, чтобы переназначить кнопку «Домой»");
+        add("Home button fix enabled.", "Исправление кнопки «Домой» включено.");
+        add("Home button fix disabled.", "Исправление кнопки «Домой» выключено.");
+        add("4. Open Android System Home Settings", "4. Открыть системные настройки главного экрана Android");
+        add("Open system selector (if supported by TV) ›", "Открыть системный выбор лаунчера (если поддерживается ТВ) ›");
+        add("On TCL and Philips Android 11/12 TVs, the OEM firmware often hides the Android Default Home UI and forces the stock launcher when pressing Home. Disabling the stock launcher (Option 2) or enabling the Home Button Fix (Option 3) guarantees pressing Home always opens testOS.", "На телевизорах TCL и Philips с Android 11/12 прошивка производителя часто скрывает системный выбор главного экрана и запускает штатный лаунчер при нажатии «Домой». Отключение штатного лаунчера (вариант 2) или включение исправления кнопки (вариант 3) гарантирует запуск testOS.");
+        add("PERMISSION STATUS", "СОСТОЯНИЕ РАЗРЕШЕНИЙ");
+        add("Grant All Permissions via Local ADB", "Выдать все разрешения через локальный ADB");
+        add("Grant All ›", "Выдать все ›");
+        add("Default Home Screen", "Главный экран по умолчанию");
+        add("Not set", "Не задано");
+        add("Button Mapper & Control Panel (Accessibility)", "Button Mapper и панель управления (специальные возможности)");
+        add("Disabled", "Отключено");
+        add("Wi-Fi Name (Location)", "Имя сети Wi-Fi (местоположение)");
+        add("Not allowed", "Не разрешено");
+        add("ACTIONS", "ДЕЙСТВИЯ");
+        add("🔍 Scan Installed System Apps via ADB", "🔍 Сканировать установленные системные приложения через ADB");
+        add("Pull full app list from ADB and match models by OEM/system packages", "Получить полный список приложений через ADB и определить модель по пакетам производителя и системы");
+        add("📋 Browse / Search All 341 TV Models", "📋 Просмотреть / найти среди 341 модели телевизоров");
+        add("View or filter the complete list of supported TV models", "Просмотреть или отфильтровать полный список поддерживаемых моделей телевизоров");
+        add("MATCHING MODELS FOR ", "ПОДХОДЯЩИЕ МОДЕЛИ ДЛЯ ");
+        add("Models by System App Similarity", "Модели по совпадению системных приложений");
+        add("Scanning installed system packages over ADB and comparing across 341 TV models…", "Сканируем установленные системные пакеты через ADB и сравниваем с 341 моделью телевизоров…");
+        add("All 341 TV Models", "Все 341 модели телевизоров");
+        add("🔍 Search / Filter by brand or model…", "🔍 Поиск / фильтр по бренду или модели…");
+        add("All (341)", "Все (341)");
+        add("Clear filter (Show all)", "Сбросить фильтр (показать все)");
+        add("QUICK BRAND FILTERS", "БЫСТРЫЕ ФИЛЬТРЫ ПО БРЕНДУ");
+        add("Filter ›", "Фильтр ›");
+        add("Previous Page", "Предыдущая страница");
+        add("Next Page", "Следующая страница");
+        add("PAGE NAVIGATION", "НАВИГАЦИЯ ПО СТРАНИЦАМ");
+        add("e.g. tcl, philips, sony, hisense, xiaomi…", "например: TCL, Philips, Sony, Hisense, Xiaomi…");
+        add("Filter TV Models", "Фильтр моделей телевизоров");
+        add("Filter", "Фильтр");
+        add("Debloat TV — ", "Очистка ТВ — ");
+        add("🔍 Scan Installed System Apps to Find Matching Model", "🔍 Сканировать системные приложения для определения модели");
+        add("GOOGLE TV WI-FI NOTICE", "ПРЕДУПРЕЖДЕНИЕ О WI-FI В GOOGLE TV");
+        add("⚠️ Your Wi-Fi network is currently owned by setupwraith. Before disabling setupwraith, open Wi-Fi Settings, Forget your Wi-Fi network, and re-connect so Wi-Fi stays saved.", "⚠️ Сейчас сетью Wi-Fi управляет setupwraith. Перед отключением setupwraith откройте настройки Wi-Fi, забудьте сеть и подключитесь к ней заново, чтобы сохранить подключение.");
+        add("On Google TV, if you disable setupwraith, make sure your Wi-Fi network was re-added in Wi-Fi Settings.", "На Google TV перед отключением setupwraith убедитесь, что вы заново добавили свою сеть в настройках Wi-Fi.");
+        add("📶 Open Wi-Fi Settings…", "📶 Открыть настройки Wi-Fi…");
+        add("Run via ADB ›", "Запустить через ADB ›");
+        add("Select at least one package first.", "Сначала выберите хотя бы один пакет.");
+        add("Select All / Select None", "Выбрать все / снять выделение");
+        add("Disable system launchers", "Отключить системные лаунчеры");
+        add("No stock Android TV / Google TV / OEM launcher packages were detected on this TV.", "На этом телевизоре не обнаружены пакеты штатных лаунчеров Android TV / Google TV / производителя.");
+        add("ONE-TAP ACTIONS", "ДЕЙСТВИЯ В ОДНО КАСАНИЕ");
+        add("Disable All Stock Launchers & Set testOS as Home", "Отключить все штатные лаунчеры и назначить testOS главным");
+        add("Disable all ›", "Отключить все ›");
+        add("System Launchers", "Системные лаунчеры");
+        add("Re-enable All Stock Launchers", "Повторно включить все штатные лаунчеры");
+        add("Enable all ›", "Включить все ›");
+        add(" [Enabled — Tap to Disable]", " [Включено — нажмите, чтобы отключить]");
+        add(" [Disabled — Tap to Enable]", " [Отключено — нажмите, чтобы включить]");
+        add("Checked items are currently DISABLED. Disabling the stock system launcher (e.g. Google TV Home / LauncherX + setupwraith, Android TV Home, or TCL/Philips OEM Home) forces Android to use testOS when pressing the Home key.", "Отмеченные пункты сейчас ОТКЛЮЧЕНЫ. Отключение штатного системного лаунчера (например, Google TV Home / LauncherX + setupwraith, Android TV Home или лаунчера TCL/Philips) заставляет Android запускать testOS при нажатии кнопки «Домой».");
+        add("Manual debloat (All system apps)", "Ручное отключение (все системные приложения)");
+        add("🔍 Filter system apps…", "🔍 Фильтр системных приложений…");
+        add("Clear filter", "Сбросить фильтр");
+        add("↻ Refresh system app list", "↻ Обновить список системных приложений");
+        add(" [Critical System Service — Protected]", " [Критическая системная служба — защищена]");
+        add("🛑 Critical System Service", "🛑 Критическая системная служба");
+        add("OK", "ОК");
+        add("🛑 Protected System Package", "🛑 Защищённый системный пакет");
+        add("Disable System App?", "Отключить системное приложение?");
+        add("Disable", "Отключить");
+        add("App name or package name…", "Название приложения или имя пакета…");
+        add("Filter System Apps", "Фильтр системных приложений");
+        add("No disabled packages have been recorded by CleanYourTV yet.", "CleanYourTV пока не сохранил список отключённых пакетов.");
+        add("Restore all ›", "Восстановить все ›");
+        add("SAVED DISABLED PACKAGES (TAP TO RE-ENABLE)", "СОХРАНЁННЫЕ ОТКЛЮЧЁННЫЕ ПАКЕТЫ (НАЖМИТЕ ДЛЯ ВКЛЮЧЕНИЯ)");
+        add("Restore debloated apps", "Восстановить отключённые приложения");
+        add("RESTORE OPTIONS", "ПАРАМЕТРЫ ВОССТАНОВЛЕНИЯ");
+        add("Re-enable all packages disabled by CleanYourTV over ADB", "Повторно включить через ADB все пакеты, отключённые CleanYourTV");
+        add("No saved disabled-app backup was found, and no TV model is selected yet. Choose a TV model first if you want to restore by model profile.", "Резервная копия отключённых приложений не найдена, модель телевизора ещё не выбрана. Сначала выберите модель, если хотите восстановить приложения по профилю.");
+        add("Choose TV model…", "Выбрать модель телевизора…");
+        add("Choose custom scene image", "Выбрать собственное изображение сцены");
+        add("Custom scene wallpaper updated.", "Обои сцены обновлены.");
+        add("Could not load selected image.", "Не удалось загрузить выбранное изображение.");
+        add("Choose custom background image", "Выбрать собственное фоновое изображение");
+        add("Custom background updated.", "Фон обновлён.");
+        add("Choose wallpaper folder to shuffle", "Выбрать папку обоев для смены");
+        add("Folder shuffle", "Смена изображений из папки");
+        add("Turn on Folder shuffle", "Включить смену изображений из папки");
+        add("Choose folder…", "Выбрать папку…");
+        add("Turn off Folder shuffle", "Выключить смену изображений из папки");
+        add("Choose background folder to shuffle", "Выбрать папку фоновых изображений для смены");
+        add("Use folder shuffle background", "Использовать фон со сменой изображений из папки");
+        add("Lock screen settings", "Настройки экрана блокировки");
+        add("LOCK SCREEN OPTIONS", "ПАРАМЕТРЫ ЭКРАНА БЛОКИРОВКИ");
+        add("Auto-launch Lock Screen when idle", "Автоматически открывать экран блокировки при бездействии");
+        add("Each wallpaper stays", "Длительность показа одних обоев");
+        add("Preview Lock Screen now", "Предпросмотр экрана блокировки");
+        add("NIGHT SCENES", "НОЧНЫЕ СЦЕНЫ");
+        add("CLASSIC WALLPAPERS", "КЛАССИЧЕСКИЕ ОБОИ");
+        add("CUSTOM & FOLDER SHUFFLE", "СВОИ ИЗОБРАЖЕНИЯ И СМЕНА ИЗ ПАПКИ");
+        add("On the Lock Screen, only Clock, Date, and Greeting are shown above your selected backgrounds. Pressing any remote button returns to where you were before.", "На экране блокировки поверх выбранного фона отображаются только часы, дата и приветствие. Нажатие любой кнопки пульта возвращает на предыдущий экран.");
+        add("One wallpaper has to stay on.", "Необходимо оставить хотя бы одни обои.");
+        add("Choose Lock Screen image", "Выбрать изображение экрана блокировки");
+        add("Custom Lock Screen image updated.", "Изображение экрана блокировки обновлено.");
+        add("Custom image", "Своё изображение");
+        add("Turn off Custom image", "Выключить своё изображение");
+        add("Turn on Custom image", "Включить своё изображение");
+        add("Choose Lock Screen folder to shuffle", "Выбрать папку изображений для экрана блокировки");
+        add("City name, e.g. Istanbul", "Название города, например Челябинск");
+        add("Choose City", "Выбрать город");
+        add("Searching…", "Поиск…");
+        add("Couldn't search. Check the internet connection.", "Не удалось выполнить поиск. Проверьте подключение к интернету.");
+        add("Matching places", "Подходящие места");
+        add("Changes the language used on the home screen, date, weather and settings.", "Изменяет язык главного экрана, даты, погоды и настроек.");
+        add("CONTROL PANEL ACTIONS", "ДЕЙСТВИЯ ПАНЕЛИ УПРАВЛЕНИЯ");
+        add("Reset control panel actions", "Сбросить действия панели управления");
+        add("Reset control panel?", "Сбросить настройки панели управления?");
+        add("All custom app and activity assignments will be cleared. The built-in actions will be restored.", "Все пользовательские назначения приложений и действий будут удалены. Будут восстановлены стандартные действия.");
+        add("Control panel actions restored to defaults.", "Стандартные действия панели управления восстановлены.");
+        add("Choose which app or activity opens from each Control Panel tile. Leave an action on Default to use the TV's built-in settings.", "Выберите приложение или действие, которое будет запускаться из каждой плитки панели управления. Оставьте значение «По умолчанию», чтобы использовать встроенные настройки телевизора.");
+        add("HOME SCREEN", "ГЛАВНЫЙ ЭКРАН");
+        add("PEOPLE & PROFILES", "ПОЛЬЗОВАТЕЛИ И ПРОФИЛИ");
+        add("DIAGNOSTICS & RECOVERY", "ДИАГНОСТИКА И ВОССТАНОВЛЕНИЕ");
+        add("Remote control", "Пульт управления");
+        add("TMDB connected", "TMDB подключён");
+        add("Information", "Информация");
+        add("Main screen", "Главный экран");
+        add("Appearance and clock", "Внешний вид и часы");
+        add("Control panel", "Панель управления");
+        add("Advanced settings", "Расширенные настройки");
+        add("Information", "Информация");
         initTranslations();
         initRussianExtras();
     }
@@ -1175,11 +1765,439 @@ public final class I18n {
     public static String s(Context c, String en, String ignored) { return translateOther(LANG_RU, en); }
     public static String t(Context c, String enKey) { return translateOther(LANG_RU, enKey); }
 
-    private static String translateOther(String lang, String en) {
+    static String translateOther(String lang, String en) {
         if (en == null) return "";
         Map<String, String> map = LANG_MAPS.get(LANG_RU);
         String direct = map != null ? map.get(en) : null;
         if (direct != null) return direct;
+        // Dynamic labels shared by launcher screens and dialogs.
+        if (en.startsWith("You are up to date (v") && en.endsWith(")")) {
+            return "У вас установлена последняя версия (v"
+                    + en.substring("You are up to date (v".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("Changelog — v")) return "Список изменений — v" + en.substring("Changelog — v".length());
+        if (en.startsWith("Downloading update v") && en.endsWith("…")) {
+            return "Загружается обновление v" + en.substring("Downloading update v".length());
+        }
+        if (en.startsWith("RAM ") && en.contains(" used of ")) {
+            int split = en.indexOf(" used of ");
+            return "ОЗУ: " + en.substring("RAM ".length(), split) + " из "
+                    + en.substring(split + " used of ".length());
+        }
+        if (en.startsWith("Closed ") && en.contains(" app")) {
+            int appEnd = en.indexOf(" app");
+            String count = en.substring("Closed ".length(), appEnd);
+            String result = "Закрыто приложений: " + count;
+            int freedAt = en.indexOf(" · freed ", appEnd);
+            if (freedAt >= 0 && en.endsWith(" MB")) {
+                result += " · освобождено " + en.substring(freedAt + " · freed ".length(),
+                        en.length() - " MB".length()) + " МБ";
+            }
+            return result;
+        }
+        if (en.startsWith("Move ") && en.endsWith("  ·  Left/Right, OK when done")) {
+            return "Переместить " + en.substring("Move ".length(),
+                    en.length() - "  ·  Left/Right, OK when done".length())
+                    + " · влево/вправо, OK — готово";
+        }
+        if (en.startsWith("Off in ") && en.endsWith(" min")) {
+            return "Выключение через " + en.substring("Off in ".length(), en.length() - " min".length()) + " мин";
+        }
+        if (en.endsWith(" is not installed on this TV.")) {
+            return "Приложение " + en.substring(0, en.length() - " is not installed on this TV.".length())
+                    + " не установлено на этом телевизоре";
+        }
+        if (en.endsWith(" is not installed on this TV")) {
+            return "Приложение " + en.substring(0, en.length() - " is not installed on this TV".length())
+                    + " не установлено на этом телевизоре";
+        }
+        if (en.startsWith("Open in ")) return "Открыть в " + en.substring("Open in ".length());
+        if (en.startsWith("▶  Open in ")) return "▶  Открыть в " + en.substring("▶  Open in ".length());
+        if (en.startsWith("Get ")) return "Скачать " + en.substring("Get ".length());
+        if (en.startsWith("Sign in to ")) return "Войти в " + en.substring("Sign in to ".length());
+        if (en.startsWith("Couldn't reach ") && en.endsWith(". Focus the tile again to retry.")) {
+            return "Не удалось связаться с " + en.substring("Couldn't reach ".length(),
+                    en.length() - ". Focus the tile again to retry.".length())
+                    + ". Чтобы повторить попытку, снова выделите плитку.";
+        }
+        if (en.startsWith("Couldn't reach ")) return "Не удалось связаться с " + en.substring("Couldn't reach ".length());
+        if (en.startsWith("Can't open ")) return "Не удалось открыть " + en.substring("Can't open ".length());
+        if (en.endsWith(" moved to Other Apps")) {
+            return "Перемещено в «Другие приложения»: "
+                    + en.substring(0, en.length() - " moved to Other Apps".length());
+        }
+        if (en.endsWith(" is back on Home")) {
+            return "Возвращено на главный экран: " + en.substring(0, en.length() - " is back on Home".length());
+        }
+        if (en.endsWith(" hidden (Settings > Apps > Hidden apps)")) {
+            return "Скрыто: " + en.substring(0, en.length() - " hidden (Settings > Apps > Hidden apps)".length())
+                    + " (Настройки > Приложения > Скрытые приложения)";
+        }
+        if (en.startsWith("Can't switch to ")) {
+            return "Не удалось переключиться на " + en.substring("Can't switch to ".length());
+        }
+        if (en.startsWith("No image files (") && en.endsWith(") in this folder")) {
+            return "В этой папке нет файлов изображений ("
+                    + en.substring("No image files (".length(), en.length() - ") in this folder".length()) + ")";
+        }
+        if (en.startsWith("Select this folder & shuffle (") && en.endsWith(" images)")) {
+            return "Выбрать эту папку и менять изображения (" + en.substring("Select this folder & shuffle (".length(),
+                    en.length() - " images)".length()) + " изображений)";
+        }
+        if (en.startsWith("Your current tvOS Launcher settings have been saved to:\n\n")) {
+            return "Текущие настройки tvOS Launcher сохранены по адресу:\n\n"
+                    + en.substring("Your current tvOS Launcher settings have been saved to:\n\n".length());
+        }
+        if (en.startsWith("Could not write to Download/") && en.endsWith("Please allow storage access and try again.")) {
+            String detail = en.substring("Could not write to ".length(),
+                    en.length() - "\n\nPlease allow storage access and try again.".length());
+            return "Не удалось записать файл:\n" + detail + "\n\nРазрешите доступ к хранилищу и повторите попытку.";
+        }
+        if (en.startsWith("Restore from Download/")) return "Восстановить из Download/" + en.substring("Restore from Download/".length());
+        if (en.startsWith("Restore from this folder (") && en.endsWith(")")) {
+            return "Восстановить из этой папки (" + en.substring("Restore from this folder (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("Settings were successfully restored from:\n")) {
+            return "Настройки успешно восстановлены из файла:\n"
+                    + en.substring("Settings were successfully restored from:\n".length());
+        }
+        if (en.startsWith("Could not restore settings from:\n")) {
+            return "Не удалось восстановить настройки из файла:\n"
+                    + en.substring("Could not restore settings from:\n".length());
+        }
+        // Dynamic CleanYourTV model-matching, debloat and restore messages.
+        if (en.startsWith("Model: ")) return "Модель: " + en.substring("Model: ".length());
+        if (en.startsWith("Product: ")) return "Продукт: " + en.substring("Product: ".length());
+        if (en.startsWith("Board/Device: ")) return "Плата / устройство: " + en.substring("Board/Device: ".length());
+        if (en.startsWith("Brand/OEM: ")) return "Бренд / производитель: " + en.substring("Brand/OEM: ".length());
+        if (en.contains(" OEM pkgs: ")) {
+            int split = en.indexOf(" OEM pkgs: ");
+            return en.substring(0, split) + " пакетов производителя: " + en.substring(split + " OEM pkgs: ".length());
+        }
+        if (en.startsWith("OEM family: ")) return "Семейство производителя: " + en.substring("OEM family: ".length());
+        if (en.contains(" apps (") && en.endsWith(")")) {
+            int split = en.indexOf(" apps (");
+            return en.substring(0, split) + " приложений (" + en.substring(split + " apps (".length());
+        }
+        if (en.startsWith("Exact TV model found and selected automatically:\n\n• ")) {
+            return "Точная модель телевизора найдена и выбрана автоматически:\n\n• "
+                    + en.substring("Exact TV model found and selected automatically:\n\n• ".length());
+        }
+        if (en.startsWith("Choose Closest TV Model — ")) {
+            return "Выберите наиболее подходящую модель ТВ — " + en.substring("Choose Closest TV Model — ".length());
+        }
+        if (en.startsWith("Models with Similar System Apps (") && en.endsWith(" apps scanned)")) {
+            return "Модели с похожими системными приложениями ("
+                    + en.substring("Models with Similar System Apps (".length(), en.length() - " apps scanned)".length())
+                    + " приложений просканировано)";
+        }
+        if (en.startsWith("All TV Models (") && en.endsWith(")")) {
+            return "Все модели телевизоров (" + en.substring("All TV Models (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("Search: \"") && en.endsWith(")")) {
+            int split = en.lastIndexOf("\" (");
+            if (split > 7) return "Поиск: " + en.substring("Search: ".length(), split + 1)
+                    + " (" + en.substring(split + 3);
+        }
+        if (en.startsWith("All disabled (") && en.endsWith(")")) {
+            return "Все отключены (" + en.substring("All disabled (".length(), en.length() - 1) + ")";
+        }
+        if (en.contains(" active / ") && en.endsWith(" found ›")) {
+            int split = en.indexOf(" active / ");
+            return en.substring(0, split) + " активно / "
+                    + en.substring(split + " active / ".length(), en.length() - " found ›".length()) + " найдено ›";
+        }
+        if (en.startsWith(" is a protected core system package and cannot be disabled automatically.")) {
+            return en.substring(0, en.length() - " is a protected core system package and cannot be disabled automatically.".length())
+                    + " — защищённый системный пакет, его нельзя отключить автоматически.";
+        }
+        String protectedCoreSuffix = " is a protected core system package and cannot be disabled automatically.";
+        if (en.endsWith(protectedCoreSuffix)) {
+            return en.substring(0, en.length() - protectedCoreSuffix.length())
+                    + " — защищённый системный пакет, его нельзя отключить автоматически.";
+        }
+        if (en.startsWith("The command was sent, but Android did not confirm that ") && en.endsWith("\nThe restore list was not changed.")) {
+            String body = en.substring("The command was sent, but Android did not confirm that ".length(),
+                    en.length() - "\nThe restore list was not changed.".length());
+            body = body.replace(" is disabled.", " отключён.")
+                    .replace(" is enabled.", " включён.");
+            return "Команда отправлена, но Android не подтвердил, что пакет " + body
+                    + "\nСписок восстановления не изменён.";
+        }
+        if (en.startsWith("Checking installed packages and Wi-Fi status over ADB for ") && en.endsWith("…")) {
+            return "Проверяем установленные пакеты и состояние Wi-Fi через ADB для "
+                    + en.substring("Checking installed packages and Wi-Fi status over ADB for ".length());
+        }
+        if (en.startsWith("On Google TV sets, Wi-Fi networks saved during initial setup belong to com.google.android.tungsten.setupwraith.")) {
+            return "На телевизорах Google TV сети Wi-Fi, сохранённые при первоначальной настройке, принадлежат пакету com.google.android.tungsten.setupwraith. "
+                    + "Отключение setupwraith, необходимое для блокировки штатного лаунчера Google TV, удалит сохранённую этим пакетом сеть Wi-Fi.\n\n"
+                    + "Перед отключением setupwraith:\n"
+                    + "1. Откройте настройки Wi-Fi, выберите свою сеть и нажмите «Забыть сеть».\n"
+                    + "2. Подключитесь к сети заново (теперь она будет сохранена пакетом com.android.tv.settings).\n"
+                    + "3. Вернитесь сюда и нажмите «Я забыл сеть и подключился снова — продолжить».";
+        }
+        if (en.startsWith("⚠️ Detected: Your current Wi-Fi network IS owned by setupwraith")
+                || en.startsWith("ℹ️ Google TV Notice (setupwraith Wi-Fi check):")) {
+            String status = en.startsWith("⚠️")
+                    ? "⚠️ Обнаружено: текущая сеть Wi-Fi принадлежит setupwraith (cname=com.google.android.tungsten.setupwraith).\n\n"
+                    : "ℹ️ Предупреждение Google TV (проверка Wi-Fi setupwraith):\n\n";
+            return status
+                    + "На телевизорах Google TV сети Wi-Fi, сохранённые при первоначальной настройке, принадлежат пакету com.google.android.tungsten.setupwraith. "
+                    + "Отключение setupwraith, необходимое для блокировки штатного лаунчера Google TV, удалит сохранённую этим пакетом сеть Wi-Fi.\n\n"
+                    + "Перед отключением setupwraith:\n"
+                    + "1. Откройте настройки Wi-Fi, выберите свою сеть и нажмите «Забыть сеть».\n"
+                    + "2. Подключитесь к сети заново (теперь она будет сохранена пакетом com.android.tv.settings).\n"
+                    + "3. Вернитесь сюда и нажмите «Я забыл сеть и подключился снова — продолжить».";
+        }
+        if (en.startsWith("None of the packages listed in ") && en.contains(" are installed on this TV.\n\n")
+                && en.endsWith("closest matching TV model?")) {
+            int split = en.indexOf(" are installed on this TV.\n\n");
+            String model = en.substring("None of the packages listed in ".length(), split);
+            return "На этом телевизоре не установлено ни одного пакета из списка " + model + ".\n\n"
+                    + "Просканировать установленные приложения через ADB, чтобы найти наиболее подходящую модель ТВ?";
+        }
+        if (en.startsWith("Select Apps to Disable — ") && en.endsWith(" found)")) {
+            return "Выберите приложения для отключения — "
+                    + en.substring("Select Apps to Disable — ".length(), en.length() - " found)".length()) + " найдено)";
+        }
+        if (en.startsWith("Starting ADB debloat for ") && en.endsWith(" packages…")) {
+            return "Запускаем отключение через ADB для "
+                    + en.substring("Starting ADB debloat for ".length(), en.length() - " packages…".length())
+                    + " пакетов…";
+        }
+        if (en.startsWith("Disabling (") && en.contains("):\n")) {
+            return "Отключение (" + en.substring("Disabling (".length());
+        }
+        if (en.startsWith("Verified disabled: ")) {
+            String[] parts = en.split("\n");
+            if (parts.length >= 3) {
+                String first = parts[0].substring("Verified disabled: ".length()).replace(" of ", " из ")
+                        .replace(" packages for ", " пакетов для ");
+                String second = parts[1].replace("Failed or unverified: ", "Не удалось подтвердить: ");
+                String third = parts[2].replace("Saved restore list: ", "Пакетов в списке восстановления: ")
+                        .replace(" packages.", ".");
+                return "Отключение подтверждено: " + first + "\n" + second + "\n" + third;
+            }
+        }
+        if (en.startsWith("No disabled app list has been saved by CleanYourTV yet.")) {
+            return "CleanYourTV пока не сохранил список отключённых приложений.\n\n"
+                    + "После запуска очистки каждый отключённый пакет будет записан здесь. Вы сможете проверить список, включить отдельные приложения или восстановить их все.";
+        }
+        if (en.startsWith("Disabled Apps (") && en.endsWith(" — Tap an app to re-enable)")) {
+            return "Отключённые приложения (" + en.substring("Disabled Apps (".length(),
+                    en.length() - " — Tap an app to re-enable)".length()) + " — нажмите на приложение, чтобы включить его)";
+        }
+        if (en.startsWith("Found saved disabled-app data (") && en.endsWith(" saved packages over ADB?")) {
+            String count = en.substring("Found saved disabled-app data (".length(),
+                    en.indexOf(" packages)."));
+            return "Найдены сохранённые данные об отключённых приложениях (пакетов: " + count + ").\n\n"
+                    + "Повторно включить все сохранённые пакеты (" + count + ") через ADB?";
+        }
+        if (en.startsWith("Restore Saved (") && en.endsWith(")")) {
+            return "Восстановить сохранённые (" + en.substring("Restore Saved (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("Restore Model List (") && en.endsWith(")")) {
+            return "Восстановить список модели (пакетов: " + en.substring("Restore Model List (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("No saved disabled-app backup was found, and no TV model is selected.")) {
+            return "Резервная копия отключённых приложений не найдена, модель телевизора не выбрана.\n\n"
+                    + "Сначала выберите модель телевизора, чтобы определить, какие пакеты нужно включить.";
+        }
+        if (en.startsWith("No saved disabled-app list was found.\n\n")) {
+            String prefix = "Restore will use your selected TV model (";
+            int start = en.indexOf(prefix);
+            int end = en.indexOf(") and re-enable its ", start + prefix.length());
+            int countEnd = en.indexOf(" packages over ADB.", end);
+            if (start >= 0 && end > start && countEnd > end) {
+                return "Сохранённый список отключённых приложений не найден.\n\n"
+                        + "Для восстановления будет использована выбранная модель телевизора ("
+                        + en.substring(start + prefix.length(), end) + "). Будут повторно включены пакеты: "
+                        + en.substring(end + ") and re-enable its ".length(), countEnd) + " через ADB.";
+            }
+        }
+        if (en.startsWith("Restore (") && en.endsWith(" pkgs)")) {
+            return "Восстановить пакеты (" + en.substring("Restore (".length(), en.length() - " pkgs)".length()) + ")";
+        }
+        if (en.startsWith("Re-enabling ") && en.endsWith(" packages over ADB…")) {
+            return "Повторно включаем через ADB "
+                    + en.substring("Re-enabling ".length(), en.length() - " packages over ADB…".length()) + " пакетов…";
+        }
+        if (en.startsWith("Enabling (") && en.contains("):\n")) {
+            return "Включение (" + en.substring("Enabling (".length());
+        }
+        if (en.startsWith("Verified enabled: ")) {
+            String result = en.replace("Verified enabled: ", "Включение подтверждено: ")
+                    .replace(". Failed or unverified: ", ". Не удалось подтвердить: ")
+                    .replace(". Remaining in restore list: ", ". Осталось в списке восстановления: ");
+            return result;
+        }
+        if (en.startsWith("1. Open TV Settings → System → About and click Build 7 times to unlock Developer Options.")) {
+            String ending = en.contains("(ADB port 5555 will be closed automatically right after setup)")
+                    ? "(порт ADB 5555 будет автоматически закрыт сразу после настройки)."
+                    : "(ADB останется включённым для CleanYourTV).";
+            return "1. Откройте «Настройки ТВ → Система → Об устройстве» и нажмите на номер сборки 7 раз, чтобы открыть параметры разработчика.\n"
+                    + "2. Откройте «Настройки → Система → Параметры разработчика» и включите отладку по USB / сети.\n"
+                    + "3. Вернитесь сюда и выберите «Выдать разрешения сейчас» " + ending;
+        }
+        if (en.startsWith("WRITE_SECURE_SETTINGS and all launcher permissions are now active, and ADB (port 5555) has been closed for your security.")) {
+            return "WRITE_SECURE_SETTINGS и все разрешения лаунчера активны. Для вашей безопасности ADB (порт 5555) закрыт.\n\n"
+                    + "Совет: для дополнительной защиты можно также выбрать «Отозвать разрешения на отладку по USB» в параметрах разработчика.";
+        }
+        // Dynamic SettingsActivity messages. The legacy second argument to tr()
+        // is Turkish, so dynamic English expressions must be translated here.
+        if (en.endsWith(" restored to Home Screen.")) {
+            return en.substring(0, en.length() - " restored to Home Screen.".length())
+                    + " восстановлено на главном экране.";
+        }
+        if (en.startsWith("To sign in, focus the ") && en.endsWith(" tile on the Home screen and scan the QR code.")) {
+            String app = en.substring("To sign in, focus the ".length(),
+                    en.length() - " tile on the Home screen and scan the QR code.".length());
+            return "Чтобы войти, выделите плитку " + app + " на главном экране и отсканируйте QR-код.";
+        }
+        if (en.startsWith("Sign out of ") && en.endsWith("?")) {
+            String app = en.substring("Sign out of ".length(), en.length() - 1);
+            return "Выйти из аккаунта " + app + "?";
+        }
+        if (en.startsWith("Continue watching on the dock will stop showing your ")) {
+            String prefix = "Continue watching on the dock will stop showing your ";
+            String middle = " titles. The ";
+            String suffix = " app itself stays signed in.";
+            int split = en.indexOf(middle, prefix.length());
+            if (split > prefix.length() && en.endsWith(suffix)) {
+                String app = en.substring(prefix.length(), split);
+                String appAgain = en.substring(split + middle.length(), en.length() - suffix.length());
+                if (app.equals(appAgain)) {
+                    return "Раздел «Продолжить просмотр» на панели больше не будет показывать материалы " + app
+                            + ". В самом приложении " + app + " вход останется выполнен.";
+                }
+            }
+        }
+        if (en.startsWith("Signed out of ") && en.endsWith(".")) {
+            return "Выполнен выход из аккаунта " + en.substring("Signed out of ".length(), en.length() - 1) + ".";
+        }
+        String criticalSuffix = " is a critical system service required for your TV remote and Bluetooth connectivity.\n\nIt cannot be disabled under any circumstances.";
+        if (en.endsWith(criticalSuffix)) {
+            return en.substring(0, en.length() - criticalSuffix.length())
+                    + " — критическая системная служба, необходимая для работы пульта и Bluetooth.\n\nОтключать её нельзя ни при каких обстоятельствах.";
+        }
+        String protectedSuffix = " is protected by testOS because it may be required for Android, TV input, Device Owner, or launcher recovery. It cannot be disabled from Manual Debloat.";
+        if (en.endsWith(protectedSuffix)) {
+            return en.substring(0, en.length() - protectedSuffix.length())
+                    + " защищён testOS, поскольку может быть необходим для Android, ТВ-входов, Device Owner или восстановления лаунчера. Отключение в ручном режиме запрещено.";
+        }
+        String manualDisablePrefix = "You are about to disable ";
+        String manualDisableSuffix = ".\n\nThis is a manual operation. It may affect TV features. Continue only if you know what this package does.";
+        if (en.startsWith(manualDisablePrefix) && en.endsWith(manualDisableSuffix)) {
+            return "Вы собираетесь отключить " + en.substring(manualDisablePrefix.length(),
+                    en.length() - manualDisableSuffix.length())
+                    + ".\n\nЭто действие выполняется вручную и может повлиять на функции телевизора. Продолжайте, только если знаете назначение этого пакета.";
+        }
+        if (en.startsWith("This runs 'settings put global adb_enabled 0'")) {
+            return "Команда 'settings put global adb_enabled 0' будет выполнена через локальный ADB, после чего проверим, закрыт ли порт 5555.\n\n"
+                    + "Если WRITE_SECURE_SETTINGS уже выдано, testOS продолжит восстанавливать специальные возможности непосредственно в приложении — ADB для этого не потребуется.\n\n"
+                    + "Для дополнительной безопасности можно также открыть параметры разработчика и выбрать «Отозвать разрешения на отладку по USB».";
+        }
+        if (en.startsWith("Keep Alive monitors the Accessibility Service and automatically restores it")) {
+            return "Keep Alive следит за службой специальных возможностей и автоматически восстанавливает её, если телевизор отключает её.\n\n"
+                    + "✓ Поскольку этому телевизору выдано WRITE_SECURE_SETTINGS, Keep Alive восстанавливает службу непосредственно в приложении. Сетевой ADB (порт 5555) оставлять включённым не нужно.";
+        }
+        if (en.startsWith("⚠️ Security Warning:")) {
+            return "⚠️ Предупреждение безопасности:\n\n"
+                    + "Keep Alive отслеживает разрешения и восстанавливает их, если телевизор отключает их в фоновом режиме.\n\n"
+                    + "Без WRITE_SECURE_SETTINGS для работы Keep Alive должна оставаться включённой сетевая отладка (ADB на порту 5555) в домашней сети. Для большей безопасности сначала выполните «Подключить / восстановить ADB» в безопасном режиме, чтобы выдать WRITE_SECURE_SETTINGS и закрыть порт 5555.\n\n"
+                    + "Всё равно включить Keep Alive?";
+        }
+        if (en.startsWith("WARNING: Manual Debloat lists ALL system apps installed on your TV.")) {
+            return "ПРЕДУПРЕЖДЕНИЕ: в ручном режиме отображаются ВСЕ системные приложения телевизора.\n\n"
+                    + "• Отключайте пакеты, только если точно знаете их назначение.\n"
+                    + "• Отключение основных служб Android, служб ТВ-входов / тюнера или настроек может нарушить работу HDMI, Wi-Fi, пульта или привести к циклической перезагрузке.\n\n"
+                    + "Продолжить на свой риск?";
+        }
+        if (en.startsWith("Dock size set to ") && en.endsWith("%.")) {
+            return "Размер панели установлен: " + en.substring("Dock size set to ".length());
+        }
+        if (en.startsWith("Removed remap for ") && en.endsWith(".")) {
+            return "Удалено переназначение кнопки " + en.substring("Removed remap for ".length(), en.length() - 1) + ".";
+        }
+        if (en.startsWith("No direct model name match for ") && en.endsWith(" Use Scan Installed System Apps via ADB above to find the closest TV profile.")) {
+            String prefix = "No direct model name match for ";
+            String suffix = " Use Scan Installed System Apps via ADB above to find the closest TV profile.";
+            return "Точное совпадение по названию модели не найдено: "
+                    + en.substring(prefix.length(), en.length() - suffix.length())
+                    + ". Используйте расположенную выше команду «Сканировать системные приложения через ADB», чтобы подобрать ближайший профиль телевизора.";
+        }
+        if (en.startsWith("Selected model: ")) return "Выбрана модель: " + en.substring("Selected model: ".length());
+        if (en.startsWith("CLOSEST MATCHES (") && en.endsWith(" APPS SCANNED)")) {
+            return "БЛИЖАЙШИЕ СОВПАДЕНИЯ (проверено приложений: " + en.substring("CLOSEST MATCHES (".length(), en.length() - " APPS SCANNED)".length()) + ")";
+        }
+        if (en.startsWith("PAGE ") && en.contains(" OF ")) {
+            return en.replace("PAGE ", "СТРАНИЦА ").replace(" OF ", " ИЗ ");
+        }
+        if (en.startsWith("MODELS (") && en.endsWith(")")) {
+            return "МОДЕЛИ (" + en.substring("MODELS (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("Page ") && en.contains(" of ")) {
+            return en.replace("Page ", "Страница ").replace(" of ", " из ");
+        }
+        if (en.startsWith("Checking installed packages over ADB for ") && en.endsWith("…")) {
+            return "Проверяем установленные пакеты через ADB для "
+                    + en.substring("Checking installed packages over ADB for ".length());
+        }
+        if (en.startsWith("None of the packages listed in ") && en.endsWith(" are installed on this TV.")) {
+            return "На этом телевизоре не установлено ни одного пакета из списка модели "
+                    + en.substring("None of the packages listed in ".length(),
+                    en.length() - " are installed on this TV.".length()) + ".";
+        }
+        if (en.startsWith("Disable Selected Packages (") && en.endsWith(")")) {
+            return "Отключить выбранные пакеты (" + en.substring("Disable Selected Packages (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("✅ Disable Selected Packages (") && en.endsWith(")")) {
+            return "✅ Отключить выбранные пакеты (" + en.substring("✅ Disable Selected Packages (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("PACKAGES ON THIS TV (") && en.endsWith(")")) {
+            return "ПАКЕТЫ НА ЭТОМ ТЕЛЕВИЗОРЕ (" + en.substring("PACKAGES ON THIS TV (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("INSTALLED SYSTEM LAUNCHERS ON THIS TV (") && en.endsWith(")")) {
+            return "УСТАНОВЛЕННЫЕ СИСТЕМНЫЕ ЛАУНЧЕРЫ (" + en.substring("INSTALLED SYSTEM LAUNCHERS ON THIS TV (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("All (") && en.endsWith(")")) {
+            return "Все (" + en.substring("All (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("ALL SYSTEM APPS (") && en.endsWith(" — TAP TO DISABLE / ENABLE)")) {
+            return "ВСЕ СИСТЕМНЫЕ ПРИЛОЖЕНИЯ (" + en.substring("ALL SYSTEM APPS (".length(),
+                    en.length() - " — TAP TO DISABLE / ENABLE)".length()) + " — НАЖМИТЕ, ЧТОБЫ ОТКЛЮЧИТЬ / ВКЛЮЧИТЬ)";
+        }
+        if (en.startsWith("Restore All Saved Packages (") && en.endsWith(")")) {
+            return "Восстановить все сохранённые пакеты (" + en.substring("Restore All Saved Packages (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("Restore Saved Disabled Apps (") && en.endsWith(" packages)")) {
+            return "Восстановить сохранённые отключённые приложения (пакетов: "
+                    + en.substring("Restore Saved Disabled Apps (".length(), en.length() - " packages)".length()) + ")";
+        }
+        if (en.startsWith("Restore Selected Model Profile (") && en.endsWith(" packages)")) {
+            String value = en.substring("Restore Selected Model Profile (".length(), en.length() - " packages)".length());
+            int split = value.lastIndexOf(" — ");
+            if (split > 0) value = value.substring(0, split) + " — пакетов: " + value.substring(split + 3);
+            return "Восстановить профиль выбранной модели (" + value + ")";
+        }
+        if (en.startsWith("Re-enable all packages in ")) {
+            return "Повторно включить все пакеты профиля " + en.substring("Re-enable all packages in ".length());
+        }
+        if (en.startsWith("Custom ")) return "Свой вариант " + en.substring("Custom ".length());
+        if (en.startsWith("Folder shuffle enabled: ")) {
+            return "Смена изображений из папки включена: " + en.substring("Folder shuffle enabled: ".length());
+        }
+        if (en.startsWith("Lock Screen folder shuffle enabled: ")) {
+            return "Смена изображений из папки для экрана блокировки включена: "
+                    + en.substring("Lock Screen folder shuffle enabled: ".length());
+        }
+        if (en.startsWith("No place found for “") && en.endsWith("”.")) {
+            return "Место «" + en.substring("No place found for “".length(), en.length() - "”.".length()) + "» не найдено.";
+        }
+        if (en.startsWith("Location set to ") && en.endsWith(".")) {
+            return "Местоположение задано: " + en.substring("Location set to ".length(), en.length() - 1) + ".";
+        }
+        if (en.startsWith("Switch to ")) return "Выбрать профиль «" + en.substring("Switch to ".length()) + "»";
         if (en.endsWith("% used · Recent Apps")) {
             String num = en.substring(0, en.length() - "% used · Recent Apps".length());
             return num + "% · " + map.getOrDefault("Recent Apps", "Недавние приложения");
@@ -1197,7 +2215,6 @@ public final class I18n {
             String rest = en.substring("Move ".length());
             if (!rest.equals("left in dock") && !rest.equals("right in dock")) return map.getOrDefault("Move", "Переместить") + " " + rest;
         }
-        if (en.startsWith("Switch to ")) return map.getOrDefault("Switch", "Переключить") + ": " + en.substring("Switch to ".length());
         if (en.startsWith("Done (") && en.endsWith(" apps disabled)")) {
             String num = en.substring("Done (".length(), en.length() - " apps disabled)".length());
             return map.getOrDefault("Done", "Готово") + " (" + num + " " + map.getOrDefault("apps", "приложений") + ")";

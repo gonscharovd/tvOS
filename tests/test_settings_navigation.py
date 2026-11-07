@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Regression guards for the grouped Settings navigation and preserved settings."""
 from pathlib import Path
+import re
 
 ROOT = Path("src/com/techgenius/tvoslauncher")
 settings = (ROOT / "SettingsActivity.java").read_text(encoding="utf-8")
@@ -63,4 +64,26 @@ routes = settings.split("private String resolvePageExtra", 1)[1].split("@Overrid
 for route in ('return CONTROL_PANEL;', 'return HOME;', 'return LOOK_SCENES;', 'return ADVANCED;'):
     assert route in routes
 
-print("Settings navigation grouping, legacy routes and feature placement passed.")
+
+# Every new user-facing label and explanatory sentence introduced by the grouped
+# navigation must have a direct Russian dictionary entry. I18n.s() intentionally
+# ignores the legacy second (Turkish) argument, so missing keys otherwise fall
+# back to English even though SettingsActivity.tr() appears to supply a fallback.
+i18n = (ROOT / "I18n.java").read_text(encoding="utf-8")
+
+def java_unescape(value):
+    value = re.sub(r'\\u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1), 16)), value)
+    return value.replace(r'\n', "\n").replace(r'\t', "\t").replace(r'\"', '"').replace(r'\\', "\\")
+
+dictionary = {
+    java_unescape(m.group(1))
+    for m in re.finditer(r'add\("((?:\\.|[^"\\])*)",', i18n)
+}
+literal_settings_strings = {
+    java_unescape(m.group(1))
+    for m in re.finditer(r'tr\(\s*"((?:\\.|[^"\\])*)"\s*,', settings)
+}
+missing_russian = sorted(literal_settings_strings - dictionary)
+assert not missing_russian, "Settings strings missing Russian translations: " + repr(missing_russian)
+
+print("Settings navigation grouping, legacy routes, feature placement and complete literal Russian coverage passed.")
