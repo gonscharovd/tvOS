@@ -45,7 +45,7 @@ public final class I18nDynamicTranslationTest {
                         + "Saved restore list: 3 packages.",
                 "Отключение подтверждено: 3 из 5 пакетов для Sber TV.\n"
                         + "Не удалось подтвердить: 2.\n"
-                        + "Сохранено в списке восстановления: 3 пакетов.");
+                        + "Пакетов в списке восстановления: 3.");
         expect("Verified enabled: 4. Failed or unverified: 1. Remaining in restore list: 1.",
                 "Включение подтверждено: 4. Не удалось подтвердить: 1. Осталось в списке восстановления: 1.");
         expect("1. Open TV Settings → System → About and click Build 7 times to unlock Developer Options.\n"
@@ -67,7 +67,7 @@ public final class I18nDynamicTranslationTest {
 
         expect("All TV Models (341)", "Все модели телевизоров (341)");
         expect("MODELS (341)", "МОДЕЛИ (341)");
-        expect("CLOSEST MATCHES (4 APPS SCANNED)", "БЛИЖАЙШИЕ СОВПАДЕНИЯ (4 ПРИЛОЖЕНИЙ ПРОВЕРЕНО)");
+        expect("CLOSEST MATCHES (4 APPS SCANNED)", "БЛИЖАЙШИЕ СОВПАДЕНИЯ (проверено приложений: 4)");
         expect("3 active / 5 found ›", "3 активно / 5 найдено ›");
         expect("Select Apps to Disable — Sber 50U4123B (4 found)",
                 "Выберите приложения для отключения — Sber 50U4123B (4 найдено)");
@@ -80,8 +80,8 @@ public final class I18nDynamicTranslationTest {
                 "На этом телевизоре не установлено ни одного пакета из списка Sber 50U4123B (sber-50u4123b).\n\n"
                         + "Просканировать установленные приложения через ADB, чтобы найти наиболее подходящую модель ТВ?");
         expect("Found saved disabled-app data (4 packages).\n\nRe-enable all 4 saved packages over ADB?",
-                "Найдены сохранённые данные об отключённых приложениях (4 пакетов).\n\n"
-                        + "Повторно включить все 4 сохранённых пакетов через ADB?");
+                "Найдены сохранённые данные об отключённых приложениях (пакетов: 4).\n\n"
+                        + "Повторно включить все сохранённые пакеты (4) через ADB?");
         expect("No saved disabled-app backup was found, and no TV model is selected.\n\n"
                         + "Please select your TV model first so Restore knows which packages to re-enable.",
                 "Резервная копия отключённых приложений не найдена, модель телевизора не выбрана.\n\n"
@@ -90,7 +90,7 @@ public final class I18nDynamicTranslationTest {
                         + "Restore will use your selected TV model (Sber 50U4123B) and re-enable its 8 packages over ADB.",
                 "Сохранённый список отключённых приложений не найден.\n\n"
                         + "Для восстановления будет использована выбранная модель телевизора (Sber 50U4123B). "
-                        + "Будут повторно включены 8 пакетов через ADB.");
+                        + "Будут повторно включены пакеты: 8 через ADB.");
         expect("Restore Selected Model Profile (Sber 50U4123B — 8 packages)",
                 "Восстановить профиль выбранной модели (Sber 50U4123B — 8 пакетов)");
         expect("Re-enable all packages in sber-50u4123b",
