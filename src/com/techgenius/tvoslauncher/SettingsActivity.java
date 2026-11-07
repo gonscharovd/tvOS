@@ -190,12 +190,6 @@ public class SettingsActivity extends Activity {
         if (lang != null && !lang.isEmpty()) {
             I18n.setLang(this, lang);
         }
-        String token = getIntent().getStringExtra("tmdb_token");
-        if (token != null && !token.trim().isEmpty()) {
-            Suggestions.prefs(this).edit().putString(Suggestions.K_TOKEN, token.trim()).apply();
-            Suggestions.changed(this);
-            Toast.makeText(this, tr("TMDB connected", "TMDB bağlandı"), Toast.LENGTH_SHORT).show();
-        }
         String pg = getIntent().getStringExtra("page");
         if (pg != null && !pg.isEmpty()) {
             currentSection = resolvePageExtra(pg);
@@ -1191,30 +1185,7 @@ public class SettingsActivity extends Activity {
 
 
 
-    private void promptRenamePerson(Profiles.Profile p, int rowIdx) {
-        android.widget.EditText in = new android.widget.EditText(this);
-        in.setSingleLine(true);
-        in.setText(I18n.profileName(this, p.name));
-        in.setSelection(in.getText().length());
-        int pad = u(14);
-        FrameLayout box = new FrameLayout(this);
-        box.setPadding(pad, pad / 2, pad, 0);
-        box.addView(in);
-        AlertDialog dlg = dialog(tr("Rename person", "Kişiyi yeniden adlandır"))
-                .setView(box)
-                .setPositiveButton(tr("Save", "Kaydet"), (d, w) -> {
-                    String n = in.getText().toString().trim();
-                    if (!n.isEmpty()) {
-                        p.name = n;
-                        Profiles.update(this, p);
-                        rebuildMainRows();
-                    }
-                })
-                .setNegativeButton(tr("Cancel", "İptal"), null)
-                .show();
-        Ui.setupDialogEditText(in, dlg);
-        in.requestFocus();
-    }
+
 
     private void promptAddPerson() {
         android.widget.EditText in = new android.widget.EditText(this);
@@ -1969,18 +1940,6 @@ public class SettingsActivity extends Activity {
             subMenuLockScreenSettings();
         } else if ("weather_source".equals(subId)) {
             subMenuWeatherSource();
-        } else if ("top_shelf".equals(subId)) {
-            subMenuTopShelf();
-        } else if (subId.startsWith("profile_actions:")) {
-            subMenuProfileActions(subId.substring("profile_actions:".length()));
-        } else if (subId.startsWith("cp_app:")) {
-            subMenuControlPanelApps(subId.substring("cp_app:".length()));
-        } else if (subId.startsWith("cp_act:")) {
-            String rest = subId.substring("cp_act:".length());
-            int colon = rest.indexOf(':');
-            if (colon > 0) {
-                subMenuControlPanelActivities(rest.substring(0, colon), rest.substring(colon + 1));
-            }
         } else if (subId.startsWith("bm_key:")) {
             try {
                 int code = Integer.parseInt(subId.substring("bm_key:".length()));
@@ -2086,214 +2045,15 @@ public class SettingsActivity extends Activity {
         }
     }
 
-    private void subMenuTopShelf() {
-        mainHeadView.setText(tr("Classic Top Shelf", "Klasik Üst Raf"));
-        backSubMenuRow();
-        section(tr("TOP SHELF CONTENT", "ÜST RAF İÇERİĞİ"));
-        String cur = Suggestions.shelf(this);
-        String[][] opts = {
-            {Suggestions.SHELF_BOTH, tr("Recommendations & News", "Öneriler ve Haberler")},
-            {Suggestions.SHELF_RECS, tr("Recommendations", "Öneriler")},
-            {Suggestions.SHELF_NEWS, tr("News", "Haberler")},
-            {Suggestions.SHELF_NONE, tr("Off", "Kapalı")}
-        };
-        for (String[] pair : opts) {
-            final String k = pair[0];
-            final String n = pair[1];
-            choiceRow(n, null, k.equals(cur), () -> {
-                Suggestions.setShelf(this, k);
-                rebuildMainRows();
-            });
-        }
-    }
 
-    private void subMenuProfileActions(String profileId) {
-        Profiles.Profile found = null;
-        int idx = 0;
-        List<Profiles.Profile> all = Profiles.list(this);
-        for (int i = 0; i < all.size(); i++) {
-            if (all.get(i).id.equals(profileId)) {
-                found = all.get(i);
-                idx = i;
-                break;
-            }
-        }
-        if (found == null) {
-            closeSubMenu();
-            return;
-        }
-        final Profiles.Profile p = found;
-        final int rowIdx = idx;
-        String dispName = I18n.profileName(this, p.name);
-        mainHeadView.setText(dispName);
-        backSubMenuRow();
-        section(dispName);
-        row(tr("Switch to " + dispName, dispName + " profiline geç"),
-                () -> Profiles.current(this).id.equals(p.id) ? tr("Active", "Etkin") : "›",
-                () -> {
-                    Profiles.setCurrent(this, p.id);
-                    closeSubMenu();
-                });
-        row(tr("Rename…", "Yeniden adlandır…"),
-                () -> "›",
-                () -> promptRenamePerson(p, rowIdx));
-        if (all.size() > 1) {
-            row(tr("Remove person", "Kişiyi kaldır"),
-                    () -> "",
-                    () -> {
-                        Profiles.delete(this, p.id);
-                        closeSubMenu();
-                    });
-        }
-    }
 
-    private String controlPanelActionTitle(String actionKey) {
-        if (ControlPanelOverlay.ACTION_WIFI.equals(actionKey)) return tr("Wi-Fi", "Wi-Fi");
-        if (ControlPanelOverlay.ACTION_BLUETOOTH.equals(actionKey)) return tr("Bluetooth", "Bluetooth");
-        if (ControlPanelOverlay.ACTION_SOUND.equals(actionKey)) return tr("Sound", "Ses");
-        if (ControlPanelOverlay.ACTION_INPUTS.equals(actionKey)) return tr("Inputs", "Girişler");
-        if (ControlPanelOverlay.ACTION_AMBIENT.equals(actionKey)) return tr("Ambient Mode", "Ortam Modu");
-        return actionKey;
-    }
 
-    private void subMenuControlPanelApps(String actionKey) {
-        String actionTitle = controlPanelActionTitle(actionKey);
-        mainHeadView.setText(actionTitle + " — " + tr("Choose Action", "Eylem Seçin"));
-        backSubMenuRow();
-        section(tr("TARGET ACTION / APPLICATION", "HEDEF EYLEM / UYGULAMA"));
 
-        String curPkg = ControlPanelOverlay.getCustomPkg(this, actionKey);
-        boolean isAmbient = ControlPanelOverlay.ACTION_AMBIENT.equals(actionKey);
-        boolean isLockMode = isAmbient && ControlPanelOverlay.isAmbientLockScreenMode(this);
 
-        choiceRow("↺  " + (isAmbient ? tr("Default (Ambient Mode)", "Varsayılan (Ortam Modu)")
-                                     : tr("Default (Automatic)", "Varsayılan (Otomatik)")),
-                isAmbient ? tr("Open TV Ambient Mode / Screensaver (or built-in fallback)",
-                               "TV Ortam Modunu / Ekran Koruyucuyu aç (veya yerleşik görünüm)")
-                          : tr("Use built-in Android TV shortcut", "Yerleşik Android TV kısayolunu kullan"),
-                curPkg.isEmpty() && !isLockMode,
-                () -> {
-                    ControlPanelOverlay.clearCustomAction(this, actionKey);
-                    closeSubMenu();
-                    showStatusMsg(actionTitle + ": " + tr("Default (Automatic)", "Varsayılan (Otomatik)"));
-                });
 
-        if (isAmbient) {
-            choiceRow("🔒  " + tr("Lock Screen", "Kilit Ekranı"),
-                    tr("Show Clock, Date & Greeting over your chosen wallpaper (press any key to return)",
-                       "Seçilen duvar kağıdı üzerinde Saat, Tarih ve Karşılama göster (dönmek için herhangi bir tuşa basın)"),
-                    isLockMode,
-                    () -> {
-                        ControlPanelOverlay.setAmbientLockScreenMode(this, true);
-                        closeSubMenu();
-                        showStatusMsg(actionTitle + ": " + tr("Lock Screen", "Kilit Ekranı"));
-                    });
-        }
 
-        PackageManager pm = getPackageManager();
-        List<PackageInfo> rawPkgs;
-        try {
-            rawPkgs = pm.getInstalledPackages(PackageManager.GET_ACTIVITIES);
-        } catch (Throwable t) {
-            rawPkgs = Collections.emptyList();
-        }
 
-        List<String[]> entries = new ArrayList<>();
-        for (PackageInfo pi : rawPkgs) {
-            if (pi == null || pi.packageName == null) continue;
-            int count = (pi.activities != null) ? pi.activities.length : 0;
-            if (count == 0) {
-                Intent q = new Intent().setPackage(pi.packageName);
-                List<ResolveInfo> ris = pm.queryIntentActivities(q, 0);
-                count = (ris != null) ? ris.size() : 0;
-            }
-            if (count == 0) continue;
-            String label = pi.packageName;
-            if (pi.applicationInfo != null) {
-                CharSequence cs = pi.applicationInfo.loadLabel(pm);
-                if (cs != null && cs.length() > 0) label = cs.toString().trim();
-            }
-            entries.add(new String[]{pi.packageName, label});
-        }
-        Collections.sort(entries, (a, b) -> {
-            int cmp = a[1].compareToIgnoreCase(b[1]);
-            return cmp != 0 ? cmp : a[0].compareToIgnoreCase(b[0]);
-        });
 
-        for (String[] entry : entries) {
-            final String pkg = entry[0];
-            final String label = entry[1];
-            choiceRow(label, pkg, pkg.equals(curPkg), () -> openSubMenu("cp_act:" + actionKey + ":" + pkg));
-        }
-    }
-
-    private void subMenuControlPanelActivities(String actionKey, String pkg) {
-        String actionTitle = controlPanelActionTitle(actionKey);
-        String appLabel = CleanYourTv.resolvePackageLabel(this, pkg);
-        mainHeadView.setText(appLabel + " — " + tr("Choose Activity", "Etkinlik Seçin"));
-        backSubMenuRow();
-        section(tr("ACTIVITIES IN ", "ETKİNLİKLER: ") + appLabel);
-
-        PackageManager pm = getPackageManager();
-        List<ActivityInfo> actList = new ArrayList<>();
-        Set<String> seenNames = new HashSet<>();
-        try {
-            PackageInfo pi = pm.getPackageInfo(pkg, PackageManager.GET_ACTIVITIES);
-            if (pi != null && pi.activities != null) {
-                for (ActivityInfo ai : pi.activities) {
-                    if (ai != null && ai.name != null && seenNames.add(ai.name)) actList.add(ai);
-                }
-            }
-        } catch (Throwable ignored) {
-        }
-        try {
-            Intent q = new Intent().setPackage(pkg);
-            List<ResolveInfo> ris = pm.queryIntentActivities(q, 0);
-            if (ris != null) {
-                for (ResolveInfo ri : ris) {
-                    if (ri.activityInfo != null && ri.activityInfo.name != null && seenNames.add(ri.activityInfo.name)) {
-                        actList.add(ri.activityInfo);
-                    }
-                }
-            }
-        } catch (Throwable ignored) {
-        }
-
-        String curPkg = ControlPanelOverlay.getCustomPkg(this, actionKey);
-        String curCls = ControlPanelOverlay.getCustomCls(this, actionKey);
-
-        choiceRow("★  " + tr("Default App Launch (Main Activity)", "Uygulamayı Normal Başlat (Ana Etkinlik)"),
-                pkg,
-                pkg.equals(curPkg) && curCls.isEmpty(),
-                () -> {
-                    ControlPanelOverlay.setCustomAction(this, actionKey, pkg, "", appLabel);
-                    if (ControlPanelOverlay.ACTION_INPUTS.equals(actionKey)) {
-                        Inputs.prefs(this).edit().putBoolean(Inputs.K_CARD, true).apply();
-                    }
-                    closeSubMenu();
-                    closeSubMenu();
-                    showStatusMsg(actionTitle + " → " + appLabel);
-                });
-
-        for (ActivityInfo ai : actList) {
-            final String fullCls = ai.name;
-            final String shortCls = fullCls.startsWith(pkg + ".") ? fullCls.substring(pkg.length()) : fullCls;
-            CharSequence actCs = ai.loadLabel(pm);
-            String actTitle = (actCs != null && actCs.length() > 0) ? actCs.toString().trim() : "";
-            final String title = (!actTitle.isEmpty() && !actTitle.equalsIgnoreCase(appLabel) && !actTitle.equals(fullCls))
-                    ? actTitle : shortCls;
-            final String summary = appLabel + " · " + shortCls;
-            choiceRow(title, fullCls, pkg.equals(curPkg) && fullCls.equals(curCls), () -> {
-                ControlPanelOverlay.setCustomAction(this, actionKey, pkg, fullCls, summary);
-                if (ControlPanelOverlay.ACTION_INPUTS.equals(actionKey)) {
-                    Inputs.prefs(this).edit().putBoolean(Inputs.K_CARD, true).apply();
-                }
-                closeSubMenu();
-                closeSubMenu();
-                showStatusMsg(actionTitle + " → " + summary);
-            });
-        }
-    }
 
     private void subMenuButtonKey(int keyCode) {
         String keyName = ButtonMapper.keyLabel(this, keyCode);
