@@ -192,7 +192,7 @@ public class MainActivity extends Activity {
     List<Suggestions.Item> heroItems = new ArrayList<>();
     int heroIndex;
     boolean heroShown;          // carousel currently forms the background
-    int heroVersion = -1;       // Suggestions.version() the items were loaded for
+    int heroVersion = -1;       // Legacy carousel generation marker
     String wallStyle;
     /** What Liquid Glass samples: a blurred copy of the wallpaper or of the carousel artwork. */
     Bitmap wallBlur, heroBlur, glassBg;
@@ -727,7 +727,7 @@ public class MainActivity extends Activity {
         timeChip.addView(time);
         clockBox.addView(timeChip, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, btn));
 
-        // Refresh: reloads every part of the carousel (recommendations, news, Continue Watching) and weather.
+        // Refresh weather data.
         refreshButton = new ImageView(this);
         refreshButton.setScaleType(ImageView.ScaleType.CENTER);
         refreshButton.setImageBitmap(Glyphs.get("refresh", dp(20), Color.WHITE));
@@ -1884,41 +1884,7 @@ public class MainActivity extends Activity {
      * screen, the photo itself sits sharp on the right ~60% and fades in from the left, and the left
      * side is a near-solid dark panel for the headline and summary. Baked once per story.
      */
-    Bitmap bakeNews(Bitmap src) {
-        if (src == null) return null;
-        int tw = Math.min(1280, screenW), th = tw * screenH / screenW;
-        Bitmap out = Bitmap.createBitmap(tw, th, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(out);
-        Paint p = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.DITHER_FLAG);
-        // Background: the photo shrunk to a few dozen pixels and stretched back (a cheap blur), darkened.
-        Bitmap tiny = Bitmap.createScaledBitmap(src, 32, Math.max(1, 32 * src.getHeight() / src.getWidth()), true);
-        c.drawBitmap(tiny, null, new android.graphics.RectF(0, 0, tw, th), p);
-        tiny.recycle();
-        c.drawColor(0xB30B0B10);
-        // The photo, centre-cropped into the right 60%, with a soft left edge.
-        android.graphics.RectF dst = new android.graphics.RectF(tw * 0.4f, 0, tw, th);
-        float scale = Math.max(dst.width() / src.getWidth(), dst.height() / src.getHeight());
-        float sw = dst.width() / scale, sh = dst.height() / scale;
-        Rect from = new Rect((int) ((src.getWidth() - sw) / 2), (int) ((src.getHeight() - sh) / 2),
-                (int) ((src.getWidth() + sw) / 2), (int) ((src.getHeight() + sh) / 2));
-        int layer = c.saveLayer(dst, null);
-        c.drawBitmap(src, from, dst, p);
-        Paint mask = new Paint();
-        mask.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.DST_IN));
-        mask.setShader(new LinearGradient(dst.left, 0, dst.left + dst.width() * 0.35f, 0, 0x00000000, 0xFF000000, Shader.TileMode.CLAMP));
-        c.drawRect(dst, mask);
-        c.restoreToCount(layer);
-        src.recycle();
-        // Reading panel on the left, then the usual bottom shade for the dock.
-        p.setShader(new LinearGradient(0, 0, tw * 0.62f, 0, new int[]{0xF20B0B10, 0xD90B0B10, 0x000B0B10},
-                new float[]{0f, 0.6f, 1f}, Shader.TileMode.CLAMP));
-        c.drawRect(0, 0, tw * 0.62f, th, p);
-        p.setShader(new LinearGradient(0, 0, 0, th, new int[]{0x00000000, 0x26000000, 0xB3000000},
-                null, Shader.TileMode.CLAMP));
-        c.drawRect(0, 0, tw, th, p);
-        topShade(c, tw, th);
-        return out;
-    }
+
 
     /** Info block sits just above the dock while a dock app is focused... */
     float heroInfoRestY() {
@@ -2166,7 +2132,7 @@ public class MainActivity extends Activity {
         int want = index;
         io.execute(() -> {
             Bitmap raw = Suggestions.image(this, it.backdrop, "w1280", Math.min(1280, screenW));
-            Bitmap bd = "news".equals(it.type) ? bakeNews(raw) : bakeScrims(raw);
+            Bitmap bd = bakeScrims(raw);
             Bitmap bdBlur = Ui.glassBackdrop(bd, 160, 90);
             String logoPath = Suggestions.logoFor(this, it);
             Bitmap logo = logoPath.isEmpty() ? null : Suggestions.image(this, logoPath, "w500", 500);
@@ -2195,85 +2161,50 @@ public class MainActivity extends Activity {
 
     /** Title/meta/overview for an item, applied in the same frame as its artwork. */
     void applyHeroInfo(Suggestions.Item it, Bitmap logo, int dir) {
-        boolean news = "news".equals(it.type);
         if (removeSelected) selectRemove(false);
         heroRemove.setVisibility(!it.pkg.isEmpty() && shelfView.isFocused() ? View.VISIBLE : View.GONE);
-        if (shelfView.isFocused()) {
-            heroButton.setVisibility(news ? View.GONE : View.VISIBLE);
-            if (!news) heroButton.setAlpha(1f);
-        }
-        Ui.textSize(heroTitle, news ? 26 : 36);  // headlines are long: smaller, up to four lines
-        heroTitle.setMaxLines(news ? 4 : 2);
-        if (!news) {
-            heroOverview.setMaxLines(2);
-            Ui.textSize(heroOverview, 12.5f);
-            if (!shelfView.isFocused()) {  // titles keep tvOS behaviour: overview only when focused
-                heroOverview.animate().cancel();
-                heroOverview.setAlpha(0f);
-                heroOverview.setVisibility(View.GONE);
-            }
+        if (shelfView.isFocused()) heroButton.setVisibility(View.VISIBLE);
+        heroButton.setAlpha(1f);
+        Ui.textSize(heroTitle, 36);
+        heroTitle.setMaxLines(2);
+        heroOverview.setMaxLines(2);
+        Ui.textSize(heroOverview, 12.5f);
+        if (!shelfView.isFocused()) {
+            heroOverview.animate().cancel();
+            heroOverview.setAlpha(0f);
+            heroOverview.setVisibility(View.GONE);
         }
         heroTitle.setText(it.title);
         heroTitle.setVisibility(View.VISIBLE);
         heroLogo.setImageDrawable(null);
         heroLogo.setVisibility(View.GONE);
         selectStrip(heroIndex);
-        if (!it.pkg.isEmpty()) {  // Continue Watching entry
+        if (!it.pkg.isEmpty()) {
             List<String> meta = new ArrayList<>();
             meta.add(appLabel(it.pkg));
             if (it.remainingMin > 0) meta.add(it.remainingMin >= 60
-                    ? (it.remainingMin / 60) + " h " + (it.remainingMin % 60) + " min left" : it.remainingMin + " min left");
+                    ? (it.remainingMin / 60) + " h " + (it.remainingMin % 60) + " min left"
+                    : it.remainingMin + " min left");
             heroMeta.setText(String.join("  \u00B7  ", meta));
             heroOverview.setText(it.overview);
-            heroBtnText.setText(I18n.s(this, "▶  Resume", "▶  Продолжить"));
+            heroBtnText.setText("▶  Продолжить");
             try {
                 heroProvider.setImageDrawable(getPackageManager().getApplicationIcon(it.pkg));
                 heroProvider.setVisibility(View.VISIBLE);
             } catch (PackageManager.NameNotFoundException e) {
                 heroProvider.setVisibility(View.GONE);
             }
-            heroBtnIcon.setVisibility(View.GONE);
-            if (heroShown && dir != 0) {
-                heroInfo.animate().cancel();
-                heroInfo.setAlpha(0f);
-                heroInfo.setTranslationX(dp(28) * dir);
-                heroInfo.animate().withLayer().alpha(1f).translationX(0).setDuration(520).setInterpolator(EASE).start();
-            }
-            return;
-        }
-        if ("news".equals(it.type)) {
-            // News: section and newsroom, how long ago. No button: stories are read on the shelf.
-            String age = "";
-            heroMeta.setText(it.genres + (age.isEmpty() ? "" : "  \u00B7  " + age));
+        } else {
+            List<String> meta = new ArrayList<>();
+            if (!it.year.isEmpty()) meta.add(it.year);
+            if (!it.type.isEmpty()) meta.add(it.type.equals("tv") ? "Сериал" : "Фильм");
+            if (!it.genres.isEmpty()) meta.add(it.genres);
+            if (it.rating > 0) meta.add(String.format(java.util.Locale.US, "\u2605 %.1f", it.rating));
+            heroMeta.setText(String.join("  \u00B7  ", meta));
             heroOverview.setText(it.overview);
-            // Stories are for reading: the summary stays visible, up to four lines.
-            heroOverview.setMaxLines(4);
-            Ui.textSize(heroOverview, 13.5f);
-            heroOverview.animate().cancel();
-            heroOverview.setVisibility(it.overview.isEmpty() ? View.GONE : View.VISIBLE);
-            heroOverview.setAlpha(0.85f);
+            heroBtnText.setText("▶  Открыть");
             heroProvider.setVisibility(View.GONE);
-            heroBtnIcon.setVisibility(View.GONE);
-            if (heroShown && dir != 0) {
-                heroInfo.animate().cancel();
-                heroInfo.setAlpha(0f);
-                heroInfo.setTranslationX(dp(28) * dir);
-                heroInfo.animate().withLayer().alpha(1f).translationX(0).setDuration(520).setInterpolator(EASE).start();
-            }
-            return;
         }
-        List<String> meta = new ArrayList<>();
-        if (!it.year.isEmpty()) meta.add(it.year);
-        meta.add(it.type.equals("tv") ? "Series" : "Movie");
-        if (!it.genres.isEmpty()) meta.add(it.genres);
-        if (it.rating > 0) meta.add(String.format(java.util.Locale.US, "\u2605 %.1f", it.rating));
-        heroMeta.setText(String.join("  \u00B7  ", meta));
-        heroOverview.setText(it.overview);
-        Suggestions.Provider p = it.provider(this);
-        heroBtnText.setText(p != null && !Suggestions.installed(this, p.pkg) ? "Get" : "\u25B6  Open");
-        int icon = p == null ? 0 : getResources().getIdentifier("provider_" + p.jwShort, "drawable", getPackageName());
-        heroProvider.setImageResource(icon);
-        heroProvider.setVisibility(icon == 0 ? View.GONE : View.VISIBLE);
         heroBtnIcon.setVisibility(View.GONE);
         if (logo != null) {
             heroLogo.setImageBitmap(logo);
@@ -2281,7 +2212,6 @@ public class MainActivity extends Activity {
             heroTitle.setVisibility(View.GONE);
         }
         if (heroShown && dir != 0) {
-            // Text glides in from the side you pressed, like the artwork.
             heroInfo.animate().cancel();
             heroInfo.setAlpha(0f);
             heroInfo.setTranslationX(dp(28) * dir);
@@ -2417,9 +2347,7 @@ public class MainActivity extends Activity {
     }
 
     /** News stories have no button: they are read right on the shelf. */
-    boolean heroIsNews() {
-        return heroIndex >= 0 && heroIndex < heroItems.size() && "news".equals(heroItems.get(heroIndex).type);
-    }
+
 
     /** Carousel and capsule navigation: LEFT/RIGHT browse, OK opens, UP/DOWN move between capsule, carousel and dock. */
     boolean heroKeys(KeyEvent ev) {
@@ -2593,7 +2521,6 @@ public class MainActivity extends Activity {
     }
 
     void openHeroItem(Suggestions.Item it) {
-        if ("news".equals(it.type)) return;  // news is read on the shelf; there is nothing to open
         if (it.pkg.isEmpty()) {
             Suggestions.open(this, it);
             return;
@@ -4289,7 +4216,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** Refresh button: fetch fresh recommendations and news, reload Continue Watching and weather. */
+    /** Refresh button: update weather data. */
     void refreshAll() {
         refreshButton.animate().cancel();
         refreshButton.setRotation(0);
