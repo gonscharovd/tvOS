@@ -3,6 +3,7 @@ package com.techgenius.tvoslauncher;
 import android.Manifest;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.NotificationManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -20,10 +21,6 @@ final class Perms {
     static final int REQ_LOCATION = 41;
 
     private Perms() {
-    }
-
-    static ComponentName listener(Activity a) {
-        return new ComponentName(a, MediaWatchService.class);
     }
 
     static boolean hasLocation(Activity a) {
@@ -48,45 +45,23 @@ final class Perms {
         }
     }
 
-    /**
-     * Checks whether Notification / MediaSession listener can be enabled on this TV.
-     * Even on low-RAM Android TVs (where ro.config.low_ram=true), MediaSessionManager.getActiveSessions()
-     * works when enabled_notification_listeners is set via WRITE_SECURE_SETTINGS or ADB.
-     */
-    static boolean listenerSupported(Activity a) {
-        return a != null;
-    }
-
-    static boolean hasListener(Activity a) {
+    static boolean hasDndAccess(Activity a) {
+        if (a == null) return false;
         try {
-            return MediaWatchService.granted(a);
+            NotificationManager nm = a.getSystemService(NotificationManager.class);
+            return nm != null && nm.isNotificationPolicyAccessGranted();
         } catch (Throwable t) {
             return false;
         }
     }
 
-    static void requestLocation(Activity a) {
-        if (!hasLocation(a)) a.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQ_LOCATION);
-    }
-
-    static void requestListener(Activity a) {
-        if (hasListener(a)) {
-            MediaWatchService.ensureSessionTracking(a);
-            return;
-        }
-        if (LocalAdb.hasWriteSecureSettings(a) && LocalAdb.repairPermissionsViaSecureSettings(a) && hasListener(a)) {
-            MediaWatchService.ensureSessionTracking(a);
-            return;
-        }
-        if (Build.VERSION.SDK_INT >= 30) {
-            Intent detail = new Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS)
-                    .putExtra(Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME, listener(a).flattenToString());
-            if (tryStart(a, detail)) return;
-        }
-        if (tryStart(a, new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS))) return;
-        if (tryStart(a, new Intent("android.settings.NOTIFICATION_POLICY_ACCESS_SETTINGS"))) return;
-        lastResort(a, I18n.s(a, "Continue Watching & Do Not Disturb", "\u0130zlemeye Devam Et ve Rahats\u0131z Etmeyin"),
-                "adb shell cmd notification allow_listener com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.MediaWatchService");
+    static void requestDndAccess(Activity a) {
+        if (a == null) return;
+        if (hasDndAccess(a)) return;
+        if (tryStart(a, new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS))) return;
+        if (tryStart(a, new Intent(Settings.ACTION_SETTINGS))) return;
+        lastResort(a, I18n.s(a, "Do Not Disturb access", "Доступ к режиму «Не беспокоить»"),
+                "adb shell cmd notification allow_dnd " + a.getPackageName());
     }
 
     /** Starts a system screen if the TV really has it (many TVs map settings actions to empty stubs). */
