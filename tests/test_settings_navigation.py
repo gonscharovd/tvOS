@@ -20,6 +20,15 @@ assert positions == sorted(positions), "Settings sections are not in the request
 assert "CONTROL_PANEL" not in sidebar and "UPDATES" not in sidebar and "PROFILES" not in sidebar
 assert "private String currentSection = HOME;" in settings
 
+# TV-remote navigation must stay within the two-pane Settings layout.
+navigation = settings.split("public boolean dispatchKeyEvent", 1)[1].split(
+    "private View findAdjacentFocusable", 1
+)[0]
+for key in ("KEYCODE_DPAD_UP", "KEYCODE_DPAD_DOWN", "KEYCODE_DPAD_LEFT",
+            "KEYCODE_DPAD_RIGHT", "KEYCODE_BACK", "requestFocus()",
+            "findAdjacentFocusable", "focusFirstRow()", "closeSubMenu()"):
+    assert key in navigation, f"D-pad navigation is missing {key}"
+
 assert "void pageMainScreen()" in settings
 assert "Звуки навигации" in settings
 assert "Повторить первоначальную настройку" in settings
