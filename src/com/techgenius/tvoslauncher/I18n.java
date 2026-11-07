@@ -17,11 +17,6 @@ public final class I18n {
     private static final Map<String, Map<String, String>> LANG_MAPS = new HashMap<>();
 
     static {
-        add("Main screen", "Главный экран");
-        add("Appearance and clock", "Внешний вид и часы");
-        add("Control panel", "Панель управления");
-        add("Advanced settings", "Расширенные настройки");
-        add("Information", "Информация");
         add("Changes the language used on the home screen, date, weather and settings.", "Изменяет язык главного экрана, даты, погоды и настроек.");
         add("CONTROL PANEL ACTIONS", "ДЕЙСТВИЯ ПАНЕЛИ УПРАВЛЕНИЯ");
         add("Reset control panel actions", "Сбросить действия панели управления");
@@ -36,6 +31,11 @@ public final class I18n {
         add("TMDB connected", "TMDB подключён");
         add("Information", "Информация");
         LANG_MAPS.put(LANG_RU, new HashMap<String, String>());
+        add("Main screen", "Главный экран");
+        add("Appearance and clock", "Внешний вид и часы");
+        add("Control panel", "Панель управления");
+        add("Advanced settings", "Расширенные настройки");
+        add("Information", "Информация");
         initTranslations();
         initRussianExtras();
     }
