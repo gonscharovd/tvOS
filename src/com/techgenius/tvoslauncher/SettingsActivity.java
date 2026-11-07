@@ -1454,7 +1454,7 @@ public class SettingsActivity extends Activity {
                 },
                 null);
 
-        infoNote(tr("Checks GitHub Releases (techgenius1/tvOS-Launcher) for the latest APK and installs updates directly on your TV.",
+        infoNote(tr("Checks GitHub Releases (gonscharovd/tvOS) for the latest APK and installs updates directly on your TV.",
                 "En güncel APK için GitHub Sürümlerini (techgenius1/tvOS-Launcher) kontrol eder ve güncellemeleri doğrudan TV'nize kurar."));
 
         if (!checkingLatestRelease) {
@@ -1570,7 +1570,6 @@ public class SettingsActivity extends Activity {
         section("ПРИЛОЖЕНИЕ");
         infoRow("Название", "testOS", null);
         infoRow("Разработчик", "gonscharovd", null);
-        infoRow("Версия", version(), null);
         infoRow("Хранение настроек", "Память телевизора", null);
         pageUpdates();
         section("РЕЗЕРВНАЯ КОПИЯ");
