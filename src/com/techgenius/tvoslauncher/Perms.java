@@ -30,6 +30,12 @@ final class Perms {
         }
     }
 
+    static void requestLocation(Activity a) {
+        if (a != null && !hasLocation(a)) {
+            a.requestPermissions(new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQ_LOCATION);
+        }
+    }
+
     static Intent accessibilityScreen(Activity a) {
         if (a == null) return null;
         try {
@@ -44,7 +50,7 @@ final class Perms {
         }
     }
 
-    static boolean hasDndAccess(Activity a) {
+    static boolean hasDndAccess(android.content.Context a) {
         if (a == null) return false;
         try {
             NotificationManager nm = a.getSystemService(NotificationManager.class);
@@ -61,6 +67,32 @@ final class Perms {
         if (tryStart(a, new Intent(Settings.ACTION_SETTINGS))) return;
         lastResort(a, I18n.s(a, "Do Not Disturb access", "Доступ к режиму «Не беспокоить»"),
                 "adb shell cmd notification allow_dnd " + a.getPackageName());
+    }
+
+    static void toggleDnd(android.content.Context c) {
+        if (c == null) return;
+        NotificationManager nm = c.getSystemService(NotificationManager.class);
+        if (nm == null) return;
+        if (!hasDndAccess(c)) {
+            if (c instanceof Activity) {
+                requestDndAccess((Activity) c);
+            } else {
+                try {
+                    c.startActivity(new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)
+                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                } catch (Throwable ignored) {
+                }
+            }
+            return;
+        }
+        boolean on = nm.getCurrentInterruptionFilter() > NotificationManager.INTERRUPTION_FILTER_ALL;
+        try {
+            nm.setInterruptionFilter(on
+                    ? NotificationManager.INTERRUPTION_FILTER_ALL
+                    : NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+        } catch (SecurityException e) {
+            if (c instanceof Activity) requestDndAccess((Activity) c);
+        }
     }
 
     /** Starts a system screen if the TV really has it (many TVs map settings actions to empty stubs). */
