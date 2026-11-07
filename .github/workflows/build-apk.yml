@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - feature/ram-cleaner-happ-vpn
+      - fix/verified-cleanmytv-state
 
 permissions:
   contents: read
