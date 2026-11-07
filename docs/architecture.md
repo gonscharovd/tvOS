@@ -21,7 +21,7 @@ The project uses Android SDK command-line tools rather than Gradle:
 | `SettingsActivity.java` | Four-group settings navigation, D-pad focus, OTA progress, CleanYourTV menus and backup/restore entry points |
 | `SetupActivity.java` | First-run setup; no language or profile step |
 | `I18n.java` | Russian-only UI dictionary and dynamic Russian labels |
-| `Search.java`, `SearchPanel.java` | App/settings search, voice input and Russian/English keyboard layouts |
+| `Search.java`, `SearchPanel.java` | App/settings search, JustWatch title lookup, voice input and Russian/English keyboard layouts |
 | `Suggestions.java` | Small shared utilities for safe activity launch, URL intents, cached artwork and stream reading; no recommendation/news engine |
 | `AppUpdater.java`, `VersionComparator.java` | GitHub Release discovery, version comparison, download progress and PackageInstaller flow |
 | `CleanYourTv.java` | TV model detection, protected package policy, package-state verification, backup and restore |
