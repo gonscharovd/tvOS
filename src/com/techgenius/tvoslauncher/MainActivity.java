@@ -282,11 +282,6 @@ public class MainActivity extends Activity {
             wallPrefetchStyle = wall;
             new Thread((Runnable) wallPrefetch, "tvos-wallpaper").start();
         }
-        // After an update that changes what the top shelf holds, start from a fresh carousel.
-        if (Suggestions.prefs(this).getInt("cache_format", 0) != 3) {
-            Suggestions.changed(this);
-            Suggestions.prefs(this).edit().putInt("cache_format", 3).apply();
-        }
         buildChrome();
         try {
             appsTask.get();
@@ -2039,45 +2034,14 @@ public class MainActivity extends Activity {
      * titles mixed in (if it's on) — one after every two items; or Continue Watching alone.
      */
     void loadHero() {
-        updateEmpty();
-        boolean shelf = Suggestions.enabled(this) && Suggestions.ready(this);
-        boolean cw = cwEnabled();
-        if (!shelf && !cw) {
-            heroItems = new ArrayList<>();
-            shelfView.setFocusable(false);
-            setHeroShown(false);
-            return;
-        }
-        int v = Suggestions.version(this) * 2 + (cw ? 1 : 0);
-        boolean reconfigured = v != heroVersion;
-        heroVersion = v;
-        io.execute(() -> {
-            List<Suggestions.Item> cwItems = new ArrayList<>();
-            StringBuilder sig = new StringBuilder();
-            for (Suggestions.Item it : cwItems) sig.append(it.key).append(it.progress).append(';');
-            boolean cwChanged = !sig.toString().equals(lastCwSig);
-            lastCwSig = sig.toString();
-            List<Suggestions.Item> base = shelf ? Suggestions.cached(this, true) : null;
-            List<Suggestions.Item> mixed = mixContinue(base, cwItems);
-            if (!mixed.isEmpty() && (reconfigured || cwChanged || heroItems.isEmpty())) {
-                handler.post(() -> setHeroItems(mixed));
-            } else if (mixed.isEmpty()) {
-                handler.post(() -> {
-                    heroItems = new ArrayList<>();
-                    shelfView.setFocusable(false);
-                    setHeroShown(false);
-                });
-            }
-            if (shelf && Suggestions.cached(this, false) == null) {
-                try {
-                    List<Suggestions.Item> fresh = Suggestions.fetch(this);
-                    List<Suggestions.Item> m2 = mixContinue(fresh, cwItems);
-                    handler.post(() -> setHeroItems(m2));
-                } catch (Exception e) {
-                    android.util.Log.w("TvHome", "suggestions: " + e);
-                }
-            }
-        });
+        // Recommendations, news and streaming-service continue-watching were removed.
+        // Keep the legacy artwork container hidden so existing home-screen layouts remain stable.
+        heroItems.clear();
+        heroIndex = 0;
+        if (shelfView != null) shelfView.setFocusable(false);
+        if (heroFront != null) heroFront.setImageDrawable(null);
+        if (heroBack != null) heroBack.setImageDrawable(null);
+        if (shelfView != null) setHeroShown(false);
     }
 
     /** Resume first: up to six recent Continue Watching titles, then news and recommendations. */
@@ -2172,10 +2136,6 @@ public class MainActivity extends Activity {
 
     void scheduleAdvance() {
         handler.removeCallbacks(heroAdvance);
-        if (continueMode()) return;  // Up Next stays put
-        int sec = Suggestions.advanceSeconds(this);
-        if (sec > 0 && heroIsNews()) sec = Math.max(sec, 15);  // time to read a story
-        if (sec > 0 && heroShown && resumed) handler.postDelayed(heroAdvance, sec * 1000L);
     }
 
     void heroStep(int dir, boolean user) {
@@ -2271,7 +2231,7 @@ public class MainActivity extends Activity {
         }
         if ("news".equals(it.type)) {
             // News: section and newsroom, how long ago. No button: stories are read on the shelf.
-            String age = News.age(it.published);
+            String age = "";
             heroMeta.setText(it.genres + (age.isEmpty() ? "" : "  \u00B7  " + age));
             heroOverview.setText(it.overview);
             // Stories are for reading: the summary stays visible, up to four lines.
@@ -4322,13 +4282,8 @@ public class MainActivity extends Activity {
         refreshButton.animate().cancel();
         refreshButton.setRotation(0);
         refreshButton.animate().rotation(360).setDuration(700).setInterpolator(EASE).start();
-        Suggestions.changed(this);
-        lastCwSig = "";
-        heroVersion = -1;
-        heroItems = new ArrayList<>();
-        loadHero();
         Weather.refresh(this, true, this::updateWeather);
-        toast("Refreshing");
+        toast("Погода обновлена");
     }
 
     // ---------------------------------------------------------------- built-in ambient mode & idle carousel
