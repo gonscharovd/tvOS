@@ -28,6 +28,7 @@ import android.view.ViewOutlineProvider;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -89,6 +90,20 @@ public class SettingsActivity extends Activity {
     private LinearLayout list;
     private TextView msgView;
     private TextView hintView;
+    private ProgressBar updateDownloadProgress;
+    private TextView updateDownloadStatus;
+    private final android.os.Handler updateProgressHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable updateProgressTick = new Runnable() {
+        @Override public void run() {
+            if (isFinishing()) return;
+            if (updateDownloadProgress != null && updateDownloadStatus != null) {
+                refreshUpdateDownloadProgress();
+            }
+            if (AppUpdater.isDownloading()) {
+                updateProgressHandler.postDelayed(this, 350L);
+            }
+        }
+    };
 
     private final List<Runnable> refreshers = new ArrayList<>();
     private static final Map<String, Bitmap> SCENE_THUMB_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
@@ -1616,6 +1631,7 @@ public class SettingsActivity extends Activity {
                 () -> tr("Check now ›", "Şimdi kontrol et ›"),
                 () -> AppUpdater.manualCheckAndPrompt(this, this::refreshAll));
 
+        addUpdateDownloadProgress();
         section(tr("VERSION INFO", "SÜRÜM BİLGİSİ"));
         infoRow(tr("Current version", "Mevcut sürüm"), "v" + AppUpdater.getCurrentVersion(this), null);
         infoRowDynamic(tr("GitHub release latest version", "GitHub son sürüm"),
@@ -1646,6 +1662,72 @@ public class SettingsActivity extends Activity {
                     }
                 }
             });
+        }
+    }
+
+    private void addUpdateDownloadProgress() {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(u(14), u(8), u(14), u(8));
+
+        updateDownloadStatus = new TextView(this);
+        updateDownloadStatus.setTextColor(0xBFFFFFFF);
+        updateDownloadStatus.setTypeface(Ui.font(this, "medium"));
+        Ui.textSize(updateDownloadStatus, 12.5f);
+        box.addView(updateDownloadStatus);
+
+        updateDownloadProgress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        updateDownloadProgress.setMax(100);
+        LinearLayout.LayoutParams progressLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, u(7));
+        progressLp.topMargin = u(8);
+        box.addView(updateDownloadProgress, progressLp);
+
+        LinearLayout.LayoutParams boxLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        boxLp.bottomMargin = u(5);
+        list.addView(box, boxLp);
+
+        refreshUpdateDownloadProgress();
+        updateProgressHandler.removeCallbacks(updateProgressTick);
+        if (AppUpdater.isDownloading()) {
+            updateProgressHandler.post(updateProgressTick);
+        }
+    }
+
+    private void refreshUpdateDownloadProgress() {
+        if (updateDownloadProgress == null || updateDownloadStatus == null) return;
+        boolean active = AppUpdater.isDownloading();
+        long downloaded = AppUpdater.getDownloadedBytes();
+        long total = AppUpdater.getDownloadTotalBytes();
+        int percent = AppUpdater.getDownloadProgressPercent();
+
+        if (!active && downloaded <= 0L && !"Download failed".equals(AppUpdater.getDownloadStatus())) {
+            updateDownloadStatus.setVisibility(View.GONE);
+            updateDownloadProgress.setVisibility(View.GONE);
+            return;
+        }
+        updateDownloadStatus.setVisibility(View.VISIBLE);
+        updateDownloadProgress.setVisibility(View.VISIBLE);
+        if (percent >= 0) {
+            updateDownloadProgress.setIndeterminate(false);
+            updateDownloadProgress.setProgress(percent);
+            updateDownloadStatus.setText(tr("Downloading update", "Загрузка обновления")
+                    + "  " + percent + "%  ·  "
+                    + android.text.format.Formatter.formatShortFileSize(this, downloaded)
+                    + " / " + android.text.format.Formatter.formatShortFileSize(this, total));
+        } else if (active) {
+            updateDownloadProgress.setIndeterminate(true);
+            updateDownloadStatus.setText(tr("Downloading update", "Загрузка обновления")
+                    + "  ·  " + android.text.format.Formatter.formatShortFileSize(this, downloaded));
+        } else if ("Download failed".equals(AppUpdater.getDownloadStatus())) {
+            updateDownloadProgress.setIndeterminate(false);
+            updateDownloadProgress.setProgress(0);
+            updateDownloadStatus.setText(tr("Update download failed", "Не удалось скачать обновление"));
+        } else {
+            updateDownloadProgress.setIndeterminate(false);
+            updateDownloadProgress.setProgress(100);
+            updateDownloadStatus.setText(tr("Download complete — opening installer", "Загрузка завершена — открываем установщик"));
         }
     }
 
@@ -5050,6 +5132,9 @@ public class SettingsActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        updateProgressHandler.removeCallbacks(updateProgressTick);
+        updateDownloadProgress = null;
+        updateDownloadStatus = null;
         ButtonMapper.captureListener = null;
         super.onDestroy();
     }
