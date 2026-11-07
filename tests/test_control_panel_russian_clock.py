@@ -28,15 +28,15 @@ for family in ("sans-serif", "serif", "monospace", "sans-serif-condensed", "sans
 
 # Every literal I18n key used by launcher Java screens must exist in the Russian dictionary.
 def unescape_java(value: str) -> str:
-    value = value.replace(r"\\n", "\n").replace(r"\\t", "\t").replace(r'\\"', '"').replace(r"\\\\", "\\")
+    value = value.replace(r"\n", "\n").replace(r"\t", "\t").replace(r'\"', '"').replace(r"\\", "\\")
     return re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), value)
 
 dictionary = {
     unescape_java(m.group(1))
-    for m in re.finditer(r'(?:add|ru\\.put)\\("((?:\\\\.|[^"\\\\])*)"', i18n)
+    for m in re.finditer(r'(?:add|ru\.put)\("((?:\\.|[^"\\])*)"', i18n)
 }
 untranslated = []
-call_re = re.compile(r'I18n\\.(?:s|t)\\s*\\(\\s*[^,]+,\\s*"((?:\\\\.|[^"\\\\])*)"', re.S)
+call_re = re.compile(r'I18n\.(?:s|t)\s*\(\s*[^,]+,\s*"((?:\\.|[^"\\])*)"', re.S)
 dynamic_prefixes = ("Move ", "Switch to ", "Done (", "Not done (")
 for source in ROOT.glob("*.java"):
     code = source.read_text(encoding="utf-8")
