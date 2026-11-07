@@ -10,6 +10,8 @@ updater = Path("src/com/techgenius/tvoslauncher/AppUpdater.java").read_text(enco
 
 assert "$env:VERSION_CODE" in build_ps and "$env:VERSION_NAME" in build_ps
 assert "${VERSION_CODE:-" in build_sh and "${VERSION_NAME:-" in build_sh
+assert 'else { "85" }' in build_ps and 'else { "2.1.70" }' in build_ps
+assert "${VERSION_CODE:-85}" in build_sh and "${VERSION_NAME:-2.1.70}" in build_sh
 
 assert 'build\\tvos-home.apk' in build_ps
 assert "build/tvos-home.apk" in build_sh
