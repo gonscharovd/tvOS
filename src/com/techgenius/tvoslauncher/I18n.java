@@ -697,6 +697,30 @@ public final class I18n {
         ru.put("Couldn't search. Check the internet connection.", "Не удалось выполнить поиск. Проверьте подключение к интернету.");
         ru.put("TMDB connected", "TMDB подключён");
 
+        // Exact Unicode / newline variants used by the source UI strings.
+        ru.put("% used  ·  Clean", "% использовано  ·  Очистить");
+        ru.put("1. Open TV Settings → System → About and click Build 7 times to unlock Developer Options.\n", "1. Откройте настройки ТВ → Система → О телевизоре и нажмите на номер сборки 7 раз, чтобы открыть параметры разработчика.\n");
+        ru.put("ADB debugging is currently turned off. Persistent ADB Mode requires ADB to be enabled.\n\nWould you like to enable ADB and switch to Persistent ADB Mode?", "Сейчас отладка ADB выключена. Для постоянного режима ADB её необходимо включить.\n\nВключить ADB и перейти в постоянный режим?");
+        ru.put("Back to return   ·   Hold OK for options", "Назад — вернуться   ·   Удерживайте OK для параметров");
+        ru.put("Choose a City…", "Выберите город…");
+        ru.put("Connecting to local ADB on port 5555 and granting permissions…\n\nIf an “Allow USB debugging?” prompt appears, check “Always allow” and press Allow.", "Подключение к локальному ADB на порту 5555 и выдача разрешений…\n\nЕсли появится запрос «Разрешить отладку по USB?», отметьте «Всегда разрешать» и нажмите «Разрешить».");
+        ru.put("Could not connect to local ADB on port 5555.\n\n1. Open Settings → System → About and click Build 7 times.\n2. Open Developer Options and turn on USB Debugging / Network Debugging.\n3. Return here and tap Pair / Repair again.", "Не удалось подключиться к локальному ADB на порту 5555.\n\n1. Откройте Настройки → Система → О телевизоре и нажмите на номер сборки 7 раз.\n2. В параметрах разработчика включите отладку по USB / сети.\n3. Вернитесь сюда и нажмите «Подключить / восстановить».");
+        ru.put("Could not connect to local ADB on port 5555.\n\nPlease make sure USB Debugging / Network Debugging is turned ON in Developer Options, then try again — or choose Manual Setup.", "Не удалось подключиться к локальному ADB на порту 5555.\n\nУбедитесь, что в параметрах разработчика включена отладка по USB / сети, и повторите попытку или выберите ручную настройку.");
+        ru.put("Delete “", "Удалить «");
+        ru.put("Granting permissions via local ADB…\n\nIf an “Allow USB debugging?” prompt appears on screen, check “Always allow” and press Allow.", "Выдача разрешений через локальный ADB…\n\nЕсли появится запрос «Разрешить отладку по USB?», отметьте «Всегда разрешать» и нажмите «Разрешить».");
+        ru.put("Keep Alive monitors the Accessibility Service and automatically restores it if your TV turns it off.\n\n", "Keep Alive следит за службой специальных возможностей и автоматически восстанавливает её, если телевизор отключит её.\n\n");
+        ru.put("Let’s set up tvOS Launcher.", "Настроим tvOS Launcher.");
+        ru.put("No place found for “", "Место не найдено: «");
+        ru.put("Open Developer Options / TV Settings…", "Открыть параметры разработчика / настройки ТВ…");
+        ru.put("Open on a phone or computer on the same Wi-Fi:\n\n", "Откройте на телефоне или компьютере в той же сети Wi-Fi:\n\n");
+        ru.put("Pairing code\n", "Код сопряжения\n");
+        ru.put("This runs 'settings put global adb_enabled 0' over Local ADB and verifies that port 5555 is closed on your home network.\n\n", "Выполняет команду 'settings put global adb_enabled 0' через локальный ADB и проверяет, что порт 5555 закрыт в домашней сети.\n\n");
+        ru.put("WRITE_SECURE_SETTINGS and all launcher permissions are now active, and ADB (port 5555) has been closed for your security.\n\n", "WRITE_SECURE_SETTINGS и все разрешения лаунчера активированы, а ADB (порт 5555) выключен для вашей безопасности.\n\n");
+        ru.put("Who’s Watching?", "Кто смотрит?");
+        ru.put("You need the ADB mode enabled for this troubleshooting step. You can always change the ADB mode from Settings later.\n\nWould you like to enable ADB now or skip this step?", "Для этого шага диагностики необходимо включить режим ADB. Позже его можно изменить в настройках.\n\nВключить ADB сейчас или пропустить этот шаг?");
+        ru.put("⚠️ Security Warning:\n\n", "⚠️ Предупреждение безопасности:\n\n");
+
+
         ru.put("% used  \\u00b7  Clean", "% использовано  ·  Очистить");
         ru.put("1. Open TV Settings \\u2192 System \\u2192 About and click Build 7 times to unlock Developer Options.\\n", "1. Откройте настройки ТВ → Система → О телевизоре и нажмите на номер сборки 7 раз, чтобы открыть параметры разработчика.\\n");
         ru.put("1. Set tvOS Launcher as Default via Local ADB", "1. Назначить tvOS Launcher главным экраном через локальный ADB");
