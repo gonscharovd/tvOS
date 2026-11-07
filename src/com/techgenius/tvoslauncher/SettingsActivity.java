@@ -1608,7 +1608,7 @@ public class SettingsActivity extends Activity {
                 () -> AppUpdater.manualCheckAndPrompt(this, this::refreshAll));
 
         addUpdateDownloadProgress();
-        section(tr("VERSION INFO", "SÜRÜM BİLGİСИ"));
+        section(tr("VERSION INFO", "ИНФОРМАЦИЯ О ВЕРСИИ"));
         infoRow(tr("Current version", "Mevcut sürüm"), "v" + AppUpdater.getCurrentVersion(this), null);
         infoRowDynamic(tr("GitHub release latest version", "GitHub son sürüm"),
                 () -> {
