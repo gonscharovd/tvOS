@@ -33,11 +33,11 @@ assert "void pageAbout()" in settings and "gonscharovd" in settings
 assert "Сохранить настройки в память ТВ" in settings
 assert "void pageAdvanced()" in settings
 assert "Выбор лаунчера по умолчанию" in settings
-assert "CleanYourTv.getSelectedModelSummary" in settings
+assert "CleanYourTv.getSelectedModelSummary" in settings and "Очистить телевизор" in settings
 assert "pageButtonMapper();" in settings
-assert "Keep Alive (Auto-repair Accessibility)" in settings
-assert "Ad-blocking Private DNS (AdGuard)" in settings
-assert "ADB connection status" in settings and "Check permissions" in settings
+assert "Автовосстановление службы пульта" in settings
+assert "AdGuard DNS" in settings
+assert "Состояние подключения" in settings and "Просмотреть выданные разрешения" in settings
 
 for removed in ("void pageLanguage()", "void pageProfiles()", "void pageControlPanel()",
                 "Classic Top Shelf suggestions", "confirmWatchSignOut(WatchCloud"):
