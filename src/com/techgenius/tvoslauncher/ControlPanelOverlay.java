@@ -221,11 +221,6 @@ public final class ControlPanelOverlay {
                 svcCtx, screenW, screenH, unit, overlayBackdrop, cells,
                 () -> {
                     dismiss();
-                    openInputs(svcCtx, () -> startExternal(svcCtx, new Intent(Settings.ACTION_CAST_SETTINGS),
-                            new Intent(Settings.ACTION_SETTINGS)));
-                },
-                () -> {
-                    dismiss();
                     VpnController.toggleHappWithFeedback(svcCtx);
                 },
                 () -> {
