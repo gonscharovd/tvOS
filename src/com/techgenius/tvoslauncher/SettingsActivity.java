@@ -1581,10 +1581,6 @@ public class SettingsActivity extends Activity {
                 () -> CustomMedia.showRestoreSettingsPicker(this, this::refreshAll));
     }
 
-    /**
-     * Signs the dock's continue-watching popup out of Nuvio/Stremio. Only the launcher's session
-     * ends; the app itself stays signed in. Signing back in is the QR on the app's dock tile.
-     */
 
 
     private void resetAllAppDataAndReturnToSetup() {
