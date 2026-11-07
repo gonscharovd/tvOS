@@ -68,7 +68,6 @@ public class SettingsActivity extends Activity {
             ABOUT = "About",
             SHELF = "Top Shelf",
             INPUTS = "Inputs",
-            WATCHING = "Continue Watching",
             HOME = "Home",
             PERMS = "Permissions";
 
@@ -1603,7 +1602,7 @@ public class SettingsActivity extends Activity {
         String[] knownPrefs = {
             "settings", "setup", "profiles", "home", "home_default",
             "app_custom_names", "button_mapper", "control_panel",
-            "weather", "suggestions", "inputs", "clicks",
+            "weather", "inputs", "clicks",
             "cleanyourtv_prefs", "local_adb", "present",
             "custom_media", "app_updater"
         };
