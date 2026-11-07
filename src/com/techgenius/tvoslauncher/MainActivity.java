@@ -76,7 +76,6 @@ public class MainActivity extends Activity {
 
     static final int COLS = 6;
     static final String SETTINGS_KEY = "special:settings";
-    static final String PRESENT_KEY = "special:present";
     static final String INPUTS_KEY = "special:inputs";
     static final String FOLDER_KEY = "special:folder";
     static final String PREF_ORDER = "order";
@@ -297,11 +296,6 @@ public class MainActivity extends Activity {
         buildGrid();
         applyLookMode();
         registerPackageReceiver();
-        // Presentation mode: run the admin server if enabled, and honour "Start on boot".
-        com.techgenius.tvoslauncher.present.Presenter.ensureRunning(this);
-        if (com.techgenius.tvoslauncher.present.Presenter.justBooted()) {
-            handler.postDelayed(() -> com.techgenius.tvoslauncher.present.Presenter.openOnBootOnce(this), 1500);
-        }
         wakeReceiver = new BroadcastReceiver() {
             @Override public void onReceive(Context c, Intent i) {
                 AirPlayGuard.check(c, true);
@@ -361,7 +355,7 @@ public class MainActivity extends Activity {
             else if (panel.equals("recents")) RecentAppsOverlay.showInActivity(this);
             else if (panel.equals("inputs")) ControlPanelOverlay.openInputs(this, () -> showInputs(ccButton));
             else if (panel.equals("weather")) showWeather();
-            else if (panel.equals("present")) com.techgenius.tvoslauncher.present.Presenter.open(this);
+            else if (panel.equals("settings")) showSettingsChooser();
             else if (panel.equals("search")) showSearch(intent.getStringExtra("q"));
             else if (panel.equals("ambient")) {
                 setIntent(intent);
@@ -3301,7 +3295,6 @@ public class MainActivity extends Activity {
         addResolved(pm, Intent.CATEGORY_LEANBACK_LAUNCHER, pkgs, true);
         addResolved(pm, Intent.CATEGORY_LAUNCHER, pkgs, false);
         if (!pkgs.contains(TV_SETTINGS)) addSettingsEntry(pm);
-        if (com.techgenius.tvoslauncher.present.Presenter.enabled(this)) addPresentEntry();
         inputs = Inputs.list(this);
         if (Inputs.showCard(this) && (!inputs.isEmpty() || ControlPanelOverlay.hasCustomAction(this, ControlPanelOverlay.ACTION_INPUTS))) {
             addInputsEntry();
@@ -3378,13 +3371,12 @@ public class MainActivity extends Activity {
     int priority(AppEntry e) {
         if (INPUTS_KEY.equals(e.key)) return -1;
         if (isSettings(e)) return 2000;
-        if (PRESENT_KEY.equals(e.key)) return 1999;
         int i = DEFAULT_ORDER.indexOf(e.pkg);
         return i >= 0 ? i : 1000;
     }
 
     boolean isSettings(AppEntry e) {
-        return SETTINGS_KEY.equals(e.key) || TV_SETTINGS.equals(e.pkg) || PRESENT_KEY.equals(e.key);
+        return SETTINGS_KEY.equals(e.key) || TV_SETTINGS.equals(e.pkg);
     }
 
     List<Inputs.Input> inputs = new ArrayList<>();
@@ -3406,23 +3398,6 @@ public class MainActivity extends Activity {
         c.drawRect(0, 0, w, h, p);
         Bitmap g = Glyphs.get("input", (int) (h * 0.5f), Color.WHITE);
         c.drawBitmap(g, (w - g.getWidth()) / 2f, (h - g.getHeight()) / 2f, null);
-        e.banner = new BitmapDrawable(getResources(), b);
-        e.icon = e.banner;
-        all.put(e.key, e);
-    }
-
-    /** Presentation tile (shown while Presentation mode is on): tvOS-style card. */
-    void addPresentEntry() {
-        AppEntry e = new AppEntry();
-        e.key = PRESENT_KEY;
-        e.pkg = getPackageName();
-        e.defaultLabel = I18n.s(this, "Presentation", "Sunum");
-        e.label = getCustomAppName(this, e.key, null, e.defaultLabel);
-        e.system = true;
-        e.color = 0xFF4370FF;
-        e.launch = new Intent(this, com.techgenius.tvoslauncher.present.PresentationActivity.class)
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        Bitmap b = com.techgenius.tvoslauncher.present.PresentIcon.banner(360, 216);
         e.banner = new BitmapDrawable(getResources(), b);
         e.icon = e.banner;
         all.put(e.key, e);
@@ -3765,6 +3740,30 @@ public class MainActivity extends Activity {
         showMenu(tile, a.label, labels, actions, labels.indexOf(uninstLabel));
     }
 
+    /** Small chooser that keeps launcher settings separate from the TV's own settings. */
+    void showSettingsChooser() {
+        String[] choices = {
+                I18n.s(this, "testOS Settings", "Настройки testOS"),
+                I18n.s(this, "TV Settings", "Настройки телевизора")
+        };
+        new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                .setTitle(I18n.s(this, "Settings", "Настройки"))
+                .setItems(choices, (dialog, which) -> {
+                    returningFromSettings = true;
+                    weatherOpen = false;
+                    if (which == 0) {
+                        startActivity(new Intent(this, SettingsActivity.class));
+                    } else {
+                        Intent tvSettings = new Intent(Settings.ACTION_SETTINGS);
+                        if (!Suggestions.start(this, tvSettings)) {
+                            try { startActivity(tvSettings); } catch (Exception ignored) { }
+                        }
+                    }
+                })
+                .setNegativeButton(I18n.s(this, "Cancel", "Отмена"), null)
+                .show();
+    }
+
     // ---------------------------------------------------------------- Control Center
 
     /**
@@ -3791,27 +3790,12 @@ public class MainActivity extends Activity {
                 glassSource,
                 cells,
                 () -> {
-                    closeProfilePicker();
-                    ControlPanelOverlay.openInputs(this, () -> showInputs(popoverReturn != null ? popoverReturn : ccButton));
-                },
-                () -> {
                     dropPicker();
                     pickerLayer = null;
                     popoverReturn = null;
                     VpnController.toggleHappWithFeedback(this);
                 },
-                () -> {
-                    dropPicker();
-                    pickerLayer = null;
-                    popoverReturn = null;
-                    weatherOpen = false;
-                    returningFromSettings = true;
-                    startActivity(new Intent(this, SettingsActivity.class));
-                },
-                () -> {
-                    closeProfilePicker();
-                    showSearch(null);
-                });
+                this::showSettingsChooser);
 
         FrameLayout.LayoutParams plp = (FrameLayout.LayoutParams) panel.getLayoutParams();
         plp.gravity = Gravity.TOP | Gravity.END;
