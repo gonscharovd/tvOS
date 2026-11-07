@@ -1729,7 +1729,7 @@ final class SceneHome {
                 int bw = maxX - minX + 1;
                 int bh = maxY - minY + 1;
                 boolean nearlySquare = Math.abs(bw - bh) <= Math.max(bw, bh) * 0.18f;
-                // Sample an inner inset (14% in from trimmed bounds) so rounded-square legacy icons (like Kodi, Stremio, Projectivy)
+                // Sample an inner inset (14% in from trimmed bounds) so rounded-square legacy icons (like Kodi and Projectivy)
                 // are detected as full-bleed icons and zoomed past their rounded corners!
                 int insetX = Math.max(6, Math.round(bw * 0.14f));
                 int insetY = Math.max(6, Math.round(bh * 0.14f));
