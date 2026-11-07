@@ -285,9 +285,20 @@ public final class CleanYourTv {
     }
 
     private static void saveDisabledPackages(Context c, String modelSlug, List<String> newlyDisabled) {
-        LinkedHashSet<String> merged = new LinkedHashSet<>(getSavedDisabledPackages(c));
-        if (newlyDisabled != null) merged.addAll(newlyDisabled);
-        replaceSavedDisabledPackages(c, modelSlug, new ArrayList<>(merged));
+        LinkedHashSet<String> verifiedDisabled = new LinkedHashSet<>();
+        for (String pkg : getSavedDisabledPackages(c)) {
+            if (Boolean.FALSE.equals(queryPackageEnabledState(c, pkg))) {
+                verifiedDisabled.add(pkg);
+            }
+        }
+        if (newlyDisabled != null) {
+            for (String pkg : newlyDisabled) {
+                if (Boolean.FALSE.equals(queryPackageEnabledState(c, pkg))) {
+                    verifiedDisabled.add(pkg);
+                }
+            }
+        }
+        replaceSavedDisabledPackages(c, modelSlug, new ArrayList<>(verifiedDisabled));
     }
 
     private static void clearSavedDisabledPackages(Context c) {
@@ -348,6 +359,11 @@ public final class CleanYourTv {
         String doneModel = prefs(c).getString(KEY_DEBLOAT_DONE_MODEL, "");
         List<String> saved = getSavedDisabledPackages(c);
         if (slug.equalsIgnoreCase(doneModel) && !saved.isEmpty()) {
+            for (String pkg : saved) {
+                if (!Boolean.FALSE.equals(queryPackageEnabledState(c, pkg))) {
+                    return false;
+                }
+            }
             return true;
         }
 
