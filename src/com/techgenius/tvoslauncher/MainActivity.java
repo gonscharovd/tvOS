@@ -1879,11 +1879,6 @@ public class MainActivity extends Activity {
         c.drawRect(0, 0, w, h * 0.2f, p);
     }
 
-    /**
-     * News layout (editorial, built for reading): a blurred, darkened copy of the photo fills the
-     * screen, the photo itself sits sharp on the right ~60% and fades in from the left, and the left
-     * side is a near-solid dark panel for the headline and summary. Baked once per story.
-     */
 
 
     /** Info block sits just above the dock while a dock app is focused... */
@@ -2004,13 +1999,10 @@ public class MainActivity extends Activity {
         return "continue".equals(shelfMode);
     }
 
-    /** Loads cached suggestions at once and refreshes them in the background when stale or reconfigured. */
+    /** Legacy hero content is disabled in this build. */
     String lastCwSig = "";
 
-    /**
-     * One carousel: news / recommendations (if this profile shows them) with Continue Watching
-     * titles mixed in (if it's on) — one after every two items; or Continue Watching alone.
-     */
+    /** Obsolete carousel mixing logic retained temporarily for source compatibility. */
     void loadHero() {
         // Recommendations, news and streaming-service continue-watching were removed.
         // Keep the legacy artwork container hidden so existing home-screen layouts remain stable.
@@ -2023,11 +2015,7 @@ public class MainActivity extends Activity {
     }
 
     /** Resume first: up to six recent Continue Watching titles, then news and recommendations. */
-    static List<Suggestions.Item> mixContinue(List<Suggestions.Item> base, List<Suggestions.Item> cw) {
-        List<Suggestions.Item> out = new ArrayList<>(cw.subList(0, Math.min(6, cw.size())));
-        if (base != null) out.addAll(base);
-        return out;
-    }
+
 
     void updateEmpty() {
         boolean show = continueMode() && heroItems.isEmpty() && !folderMode;
@@ -2346,7 +2334,6 @@ public class MainActivity extends Activity {
         loadHero();
     }
 
-    /** News stories have no button: they are read right on the shelf. */
 
 
     /** Carousel and capsule navigation: LEFT/RIGHT browse, OK opens, UP/DOWN move between capsule, carousel and dock. */
@@ -5083,7 +5070,7 @@ public class MainActivity extends Activity {
         if (sceneHome != null) sceneHome.refreshWhoBar();
     }
 
-    /** Switch to a profile: its layout, background, top-shelf tab and Continue Watching. */
+    /** Legacy profile-switch callback; single-user builds keep the active profile unchanged. */
     void switchProfile(String id) {
         if (id.equals(Profiles.current(this).id) && prefs != null) {
             refreshAvatar();
