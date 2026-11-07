@@ -544,6 +544,11 @@ public class MainActivity extends Activity {
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
         if (level >= TRIM_MEMORY_UI_HIDDEN) {
+            if (heroFront != null) heroFront.setImageDrawable(null);
+            if (heroBack != null) heroBack.setImageDrawable(null);
+            heroBlur = null;
+            glassBg = wallBlur;
+            if (sceneHome != null) sceneHome.releaseTransientCaches();
             if (Scenes.isScenesLook(this)) {
                 if (wallView != null && wallView.getDrawable() instanceof BitmapDrawable) {
                     Bitmap wb = ((BitmapDrawable) wallView.getDrawable()).getBitmap();
@@ -2050,7 +2055,7 @@ public class MainActivity extends Activity {
         boolean reconfigured = v != heroVersion;
         heroVersion = v;
         io.execute(() -> {
-            List<Suggestions.Item> cwItems = cw ? MediaWatchService.Store.list(this) : new ArrayList<>();
+            List<Suggestions.Item> cwItems = new ArrayList<>();
             StringBuilder sig = new StringBuilder();
             for (Suggestions.Item it : cwItems) sig.append(it.key).append(it.progress).append(';');
             boolean cwChanged = !sig.toString().equals(lastCwSig);
@@ -2088,11 +2093,9 @@ public class MainActivity extends Activity {
     void updateEmpty() {
         boolean show = continueMode() && heroItems.isEmpty() && !folderMode;
         if (show) {
-            shelfEmpty.setText(MediaWatchService.granted(this)
-                    ? "Shows and movies you play will appear here."
-                    : !Perms.listenerSupported(this)
-                    ? "Continue Watching isn't available on this TV (Android limits it on low-memory TVs)."
-                    : "To see what you watch here, allow it in Settings \u2192 Permissions.");
+            shelfEmpty.setText(I18n.s(this,
+                    "System playback history is not available in this build.",
+                    "История воспроизведения Android недоступна в этой сборке."));
         }
         shelfEmpty.animate().alpha(show ? 0.75f : 0f).setDuration(250).start();
     }
@@ -2199,15 +2202,23 @@ public class MainActivity extends Activity {
             String logoPath = Suggestions.logoFor(this, it);
             Bitmap logo = logoPath.isEmpty() ? null : Suggestions.image(this, logoPath, "w500", 500);
             handler.post(() -> {
-                if (heroIndex != want || heroItems.isEmpty()) return;
+                if (heroIndex != want || heroItems.isEmpty()) {
+                    if (bd != null && !bd.isRecycled()) bd.recycle();
+                    if (bdBlur != null && bdBlur != bd && !bdBlur.isRecycled()) bdBlur.recycle();
+                    if (logo != null && !logo.isRecycled()) logo.recycle();
+                    return;
+                }
                 applyHeroInfo(it, logo, dir);
                 if (bd != null) crossfadeHero(bd, dir);
                 if (bdBlur != null) {
+                    Bitmap previousBlur = heroBlur;
                     heroBlur = bdBlur;
                     if (heroShown) {
                         glassBg = heroBlur;
                         invalidateGlass();
                     }
+                    if (previousBlur != null && previousBlur != bdBlur && previousBlur != wallBlur
+                            && !previousBlur.isRecycled()) previousBlur.recycle();
                 }
             });
         });
@@ -2429,7 +2440,6 @@ public class MainActivity extends Activity {
     }
 
     void removeHeroItem(Suggestions.Item it) {
-        MediaWatchService.Store.remove(this, it.key);
         selectRemove(false);
         lastCwSig = "";
         heroVersion = -1;
@@ -2479,8 +2489,7 @@ public class MainActivity extends Activity {
                         act.add(() -> openHeroItem(it));
                         l.add("Remove from Continue Watching");
                         act.add(() -> {
-                            MediaWatchService.Store.remove(this, it.key);
-                            heroItems = new ArrayList<>();
+                                                heroItems = new ArrayList<>();
                             loadHero();
                         });
                         showMenu(heroButton, it.title, l, act, 1);
@@ -2620,23 +2629,21 @@ public class MainActivity extends Activity {
             Suggestions.open(this, it);
             return;
         }
-        MediaWatchService.Store.openContinueItem(this, it, () -> {
-            for (AppEntry e : all.values()) {
-                if (it.pkg.equals(e.pkg) && e.launch != null) {
-                    launchAnimated(heroButton, e);
-                    return;
-                }
+        for (AppEntry e : all.values()) {
+            if (it.pkg.equals(e.pkg) && e.launch != null) {
+                launchAnimated(heroButton, e);
+                return;
             }
-            Intent i = getPackageManager().getLeanbackLaunchIntentForPackage(it.pkg);
-            if (i == null) i = getPackageManager().getLaunchIntentForPackage(it.pkg);
-            if (i != null) {
-                prepareForAppLaunch();
-                Suggestions.start(this, i);
-                overridePendingTransition(R.anim.app_open_enter, R.anim.app_open_exit);
-                final String pkg = it.pkg;
-                io.execute(() -> noteLaunched(pkg));
-            }
-        });
+        }
+        Intent i = getPackageManager().getLeanbackLaunchIntentForPackage(it.pkg);
+        if (i == null) i = getPackageManager().getLaunchIntentForPackage(it.pkg);
+        if (i != null) {
+            prepareForAppLaunch();
+            Suggestions.start(this, i);
+            overridePendingTransition(R.anim.app_open_enter, R.anim.app_open_exit);
+            final String pkg = it.pkg;
+            io.execute(() -> noteLaunched(pkg));
+        }
     }
 
     // ---------------------------------------------------------------- focus sway

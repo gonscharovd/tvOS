@@ -209,7 +209,6 @@ public class PowerService extends AccessibilityService {
         }
         syncVolumeHoldFix();
         LocalAdb.ensureKeepAliveWatchdog(this);
-        MediaWatchService.ensureSessionTracking(this);
 
         // If "Launch Automatically on System Boot" is enabled and the system just booted,
         // AccessibilityService connects much earlier than BOOT_COMPLETED on many TVs: launch Home immediately!
@@ -752,7 +751,6 @@ public class PowerService extends AccessibilityService {
                     || code == KeyEvent.KEYCODE_MEDIA_STOP
                     || code == KeyEvent.KEYCODE_MEDIA_PAUSE
                     || code == KeyEvent.KEYCODE_DPAD_CENTER)) {
-            MediaWatchService.pollActiveSessionsImmediate(this);
         }
         // Fallback when LocalAdb getevent watcher is not connected (Mode 1 or when DUMP permission is not active)
         if (!LocalAdb.volWatchConnected
@@ -830,7 +828,6 @@ public class PowerService extends AccessibilityService {
         if (e != null && e.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED && e.getPackageName() != null) {
             String fgPkg = e.getPackageName().toString();
             RecentAppsOverlay.recordAppUsed(this, fgPkg);
-            MediaWatchService.pollActiveSessionsAsync(this);
 
             // Fire TV Stick ("Home on Fire" style) & OEM Home Button Fix:
             // On Fire OS 7/8, Amazon intercepts KEYCODE_HOME before onKeyEvent and launches com.amazon.tv.launcher

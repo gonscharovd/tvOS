@@ -99,7 +99,12 @@ public class SettingsActivity extends Activity {
     };
 
     private final List<Runnable> refreshers = new ArrayList<>();
-    private static final Map<String, Bitmap> SCENE_THUMB_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final android.util.LruCache<String, Bitmap> SCENE_THUMB_CACHE =
+            new android.util.LruCache<String, Bitmap>(2 * 1024 * 1024) {
+                @Override protected int sizeOf(String key, Bitmap value) {
+                    return value == null || value.isRecycled() ? 0 : Math.max(1, value.getAllocationByteCount());
+                }
+            };
     private static final java.util.concurrent.ExecutorService THUMB_EXEC =
             java.util.concurrent.Executors.newFixedThreadPool(2);
     private static volatile Bitmap sCachedBackdropBmp = null;
@@ -120,6 +125,16 @@ public class SettingsActivity extends Activity {
     };
 
     private String currentSection = LOOK_SCENES;
+
+    @Override
+    public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        if (level >= TRIM_MEMORY_UI_HIDDEN) {
+            SCENE_THUMB_CACHE.evictAll();
+            sCachedBackdropBmp = null;
+            sCachedBackdropKey = null;
+        }
+    }
     private boolean inRows = false;
     private boolean rebuilding = false;
     private String liftedSceneId = null;
@@ -471,7 +486,7 @@ public class SettingsActivity extends Activity {
                 for (Scenes.Spec spec : Scenes.ALL) {
                     if (spec.bgAsset == null || spec.bgAsset.isEmpty()) continue;
                     String tk = spec.bgAsset + ":" + reqW + "x" + reqH;
-                    if (!SCENE_THUMB_CACHE.containsKey(tk)) {
+                    if (SCENE_THUMB_CACHE.get(tk) == null) {
                         Bitmap raw = Scenes.loadAssetBitmap(ctx, spec.bgAsset, reqW, reqH);
                         if (raw != null) {
                             Bitmap scaled = Bitmap.createScaledBitmap(raw, reqW, reqH, true);
@@ -483,7 +498,7 @@ public class SettingsActivity extends Activity {
                 for (int i = 0; i < Scenes.CLASSIC_PHOTOS.length; i++) {
                     String assetPath = "backgrounds/" + Scenes.CLASSIC_PHOTOS[i][0];
                     String tk = assetPath + ":" + reqW + "x" + reqH;
-                    if (!SCENE_THUMB_CACHE.containsKey(tk)) {
+                    if (SCENE_THUMB_CACHE.get(tk) == null) {
                         Bitmap raw = Scenes.loadAssetBitmap(ctx, assetPath, reqW, reqH);
                         if (raw != null) {
                             Bitmap scaled = Bitmap.createScaledBitmap(raw, reqW, reqH, true);
@@ -1445,15 +1460,6 @@ public class SettingsActivity extends Activity {
                 () -> Clicks.enabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
                 () -> Clicks.setEnabled(this, !Clicks.enabled(this)));
 
-        section(tr("CLASSIC TOP SHELF", "КЛАССИЧЕСКАЯ ВЕРХНЯЯ ПАНЕЛЬ"));
-        row(tr("Classic Top Shelf content", "Klasik Üst Raf içeriği"), () -> {
-            switch (Suggestions.shelf(this)) {
-                case Suggestions.SHELF_RECS: return tr("Recommendations", "Öneriler");
-                case Suggestions.SHELF_NEWS: return tr("News", "Haberler");
-                case Suggestions.SHELF_NONE: return tr("Off", "Kapalı");
-                default: return tr("Recommendations & News", "Öneriler ve Haberler");
-            }
-        }, () -> openSubMenu("top_shelf"));
         row(tr("Run first-time setup again…", "İlk kurulumu tekrar çalıştır…"),
                 () -> "›",
                 () -> {
@@ -1480,9 +1486,6 @@ public class SettingsActivity extends Activity {
                 this::showAdbModeSelectorDialog);
         row(tr("ADB connection status", "ADB bağlantı durumu"),
                 () -> LocalAdb.getStatusLabel(this),
-                this::pairOrRepairAdb);
-        row(tr("Pair / Repair ADB connection", "ADB bağlantısını eşleştir / onar"),
-                () -> LocalAdb.isPaired(this) ? tr("Repair", "Onar") : tr("Pair now", "Şimdi eşleştir"),
                 this::pairOrRepairAdb);
         row(tr("Turn On / Off ADB", "ADB'yi Aç / Kapat"),
                 () -> (LocalAdb.isAdbSettingEnabled(this) || LocalAdb.portReachable)
@@ -1531,9 +1534,6 @@ public class SettingsActivity extends Activity {
         row(tr("Manual debloat (All system apps)…", "Manuel debloat (Tüm sistem uygulamaları)…"),
                 () -> tr("Advanced ›", "Gelişmiş ›"),
                 this::promptManualDebloatWarning);
-        row(tr("Disabled apps backup", "Devre dışı bırakılan uygulamalar kaydı"),
-                () -> advSavedSummary != null ? advSavedSummary : "…",
-                () -> openSubMenu("cyt_saved"));
         row(tr("Restore debloated apps…", "Debloat edilen uygulamaları geri yükle…"),
                 () -> tr("Restore ›", "Geri Yükle ›"),
                 () -> openSubMenu("cyt_restore"));
@@ -1556,7 +1556,7 @@ public class SettingsActivity extends Activity {
         }
     }
 
-    private volatile String advLaunchersSummary, advDebloatSummary, advSavedSummary;
+    private volatile String advLaunchersSummary, advDebloatSummary;
     private boolean advSummariesLoading;
 
     private void loadAdvancedSummariesAsync() {
@@ -1564,22 +1564,19 @@ public class SettingsActivity extends Activity {
         advSummariesLoading = true;
         final android.content.Context app = this;
         new Thread(() -> {
-            String launchers, debloat, saved;
+            String launchers, debloat;
             try {
                 launchers = CleanYourTv.getSystemLaunchersSummary(app);
                 debloat = CleanYourTv.getDebloatStatusSummary(app);
-                saved = CleanYourTv.getSavedDisabledSummary(app);
             } catch (Throwable t) {
-                launchers = debloat = saved = "";
+                launchers = debloat = "";
             }
-            final String l = launchers, d = debloat, s = saved;
+            final String l = launchers, d = debloat;
             runOnUiThread(() -> {
                 advSummariesLoading = false;
-                boolean changed = !l.equals(advLaunchersSummary) || !d.equals(advDebloatSummary)
-                        || !s.equals(advSavedSummary);
+                boolean changed = !l.equals(advLaunchersSummary) || !d.equals(advDebloatSummary);
                 advLaunchersSummary = l;
                 advDebloatSummary = d;
-                advSavedSummary = s;
                 if (changed && !isFinishing()) refreshAll();
             });
         }, "adv-summaries").start();
@@ -1809,7 +1806,7 @@ public class SettingsActivity extends Activity {
             "settings", "setup", "profiles", "home", "home_default",
             "app_custom_names", "button_mapper", "control_panel",
             "weather", "suggestions", "inputs", "clicks",
-            "media_watch", "cleanyourtv_prefs", "local_adb", "present",
+            "cleanyourtv_prefs", "local_adb", "present",
             "custom_media", "app_updater"
         };
         for (String p : knownPrefs) {
@@ -1817,10 +1814,6 @@ public class SettingsActivity extends Activity {
                 getSharedPreferences(p, MODE_PRIVATE).edit().clear().commit();
             } catch (Throwable ignored) {
             }
-        }
-        try {
-            MediaWatchService.Store.clear(this);
-        } catch (Throwable ignored) {
         }
         I18n.resetCache();
         Intent setup = new Intent(this, SetupActivity.class)
