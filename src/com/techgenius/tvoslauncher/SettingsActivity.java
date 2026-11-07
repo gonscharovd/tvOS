@@ -74,7 +74,6 @@ public class SettingsActivity extends Activity {
         {WEATHER, "cloud"},
         {APPS, "apps"},
         {PROFILES, "person"},
-        {BUTTON_MAPPER, "remote"},
         {QUICK, "bolt"},
         {LANGUAGE, "globe"},
         {ADVANCED, "shield"},
