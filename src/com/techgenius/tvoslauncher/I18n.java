@@ -2197,7 +2197,7 @@ public final class I18n {
         if (en.startsWith("Location set to ") && en.endsWith(".")) {
             return "Местоположение задано: " + en.substring("Location set to ".length(), en.length() - 1) + ".";
         }
-        if (en.startsWith("Switch to ")) return "Переключиться на " + en.substring("Switch to ".length());
+        if (en.startsWith("Switch to ")) return "Выбрать профиль «" + en.substring("Switch to ".length()) + "»";
         if (en.endsWith("% used · Recent Apps")) {
             String num = en.substring(0, en.length() - "% used · Recent Apps".length());
             return num + "% · " + map.getOrDefault("Recent Apps", "Недавние приложения");
