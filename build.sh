@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds and signs build/tvos-home.apk with plain SDK tools (no Gradle).
+# Builds and signs build/testOS.apk with plain SDK tools (no Gradle).
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -23,7 +23,7 @@ rm -rf build && mkdir -p build/gen build/classes build/dex
 "$BT/aapt2" compile --dir res -o build/res.zip
 "$BT/aapt2" link -o build/unsigned.apk -I "$JAR" --manifest AndroidManifest.xml --rename-manifest-package com.gonscharovd.tvoslauncher \
     -A assets --java build/gen --min-sdk-version 24 --target-sdk-version 34 \
-    --version-code "${VERSION_CODE:-14}" --version-name "${VERSION_NAME:-2.1.2-custom2}" build/res.zip
+    --version-code "${VERSION_CODE:-15}" --version-name "${VERSION_NAME:-2.1.2-testOS1}" build/res.zip
 
 javac -encoding UTF-8 --release 11 -classpath "$JAR" \
     -d build/classes $(find src build/gen -name '*.java')
@@ -38,17 +38,17 @@ javac -encoding UTF-8 --release 11 -classpath "$JAR" \
 if [ -n "${RELEASE_KEYSTORE:-}" ]; then
     [ -n "${RELEASE_KEYSTORE_PASS:-}" ] || { echo "Set RELEASE_KEYSTORE_PASS for $RELEASE_KEYSTORE" >&2; exit 1; }
     "$BT/apksigner" sign --ks "$RELEASE_KEYSTORE" --ks-pass env:RELEASE_KEYSTORE_PASS \
-        --ks-key-alias "${RELEASE_KEY_ALIAS:-tvos-release}" --out build/tvos-home.apk build/aligned.apk
+        --ks-key-alias "${RELEASE_KEY_ALIAS:-tvos-release}" --out build/testOS.apk build/aligned.apk
     echo "Signed with the release key"
 else
     KS=debug.keystore
     if [ ! -f "$KS" ]; then
         keytool -genkeypair -keystore "$KS" -storepass android -keypass android -alias debug \
-            -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=tvOS Launcher debug" >/dev/null
+            -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=testOS debug" >/dev/null
     fi
     "$BT/apksigner" sign --ks "$KS" --ks-pass pass:android --key-pass pass:android \
-        --out build/tvos-home.apk build/aligned.apk
+        --out build/testOS.apk build/aligned.apk
     echo "Signed with the local debug key (development build)"
 fi
 
-echo "Built build/tvos-home.apk"
+echo "Built build/testOS.apk"
