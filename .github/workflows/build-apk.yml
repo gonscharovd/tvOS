@@ -43,10 +43,30 @@ jobs:
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
 
+      - name: Prepare persistent preview signing key
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_KEYSTORE_PASS: ${{ secrets.RELEASE_KEYSTORE_PASS }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          test -n "$RELEASE_KEYSTORE_BASE64" || { echo "Missing RELEASE_KEYSTORE_BASE64 secret" >&2; exit 1; }
+          test -n "$RELEASE_KEYSTORE_PASS" || { echo "Missing RELEASE_KEYSTORE_PASS secret" >&2; exit 1; }
+          test -n "$RELEASE_KEY_ALIAS" || { echo "Missing RELEASE_KEY_ALIAS secret" >&2; exit 1; }
+          printf '%s' "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/tvos-preview.jks"
+          test -s "$RUNNER_TEMP/tvos-preview.jks"
+          echo "RELEASE_KEYSTORE=$RUNNER_TEMP/tvos-preview.jks" >> "$GITHUB_ENV"
+          echo "RELEASE_KEYSTORE_PASS=$RELEASE_KEYSTORE_PASS" >> "$GITHUB_ENV"
+          echo "RELEASE_KEY_ALIAS=$RELEASE_KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=2.1.70" >> "$GITHUB_ENV"
+          echo "VERSION_CODE=85" >> "$GITHUB_ENV"
+
       - name: Test CleanYourTV core package protection
         run: python3 tests/test_clean_your_tv_protection.py
       - name: Test artwork memory and Settings cleanup
         run: python3 tests/test_memory_settings_cleanup.py
+      - name: Test settings backup safety
+        run: python3 tests/test_settings_backup_safety.py
 
       - name: Test grouped Settings navigation
         run: python3 tests/test_settings_navigation.py
@@ -75,18 +95,25 @@ jobs:
       - name: Test cross-platform build contract
         run: python3 tests/test_build_contract.py
 
-      - name: Build and sign development APK
+      - name: Build signed preview APK
         run: bash build.sh
 
-      - name: Verify APK
+      - name: Verify preview APK signature and version
         run: |
-          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose build/tvos-home.apk
-          "$ANDROID_HOME/build-tools/34.0.0/aapt" dump badging build/tvos-home.apk | head -n 5
+          set -euo pipefail
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose --print-certs build/tvos-home.apk
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs build/tvos-home.apk | grep -qi '5dbf8846d9bb76a764928da8c8a833a837b44ba00f4a7c0b60dc77490319b10a'
+          "$ANDROID_HOME/build-tools/34.0.0/aapt" dump badging build/tvos-home.apk | tee /tmp/tvos-badging.txt
+          grep -F "package: name='com.gonscharovd.tvoslauncher' versionCode='$VERSION_CODE' versionName='$VERSION_NAME'" /tmp/tvos-badging.txt
 
-      - name: Upload APK
+      - name: Upload signed preview APK
         uses: actions/upload-artifact@v4
         with:
-          name: testOS-ci-debug
+          name: testOS-preview-signed
           path: build/tvos-home.apk
           if-no-files-found: error
           retention-days: 14
+
+      - name: Remove preview signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/tvos-preview.jks"
