@@ -36,6 +36,9 @@ jobs:
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
 
+      - name: Test CleanYourTV core package protection
+        run: python3 tests/test_clean_your_tv_protection.py
+
       - name: Build and sign development APK
         run: bash build.sh
 
