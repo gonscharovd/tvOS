@@ -295,13 +295,6 @@ public class MainActivity extends Activity {
             @Override public void onReceive(Context c, Intent i) {
                 AirPlayGuard.check(c, true);
                 LocalAdb.scheduleKeepAliveRepair(c, 1500L);
-                if (!Profiles.askOnWake(c) || Profiles.list(c).size() < 2) return;
-                if (resumed) {
-                    showProfilePicker(true);
-                } else {
-                    startActivity(new Intent(c, MainActivity.class).putExtra("pick_profile", true)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                }
             }
         };
         registerReceiver(wakeReceiver, new IntentFilter(Intent.ACTION_SCREEN_ON));
@@ -319,12 +312,6 @@ public class MainActivity extends Activity {
             I18n.setLang(this, lang);
             activeLang = I18n.getLang(this);
             recreate();
-            return;
-        }
-        if (intent.getBooleanExtra("pick_profile", false)) {
-            closeMenu();
-            if (launchOverlay != null) finishLaunchReturn();
-            showProfilePicker(true);
             return;
         }
         // adb perf probe: --es perf weather|status|hero|dockglass|shadows hides one layer to measure its GPU cost.
@@ -430,7 +417,7 @@ public class MainActivity extends Activity {
         updateStatusClockFormat();
         if (avatarView != null) {
             avatarView.setImageBitmap(Profiles.avatar(this, Profiles.current(this), avatarSize));
-            avatarView.setVisibility(Profiles.list(this).size() > 1 ? View.VISIBLE : View.GONE);
+            avatarView.setVisibility(View.GONE);
         }
         ensureTvListingsPermission(); // retained for the optional volume-key permission repair path
         if (Scenes.isScenesLook(this) && sceneHome != null) {
@@ -806,7 +793,6 @@ public class MainActivity extends Activity {
             v.animate().withLayer().scaleX(has ? 1.14f : 1f).scaleY(has ? 1.14f : 1f)
                     .setDuration(180).setInterpolator(LIFT).start();
         });
-        avatar.setOnClickListener(v -> showProfilePicker(false));
 
         // Room around the buttons for their focus growth (1.12x / 1.18x) so nothing is clipped;
         // the margins shrink by the same amount, so the row sits exactly where it did.
@@ -5139,7 +5125,7 @@ public class MainActivity extends Activity {
         boolean multi = Profiles.list(this).size() > 1;
         if (avatarView != null) {
             avatarView.setImageBitmap(Profiles.avatar(this, Profiles.current(this), avatarSize));
-            avatarView.setVisibility(multi ? View.VISIBLE : View.GONE);
+            avatarView.setVisibility(View.GONE);
         }
         if (sceneHome != null) sceneHome.refreshWhoBar();
     }
