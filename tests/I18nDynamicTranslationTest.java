@@ -131,7 +131,7 @@ public final class I18nDynamicTranslationTest {
                         + "• Only disable packages if you know exactly what you are doing.\n"
                         + "• Disabling core Android system services, TV input/tuner services, or Settings packages can break HDMI inputs, Wi-Fi, remote control, or cause a bootloop.\n\n"
                         + "Proceed at your own risk?",
-                "ПРЕДУПРЕЖДЕНИЕ: в ручном режиме отображаются ВСЕ системные приложения.\n\n"
+                "ПРЕДУПРЕЖДЕНИЕ: в ручном режиме отображаются ВСЕ системные приложения телевизора.\n\n"
                         + "• Отключайте пакеты, только если точно знаете их назначение.\n"
                         + "• Отключение основных служб Android, служб ТВ-входов / тюнера или настроек может нарушить работу HDMI, Wi-Fi, пульта или привести к циклической перезагрузке.\n\n"
                         + "Продолжить на свой риск?");
