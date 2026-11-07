@@ -9,7 +9,7 @@ workflow = Path(".github/workflows/build-apk.yml").read_text(encoding="utf-8")
 updater = Path("src/com/techgenius/tvoslauncher/AppUpdater.java").read_text(encoding="utf-8")
 
 assert "$env:VERSION_CODE" in build_ps and "$env:VERSION_NAME" in build_ps
-assert "\${VERSION_CODE:-" in build_sh and "\${VERSION_NAME:-" in build_sh
+assert "${VERSION_CODE:-" in build_sh and "${VERSION_NAME:-" in build_sh
 
 assert 'build\\tvos-home.apk' in build_ps
 assert "build/tvos-home.apk" in build_sh
