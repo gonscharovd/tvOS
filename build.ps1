@@ -47,7 +47,7 @@ try {
     [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, (Resolve-Path "build\dex\classes.dex").Path, "classes.dex", [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null
 
     # Package assets with POSIX forward slashes (Windows aapt2 -A writes backslashes which Android AssetManager cannot open)
-    $assetsRoot = (Resolve-Path "assets").Path
+    $assetsRoot = (Resolve-Path "build\\assets").Path
     $noCompressExts = @(".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp3", ".wav", ".ogg", ".mp4", ".webm")
     Get-ChildItem -Recurse -File -Path $assetsRoot | ForEach-Object {
         $rel = $_.FullName.Substring($assetsRoot.Length + 1).Replace('\', '/')
