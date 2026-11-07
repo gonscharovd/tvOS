@@ -666,6 +666,8 @@ public final class I18n {
         ru.put("Reset settings?", "Сбросить настройки?");
         ru.put("Done", "Готово");
         ru.put("Not done", "Не завершено");
+        ru.put("testOS Settings", "Настройки testOS");
+        ru.put("TV Settings", "Настройки телевизора");
         ru.put("Cancel", "Отмена");
         ru.put("Apply", "Применить");
         ru.put("Save", "Сохранить");
