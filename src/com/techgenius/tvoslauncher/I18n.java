@@ -1974,8 +1974,8 @@ public final class I18n {
                 String first = parts[0].substring("Verified disabled: ".length()).replace(" of ", " из ")
                         .replace(" packages for ", " пакетов для ");
                 String second = parts[1].replace("Failed or unverified: ", "Не удалось подтвердить: ");
-                String third = parts[2].replace("Saved restore list: ", "Сохранено в списке восстановления: ")
-                        .replace(" packages.", " пакетов.");
+                String third = parts[2].replace("Saved restore list: ", "Пакетов в списке восстановления: ")
+                        .replace(" packages.", ".");
                 return "Отключение подтверждено: " + first + ".\n" + second + "\n" + third;
             }
         }
@@ -1997,7 +1997,7 @@ public final class I18n {
             return "Восстановить сохранённые (" + en.substring("Restore Saved (".length(), en.length() - 1) + ")";
         }
         if (en.startsWith("Restore Model List (") && en.endsWith(")")) {
-            return "Восстановить список модели (" + en.substring("Restore Model List (".length(), en.length() - 1) + ")";
+            return "Восстановить список модели (пакетов: " + en.substring("Restore Model List (".length(), en.length() - 1) + ")";
         }
         if (en.startsWith("No saved disabled-app backup was found, and no TV model is selected.")) {
             return "Резервная копия отключённых приложений не найдена, модель телевизора не выбрана.\n\n"
@@ -2016,7 +2016,7 @@ public final class I18n {
             }
         }
         if (en.startsWith("Restore (") && en.endsWith(" pkgs)")) {
-            return "Восстановить (" + en.substring("Restore (".length(), en.length() - " pkgs)".length()) + " пакетов)";
+            return "Восстановить пакеты (" + en.substring("Restore (".length(), en.length() - " pkgs)".length()) + ")";
         }
         if (en.startsWith("Re-enabling ") && en.endsWith(" packages over ADB…")) {
             return "Повторно включаем через ADB "
@@ -2127,7 +2127,7 @@ public final class I18n {
         }
         if (en.startsWith("Selected model: ")) return "Выбрана модель: " + en.substring("Selected model: ".length());
         if (en.startsWith("CLOSEST MATCHES (") && en.endsWith(" APPS SCANNED)")) {
-            return "БЛИЖАЙШИЕ СОВПАДЕНИЯ (" + en.substring("CLOSEST MATCHES (".length(), en.length() - " APPS SCANNED)".length()) + " ПРИЛОЖЕНИЙ ПРОВЕРЕНО)";
+            return "БЛИЖАЙШИЕ СОВПАДЕНИЯ (проверено приложений: " + en.substring("CLOSEST MATCHES (".length(), en.length() - " APPS SCANNED)".length()) + ")";
         }
         if (en.startsWith("PAGE ") && en.contains(" OF ")) {
             return en.replace("PAGE ", "СТРАНИЦА ").replace(" OF ", " ИЗ ");
@@ -2167,12 +2167,14 @@ public final class I18n {
             return "Восстановить все сохранённые пакеты (" + en.substring("Restore All Saved Packages (".length(), en.length() - 1) + ")";
         }
         if (en.startsWith("Restore Saved Disabled Apps (") && en.endsWith(" packages)")) {
-            return "Восстановить сохранённые отключённые приложения ("
-                    + en.substring("Restore Saved Disabled Apps (".length(), en.length() - " packages)".length()) + " пакетов)";
+            return "Восстановить сохранённые отключённые приложения (пакетов: "
+                    + en.substring("Restore Saved Disabled Apps (".length(), en.length() - " packages)".length()) + ")";
         }
         if (en.startsWith("Restore Selected Model Profile (") && en.endsWith(" packages)")) {
             String value = en.substring("Restore Selected Model Profile (".length(), en.length() - " packages)".length());
-            return "Восстановить профиль выбранной модели (" + value + " пакетов)";
+            int split = value.lastIndexOf(" — ");
+            if (split > 0) value = value.substring(0, split) + " — пакетов: " + value.substring(split + 3);
+            return "Восстановить профиль выбранной модели (" + value + ")";
         }
         if (en.startsWith("Re-enable all packages in ")) {
             return "Повторно включить все пакеты профиля " + en.substring("Re-enable all packages in ".length());
