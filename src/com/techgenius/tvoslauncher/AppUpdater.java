@@ -46,6 +46,7 @@ public final class AppUpdater {
     private static final String KEY_LATEST_URL = "latest_apk_url";
     private static final String KEY_LATEST_CHANGELOG = "latest_changelog";
     private static final String KEY_LAST_CHECK = "last_check_ms";
+    private static final String KEY_PENDING_INSTALL_PATH = "pending_install_path";
 
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
     private static volatile boolean checking = false;
@@ -610,26 +611,8 @@ public final class AppUpdater {
                 } catch (Throwable ignored) {
                 }
 
-                // 1. If ADB is currently active (port 5555 open), install automatically via LocalAdb
-                if (LocalAdb.isAdbPortCurrentlyOpen()) {
-                    MAIN.post(() -> Toast.makeText(appCtx,
-                            I18n.s(appCtx,
-                                    "Installing update v" + version + " automatically via ADB…",
-                                    "v" + version + " güncellemesi ADB ile otomatik kuruluyor…"),
-                            Toast.LENGTH_LONG).show());
-                    if (LocalAdb.installApkViaAdb(appCtx, apkFile)) {
-                        downloading = false;
-                        if (onUiRefresh != null) MAIN.post(onUiRefresh);
-                        return;
-                    }
-                    MAIN.post(() -> Toast.makeText(appCtx,
-                            I18n.s(appCtx,
-                                    "ADB install failed, opening package installer…",
-                                    "ADB kurulumu başarısız, paket yükleyici açılıyor…"),
-                            Toast.LENGTH_SHORT).show());
-                }
-
-                // 2. If ADB is disabled (Secure Mode) or ADB install was unavailable, use system PackageInstaller
+                // Always use Android's PackageInstaller so the user gets the system confirmation UI.
+                // Do not treat a detached "pm install" shell command as a completed installation.
                 downloading = false;
                 if (onUiRefresh != null) MAIN.post(onUiRefresh);
                 MAIN.post(() -> installWithPackageInstaller(activity, apkFile));
@@ -662,15 +645,24 @@ public final class AppUpdater {
         if (activity == null || !apkFile.exists()) return;
         try {
             if (Build.VERSION.SDK_INT >= 26 && !activity.getPackageManager().canRequestPackageInstalls()) {
+                // Keep the downloaded APK and resume installation automatically when the user
+                // returns from Android's "Install unknown apps" permission screen.
+                prefs(activity).edit()
+                        .putString(KEY_PENDING_INSTALL_PATH, apkFile.getAbsolutePath())
+                        .apply();
                 Toast.makeText(activity,
-                        I18n.s(activity, "Please allow 'Install unknown apps' for testOS.",
-                                "Lütfen testOS için 'Bilinmeyen uygulamaları yükle' iznini verin."),
+                        I18n.s(activity, "Allow testOS to install unknown apps; installation will resume when you return.",
+                                "Разрешите testOS устанавливать неизвестные приложения — после возврата установка продолжится."),
                         Toast.LENGTH_LONG).show();
                 try {
                     Intent permIntent = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
                             Uri.parse("package:" + activity.getPackageName()));
                     activity.startActivity(permIntent);
-                } catch (Throwable ignored) {
+                } catch (Throwable t) {
+                    Toast.makeText(activity,
+                            I18n.s(activity, "Could not open install permission settings.",
+                                    "Не удалось открыть настройки разрешения на установку."),
+                            Toast.LENGTH_LONG).show();
                 }
                 return;
             }
@@ -706,6 +698,32 @@ public final class AppUpdater {
     }
 
     /**
+     * Resumes a download that was waiting for the Android "Install unknown apps" permission.
+     * Call from Activity.onResume() after the user returns from system settings.
+     */
+    public static void resumePendingInstallIfAllowed(Activity activity) {
+        if (activity == null || activity.isFinishing()) return;
+        String path = prefs(activity).getString(KEY_PENDING_INSTALL_PATH, "");
+        if (path == null || path.isEmpty()) return;
+        if (Build.VERSION.SDK_INT >= 26
+                && !activity.getPackageManager().canRequestPackageInstalls()) return;
+
+        File apkFile = new File(path);
+        if (!apkFile.isFile() || apkFile.length() < 10_000L) {
+            prefs(activity).edit().remove(KEY_PENDING_INSTALL_PATH).apply();
+            Toast.makeText(activity,
+                    I18n.s(activity, "The downloaded update is no longer available. Please download it again.",
+                            "Скачанный файл обновления больше недоступен. Скачайте его повторно."),
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // Clear before opening PackageInstaller to avoid duplicate sessions on repeated onResume().
+        prefs(activity).edit().remove(KEY_PENDING_INSTALL_PATH).apply();
+        installWithPackageInstaller(activity, apkFile);
+    }
+
+    /**
      * Receives PackageInstaller status callbacks and launches the user confirmation prompt if required.
      */
     public static final class InstallStatusReceiver extends BroadcastReceiver {
@@ -724,8 +742,20 @@ public final class AppUpdater {
                 }
             } else if (status == PackageInstaller.STATUS_SUCCESS) {
                 Toast.makeText(context,
-                        I18n.s(context, "Update installed!", "Güncelleme yüklendi!"),
+                        I18n.s(context, "Update installed!", "Обновление установлено!"),
                         Toast.LENGTH_SHORT).show();
+            } else if (status == PackageInstaller.STATUS_FAILURE
+                    || status == PackageInstaller.STATUS_FAILURE_ABORTED
+                    || status == PackageInstaller.STATUS_FAILURE_BLOCKED
+                    || status == PackageInstaller.STATUS_FAILURE_CONFLICT
+                    || status == PackageInstaller.STATUS_FAILURE_INCOMPATIBLE
+                    || status == PackageInstaller.STATUS_FAILURE_INVALID
+                    || status == PackageInstaller.STATUS_FAILURE_STORAGE) {
+                String detail = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
+                String message = I18n.s(context, "Could not install update.",
+                        "Не удалось установить обновление.");
+                if (detail != null && !detail.trim().isEmpty()) message += " " + detail;
+                Toast.makeText(context, message, Toast.LENGTH_LONG).show();
             }
         }
     }
