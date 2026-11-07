@@ -104,6 +104,9 @@ public final class I18n {
         add("Could not open install permission settings.", "Не удалось открыть настройки разрешения на установку.");
         add("The downloaded update is no longer available. Please download it again.", "Скачанный файл обновления больше недоступен. Скачайте его повторно.");
         add("Could not install update.", "Не удалось установить обновление.");
+        add("A new version of testOS is available on GitHub.", "На GitHub доступна новая версия testOS.");
+        add("Current version:", "Текущая версия:");
+        add("New version:", "Новая версия:");
         add("iPhone Duo", "iPhone Duo");
         add("iPhone Rounded", "iPhone Rounded");
         add("Tall Glass", "Высокий");
