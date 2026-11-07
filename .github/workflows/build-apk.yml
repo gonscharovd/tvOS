@@ -83,8 +83,8 @@ jobs:
         if: github.ref == 'refs/heads/feature/testos-ui-cleanup'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ env.VERSION_NAME }}
-          name: testOS ${{ env.VERSION_NAME }}
+          tag_name: v2.1.${{ github.run_number }}
+          name: testOS 2.1.${{ github.run_number }}
           generate_release_notes: true
           files: build/tvos-home.apk
           fail_on_unmatched_files: true
