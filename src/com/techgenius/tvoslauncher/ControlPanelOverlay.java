@@ -847,12 +847,8 @@ public final class ControlPanelOverlay {
         return false;
     }
 
-    public static void openTvSettings(Context c) {
-        if (!startExternal(c, new Intent(Settings.ACTION_SETTINGS))) {
-            try {
-                startExternal(c, new Intent(Settings.ACTION_SETTINGS));
-            } catch (Throwable ignored) { }
-        }
+    public static boolean openTvSettings(Context c) {
+        return startExternal(c, new Intent(Settings.ACTION_SETTINGS));
     }
 
     public static void openWifiSettings(Context c) {
