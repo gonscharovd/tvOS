@@ -57,8 +57,13 @@ def main() -> None:
     for package in allowed_exceptions:
         assert not blocked_by_core_regex(package), f"CORE_OK exception unexpectedly blocked: {package}"
 
-    print(f"CleanYourTV protection regex: {len(must_be_blocked)} blocked cases and "
-          f"{len(allowed_exceptions)} CORE_OK exceptions passed.")
+    assert 'NEVER_DISABLE_EXACT.add("ru.sberdevices.SberDevicesServiceSystem")' in SOURCE
+    assert 'NEVER_DISABLE_EXACT.add("ru.sberdevices.starlauncher")' in SOURCE
+    assert "if (disable && !isSafeToDisable(activity, pkg))" in SOURCE
+    assert "if (disable && !allowAnySystemApp && !isSafeToDisable(activity, pkg))" not in SOURCE
+
+    print(f"CleanYourTV protection: {len(must_be_blocked)} core packages, "
+          f"{len(allowed_exceptions)} CORE_OK exceptions, Sber Device Owner/launcher guards passed.")
 
 
 if __name__ == "__main__":
