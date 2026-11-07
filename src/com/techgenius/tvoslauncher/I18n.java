@@ -82,6 +82,15 @@ public final class I18n {
         add("Clock", "Часы");
         add("Clock style", "Стиль часов");
         add("iPhone Duo", "iPhone Duo");
+        add("iPhone Rounded", "iPhone Rounded");
+        add("Tall Glass", "Высокий");
+        add("Classic", "Классический");
+        add("Serif", "С засечками");
+        add("Digital", "Цифровой");
+        add("Condensed", "Узкий");
+        add("Thin", "Тонкий");
+        add("Bold", "Жирный");
+        add("iPhone Duo", "iPhone Duo");
         add("Glass", "Стекло");
         add("12 hour", "12 часов");
         add("24 hour", "24 часа");
