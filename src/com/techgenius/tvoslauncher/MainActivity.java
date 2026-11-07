@@ -60,7 +60,6 @@ import android.widget.ScrollView;
 import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.service.notification.NotificationListenerService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -3936,22 +3935,7 @@ public class MainActivity extends Activity {
                 ? I18n.s(this, "On", "Açık") : I18n.s(this, "Off", "Kapalı");
     }
 
-    void toggleDnd() {
-        android.app.NotificationManager nm = getSystemService(android.app.NotificationManager.class);
-        if (nm == null) return;
-        if (!nm.isNotificationPolicyAccessGranted()) {
-            Perms.requestDndAccess(this);
-            return;
-        }
-        boolean on = nm.getCurrentInterruptionFilter() > android.app.NotificationManager.INTERRUPTION_FILTER_ALL;
-        try {
-            nm.setInterruptionFilter(on
-                    ? android.app.NotificationManager.INTERRUPTION_FILTER_ALL
-                    : android.app.NotificationManager.INTERRUPTION_FILTER_PRIORITY);
-        } catch (SecurityException e) {
-            Perms.requestDndAccess(this);
-        }
-    }
+    void toggleDnd() { Perms.toggleDnd(this); }
 
     String audioOutput() {
         android.media.AudioManager am = getSystemService(android.media.AudioManager.class);
