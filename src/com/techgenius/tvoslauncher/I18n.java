@@ -18,6 +18,9 @@ public final class I18n {
 
     static {
         LANG_MAPS.put(LANG_RU, new HashMap<String, String>());
+        add("min", "мин");
+        add("Now", "Сейчас");
+        add("Today", "Сегодня");
         add("Could not check for updates.", "Не удалось проверить наличие обновлений.");
         add("ADB is active — selecting Install will download and install the update automatically.", "ADB включён — при выборе «Установить» обновление будет загружено и установлено автоматически.");
         add("ADB is turned off (Secure Mode) — selecting Install will download the update and open the system package installer.", "ADB выключен (безопасный режим) — при выборе «Установить» обновление будет загружено, после чего откроется системный установщик пакетов.");
