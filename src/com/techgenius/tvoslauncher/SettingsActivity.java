@@ -1454,8 +1454,7 @@ public class SettingsActivity extends Activity {
                 },
                 null);
 
-        infoNote(tr("Checks GitHub Releases (gonscharovd/tvOS) for the latest APK and installs updates directly on your TV.",
-                "En güncel APK için GitHub Sürümlerini (techgenius1/tvOS-Launcher) kontrol eder ve güncellemeleri doğrudan TV'nize kurar."));
+        infoNote("Проверяет GitHub Releases репозитория gonscharovd/tvOS и устанавливает обновления прямо на телевизор.");
 
         if (!checkingLatestRelease) {
             checkingLatestRelease = true;
