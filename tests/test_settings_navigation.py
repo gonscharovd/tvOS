@@ -108,3 +108,8 @@ assert 'choiceRow(' not in look_page
 assert 'CLASSIC BACKGROUND' not in look_page
 assert 'sceneCheckRow(spec, sceneIdx, order);' in look_page
 assert 'scene-gradient:' in settings
+
+setup = (ROOT / "SetupActivity.java").read_text(encoding="utf-8")
+assert "LOOK_CLASSIC" not in setup
+assert 'option(l, tr("Classic"' not in setup
+assert "Classic Backgrounds" not in setup
