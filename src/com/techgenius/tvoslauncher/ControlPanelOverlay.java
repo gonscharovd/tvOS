@@ -323,7 +323,7 @@ public final class ControlPanelOverlay {
             outCells.add(tile);
         }
 
-        int y4 = capsules.size() * cap + Math.max(0, capsules.size() - 1) * gap;
+        int y4 = capsules.size() * (cap + gap);
         // Fixed bottom row: VPN toggle and the settings chooser.
         outCells.add(makeTile(c, panel, 0, y4, small, cap, unit, screenW, screenH, glassSource,
                 "shield", null, null, v -> { if (onVpnToggle != null) onVpnToggle.run(); }));
@@ -355,7 +355,7 @@ public final class ControlPanelOverlay {
             View.OnClickListener click) {
 
         boolean iconOnly = title == null;
-        float radius = iconOnly ? dp(unit, 16) : h / 2f;
+        float radius = h / 2f;
 
         final android.graphics.drawable.Drawable idleBg;
         if (glassSource != null) {
