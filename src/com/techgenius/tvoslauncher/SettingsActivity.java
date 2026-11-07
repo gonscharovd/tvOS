@@ -170,13 +170,15 @@ public class SettingsActivity extends Activity {
 
     private String resolvePageExtra(String pg) {
         if (pg == null || pg.isEmpty()) return HOME;
-        if (INPUTS.equals(pg) || "cp".equalsIgnoreCase(pg) || "control_panel".equalsIgnoreCase(pg)) {
+        if (INPUTS.equals(pg) || CONTROL_PANEL.equals(pg) || "cp".equalsIgnoreCase(pg) || "control_panel".equalsIgnoreCase(pg)) {
             return CONTROL_PANEL;
         } else if (LOCATION.equals(pg) || WEATHER.equals(pg) || "weather".equalsIgnoreCase(pg)) {
             return WEATHER;
-        } else if (SHELF.equals(pg) || WATCHING.equals(pg) || HOME.equals(pg) || PERMS.equals(pg) || "quick".equalsIgnoreCase(pg)) {
+        } else if (SHELF.equals(pg) || WATCHING.equals(pg) || HOME.equals(pg) || PERMS.equals(pg)
+                || QUICK.equals(pg) || "quick".equalsIgnoreCase(pg)) {
             return HOME;
-        } else if ("look".equalsIgnoreCase(pg) || "scenes".equalsIgnoreCase(pg) || "language".equalsIgnoreCase(pg)) {
+        } else if (LOOK_SCENES.equals(pg) || "Look and scenes".equalsIgnoreCase(pg)
+                || "look".equalsIgnoreCase(pg) || "scenes".equalsIgnoreCase(pg) || "language".equalsIgnoreCase(pg)) {
             return LOOK_SCENES;
         } else if ("bm".equalsIgnoreCase(pg) || "button_mapper".equalsIgnoreCase(pg) || BUTTON_MAPPER.equals(pg)) {
             return ADVANCED;
