@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - feature/ram-cleaner-happ-vpn
+      - feature/testos-ui-cleanup
 
 permissions:
   contents: read
