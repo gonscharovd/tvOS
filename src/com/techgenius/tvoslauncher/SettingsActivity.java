@@ -51,6 +51,7 @@ import java.util.Set;
  *
  * The Control Panel remains available from the launcher; its separate customization screen
  * and all multi-user settings have been removed.
+ */
 public class SettingsActivity extends Activity {
 
     static final String ROOT = "root",
