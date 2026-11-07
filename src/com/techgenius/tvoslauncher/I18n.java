@@ -697,6 +697,49 @@ public final class I18n {
         ru.put("Couldn't search. Check the internet connection.", "Не удалось выполнить поиск. Проверьте подключение к интернету.");
         ru.put("TMDB connected", "TMDB подключён");
 
+        // Search, voice input, ADB status and media-provider labels.
+        ru.put("ADB Enabled · Not Paired", "ADB включён · не сопряжено");
+        ru.put("Accessibility", "Специальные возможности");
+        ru.put("Apps & Settings", "Приложения и настройки");
+        ru.put("Can’t reach the internet", "Нет подключения к интернету");
+        ru.put("Connected & Paired (Port 5555 Open)", "Подключено и сопряжено (порт 5555 открыт)");
+        ru.put("Date & Time", "Дата и время");
+        ru.put("Didn’t catch that — press the mic to try again", "Не удалось распознать — нажмите на микрофон и попробуйте ещё раз");
+        ru.put("Disconnected (ADB Off)", "Отключено (ADB выключен)");
+        ru.put("Display", "Экран");
+        ru.put("Get ", "Получить ");
+        ru.put("HOW TO WATCH", "ГДЕ СМОТРЕТЬ");
+        ru.put("Keep typing to search movies and shows", "Продолжайте вводить запрос для поиска фильмов и сериалов");
+        ru.put("Listening…", "Слушаю…");
+        ru.put("Movie", "Фильм");
+        ru.put("Movies & TV", "Фильмы и ТВ");
+        ru.put("No movies or shows found", "Фильмы и сериалы не найдены");
+        ru.put("No results", "Нет результатов");
+        ru.put("Not installed", "Не установлено");
+        ru.put("Not streaming right now.", "Сейчас недоступно для просмотра.");
+        ru.put("On ", "Включено ");
+        ru.put("Paired · ADB Enabled", "Сопряжено · ADB включён");
+        ru.put("Persistent ADB Mode (Keep port 5555 open)", "Постоянный режим ADB (оставить порт 5555 открытым)");
+        ru.put("Port 5555 Open · Ready to Pair", "Порт 5555 открыт · готово к сопряжению");
+        ru.put("Recent Searches", "Недавние запросы");
+        ru.put("Refresh Carousel", "Обновить карусель");
+        ru.put("Say a movie, show or app", "Назовите фильм, сериал или приложение");
+        ru.put("Screen Saver", "Заставка");
+        ru.put("Search apps, movies and shows", "Поиск приложений, фильмов и сериалов");
+        ru.put("Secure Mode (Needs One-Time Pair to Grant Permissions)", "Безопасный режим (однократное сопряжение для выдачи разрешений)");
+        ru.put("Secure Mode Active (ADB Not Used · Self-Repair Ready)", "Безопасный режим активен (ADB не используется · самовосстановление готово)");
+        ru.put("Secure Mode — WRITE_SECURE_SETTINGS & Close ADB (Recommended)", "Безопасный режим — WRITE_SECURE_SETTINGS и выключение ADB (рекомендуется)");
+        ru.put("Series", "Сериал");
+        ru.put("Storage", "Хранилище");
+        ru.put("Trending", "В тренде");
+        ru.put("Type to search your apps, settings, movies and shows", "Введите запрос для поиска приложений, настроек, фильмов и сериалов");
+        ru.put("Voice input isn't available on this TV", "Голосовой ввод недоступен на этом телевизоре");
+        ru.put("Voice needs the internet", "Для голосового ввода нужен интернет");
+        ru.put("clear", "очистить");
+        ru.put("space", "пробел");
+        ru.put("▶  Open in ", "▶  Открыть в ");
+
+
         // Remaining dialogs, remote-key names, icon editor and update flow.
         ru.put("A new version of tvOS Launcher is available on GitHub.\\n", "На GitHub доступна новая версия tvOS Launcher.\\n");
         ru.put("ADB install failed, opening package installer…", "Не удалось установить через ADB, открываем системный установщик…");
