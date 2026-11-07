@@ -103,39 +103,12 @@ public final class AppUpdater {
     }
 
     public static String cleanVersion(String v) {
-        if (v == null) return "";
-        String s = v.trim();
-        while (s.startsWith("v") || s.startsWith("V")) {
-            s = s.substring(1).trim();
-        }
-        return s;
+        return VersionComparator.clean(v);
     }
 
     /** Returns true if remoteVer is strictly newer than currentVer (e.g. "2.0.4" > "2.0.3"). */
     public static boolean isNewerVersion(String currentVer, String remoteVer) {
-        String c = cleanVersion(currentVer);
-        String r = cleanVersion(remoteVer);
-        if (r.isEmpty()) return false;
-        if (c.isEmpty()) return true;
-        if (c.equals(r)) return false;
-        String[] cp = c.split("[^0-9]+");
-        String[] rp = r.split("[^0-9]+");
-        int len = Math.max(cp.length, rp.length);
-        for (int i = 0; i < len; i++) {
-            int cv = 0;
-            int rv = 0;
-            try {
-                if (i < cp.length && !cp[i].isEmpty()) cv = Integer.parseInt(cp[i]);
-            } catch (NumberFormatException ignored) {
-            }
-            try {
-                if (i < rp.length && !rp[i].isEmpty()) rv = Integer.parseInt(rp[i]);
-            } catch (NumberFormatException ignored) {
-            }
-            if (rv > cv) return true;
-            if (rv < cv) return false;
-        }
-        return false;
+        return VersionComparator.isNewer(currentVer, remoteVer);
     }
 
     /**
