@@ -3782,6 +3782,7 @@ public class MainActivity extends Activity {
         FrameLayout layer = new FrameLayout(this);
         layer.setClickable(true);
         layer.setClipChildren(false);
+        layer.setTag("control_panel");
         addBlurredBackdrop(layer, 0x8C000000);
 
         List<View> cells = new ArrayList<>();
@@ -4947,6 +4948,10 @@ public class MainActivity extends Activity {
 
     /** Directional focus inside a popover: nearest cell whose centre lies in that direction. */
     boolean pickerMove(int keyCode) {
+        if (pickerLayer != null && "control_panel".equals(pickerLayer.getTag())) {
+            ControlPanelOverlay.moveControlPanelFocus(pickerCells, keyCode);
+            return true;
+        }
         View cur = getCurrentFocus();
         if (!pickerCells.contains(cur)) {
             if (!pickerCells.isEmpty()) pickerCells.get(0).requestFocus();
