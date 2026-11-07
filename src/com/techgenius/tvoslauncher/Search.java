@@ -195,17 +195,6 @@ final class Search {
         return out;
     }
 
-    /**
-     * Stremio's catalogue search (Cinemeta), for titles JustWatch doesn't list. Only used when
-     * Stremio or Nuvio is installed, since those are the only apps that can open them.
-     */
-
-
-
-
-    /** "Open in Stremio" (or Nuvio) by IMDb id, after the services, when one of them is installed. */
-
-
     static String tidyService(String s) {
         return s.replace(" Free with Ads", "").replace(" with Ads", "").replace(" Amazon Channel", "").trim();
     }
