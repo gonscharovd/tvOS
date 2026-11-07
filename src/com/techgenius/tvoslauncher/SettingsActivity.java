@@ -58,14 +58,12 @@ public class SettingsActivity extends Activity {
             LOOK_SCENES = "Look and scenes",
             APPS = "Apps",
             PROFILES = "Profiles",
-            CONTROL_PANEL = "Control Panel",
             BUTTON_MAPPER = "Button mapper",
             QUICK = "Quick buttons",
             ADVANCED = "Advanced",
             UPDATES = "Updates",
             ABOUT = "About",
             SHELF = "Top Shelf",
-            PRESENT = "Presentation",
             INPUTS = "Inputs",
             WATCHING = "Continue Watching",
             HOME = "Home",
@@ -76,7 +74,6 @@ public class SettingsActivity extends Activity {
         {WEATHER, "cloud"},
         {APPS, "apps"},
         {PROFILES, "person"},
-        {CONTROL_PANEL, "sliders"},
         {BUTTON_MAPPER, "remote"},
         {QUICK, "bolt"},
         {LANGUAGE, "globe"},
@@ -149,10 +146,10 @@ public class SettingsActivity extends Activity {
     private String resolvePageExtra(String pg) {
         if (pg == null || pg.isEmpty()) return LOOK_SCENES;
         if (INPUTS.equals(pg) || "cp".equalsIgnoreCase(pg) || "control_panel".equalsIgnoreCase(pg)) {
-            return CONTROL_PANEL;
+            return QUICK;
         } else if (LOCATION.equals(pg) || WEATHER.equals(pg) || "weather".equalsIgnoreCase(pg)) {
             return WEATHER;
-        } else if (SHELF.equals(pg) || PRESENT.equals(pg) || WATCHING.equals(pg) || HOME.equals(pg) || PERMS.equals(pg) || "quick".equalsIgnoreCase(pg)) {
+        } else if (SHELF.equals(pg) || WATCHING.equals(pg) || HOME.equals(pg) || PERMS.equals(pg) || "quick".equalsIgnoreCase(pg)) {
             return QUICK;
         } else if ("look".equalsIgnoreCase(pg) || "scenes".equalsIgnoreCase(pg)) {
             return LOOK_SCENES;
@@ -245,7 +242,6 @@ public class SettingsActivity extends Activity {
             case WEATHER: return tr("Weather and location", "Hava durumu ve konum");
             case APPS: return tr("Apps", "Uygulamalar");
             case PROFILES: return tr("People", "Kişiler");
-            case CONTROL_PANEL: return tr("Control Panel", "Denetim Paneli");
             case BUTTON_MAPPER: return tr("Button mapper", "Düğme eşleyici");
             case QUICK: return tr("Quick settings", "Hızlı ayarlar");
             case LANGUAGE: return tr("Language", "Dil");
@@ -816,9 +812,6 @@ public class SettingsActivity extends Activity {
                     case PROFILES:
                         pageProfiles();
                         break;
-                    case CONTROL_PANEL:
-                        pageControlPanel();
-                        break;
                     case BUTTON_MAPPER:
                         pageButtonMapper();
                         break;
@@ -1140,16 +1133,6 @@ public class SettingsActivity extends Activity {
                 it.icon = new BitmapDrawable(getResources(), Glyphs.get("input", u(22), Color.WHITE));
                 out.add(it);
             }
-            if (hidden.contains(MainActivity.PRESENT_KEY)) {
-                HiddenAppItem it = new HiddenAppItem();
-                it.key = MainActivity.PRESENT_KEY;
-                it.pkg = getPackageName();
-                it.label = MainActivity.getCustomAppName(this, it.key, null, tr("Presentation", "Sunum"));
-                it.icon = new BitmapDrawable(getResources(), Glyphs.get("present", u(22), Color.WHITE));
-                it.launch = new Intent(this, com.techgenius.tvoslauncher.present.PresentationActivity.class)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                out.add(it);
-            }
             Collections.sort(out, (a, b) -> a.label.compareToIgnoreCase(b.label));
         } catch (Throwable ignored) {
         }
@@ -1380,67 +1363,6 @@ public class SettingsActivity extends Activity {
         in.requestFocus();
     }
 
-    void pageControlPanel() {
-        section(tr("UNIVERSAL SHORTCUT ACTIONS", "EVRENSEL KISAYOL EYLEMLERİ"));
-        row(tr("Wi-Fi", "Wi-Fi"),
-                () -> ControlPanelOverlay.getActionSummary(this, ControlPanelOverlay.ACTION_WIFI),
-                () -> openSubMenu("cp_app:" + ControlPanelOverlay.ACTION_WIFI));
-        row(tr("Bluetooth", "Bluetooth"),
-                () -> ControlPanelOverlay.getActionSummary(this, ControlPanelOverlay.ACTION_BLUETOOTH),
-                () -> openSubMenu("cp_app:" + ControlPanelOverlay.ACTION_BLUETOOTH));
-        row(tr("Sound", "Ses"),
-                () -> ControlPanelOverlay.getActionSummary(this, ControlPanelOverlay.ACTION_SOUND),
-                () -> openSubMenu("cp_app:" + ControlPanelOverlay.ACTION_SOUND));
-        row(tr("Inputs (Control Panel & Dock)", "Girişler (Denetim Paneli ve Dock)"),
-                () -> ControlPanelOverlay.getActionSummary(this, ControlPanelOverlay.ACTION_INPUTS),
-                () -> openSubMenu("cp_app:" + ControlPanelOverlay.ACTION_INPUTS));
-        row(tr("Ambient Mode", "Ortam Modu"),
-                () -> ControlPanelOverlay.getActionSummary(this, ControlPanelOverlay.ACTION_AMBIENT),
-                () -> openSubMenu("cp_app:" + ControlPanelOverlay.ACTION_AMBIENT));
-        if (ControlPanelOverlay.isAmbientLockScreenMode(this)) {
-            row(tr("Lock screen settings…", "Kilit ekranı ayarları…"),
-                    () -> Scenes.lockClockPosLabel(this) + " · " + Scenes.lockIdleLabel(this),
-                    () -> openSubMenu("lock_screen_settings"));
-        }
-
-        section(tr("CONTROL PANEL ITEMS (SHOW / HIDE)", "DENETİM PANELİ ÖĞELERİ (GÖSTER / GİZLE)"));
-        for (final String[] itemRow : ControlPanelOverlay.ALL_CP_ITEMS) {
-            final String itemKey = itemRow[0];
-            row(ControlPanelOverlay.getItemTitle(this, itemKey),
-                    () -> ControlPanelOverlay.isItemEnabled(this, itemKey) ? tr("On", "Açık") : tr("Off", "Kapalı"),
-                    () -> {
-                        boolean next = !ControlPanelOverlay.isItemEnabled(this, itemKey);
-                        ControlPanelOverlay.setItemEnabled(this, itemKey, next);
-                        refreshAll();
-                    });
-        }
-
-        section(tr("INPUTS APP ON DOCK", "DOCK ÜZERİNDEKİ GİRİŞLER UYGULAMASI"));
-        row(tr("Show Inputs app on Dock", "Dock'ta Girişler uygulamasını göster"),
-                () -> Inputs.showCard(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
-                () -> {
-                    boolean next = !Inputs.showCard(this);
-                    Inputs.prefs(this).edit().putBoolean(Inputs.K_CARD, next).apply();
-                    refreshAll();
-                });
-
-        section(tr("RESET", "SIFIRLAMA"));
-        row(tr("Reset Control Panel actions to default", "Denetim Paneli eylemlerini varsayılana sıfırla"),
-                () -> "",
-                () -> {
-                    ControlPanelOverlay.clearAllCustomActions(this);
-                    for (String[] itemRow : ControlPanelOverlay.ALL_CP_ITEMS) {
-                        ControlPanelOverlay.setItemEnabled(this, itemRow[0], true);
-                    }
-                    rebuildMainRows();
-                    showStatusMsg(tr("Control Panel actions and items reset to default.",
-                            "Denetim Paneli eylemleri ve öğeleri varsayılana sıfırlandı."));
-                });
-
-        infoNote(tr("Each TV brand uses different package and activity names for Wi-Fi, Bluetooth, Sound, Inputs, and Ambient Mode. You can also choose Lock Screen for Ambient Mode (for TVs without built-in Ambient Mode) and toggle individual Control Panel items on or off.",
-                "Her TV markası Wi-Fi, Bluetooth, Ses, Girişler ve Ortam Modu için farklı paket ve etkinlik adları kullanır. Ayrıca Ortam Modu için Kilit Ekranı'nı seçebilir (yerleşik Ortam Modu olmayan TV'ler için) ve Denetim Paneli öğelerini tek tek açıp kapatabilirsiniz."));
-    }
-
     void pageButtonMapper() {
         section(tr("ACCESSIBILITY SERVICE", "ERİŞİLEBİLİRLİK SERVİSİ"));
         row(tr("Button Mapper accessibility service", "Düğme Eşleyici erişilebilirlik servisi"),
@@ -1525,7 +1447,7 @@ public class SettingsActivity extends Activity {
         row(tr("Default home screen", "Varsayılan ana ekran"),
                 () -> Perms.isDefaultHome(this) ? tr("Active", "Etkin") : tr("Set as default…", "Varsayılan yap…"),
                 () -> Perms.requestDefaultHome(this));
-        row(tr("Continue Watching & DND permission", "İzlemeye Devam Et ve Rahatsız Etmeyin izni"),
+        row(tr("Continue Watching notification access", "Доступ к уведомлениям для «Продолжить просмотр»"),
                 () -> Perms.hasListener(this) ? tr("Allowed", "İzin verildi")
                         : Perms.listenerSupported(this) ? tr("Allow…", "İzin ver…") : tr("Not on this TV", "Bu TV'de yok"),
                 () -> Perms.requestListener(this));
@@ -1533,18 +1455,7 @@ public class SettingsActivity extends Activity {
                 () -> Clicks.enabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
                 () -> Clicks.setEnabled(this, !Clicks.enabled(this)));
 
-        section(tr("PRESENTATION &CLASSIC SHELF", "SUNUM VE KLASİK ÜST RAF"));
-        row(tr("Presentation mode", "Sunum modu"),
-                () -> com.techgenius.tvoslauncher.present.Presenter.enabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
-                () -> {
-                    boolean on = !com.techgenius.tvoslauncher.present.Presenter.enabled(this);
-                    com.techgenius.tvoslauncher.present.Presenter.set(this, com.techgenius.tvoslauncher.present.Presenter.KEY_ENABLED, on);
-                });
-        row(tr("Presentation address & QR code", "Sunum adresi ve QR kodu"),
-                () -> com.techgenius.tvoslauncher.present.Presenter.enabled(this)
-                        ? com.techgenius.tvoslauncher.present.Presenter.address().replace("http://", "")
-                        : tr("Turn on first", "Önce etkinleştirin"),
-                this::showPresentInfo);
+        section(tr("CLASSIC TOP SHELF", "КЛАССИЧЕСКАЯ ВЕРХНЯЯ ПАНЕЛЬ"));
         row(tr("Classic Top Shelf content", "Klasik Üst Raf içeriği"), () -> {
             switch (Suggestions.shelf(this)) {
                 case Suggestions.SHELF_RECS: return tr("Recommendations", "Öneriler");
@@ -1596,18 +1507,6 @@ public class SettingsActivity extends Activity {
                 this::confirmRevokeAllPermissions);
 
         section(tr("STARTUP & KEEP ALIVE", "BAŞLANGIÇ VE KEEP ALIVE"));
-        row(tr("Launch automatically on system boot", "Sistem açılışında otomatik başlat"),
-                () -> com.techgenius.tvoslauncher.present.BootReceiver.isLaunchOnBootEnabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
-                () -> {
-                    boolean next = !com.techgenius.tvoslauncher.present.BootReceiver.isLaunchOnBootEnabled(this);
-                    com.techgenius.tvoslauncher.present.BootReceiver.setLaunchOnBootEnabled(this, next);
-                    refreshAll();
-                    showStatusMsg(next
-                            ? tr("tvOS Launcher will launch immediately on system boot.",
-                                 "tvOS Launcher sistem açılışında anında otomatik başlatılacak.")
-                            : tr("Automatic launch on boot disabled.",
-                                 "Sistem açılışında otomatik başlatma kapatıldı."));
-                });
         row(tr("Keep Alive (Auto-repair Accessibility)", "Keep Alive (Erişilebilirliği otomatik onar)"),
                 () -> LocalAdb.isKeepAliveEnabled(this) ? tr("On (Default)", "Açık (Varsayılan)") : tr("Off", "Kapalı"),
                 this::toggleKeepAliveWithWarning);
@@ -5231,33 +5130,5 @@ public class SettingsActivity extends Activity {
         }).setNegativeButton(tr("Cancel", "İptal"), null).show();
     }
 
-    void showPresentInfo() {
-        if (!com.techgenius.tvoslauncher.present.Presenter.enabled(this)) {
-            Toast.makeText(this, tr("Turn on Presentation mode first", "Önce Sunum modunu açın"), Toast.LENGTH_SHORT).show();
-            return;
-        }
-        com.techgenius.tvoslauncher.present.Presenter.ensureRunning(this);
-        LinearLayout box = new LinearLayout(this);
-        box.setOrientation(LinearLayout.HORIZONTAL);
-        box.setGravity(Gravity.CENTER_VERTICAL);
-        int pad = u(16);
-        box.setPadding(pad, pad, pad, pad / 2);
-        ImageView qr = new ImageView(this);
-        qr.setImageBitmap(com.techgenius.tvoslauncher.present.Presenter.qr(u(110)));
-        qr.setBackgroundColor(Color.WHITE);
-        qr.setPadding(u(6), u(6), u(6), u(6));
-        box.addView(qr, new LinearLayout.LayoutParams(u(122), u(122)));
-        TextView info = new TextView(this);
-        String pin = com.techgenius.tvoslauncher.present.Presenter.pin(this);
-        info.setText(tr("Open on a phone or computer on the same Wi-Fi:\n\n", "Aynı Wi-Fi ağındaki telefon veya bilgisayarda açın:\n\n")
-                + com.techgenius.tvoslauncher.present.Presenter.address() + "\n\n"
-                + tr("Pairing code\n", "Eşleştirme kodu\n")
-                + pin.substring(0, 3) + " " + pin.substring(3));
-        info.setTextColor(Color.WHITE);
-        info.setTypeface(Ui.font(this, "medium"));
-        Ui.textSize(info, 14);
-        info.setPadding(u(18), 0, 0, 0);
-        box.addView(info);
-        dialog(tr("Send to this TV", "Bu TV'ye gönder")).setView(box).setPositiveButton(tr("Done", "Tamam"), null).show();
-    }
+
 }
