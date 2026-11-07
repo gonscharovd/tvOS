@@ -92,7 +92,7 @@ public final class I18nDynamicTranslationTest {
                         + "Для восстановления будет использована выбранная модель телевизора (Sber 50U4123B). "
                         + "Будут повторно включены пакеты: 8 через ADB.");
         expect("Restore Selected Model Profile (Sber 50U4123B — 8 packages)",
-                "Восстановить профиль выбранной модели (Sber 50U4123B — 8 пакетов)");
+                "Восстановить профиль выбранной модели (Sber 50U4123B — пакетов: 8)");
         expect("Re-enable all packages in sber-50u4123b",
                 "Повторно включить все пакеты профиля sber-50u4123b");
         expect("com.example.app is a protected core system package and cannot be disabled automatically.",
