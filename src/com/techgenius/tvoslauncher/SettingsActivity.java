@@ -174,7 +174,9 @@ public class SettingsActivity extends Activity {
             return CONTROL_PANEL;
         } else if (LOCATION.equals(pg) || WEATHER.equals(pg) || "weather".equalsIgnoreCase(pg)) {
             return WEATHER;
-        } else if (SHELF.equals(pg) || WATCHING.equals(pg) || HOME.equals(pg) || PERMS.equals(pg)
+        } else if (PERMS.equals(pg)) {
+            return ADVANCED;
+        } else if (SHELF.equals(pg) || WATCHING.equals(pg) || HOME.equals(pg)
                 || QUICK.equals(pg) || "quick".equalsIgnoreCase(pg)) {
             return HOME;
         } else if (LOOK_SCENES.equals(pg) || "Look and scenes".equalsIgnoreCase(pg)
