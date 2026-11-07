@@ -17,6 +17,24 @@ public final class I18n {
     private static final Map<String, Map<String, String>> LANG_MAPS = new HashMap<>();
 
     static {
+        add("Main screen", "Главный экран");
+        add("Appearance and clock", "Внешний вид и часы");
+        add("Control panel", "Панель управления");
+        add("Advanced settings", "Расширенные настройки");
+        add("Information", "Информация");
+        add("Changes the language used on the home screen, date, weather and settings.", "Изменяет язык главного экрана, даты, погоды и настроек.");
+        add("CONTROL PANEL ACTIONS", "ДЕЙСТВИЯ ПАНЕЛИ УПРАВЛЕНИЯ");
+        add("Reset control panel actions", "Сбросить действия панели управления");
+        add("Reset control panel?", "Сбросить настройки панели управления?");
+        add("All custom app and activity assignments will be cleared. The built-in actions will be restored.", "Все пользовательские назначения приложений и действий будут удалены. Будут восстановлены стандартные действия.");
+        add("Control panel actions restored to defaults.", "Стандартные действия панели управления восстановлены.");
+        add("Choose which app or activity opens from each Control Panel tile. Leave an action on Default to use the TV's built-in settings.", "Выберите приложение или действие, которое будет запускаться из каждой плитки панели управления. Оставьте значение «По умолчанию», чтобы использовать встроенные настройки телевизора.");
+        add("HOME SCREEN", "ГЛАВНЫЙ ЭКРАН");
+        add("PEOPLE & PROFILES", "ПОЛЬЗОВАТЕЛИ И ПРОФИЛИ");
+        add("DIAGNOSTICS & RECOVERY", "ДИАГНОСТИКА И ВОССТАНОВЛЕНИЕ");
+        add("Remote control", "Пульт управления");
+        add("TMDB connected", "TMDB подключён");
+        add("Information", "Информация");
         LANG_MAPS.put(LANG_RU, new HashMap<String, String>());
         initTranslations();
         initRussianExtras();
