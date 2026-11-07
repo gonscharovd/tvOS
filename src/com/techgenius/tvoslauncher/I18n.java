@@ -9,10 +9,7 @@ import java.util.Map;
 
 /** Russian-only localization for this device-specific testOS build. */
 public final class I18n {
-    public static final String LANG_EN = "en", LANG_TR = "tr", LANG_SV = "sv", LANG_HI = "hi",
-            LANG_ES = "es", LANG_FR = "fr", LANG_DE = "de", LANG_IT = "it", LANG_RU = "ru",
-            LANG_PT = "pt", LANG_AR = "ar", LANG_JA = "ja", LANG_ZH = "zh", LANG_KO = "ko";
-    public static final String[][] LANGUAGES = {{LANG_RU, "Русский", "Использовать testOS на русском"}};
+    public static final String LANG_RU = "ru";
     private static String cachedLang;
     private static final Map<String, Map<String, String>> LANG_MAPS = new HashMap<>();
 
