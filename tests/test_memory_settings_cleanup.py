@@ -23,7 +23,12 @@ assert "logo.recycle()" in main
 assert 'row(tr("Pair / Repair ADB connection"' not in settings
 assert 'row(tr("Disabled apps backup"' not in settings
 assert 'row(tr("Classic Top Shelf content"' not in settings
-assert 'row(tr("Classic Top Shelf suggestions"' in settings
+assert 'row(tr("Classic Top Shelf suggestions"' not in settings
+assert "void pageControlPanel()" not in settings
+assert "void pageProfiles()" not in settings
+assert "void pageLanguage()" not in settings
+assert "NuvioCloud" not in settings and "StremioCloud" not in settings
+assert "pageUpdates();" in settings
 
 for source in (main, scene, settings, power):
     assert "MediaWatchService.Store" not in source
