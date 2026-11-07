@@ -63,6 +63,15 @@ jobs:
       - name: Test Control Panel, Russian localization and clock fonts
         run: python3 tests/test_control_panel_russian_clock.py
 
+      - name: Test full Russian localization coverage
+        run: python3 tests/test_russian_localization_coverage.py
+
+      - name: Test dynamic Russian translations
+        run: |
+          mkdir -p /tmp/tvos-i18n-tests
+          javac --release 11 -cp "$ANDROID_HOME/platforms/android-34/android.jar" -d /tmp/tvos-i18n-tests src/com/techgenius/tvoslauncher/I18n.java tests/I18nDynamicTranslationTest.java
+          java -cp "/tmp/tvos-i18n-tests:$ANDROID_HOME/platforms/android-34/android.jar" com.techgenius.tvoslauncher.I18nDynamicTranslationTest
+
       - name: Test cross-platform build contract
         run: python3 tests/test_build_contract.py
 
