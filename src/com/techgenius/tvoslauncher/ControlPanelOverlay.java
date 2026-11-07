@@ -323,7 +323,7 @@ public final class ControlPanelOverlay {
             outCells.add(tile);
         }
 
-        int y4 = capsules.size() * (cap + gap);
+        int y4 = capsules.size() * cap + Math.max(0, capsules.size() - 1) * gap;
         // Fixed bottom row: VPN toggle and the settings chooser.
         outCells.add(makeTile(c, panel, 0, y4, small, small, unit, screenW, screenH, glassSource,
                 "shield", null, null, v -> { if (onVpnToggle != null) onVpnToggle.run(); }));
