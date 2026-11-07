@@ -65,6 +65,55 @@ public final class I18nDynamicTranslationTest {
         expect("Could not write to Download/tvos-settings-backup.json\n\nPlease allow storage access and try again.",
                 "Не удалось записать файл:\nDownload/tvos-settings-backup.json\n\nРазрешите доступ к хранилищу и повторите попытку.");
 
+        expect("All TV Models (341)", "Все модели телевизоров (341)");
+        expect("MODELS (341)", "МОДЕЛИ (341)");
+        expect("CLOSEST MATCHES (4 APPS SCANNED)", "БЛИЖАЙШИЕ СОВПАДЕНИЯ (4 ПРИЛОЖЕНИЙ ПРОВЕРЕНО)");
+        expect("3 active / 5 found ›", "3 активно / 5 найдено ›");
+        expect("Select Apps to Disable — Sber 50U4123B (4 found)",
+                "Выберите приложения для отключения — Sber 50U4123B (4 найдено)");
+        expect("Starting ADB debloat for 12 packages…",
+                "Запускаем отключение через ADB для 12 пакетов…");
+        expect("Disabling (2/12):\ncom.example.app", "Отключение (2/12):\ncom.example.app");
+        expect("Enabling (1/4):\ncom.example.app", "Включение (1/4):\ncom.example.app");
+        expect("None of the packages listed in Sber 50U4123B (sber-50u4123b) are installed on this TV.\n\n"
+                        + "Would you like to scan your TV's installed apps over ADB to find the closest matching TV model?",
+                "На этом телевизоре не установлено ни одного пакета из списка Sber 50U4123B (sber-50u4123b).\n\n"
+                        + "Просканировать установленные приложения через ADB, чтобы найти наиболее подходящую модель ТВ?");
+        expect("Found saved disabled-app data (4 packages).\n\nRe-enable all 4 saved packages over ADB?",
+                "Найдены сохранённые данные об отключённых приложениях (4 пакетов).\n\n"
+                        + "Повторно включить все 4 сохранённых пакетов через ADB?");
+        expect("No saved disabled-app backup was found, and no TV model is selected.\n\n"
+                        + "Please select your TV model first so Restore knows which packages to re-enable.",
+                "Резервная копия отключённых приложений не найдена, модель телевизора не выбрана.\n\n"
+                        + "Сначала выберите модель телевизора, чтобы определить, какие пакеты нужно включить.");
+        expect("No saved disabled-app list was found.\n\n"
+                        + "Restore will use your selected TV model (Sber 50U4123B) and re-enable its 8 packages over ADB.",
+                "Сохранённый список отключённых приложений не найден.\n\n"
+                        + "Для восстановления будет использована выбранная модель телевизора (Sber 50U4123B). "
+                        + "Будут повторно включены 8 пакетов через ADB.");
+        expect("Restore Selected Model Profile (Sber 50U4123B — 8 packages)",
+                "Восстановить профиль выбранной модели (Sber 50U4123B — 8 пакетов)");
+        expect("Re-enable all packages in sber-50u4123b",
+                "Повторно включить все пакеты профиля sber-50u4123b");
+        expect("com.example.app is a protected core system package and cannot be disabled automatically.",
+                "com.example.app — защищённый системный пакет, его нельзя отключить автоматически.");
+        expect("The command was sent, but Android did not confirm that com.example.app is disabled.\n"
+                        + "The restore list was not changed.",
+                "Команда отправлена, но Android не подтвердил, что пакет com.example.app отключён.\n"
+                        + "Список восстановления не изменён.");
+        expect("com.example.app (com.example.app) is a critical system service required for your TV remote and Bluetooth connectivity.\n\n"
+                        + "It cannot be disabled under any circumstances.",
+                "com.example.app (com.example.app) — критическая системная служба, необходимая для работы пульта и Bluetooth.\n\n"
+                        + "Отключать её нельзя ни при каких обстоятельствах.");
+        expect("You are about to disable com.example.app (com.example.app).\n\n"
+                        + "This is a manual operation. It may affect TV features. Continue only if you know what this package does.",
+                "Вы собираетесь отключить com.example.app (com.example.app).\n\n"
+                        + "Это действие выполняется вручную и может повлиять на функции телевизора. Продолжайте, только если знаете назначение этого пакета.");
+        expect("Folder shuffle enabled: /storage/emulated/0/Pictures",
+                "Смена изображений из папки включена: /storage/emulated/0/Pictures");
+        expect("Lock Screen folder shuffle enabled: /storage/emulated/0/Pictures",
+                "Смена изображений из папки для экрана блокировки включена: /storage/emulated/0/Pictures");
+        expect("Custom 2", "Свой вариант 2");
         System.out.println("Dynamic Russian translation tests passed: " + checks);
     }
 }
