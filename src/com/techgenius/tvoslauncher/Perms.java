@@ -14,8 +14,7 @@ import android.provider.Settings;
 /**
  * Permissions, asked for on screen wherever the TV allows it; adb is only the last resort.
  * - Location (Wi-Fi name): the normal runtime prompt.
- * - Notification access (Continue Watching, Do Not Disturb): the system's notification-access
- *   screen (Android 11+ opens testOS's own switch directly).
+ * - Do Not Disturb: Android's dedicated notification-policy access screen.
  */
 final class Perms {
     static final int REQ_LOCATION = 41;
