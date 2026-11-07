@@ -3742,6 +3742,10 @@ public class MainActivity extends Activity {
 
     /** Small chooser that keeps launcher settings separate from the TV's own settings. */
     void showSettingsChooser() {
+        dropPicker();
+        pickerLayer = null;
+        popoverReturn = null;
+        weatherOpen = false;
         String[] choices = {
                 I18n.s(this, "testOS Settings", "Настройки testOS"),
                 I18n.s(this, "TV Settings", "Настройки телевизора")
