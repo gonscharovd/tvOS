@@ -5087,6 +5087,7 @@ public class SettingsActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
+        AppUpdater.resumePendingInstallIfAllowed(this);
         if (BUTTON_MAPPER.equals(currentSection)) {
             rebuildMainRows();
         } else {
