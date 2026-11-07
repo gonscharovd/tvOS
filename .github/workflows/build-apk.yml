@@ -67,7 +67,7 @@ jobs:
         run: |
           set -euo pipefail
           "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose --print-certs build/testOS.apk
-          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs build/testOS.apk | grep -qi '5d:bf:88:46:d9:bb:76:a7:64:92:8d:a8:c8:a8:33:a8:37:b4:4b:a0:0f:4a:7c:0b:60:dc:77:49:03:19:b1:0a'
+          "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --print-certs build/testOS.apk | grep -qi '5dbf8846d9bb76a764928da8c8a833a837b44ba00f4a7c0b60dc77490319b10a'
           "$ANDROID_HOME/build-tools/34.0.0/aapt" dump badging build/testOS.apk | head -n 5
           cp build/testOS.apk build/tvos-home.apk
 
