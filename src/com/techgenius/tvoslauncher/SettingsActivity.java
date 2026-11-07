@@ -1391,6 +1391,9 @@ public class SettingsActivity extends Activity {
                             : tr("Home button is handled by the TV system.",
                                  "Кнопка Домой обрабатывается самой системой телевизора."));
                 });
+        infoNote(tr("When the Home fix is enabled, a short press opens testOS and a long press opens the TV's own Settings. With the fix disabled, Home is handled by the TV system.",
+                "Если исправление кнопки Домой включено, короткое нажатие открывает testOS, а долгое — настройки телевизора. Если выключено, кнопкой управляет сама система ТВ."));
+
         row(tr("Long-press volume button fix", "Исправление долгого нажатия кнопки громкости"),
                 () -> ButtonMapper.isVolumeHoldFixEnabled(this) ? tr("On", "Включено") : tr("Off", "Выключено"),
                 () -> {
