@@ -1582,7 +1582,7 @@ public final class I18n {
                     + en.substring("Lock Screen folder shuffle enabled: ".length());
         }
         if (en.startsWith("No place found for “") && en.endsWith("”.")) {
-            return "Место «" + en.substring("No place found for “".length(), en.length() - "”. ".length() + 1) + "» не найдено.";
+            return "Место «" + en.substring("No place found for “".length(), en.length() - "”.".length()) + "» не найдено.";
         }
         if (en.startsWith("Location set to ") && en.endsWith(".")) {
             return "Местоположение задано: " + en.substring("Location set to ".length(), en.length() - 1) + ".";
@@ -1605,7 +1605,6 @@ public final class I18n {
             String rest = en.substring("Move ".length());
             if (!rest.equals("left in dock") && !rest.equals("right in dock")) return map.getOrDefault("Move", "Переместить") + " " + rest;
         }
-        if (en.startsWith("Switch to ")) return map.getOrDefault("Switch", "Переключить") + ": " + en.substring("Switch to ".length());
         if (en.startsWith("Done (") && en.endsWith(" apps disabled)")) {
             String num = en.substring("Done (".length(), en.length() - " apps disabled)".length());
             return map.getOrDefault("Done", "Готово") + " (" + num + " " + map.getOrDefault("apps", "приложений") + ")";
