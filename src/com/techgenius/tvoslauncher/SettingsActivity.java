@@ -28,6 +28,7 @@ import android.view.ViewOutlineProvider;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -73,10 +74,6 @@ public class SettingsActivity extends Activity {
         {LOOK_SCENES, "scene"},
         {WEATHER, "cloud"},
         {APPS, "apps"},
-        {PROFILES, "person"},
-        {BUTTON_MAPPER, "remote"},
-        {QUICK, "bolt"},
-        {LANGUAGE, "globe"},
         {ADVANCED, "shield"},
         {UPDATES, "update"},
         {ABOUT, "info"}
@@ -89,6 +86,16 @@ public class SettingsActivity extends Activity {
     private LinearLayout list;
     private TextView msgView;
     private TextView hintView;
+    private ProgressBar updateDownloadProgress;
+    private TextView updateDownloadStatus;
+    private final android.os.Handler updateProgressHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private final Runnable updateProgressTick = new Runnable() {
+        @Override public void run() {
+            if (isFinishing()) return;
+            if (updateDownloadProgress != null && updateDownloadStatus != null) refreshUpdateDownloadProgress();
+            if (AppUpdater.isDownloading()) updateProgressHandler.postDelayed(this, 350L);
+        }
+    };
 
     private final List<Runnable> refreshers = new ArrayList<>();
     private static final Map<String, Bitmap> SCENE_THUMB_CACHE = new java.util.concurrent.ConcurrentHashMap<>();
@@ -1059,12 +1066,6 @@ public class SettingsActivity extends Activity {
                             .apply();
                     showStatusMsg(tr("App layout reset to default.", "Uygulama düzeni varsayılana sıfırlandı."));
                 });
-        row(tr("Show Continue Watching on Home", "Ana ekranda İzlemeye Devam Et'i göster"),
-                () -> Profiles.homePrefs(this).getBoolean("cw_enabled", false) ? tr("On", "Açık") : tr("Off", "Kapalı"),
-                () -> {
-                    boolean on = !Profiles.homePrefs(this).getBoolean("cw_enabled", false);
-                    Profiles.homePrefs(this).edit().putBoolean("cw_enabled", on).apply();
-                });
         row(tr("Home screen weather shortcut", "Ana ekranda hava durumu kısayolu"),
                 () -> SceneHome.isWeatherShortcutEnabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
                 () -> {
@@ -1080,12 +1081,6 @@ public class SettingsActivity extends Activity {
                 default: return tr("Recommendations & News", "Öneriler ve Haberler");
             }
         }, () -> openSubMenu("top_shelf"));
-        row(tr("Clear Continue Watching history", "İzlemeye Devam Et geçmişini temizle"),
-                () -> "",
-                () -> {
-                    MediaWatchService.Store.clear(this);
-                    showStatusMsg(tr("Continue Watching cleared.", "İzlemeye Devam Et geçmişi temizlendi."));
-                });
         row(tr("Manage system apps in TV settings…", "TV ayarlarında uygulamaları yönet…"),
                 () -> "›",
                 () -> Suggestions.start(this, new Intent(Settings.ACTION_APPLICATION_SETTINGS)));
@@ -1447,10 +1442,6 @@ public class SettingsActivity extends Activity {
         row(tr("Default home screen", "Varsayılan ana ekran"),
                 () -> Perms.isDefaultHome(this) ? tr("Active", "Etkin") : tr("Set as default…", "Varsayılan yap…"),
                 () -> Perms.requestDefaultHome(this));
-        row(tr("Continue Watching notification access", "Доступ к уведомлениям для «Продолжить просмотр»"),
-                () -> Perms.hasListener(this) ? tr("Allowed", "İzin verildi")
-                        : Perms.listenerSupported(this) ? tr("Allow…", "İzin ver…") : tr("Not on this TV", "Bu TV'de yok"),
-                () -> Perms.requestListener(this));
         row(tr("Navigation click sounds", "Gezinme tıklama sesleri"),
                 () -> Clicks.enabled(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
                 () -> Clicks.setEnabled(this, !Clicks.enabled(this)));
@@ -1616,7 +1607,8 @@ public class SettingsActivity extends Activity {
                 () -> tr("Check now ›", "Şimdi kontrol et ›"),
                 () -> AppUpdater.manualCheckAndPrompt(this, this::refreshAll));
 
-        section(tr("VERSION INFO", "SÜRÜM BİLGİSİ"));
+        addUpdateDownloadProgress();
+        section(tr("VERSION INFO", "ИНФОРМАЦИЯ О ВЕРСИИ"));
         infoRow(tr("Current version", "Mevcut sürüm"), "v" + AppUpdater.getCurrentVersion(this), null);
         infoRowDynamic(tr("GitHub release latest version", "GitHub son sürüm"),
                 () -> {
@@ -1646,6 +1638,72 @@ public class SettingsActivity extends Activity {
                     }
                 }
             });
+        }
+    }
+
+    private void addUpdateDownloadProgress() {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.VERTICAL);
+        box.setPadding(u(14), u(8), u(14), u(8));
+
+        updateDownloadStatus = new TextView(this);
+        updateDownloadStatus.setTextColor(0xBFFFFFFF);
+        updateDownloadStatus.setTypeface(Ui.font(this, "medium"));
+        Ui.textSize(updateDownloadStatus, 12.5f);
+        box.addView(updateDownloadStatus);
+
+        updateDownloadProgress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        updateDownloadProgress.setMax(100);
+        LinearLayout.LayoutParams progressLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, u(7));
+        progressLp.topMargin = u(8);
+        box.addView(updateDownloadProgress, progressLp);
+
+        LinearLayout.LayoutParams boxLp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        boxLp.bottomMargin = u(5);
+        list.addView(box, boxLp);
+
+        refreshUpdateDownloadProgress();
+        updateProgressHandler.removeCallbacks(updateProgressTick);
+        if (AppUpdater.isDownloading()) {
+            updateProgressHandler.post(updateProgressTick);
+        }
+    }
+
+    private void refreshUpdateDownloadProgress() {
+        if (updateDownloadProgress == null || updateDownloadStatus == null) return;
+        boolean active = AppUpdater.isDownloading();
+        long downloaded = AppUpdater.getDownloadedBytes();
+        long total = AppUpdater.getDownloadTotalBytes();
+        int percent = AppUpdater.getDownloadProgressPercent();
+
+        if (!active && downloaded <= 0L && !"Download failed".equals(AppUpdater.getDownloadStatus())) {
+            updateDownloadStatus.setVisibility(View.GONE);
+            updateDownloadProgress.setVisibility(View.GONE);
+            return;
+        }
+        updateDownloadStatus.setVisibility(View.VISIBLE);
+        updateDownloadProgress.setVisibility(View.VISIBLE);
+        if (percent >= 0) {
+            updateDownloadProgress.setIndeterminate(false);
+            updateDownloadProgress.setProgress(percent);
+            updateDownloadStatus.setText(tr("Downloading update", "Загрузка обновления")
+                    + "  " + percent + "%  ·  "
+                    + android.text.format.Formatter.formatShortFileSize(this, downloaded)
+                    + " / " + android.text.format.Formatter.formatShortFileSize(this, total));
+        } else if (active) {
+            updateDownloadProgress.setIndeterminate(true);
+            updateDownloadStatus.setText(tr("Downloading update", "Загрузка обновления")
+                    + "  ·  " + android.text.format.Formatter.formatShortFileSize(this, downloaded));
+        } else if ("Download failed".equals(AppUpdater.getDownloadStatus())) {
+            updateDownloadProgress.setIndeterminate(false);
+            updateDownloadProgress.setProgress(0);
+            updateDownloadStatus.setText(tr("Update download failed", "Не удалось скачать обновление"));
+        } else {
+            updateDownloadProgress.setIndeterminate(false);
+            updateDownloadProgress.setProgress(100);
+            updateDownloadStatus.setText(tr("Download complete — opening installer", "Загрузка завершена — открываем установщик"));
         }
     }
 
@@ -1775,10 +1833,9 @@ public class SettingsActivity extends Activity {
 
     private String permissionsSummaryCount() {
         int granted = 0;
-        int total = 4;
+        int total = 3;
         if (Perms.isDefaultHome(this)) granted++;
         if (ButtonMapper.isServiceEnabled(this)) granted++;
-        if (Perms.hasListener(this)) granted++;
         if (Perms.hasLocation(this)) granted++;
         return granted + " / " + total + " " + tr("active", "etkin");
     }
@@ -2589,10 +2646,6 @@ public class SettingsActivity extends Activity {
                         pairOrRepairAdb();
                     }
                 });
-
-        row(tr("Continue Watching & DND (Notification Access)", "İzlemeye Devam Et ve Rahatsız Etmeyin"),
-                () -> Perms.hasListener(this) ? "✓  " + tr("Allowed", "İzin verildi") : "✗  " + tr("Not allowed", "İzin verilmedi"),
-                () -> Perms.requestListener(this));
 
         row(tr("Wi-Fi Name (Location)", "Wi-Fi Adı (Konum)"),
                 () -> Perms.hasLocation(this) ? "✓  " + tr("Allowed", "İzin verildi") : "✗  " + tr("Not allowed", "İzin verilmedi"),
@@ -5050,6 +5103,9 @@ public class SettingsActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        updateProgressHandler.removeCallbacks(updateProgressTick);
+        updateDownloadProgress = null;
+        updateDownloadStatus = null;
         ButtonMapper.captureListener = null;
         super.onDestroy();
     }
@@ -5061,6 +5117,10 @@ public class SettingsActivity extends Activity {
 
     void refreshAll() {
         for (Runnable x : refreshers) x.run();
+        if (updateDownloadProgress != null && AppUpdater.isDownloading()) {
+            updateProgressHandler.removeCallbacks(updateProgressTick);
+            updateProgressHandler.post(updateProgressTick);
+        }
     }
 
     AlertDialog.Builder dialog(String title) {

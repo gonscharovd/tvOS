@@ -384,24 +384,10 @@ public class SetupActivity extends Activity {
         hi.setAlpha(0f);
         hi.setTranslationY(u(12));
         hi.animate().alpha(1f).translationY(0).setDuration(700).start();
-        // "Welcome" in Turkish, English, Swedish, Indian and world languages, fading from one to the next.
-        String[] words = {"Welcome", "Ho\u015f Geldiniz", "V\u00e4lkommen", "\u0938\u094d\u0935\u093e\u0917\u0924 \u0939\u0948", "\u09b8\u09cd\u09ac\u09be\u0997\u09a4\u09ae", "\u0bb5\u0bb0\u0bb5\u0bc7\u0bb1\u0bcd\u0b95\u0bbf\u0bb1\u0bcb\u0bae\u0bcd", "\u0c38\u0c4d\u0c35\u0c3e\u0c17\u0c24\u0c02", "Bienvenue", "Bienvenido", "Willkommen", "\u3088\u3046\u3053\u305d", "Benvenuto", "Bem-vindo", "\u6b22\u8fce"};
-        int[] k = {I18n.isTr(this) ? 1 : 0};
-        Runnable[] cycle = new Runnable[1];
-        cycle[0] = () -> {
-            k[0] = (k[0] + 1) % words.length;
-            hi.animate().alpha(0f).setDuration(350).withEndAction(() -> {
-                hi.setText(words[k[0]]);
-                hi.animate().alpha(1f).setDuration(450).start();
-            }).start();
-            handler.postDelayed(cycle[0], 2200);
-        };
-        handler.postDelayed(cycle[0], 2400);
         TextView s = subtitle(tr("Let\u2019s set up testOS.", "testOS\u2019\u0131 kural\u0131m."));
         Ui.textSize(s, 16);
         ((LinearLayout.LayoutParams) s.getLayoutParams()).bottomMargin = u(16);
         LinearLayout l = scrollableList();
-        String curLang = I18n.getLang(this);
         View startRow = option(l, tr("Get Started", "Ba\u015fla"), null, false, () -> {
             Scenes.setClock24h(this, I18n.isDefault24hForLang(I18n.getLang(this)));
             next();
@@ -412,20 +398,6 @@ public class SetupActivity extends Activity {
             startRow.setNextFocusRightId(skipBtn.getId());
             skipBtn.setNextFocusDownId(startRow.getId());
             skipBtn.setNextFocusLeftId(startRow.getId());
-        }
-        for (int i = 0; i < I18n.LANGUAGES.length; i++) {
-            final int rowIdx = i + 1;
-            final String code = I18n.LANGUAGES[i][0];
-            final String title = I18n.LANGUAGES[i][1];
-            final String sub = I18n.LANGUAGES[i][2];
-            View langRow = option(l, title, sub, code.equals(curLang), () -> {
-                I18n.setLang(this, code);
-                show(0, 0);
-                focusRow(rowIdx);
-            });
-            if (skipBtn != null) {
-                langRow.setNextFocusRightId(skipBtn.getId());
-            }
         }
         TextView by = new TextView(this);
         by.setText("by techgenius");
@@ -680,14 +652,8 @@ public class SetupActivity extends Activity {
             show(index, 0);
             focusRow(1);
         });
-        boolean cw = Profiles.homePrefs(this).getBoolean("cw_enabled", true);
-        option(l, tr("Continue Watching", "\u0130zlemeye Devam Et"),
-                tr("What you were watching, mixed into the carousel", "\u0130zledi\u011finiz i\u00e7erikler ana ekranda g\u00f6sterilir"), cw, () -> {
-            Profiles.homePrefs(this).edit().putBoolean("cw_enabled", !cw).apply();
-            show(index, 0);
-            focusRow(2);
-        });
-        option(l, tr("Continue", "Devam Et"), recs || news || cw ? null : tr("Just your background for now", "\u015eimdilik yaln\u0131zca arka plan\u0131n\u0131z"), false, this::next);
+        Profiles.homePrefs(this).edit().putBoolean("cw_enabled", false).apply();
+        option(l, tr("Continue", "Продолжить"), recs || news ? null : tr("Just your background for now", "Пока только фон"), false, this::next);
         dots();
     }
 
@@ -796,7 +762,7 @@ public class SetupActivity extends Activity {
         if (permMode == 0) {
             title(tr("Finish Setting Up", "Kurulumu Tamamla"));
             TextView s = subtitle(tr(
-                    "Select a usage mode for permissions (Button Mapper Accessibility, Continue Watching, and Wi-Fi). Pick ONE usage mode below:",
+                    "Select a usage mode for permissions (Button Mapper Accessibility and Wi-Fi). Pick ONE usage mode below:",
                     "İzinler için bir kullanım modu seçin (Düğme Eşleyici Erişilebilirliği, İzlemeye Devam Et ve Wi-Fi). Aşağıdan BİR kullanım modu seçin:"));
             ((LinearLayout.LayoutParams) s.getLayoutParams()).bottomMargin = u(14);
             LinearLayout l = scrollableList();
@@ -890,10 +856,6 @@ public class SetupActivity extends Activity {
             option(l, tr("Show the Wi-Fi Name", "Wi-Fi Ad\u0131n\u0131 G\u00f6ster"),
                     tr("In Control Center (needs location access)", "Denetim Merkezi'nde (konum izni gerekir)"), false,
                     () -> Perms.requestLocation(this));
-        }
-        if (Perms.listenerSupported(this) && !Perms.hasListener(this)) {
-            option(l, tr("Continue Watching", "\u0130zlemeye Devam Et"),
-                    tr("Remember what you play in each app", "Her uygulamada ne oynatt\u0131\u011f\u0131n\u0131z\u0131 hat\u0131rla"), false, () -> Perms.requestListener(this));
         }
         boolean accOn = ButtonMapper.isServiceEnabled(this);
         option(l, tr("Button Mapper & Control Panel", "D\u00fc\u011fme E\u015fleyici ve Denetim Paneli"),
