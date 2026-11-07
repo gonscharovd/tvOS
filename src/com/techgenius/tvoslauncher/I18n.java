@@ -1713,6 +1713,176 @@ public final class I18n {
             return "Не удалось восстановить настройки из файла:\n"
                     + en.substring("Could not restore settings from:\n".length());
         }
+        // Dynamic CleanYourTV model-matching, debloat and restore messages.
+        if (en.startsWith("Model: ")) return "Модель: " + en.substring("Model: ".length());
+        if (en.startsWith("Product: ")) return "Продукт: " + en.substring("Product: ".length());
+        if (en.startsWith("Board/Device: ")) return "Плата / устройство: " + en.substring("Board/Device: ".length());
+        if (en.startsWith("Brand/OEM: ")) return "Бренд / производитель: " + en.substring("Brand/OEM: ".length());
+        if (en.contains(" OEM pkgs: ")) {
+            int split = en.indexOf(" OEM pkgs: ");
+            return en.substring(0, split) + " пакетов производителя: " + en.substring(split + " OEM pkgs: ".length());
+        }
+        if (en.startsWith("OEM family: ")) return "Семейство производителя: " + en.substring("OEM family: ".length());
+        if (en.contains(" apps (") && en.endsWith(")")) {
+            int split = en.indexOf(" apps (");
+            return en.substring(0, split) + " приложений (" + en.substring(split + " apps (".length());
+        }
+        if (en.startsWith("Exact TV model found and selected automatically:\n\n• ")) {
+            return "Точная модель телевизора найдена и выбрана автоматически:\n\n• "
+                    + en.substring("Exact TV model found and selected automatically:\n\n• ".length());
+        }
+        if (en.startsWith("Choose Closest TV Model — ")) {
+            return "Выберите наиболее подходящую модель ТВ — " + en.substring("Choose Closest TV Model — ".length());
+        }
+        if (en.startsWith("Models with Similar System Apps (") && en.endsWith(" apps scanned)")) {
+            return "Модели с похожими системными приложениями ("
+                    + en.substring("Models with Similar System Apps (".length(), en.length() - " apps scanned)".length())
+                    + " приложений просканировано)";
+        }
+        if (en.startsWith("All TV Models (") && en.endsWith(")")) {
+            return "Все модели телевизоров (" + en.substring("All TV Models (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("Search: \"") && en.endsWith(")")) {
+            int split = en.lastIndexOf("\" (");
+            if (split > 7) return "Поиск: " + en.substring("Search: ".length(), split + 1)
+                    + " (" + en.substring(split + 3);
+        }
+        if (en.startsWith("All disabled (") && en.endsWith(")")) {
+            return "Все отключены (" + en.substring("All disabled (".length(), en.length() - 1) + ")";
+        }
+        if (en.contains(" active / ") && en.endsWith(" found ›")) {
+            int split = en.indexOf(" active / ");
+            return en.substring(0, split) + " активно / "
+                    + en.substring(split + " active / ".length(), en.length() - " found ›".length()) + " найдено ›";
+        }
+        if (en.startsWith(" is a protected core system package and cannot be disabled automatically.")) {
+            return en.substring(0, en.length() - " is a protected core system package and cannot be disabled automatically.".length())
+                    + " — защищённый системный пакет, его нельзя отключить автоматически.";
+        }
+        String protectedCoreSuffix = " is a protected core system package and cannot be disabled automatically.";
+        if (en.endsWith(protectedCoreSuffix)) {
+            return en.substring(0, en.length() - protectedCoreSuffix.length())
+                    + " — защищённый системный пакет, его нельзя отключить автоматически.";
+        }
+        if (en.startsWith("The command was sent, but Android did not confirm that ") && en.endsWith("\nThe restore list was not changed.")) {
+            String body = en.substring("The command was sent, but Android did not confirm that ".length(),
+                    en.length() - "\nThe restore list was not changed.".length());
+            body = body.replace(" is disabled.", " отключён.")
+                    .replace(" is enabled.", " включён.");
+            return "Команда отправлена, но Android не подтвердил, что пакет " + body
+                    + "\nСписок восстановления не изменён.";
+        }
+        if (en.startsWith("Checking installed packages and Wi-Fi status over ADB for ") && en.endsWith("…")) {
+            return "Проверяем установленные пакеты и состояние Wi-Fi через ADB для "
+                    + en.substring("Checking installed packages and Wi-Fi status over ADB for ".length());
+        }
+        if (en.startsWith("⚠️ Detected: Your current Wi-Fi network IS owned by setupwraith")
+                || en.startsWith("ℹ️ Google TV Notice (setupwraith Wi-Fi check):")) {
+            String status = en.startsWith("⚠️")
+                    ? "⚠️ Обнаружено: текущая сеть Wi-Fi принадлежит setupwraith (cname=com.google.android.tungsten.setupwraith).\n\n"
+                    : "ℹ️ Предупреждение Google TV (проверка Wi-Fi setupwraith):\n\n";
+            return status
+                    + "На телевизорах Google TV сети Wi-Fi, сохранённые при первоначальной настройке, принадлежат пакету com.google.android.tungsten.setupwraith. "
+                    + "Отключение setupwraith, необходимое для блокировки штатного лаунчера Google TV, удалит сохранённую этим пакетом сеть Wi-Fi.\n\n"
+                    + "Перед отключением setupwraith:\n"
+                    + "1. Откройте настройки Wi-Fi, выберите свою сеть и нажмите «Забыть сеть».\n"
+                    + "2. Подключитесь к сети заново (теперь она будет сохранена пакетом com.android.tv.settings).\n"
+                    + "3. Вернитесь сюда и нажмите «Я забыл сеть и подключился снова — продолжить».";
+        }
+        if (en.startsWith("None of the packages listed in ") && en.contains(" are installed on this TV.\n\n")
+                && en.endsWith("closest matching TV model?")) {
+            int split = en.indexOf(" are installed on this TV.\n\n");
+            String model = en.substring("None of the packages listed in ".length(), split);
+            return "На этом телевизоре не установлено ни одного пакета из списка " + model + ".\n\n"
+                    + "Просканировать установленные приложения через ADB, чтобы найти наиболее подходящую модель ТВ?";
+        }
+        if (en.startsWith("Select Apps to Disable — ") && en.endsWith(" found)")) {
+            return "Выберите приложения для отключения — "
+                    + en.substring("Select Apps to Disable — ".length(), en.length() - " found)".length()) + " найдено)";
+        }
+        if (en.startsWith("Starting ADB debloat for ") && en.endsWith(" packages…")) {
+            return "Запускаем отключение через ADB для "
+                    + en.substring("Starting ADB debloat for ".length(), en.length() - " packages…".length())
+                    + " пакетов…";
+        }
+        if (en.startsWith("Disabling (") && en.contains("):\n")) {
+            return "Отключение (" + en.substring("Disabling (".length());
+        }
+        if (en.startsWith("Verified disabled: ")) {
+            String[] parts = en.split("\n");
+            if (parts.length >= 3) {
+                String first = parts[0].substring("Verified disabled: ".length()).replace(" of ", " из ")
+                        .replace(" packages for ", " пакетов для ");
+                String second = parts[1].replace("Failed or unverified: ", "Не удалось подтвердить: ");
+                String third = parts[2].replace("Saved restore list: ", "Сохранено в списке восстановления: ")
+                        .replace(" packages.", " пакетов.");
+                return "Отключение подтверждено: " + first + ".\n" + second + "\n" + third;
+            }
+        }
+        if (en.startsWith("No disabled app list has been saved by CleanYourTV yet.")) {
+            return "CleanYourTV пока не сохранил список отключённых приложений.\n\n"
+                    + "После запуска очистки каждый отключённый пакет будет записан здесь. Вы сможете проверить список, включить отдельные приложения или восстановить их все.";
+        }
+        if (en.startsWith("Disabled Apps (") && en.endsWith(" — Tap an app to re-enable)")) {
+            return "Отключённые приложения (" + en.substring("Disabled Apps (".length(),
+                    en.length() - " — Tap an app to re-enable)".length()) + " — нажмите на приложение, чтобы включить его)";
+        }
+        if (en.startsWith("Found saved disabled-app data (") && en.endsWith(" saved packages over ADB?")) {
+            String count = en.substring("Found saved disabled-app data (".length(),
+                    en.indexOf(" packages)."));
+            return "Найдены сохранённые данные об отключённых приложениях (" + count + " пакетов).\n\n"
+                    + "Повторно включить все " + count + " сохранённых пакетов через ADB?";
+        }
+        if (en.startsWith("Restore Saved (") && en.endsWith(")")) {
+            return "Восстановить сохранённые (" + en.substring("Restore Saved (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("Restore Model List (") && en.endsWith(")")) {
+            return "Восстановить список модели (" + en.substring("Restore Model List (".length(), en.length() - 1) + ")";
+        }
+        if (en.startsWith("No saved disabled-app backup was found, and no TV model is selected.")) {
+            return "Резервная копия отключённых приложений не найдена, модель телевизора не выбрана.\n\n"
+                    + "Сначала выберите модель телевизора, чтобы определить, какие пакеты нужно включить.";
+        }
+        if (en.startsWith("No saved disabled-app list was found.\n\n")) {
+            String prefix = "Restore will use your selected TV model (";
+            int start = en.indexOf(prefix);
+            int end = en.indexOf(") and re-enable its ", start + prefix.length());
+            int countEnd = en.indexOf(" packages over ADB.", end);
+            if (start >= 0 && end > start && countEnd > end) {
+                return "Сохранённый список отключённых приложений не найден.\n\n"
+                        + "Для восстановления будет использована выбранная модель телевизора ("
+                        + en.substring(start + prefix.length(), end) + "). Будут повторно включены "
+                        + en.substring(end + ") and re-enable its ".length(), countEnd) + " пакетов через ADB.";
+            }
+        }
+        if (en.startsWith("Restore (") && en.endsWith(" pkgs)")) {
+            return "Восстановить (" + en.substring("Restore (".length(), en.length() - " pkgs)".length()) + " пакетов)";
+        }
+        if (en.startsWith("Re-enabling ") && en.endsWith(" packages over ADB…")) {
+            return "Повторно включаем через ADB "
+                    + en.substring("Re-enabling ".length(), en.length() - " packages over ADB…".length()) + " пакетов…";
+        }
+        if (en.startsWith("Enabling (") && en.contains("):\n")) {
+            return "Включение (" + en.substring("Enabling (".length());
+        }
+        if (en.startsWith("Verified enabled: ")) {
+            String result = en.replace("Verified enabled: ", "Включение подтверждено: ")
+                    .replace(". Failed or unverified: ", ". Не удалось подтвердить: ")
+                    .replace(". Remaining in restore list: ", ". Осталось в списке восстановления: ");
+            return result;
+        }
+        if (en.startsWith("1. Open TV Settings → System → About and click Build 7 times to unlock Developer Options.")) {
+            String ending = en.contains("(ADB port 5555 will be closed automatically right after setup)")
+                    ? "(порт ADB 5555 будет автоматически закрыт сразу после настройки)."
+                    : "(ADB останется включённым для CleanYourTV).";
+            return "1. Откройте «Настройки ТВ → Система → Об устройстве» и нажмите на номер сборки 7 раз, чтобы открыть параметры разработчика.\n"
+                    + "2. Откройте «Настройки → Система → Параметры разработчика» и включите отладку по USB / сети.\n"
+                    + "3. Вернитесь сюда и выберите «Выдать разрешения сейчас» " + ending;
+        }
+        if (en.startsWith("WRITE_SECURE_SETTINGS and all launcher permissions are now active, and ADB (port 5555) has been closed for your security.")) {
+            return "WRITE_SECURE_SETTINGS и все разрешения лаунчера активны. Для вашей безопасности ADB (порт 5555) закрыт.\n\n"
+                    + "Совет: для дополнительной защиты можно также выбрать «Отозвать разрешения на отладку по USB» в параметрах разработчика.";
+        }
         // Dynamic SettingsActivity messages. The legacy second argument to tr()
         // is Turkish, so dynamic English expressions must be translated here.
         if (en.endsWith(" restored to Home Screen.")) {
