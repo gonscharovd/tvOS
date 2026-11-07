@@ -73,7 +73,6 @@ public class SettingsActivity extends Activity {
         {LOOK_SCENES, "scene"},
         {WEATHER, "cloud"},
         {APPS, "apps"},
-        {LANGUAGE, "globe"},
         {ADVANCED, "shield"},
         {UPDATES, "update"},
         {ABOUT, "info"}
