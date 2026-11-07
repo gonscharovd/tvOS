@@ -39,6 +39,12 @@ jobs:
       - name: Test CleanYourTV core package protection
         run: python3 tests/test_clean_your_tv_protection.py
 
+      - name: Test OTA version comparison
+        run: |
+          mkdir -p /tmp/tvos-version-tests
+          javac --release 11 -d /tmp/tvos-version-tests src/com/techgenius/tvoslauncher/VersionComparator.java tests/VersionComparatorTest.java
+          java -cp /tmp/tvos-version-tests com.techgenius.tvoslauncher.VersionComparatorTest
+
       - name: Build and sign development APK
         run: bash build.sh
 
