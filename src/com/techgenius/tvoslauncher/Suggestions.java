@@ -24,29 +24,15 @@ import java.util.List;
  * The former recommendations, news feeds and streaming-service discovery engine has been removed.
  */
 final class Suggestions {
-    static final class Provider {
-        final int id;
-        final String name, pkg, jwShort, jwTech;
-        Provider(int id, String name, String pkg, String jwShort, String jwTech) {
-            this.id = id;
-            this.name = name;
-            this.pkg = pkg;
-            this.jwShort = jwShort;
-            this.jwTech = jwTech;
-        }
-    }
+
 
     static final class Item {
-        int id, providerId;
+        int id;
         String type = "", title = "", overview = "", backdrop = "", logo = "", year = "", genres = "";
         String link = "", pkg = "", key = "";
         float progress = -1f;
         int remainingMin = -1;
         double rating;
-        long published;
-
-        Provider provider() { return null; }
-        Provider provider(Context c) { return null; }
     }
 
     static boolean installed(Context c, String pkg) {
