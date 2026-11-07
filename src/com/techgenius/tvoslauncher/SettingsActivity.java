@@ -1712,22 +1712,22 @@ public class SettingsActivity extends Activity {
         if (percent >= 0) {
             updateDownloadProgress.setIndeterminate(false);
             updateDownloadProgress.setProgress(percent);
-            updateDownloadStatus.setText(tr("Downloading update", "Загрузка обновления")
+            updateDownloadStatus.setText(tr("Downloading update", "Güncelleme indiriliyor")
                     + "  " + percent + "%  ·  "
                     + android.text.format.Formatter.formatShortFileSize(this, downloaded)
                     + " / " + android.text.format.Formatter.formatShortFileSize(this, total));
         } else if (active) {
             updateDownloadProgress.setIndeterminate(true);
-            updateDownloadStatus.setText(tr("Downloading update", "Загрузка обновления")
+            updateDownloadStatus.setText(tr("Downloading update", "Güncelleme indiriliyor")
                     + "  ·  " + android.text.format.Formatter.formatShortFileSize(this, downloaded));
         } else if ("Download failed".equals(AppUpdater.getDownloadStatus())) {
             updateDownloadProgress.setIndeterminate(false);
             updateDownloadProgress.setProgress(0);
-            updateDownloadStatus.setText(tr("Update download failed", "Не удалось скачать обновление"));
+            updateDownloadStatus.setText(tr("Update download failed", "Güncelleme indirilemedi"));
         } else {
             updateDownloadProgress.setIndeterminate(false);
             updateDownloadProgress.setProgress(100);
-            updateDownloadStatus.setText(tr("Download complete — opening installer", "Загрузка завершена — открываем установщик"));
+            updateDownloadStatus.setText(tr("Download complete — opening installer", "İndirme tamamlandı — yükleyici açılıyor"));
         }
     }
 
@@ -5146,6 +5146,10 @@ public class SettingsActivity extends Activity {
 
     void refreshAll() {
         for (Runnable x : refreshers) x.run();
+        if (updateDownloadProgress != null && AppUpdater.isDownloading()) {
+            updateProgressHandler.removeCallbacks(updateProgressTick);
+            updateProgressHandler.post(updateProgressTick);
+        }
     }
 
     AlertDialog.Builder dialog(String title) {
