@@ -312,8 +312,10 @@ public final class ControlPanelOverlay {
         }, true));
         capsules.add(new CapsuleSpec("timer", I18n.s(c, "Sleep Timer", "Таймер сна"),
                 () -> timerState(c), v -> cycleSleepTimer(c), false));
+        capsules.add(new CapsuleSpec("shield", "VPN", () -> vpnState(c),
+                v -> { if (onVpnToggle != null) onVpnToggle.run(); }, false));
 
-        // Four full-width status/action rows.
+        // Five full-width status/action rows.
         for (int i = 0; i < capsules.size(); i++) {
             CapsuleSpec cs = capsules.get(i);
             int y = i * (cap + gap);
@@ -323,14 +325,12 @@ public final class ControlPanelOverlay {
             outCells.add(tile);
         }
 
-        int y4 = capsules.size() * (cap + gap);
-        // Fixed bottom row: VPN toggle and the settings chooser.
-        outCells.add(makeTile(c, panel, 0, y4, small, cap, unit, screenW, screenH, glassSource,
-                "shield", null, null, v -> { if (onVpnToggle != null) onVpnToggle.run(); }));
-        outCells.add(makeTile(c, panel, small + gap, y4, small, cap, unit, screenW, screenH, glassSource,
+        int y5 = capsules.size() * (cap + gap);
+        // Keep Settings as a compact shortcut, centered beneath the full-width rows.
+        outCells.add(makeTile(c, panel, (w - small) / 2, y5, small, cap, unit, screenW, screenH, glassSource,
                 "gear", null, null, v -> { if (onSettings != null) onSettings.run(); }));
 
-        int totalH = y4 + cap;
+        int totalH = y5 + cap;
         FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(w, totalH, Gravity.TOP | Gravity.END);
         plp.topMargin = dp(unit, 36);
         plp.rightMargin = dp(unit, 28);
@@ -381,7 +381,8 @@ public final class ControlPanelOverlay {
 
         int gs = iconOnly ? dp(unit, 26) : dp(unit, 25);
         ImageView gi = new ImageView(c);
-        int baseIconColor = ("wifi".equals(glyph) || "bluetooth".equals(glyph)) ? 0xFF0A84FF
+        boolean vpnActive = "shield".equals(glyph) && VpnController.isVpnActive(c);
+        int baseIconColor = ("wifi".equals(glyph) || "bluetooth".equals(glyph) || vpnActive) ? 0xFF0A84FF
                 : "ambient".equals(glyph) ? 0xFFFFD60A
                 : "power".equals(glyph) ? 0xFFFF453A
                 : Color.WHITE;
@@ -426,7 +427,7 @@ public final class ControlPanelOverlay {
         white.setCornerRadius(radius);
         white.setColor(0xF7FFFFFF);
 
-        final int focusIconColor = ("wifi".equals(glyph) || "bluetooth".equals(glyph)) ? 0xFF0A84FF
+        final int focusIconColor = ("wifi".equals(glyph) || "bluetooth".equals(glyph) || vpnActive) ? 0xFF0A84FF
                 : "ambient".equals(glyph) ? 0xFFD97706
                 : "power".equals(glyph) ? 0xFFD7372A
                 : 0xFF111114;
@@ -505,6 +506,12 @@ public final class ControlPanelOverlay {
     }
 
     // ---------------------------------------------------------------- Live States & Actions
+
+    public static String vpnState(Context c) {
+        return VpnController.isVpnActive(c)
+                ? I18n.s(c, "Connected", "Подключён")
+                : I18n.s(c, "Disconnected", "Отключён");
+    }
 
     public static String wifiState(Context c) {
         try {
