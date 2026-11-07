@@ -1976,7 +1976,7 @@ public final class I18n {
                 String second = parts[1].replace("Failed or unverified: ", "Не удалось подтвердить: ");
                 String third = parts[2].replace("Saved restore list: ", "Пакетов в списке восстановления: ")
                         .replace(" packages.", ".");
-                return "Отключение подтверждено: " + first + ".\n" + second + "\n" + third;
+                return "Отключение подтверждено: " + first + "\n" + second + "\n" + third;
             }
         }
         if (en.startsWith("No disabled app list has been saved by CleanYourTV yet.")) {
