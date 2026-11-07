@@ -1317,39 +1317,45 @@ public class SettingsActivity extends Activity {
         row("Выбор лаунчера по умолчанию",
                 () -> Perms.isDefaultHome(this) ? "testOS активен" : "Выбрать лаунчер…",
                 () -> Perms.requestDefaultHome(this));
-        section(tr("ADB & SECURITY MODE", "ADB VE GÜVENLİK MODU"));
-        twoLineRow(tr("ADB operating mode", "ADB çalışma modu"),
+        pageButtonMapper();
+
+        section("ADB");
+        twoLineRow("Режим работы ADB",
                 () -> LocalAdb.getAdbModeLabel(this),
                 this::showAdbModeSelectorDialog);
-        row(tr("Turn On / Off ADB", "ADB'yi Aç / Kapat"),
-                () -> (LocalAdb.isAdbSettingEnabled(this) || LocalAdb.portReachable)
-                        ? tr("On", "Açık")
-                        : tr("Off", "Kapalı"),
+        row("ADB", () -> (LocalAdb.isAdbSettingEnabled(this) || LocalAdb.portReachable)
+                        ? "Включён" : "Выключен",
                 this::toggleAdbPort);
-        row(tr("Remove / revoke all permissions", "Tüm izinleri kaldır / geri al"),
-                () -> tr("Revoke ›", "Kaldır ›"),
+        row("Состояние подключения",
+                () -> LocalAdb.getStatusLabel(this),
+                this::pairOrRepairAdb);
+
+        section("РАЗРЕШЕНИЯ");
+        row("Просмотреть выданные разрешения",
+                this::permissionsSummaryCount,
+                () -> openSubMenu("check_permissions"));
+        row("Отозвать выданные разрешения",
+                () -> "Отозвать ›",
                 this::confirmRevokeAllPermissions);
 
-        section(tr("STARTUP & KEEP ALIVE", "BAŞLANGIÇ VE KEEP ALIVE"));
-        row(tr("Keep Alive (Auto-repair Accessibility)", "Keep Alive (Erişilebilirliği otomatik onar)"),
-                () -> LocalAdb.isKeepAliveEnabled(this) ? tr("On (Default)", "Açık (Varsayılan)") : tr("Off", "Kapalı"),
+        section("РАБОТА СЛУЖБЫ ПУЛЬТА");
+        row("Автовосстановление службы пульта",
+                () -> LocalAdb.isKeepAliveEnabled(this) ? "Включено" : "Выключено",
                 this::toggleKeepAliveWithWarning);
+        infoNote("Поддерживает работу переназначения кнопок, если Android отключает службу специальных возможностей. В безопасном режиме ADB не остаётся постоянно открытым.");
 
-        infoNote(tr("Security Note: Keep Alive is enabled by default. In Secure Mode, testOS uses WRITE_SECURE_SETTINGS to restore Accessibility directly in-process without touching ADB (even if ADB is enabled on the TV). In Persistent ADB Mode, Keep Alive can also use Local ADB on port 5555.",
-                "Güvenlik Notu: Keep Alive varsayılan olarak açıktır. Güvenli Mod'da testOS, ADB'yi hiç kullanmadan (TV'de ADB açık olsa bile) Erişilebilirliği doğrudan WRITE_SECURE_SETTINGS ile onarır. Kalıcı ADB Modu'nda ise port 5555 üzerinden yerel ADB'yi de kullanabilir."));
-
-        section(tr("CLEANYOURTV (BETA)", "CLEANYOURTV (BETA)"));
-        twoLineRow(tr("Choose TV model", "TV modelini seçin"),
+        section("ОЧИСТКА ТВ");
+        twoLineRow("Модель телевизора",
                 () -> CleanYourTv.getSelectedModelSummary(this),
                 () -> {
                     cytAutoContinueToDebloat = false;
                     openSubMenu("cyt_models");
                 });
-        row(tr("Debloat status", "Debloat durumu"),
-                () -> advDebloatSummary != null ? advDebloatSummary : "…",
+        row("Состояние очистки",
+                () -> advDebloatSummary != null ? advDebloatSummary : "Загрузка…",
                 () -> openSubMenu("cyt_saved"));
-        row(tr("Debloat TV…", "TV Debloat Başlat…"),
-                () -> tr("Start ›", "Başlat ›"),
+        row("Очистить телевизор",
+                () -> "Начать ›",
                 () -> {
                     if (CleanYourTv.getSelectedModelSlug(this).isEmpty()) {
                         cytAutoContinueToDebloat = true;
@@ -1359,35 +1365,22 @@ public class SettingsActivity extends Activity {
                         openSubMenu("cyt_debloat");
                     }
                 });
-        row(tr("Disable system launchers…", "Sistem başlatıcılarını devre dışı bırak…"),
-                () -> advLaunchersSummary != null ? advLaunchersSummary : "…",
+        row("Системные лаунчеры",
+                () -> advLaunchersSummary != null ? advLaunchersSummary : "Загрузка…",
                 () -> openSubMenu("cyt_launchers"));
-        row(tr("Manual debloat (All system apps)…", "Manuel debloat (Tüm sistem uygulamaları)…"),
-                () -> tr("Advanced ›", "Gelişmiş ›"),
+        row("Ручная очистка системных приложений",
+                () -> "Дополнительно ›",
                 this::promptManualDebloatWarning);
-        row(tr("Restore debloated apps…", "Debloat edilen uygulamaları geri yükle…"),
-                () -> tr("Restore ›", "Geri Yükle ›"),
+        row("Восстановить отключённые приложения",
+                () -> "Восстановить ›",
                 () -> openSubMenu("cyt_restore"));
-        row(tr("Ad-blocking Private DNS (AdGuard)", "Reklam engelleyici Özel DNS (AdGuard)"),
-                () -> CleanYourTv.isAdguardDnsActive(this) ? tr("On", "Açık") : tr("Off", "Kapalı"),
+        infoNote("Можно выбрать модель телевизора или найти её по системным приложениям. В состоянии очистки отображается список отключённых пакетов. Очистка отключает выбранные приложения, а не удаляет их.");
+
+        section("БЛОКИРОВКА РЕКЛАМЫ");
+        row("AdGuard DNS",
+                () -> CleanYourTv.isAdguardDnsActive(this) ? "Включена" : "Выключена",
                 () -> CleanYourTv.toggleAdguardDns(this, this::refreshAll));
 
-        infoNote(tr("CleanYourTV (Beta) runs the CleanYourTV debloat profiles directly on your TV over Local ADB without needing a PC. Choose your TV model (or scan by installed system app packages), disable stock launchers or bloatware, and restore them anytime with one tap.",
-                "CleanYourTV (Beta), bilgisayara ihtiyaç duymadan CleanYourTV debloat profillerini Yerel ADB üzerinden doğrudan TV'nizde çalıştırır. TV modelinizi seçin (veya yüklü sistem uygulaması paketlerine göre tarayın), stok başlatıcıları veya gereksiz uygulamaları devre dışı bırakın ve istediğiniz zaman tek dokunuşla geri yükleyin."));
-        
-        pageButtonMapper();
-
-        section(tr("DIAGNOSTICS & RECOVERY", "TANI VE KURTARMA"));
-        row(tr("ADB connection status", "ADB bağlantı durumu"),
-                () -> LocalAdb.getStatusLabel(this),
-                this::pairOrRepairAdb);
-        row(tr("Check permissions", "İzinleri kontrol et"),
-                this::permissionsSummaryCount,
-                () -> openSubMenu("check_permissions"));
-
-
-        // Expensive PackageManager scans (launchers, debloat status) run off the UI thread so the
-        // page's first frames aren't blocked; rows show "…" until the values arrive.
         loadAdvancedSummariesAsync();
         if (LocalAdb.getAdbMode(this) == LocalAdb.ADB_MODE_PERSISTENT) {
             LocalAdb.probePortAsync(this, () -> runOnUiThread(() -> {
