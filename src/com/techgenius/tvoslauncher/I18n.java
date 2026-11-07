@@ -18,6 +18,22 @@ public final class I18n {
 
     static {
         LANG_MAPS.put(LANG_RU, new HashMap<String, String>());
+        add("Custom 2", "Свой вариант 2");
+        add("Custom 3", "Свой вариант 3");
+        add("Custom 4", "Свой вариант 4");
+        add("Custom 5", "Свой вариант 5");
+        add("Folder Shuffle", "Смена изображений из папки");
+        add("Custom Lock Image", "Своё изображение экрана блокировки");
+        add("Tessellated Pavement", "Мозаичный берег");
+        add("Grose Valley", "Долина Гроуз");
+        add("Albury Storm", "Гроза в Олбери");
+        add("Aresquiers Beach", "Пляж Арескьер");
+        add("Vang Vieng Sunset", "Закат в Ванг-Вьенге");
+        add("Aurora", "Северное сияние");
+        add("Midnight", "Полночь");
+        add("Ocean", "Океан");
+        add("Sunset", "Закат");
+        add("Graphite", "Графит");
 
         add("m", "мин");
         add("Continue watching", "Продолжить просмотр");
