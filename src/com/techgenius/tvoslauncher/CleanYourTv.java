@@ -69,7 +69,7 @@ public final class CleanYourTv {
      */
     private static final Pattern CORE_RE = Pattern.compile(
             "^(android"
-            + "|com\\.android\\.(systemui|settings|tv\\.settings|providers\\..*|inputmethod\\..*| server\\..*|permissioncontroller|packageinstaller| vending|defcontainer|shell|bluetooth|nfc|se|keychain|certinstaller|externalstorage|location\\.fused|networkstack.*|wifi.*|captiveportallogin|pacprocessor|proxyhandler|statementservice|companiondevicemanager|mms\\.service|mtp|ons|rkpdapp|sdksandbox|sharedstoragebackup|vpndialogs|wallpapercropper|htmlviewer)"
+            + "|com\\.android\\.(systemui|settings|tv\\.settings|providers\\..*|inputmethod\\..*|server(\\..*)?|permissioncontroller|packageinstaller|vending|defcontainer|shell|bluetooth|nfc|se|keychain|certinstaller|externalstorage|location\\.fused|networkstack.*|wifi.*|captiveportallogin|pacprocessor|proxyhandler|statementservice|companiondevicemanager|mms\\.service|mtp|ons|rkpdapp|sdksandbox|sharedstoragebackup|vpndialogs|wallpapercropper|htmlviewer)"
             + "|com\\.google\\.android\\.(gms|gsf|gsf\\.login|packageinstaller|permissioncontroller|ext\\.services|ext\\.shared|networkstack.*|captiveportallogin|webview|trichromelibrary|tv\\.frameworkpackagestubs|modulemetadata|ondevicepersonalization\\.services|federatedcompute|sdksandbox|adservices\\.api)"
             + ")$"
     );
