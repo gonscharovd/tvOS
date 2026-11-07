@@ -842,7 +842,7 @@ public class PowerService extends AccessibilityService {
             }
 
             // Fast boot guard: during the first 40s after system boot, if "Launch on System Boot" is enabled
-            // and a stock OEM/Chinese TV launcher pops to the foreground, immediately bring tvOS Launcher to front!
+            // and a stock OEM/Chinese TV launcher pops to the foreground, immediately bring testOS to front!
             if (SystemClock.elapsedRealtime() < 160_000L
                     && (SystemClock.elapsedRealtime() - serviceConnectedElapsedMs) < 40_000L
                     && BootReceiver.isLaunchOnBootEnabled(this)) {
