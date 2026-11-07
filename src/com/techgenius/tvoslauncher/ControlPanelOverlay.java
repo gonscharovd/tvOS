@@ -699,55 +699,8 @@ public final class ControlPanelOverlay {
     public static final String AMBIENT_MODE_LOCK_SCREEN = "lock_screen";
     public static final String AMBIENT_MODE_CUSTOM = "custom";
 
-    public static final String ITEM_WIFI = "wifi";
-    public static final String ITEM_BLUETOOTH = "bluetooth";
-    public static final String ITEM_MEMORY = "memory";
-    public static final String ITEM_DND = "dnd";
-    public static final String ITEM_AUDIO = "audio";
-    public static final String ITEM_TIMER = "timer";
-    public static final String ITEM_AMBIENT = "ambient";
-    public static final String ITEM_POWER = "power";
-    public static final String ITEM_INPUTS = "inputs";
-    public static final String ITEM_VPN = "vpn";
-    public static final String ITEM_SETTINGS = "settings";
-    public static final String ITEM_SEARCH = "search";
-
-    public static final String[][] ALL_CP_ITEMS = {
-        {ITEM_WIFI, "Wi-Fi", "Wi-Fi"},
-        {ITEM_BLUETOOTH, "Bluetooth", "Bluetooth"},
-        {ITEM_MEMORY, "Memory / Recent Apps", "Bellek / Son Uygulamalar"},
-        {ITEM_DND, "Do Not Disturb", "Rahatsız Etmeyin"},
-        {ITEM_AUDIO, "Audio Output", "Ses Çıkışı"},
-        {ITEM_TIMER, "Sleep Timer", "Uyku Zamanlayıcısı"},
-        {ITEM_AMBIENT, "Ambient Mode / Lock Screen", "Ortam Modu / Kilit Ekranı"},
-        {ITEM_POWER, "Power Off / Screen Off", "Kapat / Ekranı Kapat"},
-        {ITEM_INPUTS, "TV Inputs Shortcut", "TV Girişleri Kısayolu"},
-        {ITEM_VPN, "VPN (Happ)", "VPN (Happ)"},
-        {ITEM_SETTINGS, "Settings Shortcut", "Ayarlar Kısayolu"},
-        {ITEM_SEARCH, "Search / Assistant Shortcut", "Arama / Asistan Kısayolu"}
-    };
-
     public static android.content.SharedPreferences cpPrefs(Context c) {
         return c.getSharedPreferences(PREFS_CP, Context.MODE_PRIVATE);
-    }
-
-    public static String getItemTitle(Context c, String itemKey) {
-        for (String[] row : ALL_CP_ITEMS) {
-            if (row[0].equals(itemKey)) {
-                return I18n.s(c, row[1], row[2]);
-            }
-        }
-        return itemKey;
-    }
-
-    public static boolean isItemEnabled(Context c, String itemKey) {
-        if (c == null || itemKey == null) return true;
-        return cpPrefs(c).getBoolean("item_enabled_" + itemKey, true);
-    }
-
-    public static void setItemEnabled(Context c, String itemKey, boolean enabled) {
-        if (c == null || itemKey == null) return;
-        cpPrefs(c).edit().putBoolean("item_enabled_" + itemKey, enabled).apply();
     }
 
     public static boolean isAmbientLockScreenMode(Context c) {
