@@ -1699,13 +1699,6 @@ final class SceneHome {
             c.drawBitmap(g, (s - g.getWidth()) / 2f, (s - g.getHeight()) / 2f, null);
             return out;
         }
-        if (MainActivity.PRESENT_KEY.equals(a.key)) {
-            p.setShader(new LinearGradient(0, 0, 0, s, 0xFF5682FF, 0xFF2B50CC, Shader.TileMode.CLAMP));
-            c.drawRect(0, 0, s, s, p);
-            Bitmap g = Glyphs.get("present", Math.round(s * 0.52f), Color.WHITE);
-            c.drawBitmap(g, (s - g.getWidth()) / 2f, (s - g.getHeight()) / 2f, null);
-            return out;
-        }
         boolean isPlayStore = "com.android.vending".equals(a.pkg);
         if (isPlayStore) {
             c.drawColor(0xFFFFFFFF);
