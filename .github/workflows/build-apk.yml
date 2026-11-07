@@ -46,7 +46,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: tvos-custom-2.1.2-custom1
+          name: tvos-custom-2.1.2-custom2
           path: build/tvos-home.apk
           if-no-files-found: error
           retention-days: 14
