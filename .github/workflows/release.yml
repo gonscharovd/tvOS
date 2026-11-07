@@ -76,6 +76,9 @@ jobs:
       - name: Test cross-platform build contract
         run: python3 tests/test_build_contract.py
 
+      - name: Test OTA install flow
+        run: python3 tests/test_ota_install_flow.py
+
       - name: Build release APK
         run: bash build.sh
 
