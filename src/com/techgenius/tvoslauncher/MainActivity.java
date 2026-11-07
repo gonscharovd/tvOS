@@ -465,7 +465,7 @@ public class MainActivity extends Activity {
             startActivity(new Intent(this, SetupActivity.class));
             return;
         }
-        // Screensaver: tvOS Launcher never holds the screen on unless the user turned the screensaver off here.
+        // Screensaver: testOS never holds the screen on unless the user turned the screensaver off here.
         if (getSharedPreferences("screensaver", MODE_PRIVATE).getBoolean("allow", true)) {
             getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         } else {
@@ -479,8 +479,8 @@ public class MainActivity extends Activity {
         if (SetupActivity.done(this) && !Perms.isDefaultHome(this) && !prefs.getBoolean("asked_default_home", false)) {
             prefs.edit().putBoolean("asked_default_home", true).apply();
             new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle(I18n.s(this, "Make tvOS Launcher your home screen?", "tvOS Launcher ana ekranınız yapılsın mı?"))
-                    .setMessage(I18n.s(this, "The Home button on the remote will open tvOS Launcher.", "Kumandadaki Ana Ekran düğmesi tvOS Launcher'ı açacaktır."))
+                    .setTitle(I18n.s(this, "Make testOS your home screen?", "testOS ana ekranınız yapılsın mı?"))
+                    .setMessage(I18n.s(this, "The Home button on the remote will open testOS.", "Kumandadaki Ana Ekran düğmesi testOS'ı açacaktır."))
                     .setPositiveButton(I18n.s(this, "Make Home Screen", "Ana Ekran Yap"), (d, w) -> Perms.requestDefaultHome(this))
                     .setNegativeButton(I18n.s(this, "Not Now", "Şimdi Değil"), null).show();
         }
@@ -3969,7 +3969,7 @@ public class MainActivity extends Activity {
     }
 
     /**
-     * Clean: close the apps you've opened since the last clean. With tvOS Launcher's accessibility switch on,
+     * Clean: close the apps you've opened since the last clean. With testOS's accessibility switch on,
      * it presses Force stop on each app's info page (what you'd do by hand); otherwise Android is
      * asked to drop their background processes. The memory freed is measured.
      */
@@ -4444,7 +4444,7 @@ public class MainActivity extends Activity {
     /** Seconds without input before the dock slides away (Settings -> Home); 0 = never. */
     int idleSeconds() {
         int sec = Profiles.homePrefs(this).getInt("idle_sec", 20);
-        // tvOS Launcher carousel chosen as the screensaver: it always takes over when idle.
+        // testOS carousel chosen as the screensaver: it always takes over when idle.
         if (sec == 0 && !getSharedPreferences("screensaver", MODE_PRIVATE).getBoolean("allow", true)) sec = 20;
         return sec;
     }
