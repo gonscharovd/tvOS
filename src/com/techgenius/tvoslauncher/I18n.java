@@ -81,6 +81,44 @@ public final class I18n {
         add("Each scene stays", "Длительность сцены");
         add("Clock", "Часы");
         add("Clock style", "Стиль часов");
+        add("RAM", "ОЗУ");
+        add("Launcher", "Лаунчер");
+        add("TV", "ТВ");
+        add("Disconnected", "Отключён");
+        add("Back to return   ·   Hold OK for options", "Нажмите «Назад» для возврата · удерживайте OK для действий");
+        add("Who’s Watching?", "Кто смотрит?");
+        add("Delete profile", "Удалить профиль");
+        add("Getting the weather…", "Загружаем погоду…");
+        add("Continue Watching & Do Not Disturb", "Продолжить просмотр и режим «Не беспокоить»");
+        add("Set Default via Local ADB (Recommended)", "Назначить по умолчанию через локальный ADB (рекомендуется)");
+        add("Disable Stock TV Launchers (TCL / Philips / Google TV)", "Отключить штатные лаунчеры ТВ (TCL / Philips / Google TV)");
+        add("Enable Home Button Fix (Accessibility Remap)", "Включить перехват кнопки «Домой» (спец. возможности)");
+        add("Open Android Default Home Settings", "Открыть настройки главного экрана Android");
+        add("Set Default Home Launcher", "Назначить лаунчер главным экраном");
+        add("Default home launcher set via ADB!", "Лаунчер назначен главным экраном через ADB!");
+        add("Home Button Fix & Accessibility enabled!", "Перехват кнопки «Домой» и специальные возможности включены!");
+        add("Home Button Fix enabled!", "Перехват кнопки «Домой» включён!");
+        add("Select Home App", "Выберите приложение главного экрана");
+        add("This TV's settings have no switch for this permission. Whoever set up the TV can turn it on once from a computer on the same network:\n\n", "В настройках этого телевизора нет переключателя для данного разрешения. Его можно один раз включить с компьютера в той же сети:\n\n");
+        add("Allow testOS to install unknown apps; installation will resume when you return.", "Разрешите testOS устанавливать неизвестные приложения — после возврата установка продолжится.");
+        add("Could not open install permission settings.", "Не удалось открыть настройки разрешения на установку.");
+        add("The downloaded update is no longer available. Please download it again.", "Скачанный файл обновления больше недоступен. Скачайте его повторно.");
+        add("Could not install update.", "Не удалось установить обновление.");
+        add("A new version of testOS is available on GitHub.", "На GitHub доступна новая версия testOS.");
+        add("Current version:", "Текущая версия:");
+        add("New version:", "Новая версия:");
+        add("✕  Remove", "✕  Удалить");
+        add("▶  Resume", "▶  Продолжить");
+        add("Emoji", "Эмодзи");
+        add("iPhone Duo", "iPhone Duo");
+        add("iPhone Rounded", "iPhone Rounded");
+        add("Tall Glass", "Высокий");
+        add("Classic", "Классический");
+        add("Serif", "С засечками");
+        add("Digital", "Цифровой");
+        add("Condensed", "Узкий");
+        add("Thin", "Тонкий");
+        add("Bold", "Жирный");
         add("iPhone Duo", "iPhone Duo");
         add("Glass", "Стекло");
         add("12 hour", "12 часов");
@@ -1148,6 +1186,10 @@ public final class I18n {
         if (en.endsWith("% used · Clean")) {
             String num = en.substring(0, en.length() - "% used · Clean".length());
             return num + "% · " + map.getOrDefault("Clean", "Очистить");
+        }
+        if (en.endsWith("% used  ·  Clean")) {
+            String num = en.substring(0, en.length() - "% used  ·  Clean".length());
+            return num + "% использовано · " + map.getOrDefault("Clean", "Очистить");
         }
         if (en.endsWith(" min left")) return en.substring(0, en.length() - " min left".length()) + " мин";
         if (en.startsWith("Move ")) {

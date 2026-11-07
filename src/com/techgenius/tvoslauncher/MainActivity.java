@@ -1781,7 +1781,7 @@ public class MainActivity extends Activity {
         btnRow.addView(heroButton, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(32)));
         heroRemove = text(13, Ui.font(this, "semibold"), 1f);
         heroRemove.setShadowLayer(0, 0, 0, 0);
-        heroRemove.setText("\u2715  Remove");
+        heroRemove.setText(I18n.s(this, "✕  Remove", "✕  Удалить"));
         heroRemove.setGravity(Gravity.CENTER);
         heroRemove.setPadding(dp(16), 0, dp(18), 0);
         heroRemoveBg = new GradientDrawable();
@@ -2245,7 +2245,7 @@ public class MainActivity extends Activity {
                     ? (it.remainingMin / 60) + " h " + (it.remainingMin % 60) + " min left" : it.remainingMin + " min left");
             heroMeta.setText(String.join("  \u00B7  ", meta));
             heroOverview.setText(it.overview);
-            heroBtnText.setText("\u25B6  Resume");
+            heroBtnText.setText(I18n.s(this, "▶  Resume", "▶  Продолжить"));
             try {
                 heroProvider.setImageDrawable(getPackageManager().getApplicationIcon(it.pkg));
                 heroProvider.setVisibility(View.VISIBLE);
@@ -3782,6 +3782,7 @@ public class MainActivity extends Activity {
         FrameLayout layer = new FrameLayout(this);
         layer.setClickable(true);
         layer.setClipChildren(false);
+        layer.setTag("control_panel");
         addBlurredBackdrop(layer, 0x8C000000);
 
         List<View> cells = new ArrayList<>();
@@ -4947,6 +4948,10 @@ public class MainActivity extends Activity {
 
     /** Directional focus inside a popover: nearest cell whose centre lies in that direction. */
     boolean pickerMove(int keyCode) {
+        if (pickerLayer != null && "control_panel".equals(pickerLayer.getTag())) {
+            ControlPanelOverlay.moveControlPanelFocus(pickerCells, keyCode);
+            return true;
+        }
         View cur = getCurrentFocus();
         if (!pickerCells.contains(cur)) {
             if (!pickerCells.isEmpty()) pickerCells.get(0).requestFocus();
@@ -5107,7 +5112,7 @@ public class MainActivity extends Activity {
                 if (free.get(i).equals(prof.emoji)) cur = i;
             }
             new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle("Emoji")
+                    .setTitle(I18n.s(this, "Emoji", "Эмодзи"))
                     .setSingleChoiceItems(items, cur, (d, w) -> {
                         prof.emoji = free.get(w);
                         Profiles.update(this, prof);
@@ -5131,7 +5136,7 @@ public class MainActivity extends Activity {
             del = l.size();
             l.add(I18n.s(this, "Delete", "Sil"));
             act.add(() -> new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle(I18n.s(this, "Delete \u201C" + prof.name + "\u201D?", "\u201C" + prof.name + "\u201D silinsin mi?"))
+                    .setTitle(I18n.s(this, "Delete profile", "Удалить профиль") + " «" + prof.name + "»?")
                     .setMessage(I18n.s(this, "Its layout and Continue Watching list will be removed.", "Düzeni ve İzlemeye Devam Et listesi kaldırılacak."))
                     .setPositiveButton(I18n.s(this, "Delete", "Sil"), (d, w) -> {
                         boolean wasCurrent = Profiles.current(this).id.equals(prof.id);

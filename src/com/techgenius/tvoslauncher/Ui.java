@@ -47,18 +47,26 @@ public final class Ui {
     public static android.graphics.Typeface font(Context c, String weight) {
         android.graphics.Typeface t = FONTS.get(weight);
         if (t == null) {
-            String file = weight.equals("clock") ? "Antonio-Light"
-                    : weight.equals("clock_duo") ? "Bahnschrift"
-                    : weight.equals("clock_rounded") ? "VarelaRound-Regular"
-                    : weight.equals("display") ? "InterDisplay-Bold" : weight.equals("medium") ? "Inter-Medium"
-                    : weight.equals("semibold") ? "Inter-SemiBold" : "Inter-Regular";
-            try {
-                t = android.graphics.Typeface.createFromAsset(c.getAssets(), "fonts/" + file + ".ttf");
-            } catch (RuntimeException e) {
+            if (weight.equals("clock_classic")) t = android.graphics.Typeface.create("sans-serif", android.graphics.Typeface.NORMAL);
+            else if (weight.equals("clock_serif")) t = android.graphics.Typeface.create("serif", android.graphics.Typeface.NORMAL);
+            else if (weight.equals("clock_digital")) t = android.graphics.Typeface.create("monospace", android.graphics.Typeface.NORMAL);
+            else if (weight.equals("clock_condensed")) t = android.graphics.Typeface.create("sans-serif-condensed", android.graphics.Typeface.NORMAL);
+            else if (weight.equals("clock_thin")) t = android.graphics.Typeface.create("sans-serif-thin", android.graphics.Typeface.NORMAL);
+            else if (weight.equals("clock_bold")) t = android.graphics.Typeface.create("sans-serif-black", android.graphics.Typeface.NORMAL);
+            else {
+                String file = weight.equals("clock") ? "Antonio-Light"
+                        : weight.equals("clock_duo") ? "Bahnschrift"
+                        : weight.equals("clock_rounded") ? "VarelaRound-Regular"
+                        : weight.equals("display") ? "InterDisplay-Bold" : weight.equals("medium") ? "Inter-Medium"
+                        : weight.equals("semibold") ? "Inter-SemiBold" : "Inter-Regular";
                 try {
-                    t = android.graphics.Typeface.createFromAsset(c.getAssets(), "fonts\\" + file + ".ttf");
-                } catch (RuntimeException e2) {
-                    t = android.graphics.Typeface.DEFAULT;
+                    t = android.graphics.Typeface.createFromAsset(c.getAssets(), "fonts/" + file + ".ttf");
+                } catch (RuntimeException e) {
+                    try {
+                        t = android.graphics.Typeface.createFromAsset(c.getAssets(), "fonts\\" + file + ".ttf");
+                    } catch (RuntimeException e2) {
+                        t = android.graphics.Typeface.DEFAULT;
+                    }
                 }
             }
             FONTS.put(weight, t);

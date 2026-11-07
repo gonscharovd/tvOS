@@ -190,6 +190,7 @@ public final class ControlPanelOverlay {
         layer.setClickable(true);
         layer.setClipChildren(false);
         layer.setClipToPadding(false);
+        layer.setTag("control_panel");
         layer.setOnClickListener(v -> dismiss());
 
         final android.graphics.Bitmap glassBmp = getOverlayGlassBitmap(svcCtx, screenW, screenH);
@@ -489,43 +490,50 @@ public final class ControlPanelOverlay {
     }
 
     private static void moveFocusInOverlay(Context c, int keyCode) {
-        if (activeCells == null || activeCells.isEmpty()) return;
-        View cur = null;
-        for (View v : activeCells) {
-            if (v.isFocused()) {
-                cur = v;
+        moveControlPanelFocus(activeCells, keyCode);
+    }
+
+    /**
+     * The Control Panel is a fixed six-row layout, not a free-form grid. Use its logical
+     * neighbours instead of geometric nearest-centre scoring: a full-width VPN tile is
+     * centred above two half-width tiles, so a distance score can incorrectly skip RAM
+     * and land on the Sleep Timer directly below.
+     *
+     * Cell order: Wi-Fi, Bluetooth, VPN, RAM, Recent Apps, Sleep Timer, Launcher, TV Settings.
+     */
+    public static void moveControlPanelFocus(List<View> cells, int keyCode) {
+        if (cells == null || cells.isEmpty()) return;
+        int current = -1;
+        for (int i = 0; i < cells.size(); i++) {
+            if (cells.get(i).isFocused()) {
+                current = i;
                 break;
             }
         }
-        if (cur == null) {
-            activeCells.get(0).requestFocus();
+        if (current < 0) {
+            cells.get(0).requestFocus();
             return;
         }
-        int[] a = new int[2];
-        cur.getLocationOnScreen(a);
-        float ax = a[0] + cur.getWidth() / 2f, ay = a[1] + cur.getHeight() / 2f;
-        View best = null;
-        float bestScore = Float.MAX_VALUE;
-        for (View v : activeCells) {
-            if (v == cur) continue;
-            int[] b = new int[2];
-            v.getLocationOnScreen(b);
-            float dx = b[0] + v.getWidth() / 2f - ax, dy = b[1] + v.getHeight() / 2f - ay;
-            float main, cross;
-            switch (keyCode) {
-                case KeyEvent.KEYCODE_DPAD_LEFT: main = -dx; cross = dy; break;
-                case KeyEvent.KEYCODE_DPAD_RIGHT: main = dx; cross = dy; break;
-                case KeyEvent.KEYCODE_DPAD_UP: main = -dy; cross = dx; break;
-                default: main = dy; cross = dx; break;
-            }
-            if (main <= 8) continue;
-            float score = main + Math.abs(cross) * 2.2f;
-            if (score < bestScore) {
-                bestScore = score;
-                best = v;
-            }
+        int next = nextControlPanelIndex(current, keyCode);
+        if (next >= 0 && next < cells.size()) cells.get(next).requestFocus();
+    }
+
+    static int nextControlPanelIndex(int current, int keyCode) {
+        boolean up = keyCode == KeyEvent.KEYCODE_DPAD_UP;
+        boolean down = keyCode == KeyEvent.KEYCODE_DPAD_DOWN;
+        boolean left = keyCode == KeyEvent.KEYCODE_DPAD_LEFT;
+        boolean right = keyCode == KeyEvent.KEYCODE_DPAD_RIGHT;
+        switch (current) {
+            case 0: return down ? 1 : -1;
+            case 1: return up ? 0 : down ? 2 : -1;
+            case 2: return up ? 1 : down ? 3 : -1;
+            case 3: return up ? 2 : right ? 4 : down ? 5 : -1;
+            case 4: return up ? 2 : left ? 3 : down ? 5 : -1;
+            case 5: return up ? 3 : down ? 6 : -1;
+            case 6: return up ? 5 : right ? 7 : -1;
+            case 7: return up ? 5 : left ? 6 : -1;
+            default: return -1;
         }
-        if (best != null) best.requestFocus();
     }
 
     // ---------------------------------------------------------------- Live States & Actions

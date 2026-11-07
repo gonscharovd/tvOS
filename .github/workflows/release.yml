@@ -79,6 +79,9 @@ jobs:
       - name: Test OTA install flow
         run: python3 tests/test_ota_install_flow.py
 
+      - name: Test Control Panel, Russian localization and clock fonts
+        run: python3 tests/test_control_panel_russian_clock.py
+
       - name: Build release APK
         run: bash build.sh
 
