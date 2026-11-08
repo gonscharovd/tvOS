@@ -8,9 +8,9 @@
 |---|---|---:|---|---|
 | TOS-001 | Review core cleanup в PR #14: Night Scenes only, удаление Classic UI/старых профилей, миграция настроек | P1 | REVIEW | CI #293 success; требуется review и runtime validation |
 | TOS-002 | Унифицировать build version defaults для build.sh/build.ps1/CI через единый источник | P1 | READY | TOS-001 |
-| TOS-003 | Синхронизировать README/features/architecture/install с поведением PR #14 | P1 | READY | TOS-001 |
+| TOS-003 | Синхронизировать README/features/architecture/install с поведением PR #14 | P1 | REVIEW | TOS-001; изменения внесены в PR #15, ожидают review |
 | TOS-004 | Удалить hard-coded путь JDK пользователя из build.ps1 и проверить Windows build | P2 | READY | TOS-002 |
-| TOS-005 | Проверить HOME Activity component command по итоговому APK manifest и обновить install docs | P2 | READY | TOS-003 |
+| TOS-005 | Проверить HOME Activity component command по итоговому APK manifest и обновить install docs | P2 | BLOCKED | APK manifest подтверждён и docs обновлены; остаётся проверка PackageManager на ТВ |
 | TOS-006 | Выполнить runtime regression на Sber SDX-50U4123B для PR #14 | P1 | BLOCKED | Нужен тест на телевизоре и release-compatible APK |
 | TOS-007 | Подтвердить сертификат установленного APK и OTA in-place update после PR #14 | P1 | BLOCKED | TOS-006, release signing |
 | TOS-008 | Подключить SingleUserMigrationTest.java к CI workflow | P2 | READY | TOS-001 |
@@ -29,8 +29,9 @@
 
 ### TOS-003 — Documentation sync
 - **Описание:** убрать устаревшие описания Continue Watching/Classic/profile UI и привести release/build/signing claims к коду.
-- **Критерии:** README, features, architecture и install guide соответствуют текущему PR; нет заявлений о непроверенных runtime функциях.
-- **Связанные файлы:** `README.md`, `docs/features.md`, `docs/architecture.md`, `docs/install.md`, `docs/refactor-cleanup-dependency-map.md`.
+- **Результат:** обновлены README, features, architecture, install, getting-started, docs index и dependency map в PR #15. Исправлены component names после инспекции compiled APK manifest; preview signing описан как runner debug key.
+- **Статус:** REVIEW — изменения готовы в PR #15, ожидают review/merge.
+- **Связанные файлы:** `README.md`, `docs/features.md`, `docs/architecture.md`, `docs/install.md`, `docs/getting-started.md`, `docs/README.md`, `docs/refactor-cleanup-dependency-map.md`.
 
 ### TOS-004 — Windows build
 - **Описание:** заменить путь JDK, привязанный к профилю другого разработчика, на JAVA_HOME/PATH и проверить сборку.
@@ -39,7 +40,8 @@
 
 ### TOS-005 — Install component
 - **Описание:** проверить расхождение source namespace `com.techgenius.tvoslauncher` и final application ID `com.gonscharovd.tvoslauncher` в install commands.
-- **Критерии:** component string подтверждён итоговым APK manifest/PackageManager и проверен на устройстве.
+- **Результат:** compiled CI APK manifest подтверждает package `com.gonscharovd.tvoslauncher` и Activity class `com.techgenius.tvoslauncher.MainActivity`; docs commands исправлены на полное имя класса.
+- **Осталось:** проверить flattened component через PackageManager на целевом ТВ.
 - **Связанные файлы:** `AndroidManifest.xml`, `build.sh`, `build.ps1`, `docs/install.md`, `docs/getting-started.md`.
 
 ### TOS-006 / TOS-007 — Runtime and OTA
