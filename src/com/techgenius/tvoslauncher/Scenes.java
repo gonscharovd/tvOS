@@ -386,8 +386,77 @@ public final class Scenes {
         p.edit().putString("scene_enabled", value.toString()).putBoolean(migrationKey, true).apply();
     }
 
+    /**
+     * One-time migration of Classic-only user assets into the Night Scenes gallery.
+     * Never overwrites an existing custom scene slot or the user's Scene folder.
+     */
+    private static void migrateClassicCustomAssets(Context c) {
+        SharedPreferences p = prefs(c);
+
+        final String customKey = "night_gallery_classic_custom_wallpaper_v1";
+        if (!p.getBoolean(customKey, false)) {
+            if (!CustomMedia.hasCustomClassicWallpaper(c)) {
+                p.edit().putBoolean(customKey, true).apply();
+            } else {
+                int freeSlot = 0;
+                for (int slot = 1; slot <= MAX_CUSTOM_SCENES; slot++) {
+                    if (!CustomMedia.hasCustomSceneWallpaper(c, slot)) {
+                        freeSlot = slot;
+                        break;
+                    }
+                }
+                if (freeSlot > 0) {
+                    Bitmap legacy = CustomMedia.getCustomClassicWallpaper(c);
+                    if (legacy != null && CustomMedia.setCustomSceneWallpaper(c, freeSlot, legacy)) {
+                        addEnabledSceneId(c, customId(freeSlot));
+                        p.edit().putBoolean(customKey, true).apply();
+                    }
+                }
+                // If every custom slot is occupied, leave the original Classic file untouched
+                // and retry on a later scene load after the user frees a slot.
+            }
+        }
+
+        final String folderKey = "night_gallery_classic_folder_shuffle_v1";
+        if (!p.getBoolean(folderKey, false)) {
+            if (!CustomMedia.hasWallpaperShuffleFolder(c, CustomMedia.SCOPE_CLASSIC)) {
+                p.edit().putBoolean(folderKey, true).apply();
+            } else if (CustomMedia.hasWallpaperShuffleFolder(c, CustomMedia.SCOPE_SCENE)) {
+                addEnabledSceneId(c, FOLDER_SHUFFLE_ID);
+                p.edit().putBoolean(folderKey, true).apply();
+            } else {
+                String legacyFolder = CustomMedia.getWallpaperShuffleFolder(c, CustomMedia.SCOPE_CLASSIC);
+                if (legacyFolder != null && !legacyFolder.trim().isEmpty()) {
+                    CustomMedia.setWallpaperShuffleFolder(c, CustomMedia.SCOPE_SCENE, legacyFolder);
+                    if (CustomMedia.hasWallpaperShuffleFolder(c, CustomMedia.SCOPE_SCENE)) {
+                        addEnabledSceneId(c, FOLDER_SHUFFLE_ID);
+                        p.edit().putBoolean(folderKey, true).apply();
+                    }
+                }
+            }
+        }
+    }
+
+    private static void addEnabledSceneId(Context c, String id) {
+        SharedPreferences p = prefs(c);
+        List<String> enabled = new ArrayList<>();
+        String raw = p.getString("scene_enabled", "night,golden,water,fog,dawn");
+        for (String part : raw.split(",")) {
+            String item = part.trim();
+            if (!item.isEmpty() && !enabled.contains(item)) enabled.add(item);
+        }
+        if (!enabled.contains(id)) enabled.add(id);
+        StringBuilder out = new StringBuilder();
+        for (String item : enabled) {
+            if (out.length() > 0) out.append(',');
+            out.append(item);
+        }
+        p.edit().putString("scene_enabled", out.toString()).apply();
+    }
+
     public static List<String> getEnabledSceneIds(Context c) {
         migrateClassicBackgroundsToNightGallery(c);
+        migrateClassicCustomAssets(c);
         String raw = prefs(c).getString("scene_enabled", "night,golden,water,fog,dawn");
         List<String> enabled = new ArrayList<>();
         for (String part : raw.split(",")) {

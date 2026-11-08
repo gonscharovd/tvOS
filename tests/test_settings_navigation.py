@@ -108,6 +108,17 @@ assert "TURKISH" not in search_panel and "HINDI" not in search_panel
 assert "RUSSIAN" in search_panel and "РУС" in search_panel and "ENG" in search_panel
 assert not (Path("res/values-tr") / "strings.xml").exists()
 
+# Classic-only wallpaper assets migrate into Night Scenes without overwriting existing user assets.
+scenes = (ROOT / "Scenes.java").read_text(encoding="utf-8")
+settings = (ROOT / "SettingsActivity.java").read_text(encoding="utf-8")
+assert "migrateClassicCustomAssets(c)" in scenes
+assert "night_gallery_classic_custom_wallpaper_v1" in scenes
+assert "night_gallery_classic_folder_shuffle_v1" in scenes
+assert "hasCustomSceneWallpaper(c, slot)" in scenes
+assert "setCustomSceneWallpaper(c, freeSlot, legacy)" in scenes
+assert "setWallpaperShuffleFolder(c, CustomMedia.SCOPE_SCENE, legacyFolder)" in scenes
+assert "subMenuAmbientThemes" not in settings and "customClassicPhotoRow" not in settings
+
 print("Simplified settings navigation, Russian-only keyboard, single-user mode and removed media integrations passed.")
 
 
