@@ -50,7 +50,7 @@
 - Кодовая рабочая ветка: `refactor/testos-core-cleanup-2026-11`.
 - Последний commit кода: `c08bc91e06b7fa66f6bd185e3ab5633033884c33`.
 - main: `a765318b577e66fae66a8ffe28439dcd6233f38f`.
-- Система памяти: ветка `docs/project-memory-2026-11`, последний commit на момент handoff обновления — `036d45c88e192c518d93aa3f6540086e2b5a3d7a` (после правок handoff SHA изменится); Draft PR #15.
+- Система памяти: ветка `docs/project-memory-2026-11`; Draft PR [#15](https://github.com/gonscharovd/tvOS/pull/15).
 
 ## Оставшиеся вопросы
 
