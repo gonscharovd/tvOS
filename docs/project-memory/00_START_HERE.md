@@ -68,5 +68,6 @@ testOS — собственный русскоязычный однопольз�
 - [Основная ветка](https://github.com/gonscharovd/tvOS/tree/main)
 - [Рабочая ветка PR #14](https://github.com/gonscharovd/tvOS/tree/refactor/testos-core-cleanup-2026-11)
 - [PR #14 — core cleanup](https://github.com/gonscharovd/tvOS/pull/14)
+- [PR #15 — project memory and documentation sync](https://github.com/gonscharovd/tvOS/pull/15)
 - [Последний известный релиз v2.1.73](https://github.com/gonscharovd/tvOS/releases/tag/v2.1.73)
 - [Последняя успешная проверка ветки на момент фиксации: run #293](https://github.com/gonscharovd/tvOS/actions/runs/42517077387)
