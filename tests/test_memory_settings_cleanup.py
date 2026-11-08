@@ -36,6 +36,7 @@ for removed in ("cwEnabled(", "loadHero(", "heroKeys(", "heroItems", "Suggestion
     assert removed not in main, f"Retired Classic home UI remains: {removed}"
 # Night Scenes still owns the shared backdrop and the service lifecycle.
 assert "Bitmap glassBg;" in main and "glassSource" in main
+assert "Bitmap backdropSharp(" in main and "tvosCard(" in main
 assert "makeWallpaperBase(" in main
 assert "sceneHome.dispatchKey(ev)" in main
 assert "Weather.refresh(MainActivity.this, false" in main
