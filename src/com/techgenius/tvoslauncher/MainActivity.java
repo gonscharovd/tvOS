@@ -3198,33 +3198,47 @@ public class MainActivity extends Activity {
     void showControlCenter() {
         ControlPanelOverlay.dismiss();
         dropPicker();
-        popoverReturn = sceneHome != null ? sceneHome.moonBtn : null;
+        popoverReturn = Scenes.isScenesLook(this) && sceneHome != null ? sceneHome.moonBtn : ccButton;
         FrameLayout layer = new FrameLayout(this);
         layer.setClickable(true);
         layer.setClipChildren(false);
         layer.setTag("control_panel");
         addBlurredBackdrop(layer, 0x8C000000);
+
         List<View> cells = new ArrayList<>();
         FrameLayout panel = ControlPanelOverlay.buildControlPanelView(
-                this, screenW, screenH, unit, glassSource, cells,
+                this,
+                screenW,
+                screenH,
+                unit,
+                glassSource,
+                cells,
                 () -> {
-                    dropPicker(); pickerLayer = null; popoverReturn = null;
+                    dropPicker();
+                    pickerLayer = null;
+                    popoverReturn = null;
                     VpnController.toggleHappWithFeedback(this);
                 },
                 () -> {
-                    dropPicker(); pickerLayer = null; popoverReturn = null;
+                    dropPicker();
+                    pickerLayer = null;
+                    popoverReturn = null;
                     returningFromSettings = true;
                     startActivity(new Intent(this, SettingsActivity.class));
                 },
                 () -> {
-                    dropPicker(); pickerLayer = null; popoverReturn = null;
+                    dropPicker();
+                    pickerLayer = null;
+                    popoverReturn = null;
                     ControlPanelOverlay.openTvSettings(this);
                 });
+
         FrameLayout.LayoutParams plp = (FrameLayout.LayoutParams) panel.getLayoutParams();
         plp.gravity = Gravity.TOP | Gravity.END;
         plp.topMargin = dp(58);
         plp.rightMargin = dockOuter;
         layer.addView(panel, plp);
+
         root.addView(layer, match());
         pickerLayer = layer;
         pickerCells = cells;
@@ -3506,22 +3520,22 @@ public class MainActivity extends Activity {
         shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.RIGHT_LEFT,
                 new int[]{0x99000000, 0x40000000, 0x00000000}));
         layer.addView(shade, new FrameLayout.LayoutParams(screenW * 3 / 5, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.END));
+
         int col = dp(141), gap = dp(13), cap = (col - gap) / 2;
         FrameLayout panel = new FrameLayout(this);
         panel.setClipChildren(false);
         List<View> cells = new ArrayList<>();
         TextView title = text(13, Ui.font(this, "semibold"), 0.75f);
-        title.setText(I18n.s(this, "Inputs", "Girişи"));
+        title.setText(I18n.s(this, "Inputs", "Girişler"));
         panel.addView(title, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(20)));
         int top = dp(26);
         for (int i = 0; i < list.size(); i++) {
-            Inputs.Input input = list.get(i);
+            Inputs.Input in = list.get(i);
             int x = (i % 2) * (col + gap), y = top + (i / 2) * (cap + gap);
-            cells.add(ccTile(panel, x, y, col, cap, Inputs.glyph(input), input.label,
-                    input.disconnected ? () -> I18n.s(this, "Not connected", "Bağlı değil") : null,
-                    false, v -> {
+            cells.add(ccTile(panel, x, y, col, cap, Inputs.glyph(in), in.label,
+                    in.disconnected ? () -> I18n.s(this, "Not connected", "Bağlı değil") : null, false, v -> {
                         closePicker();
-                        if (!Inputs.open(this, input)) toast(I18n.s(this, "Can't switch to " + input.label, input.label + " girişine geçilemiyor"));
+                        if (!Inputs.open(this, in)) toast(I18n.s(this, "Can't switch to " + in.label, in.label + " girişine geçilemiyor"));
                     }));
         }
         int rows = (list.size() + 1) / 2;
@@ -3530,12 +3544,15 @@ public class MainActivity extends Activity {
         plp.topMargin = dp(72);
         plp.rightMargin = dockOuter;
         layer.addView(panel, plp);
+
         root.addView(layer, match());
         pickerLayer = layer;
         pickerCells = cells;
         layer.setAlpha(0f);
-        layer.animate().alpha(1f).setDuration(220).withEndAction(() -> hideUnderOverlay(layer)).start();
-        if (!cells.isEmpty()) cells.get(0).requestFocus();
+        panel.setTranslationY(-dp(10));
+        layer.animate().alpha(1f).setDuration(200).start();
+        panel.animate().translationY(0).setDuration(260).setInterpolator(EASE).start();
+        cells.get(0).requestFocus();
     }
 
     // ---------------------------------------------------------------- internet status
@@ -3940,18 +3957,25 @@ public class MainActivity extends Activity {
 
     /** The full forecast: a glass panel opening from the weather card in the top-left corner (or top-right weather shortcut in Night Scenes). */
     void showWeather() {
-        Weather.Data data = Weather.cached(this);
-        if (data == null) {
+        Weather.Data d = Weather.cached(this);
+        if (d == null) {
             if (Weather.enabled(this)) {
                 Weather.refresh(this, true, () -> {
                     updateWeather();
-                    if (Weather.cached(this) != null) showWeather();
+                    if (Weather.cached(this) != null) {
+                        showWeather();
+                    }
                 });
             }
             return;
         }
         dropPicker();
-        popoverReturn = sceneHome != null ? sceneHome.weatherBtn : null;
+        if (Scenes.isScenesLook(this) && sceneHome != null && sceneHome.weatherBtn != null
+                && sceneHome.weatherBtn.getVisibility() == View.VISIBLE) {
+            popoverReturn = sceneHome.weatherBtn;
+        } else {
+            popoverReturn = weatherCard;
+        }
         FrameLayout layer = new FrameLayout(this);
         layer.setClickable(true);
         layer.setClipChildren(false);
@@ -3959,25 +3983,35 @@ public class MainActivity extends Activity {
         shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
                 new int[]{0xA6000000, 0x4D000000, 0x00000000}));
         layer.addView(shade, new FrameLayout.LayoutParams(screenW * 3 / 5, ViewGroup.LayoutParams.MATCH_PARENT, Gravity.START));
+
         WeatherView panel = new WeatherView(this, true, unit);
         LiquidGlass glass = new LiquidGlass(dp(26), 0x33000000, glassSource, screenW, screenH, unit).adaptive();
         glass.lens = dp(7);
         panel.setBackground(glass);
         panel.setFocusable(true);
-        panel.setData(data);
+        panel.setData(d);
         FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(dp(WeatherView.FULL_W), dp(WeatherView.FULL_H),
                 Gravity.TOP | Gravity.START);
         plp.topMargin = dp(24);
         plp.leftMargin = dockOuter;
         layer.addView(panel, plp);
+
         root.addView(layer, match());
         pickerLayer = layer;
         pickerCells = new ArrayList<>();
         pickerCells.add(panel);
         weatherOpen = true;
+        weatherCard.animate().alpha(0f).setDuration(150).start();
         layer.setAlpha(0f);
-        layer.animate().alpha(1f).setDuration(220).withEndAction(() -> hideUnderOverlay(layer)).start();
+        panel.setTranslationY(-dp(10));
+        layer.animate().alpha(1f).setDuration(200).start();
+        panel.animate().translationY(0).setDuration(260).setInterpolator(EASE).start();
         panel.requestFocus();
+        Weather.refresh(this, false, () -> {
+            Weather.Data nd = Weather.cached(this);
+            if (nd != null && panel.isAttachedToWindow()) panel.setData(nd);
+            updateWeather();
+        });
     }
 
     // ---------------------------------------------------------------- profiles
@@ -4040,17 +4074,18 @@ public class MainActivity extends Activity {
         pickerLayer = search.layer;
         pickerCells = new ArrayList<>();
         root.addView(search.layer, match());
-        search.firstKey().requestFocus();
+        search.firstKey().requestFocus();  // only possible once the layer is attached
         SearchPanel opened = search;
         search.layer.setAlpha(0f);
+        // Once search covers the screen, the Home layers under it stop drawing (the backdrop is a snapshot).
         search.layer.animate().alpha(1f).setDuration(200).withEndAction(() -> {
             if (search != opened) return;
             hiddenUnderSearch.clear();
             for (int i = 0; i < root.getChildCount(); i++) {
-                View child = root.getChildAt(i);
-                if (child != opened.layer && child != launchOverlay && child.getVisibility() == View.VISIBLE) {
-                    child.setVisibility(View.INVISIBLE);
-                    hiddenUnderSearch.add(child);
+                View c = root.getChildAt(i);
+                if (c != opened.layer && c != launchOverlay && c.getVisibility() == View.VISIBLE) {
+                    c.setVisibility(View.INVISIBLE);
+                    hiddenUnderSearch.add(c);
                 }
             }
         }).start();
@@ -4259,14 +4294,17 @@ public class MainActivity extends Activity {
         menuLayer = new FrameLayout(this);
         menuLayer.setBackgroundColor(0x00000000);
         menuLayer.setClickable(true);
+
         LinearLayout panel = new LinearLayout(this);
         panel.setOrientation(LinearLayout.VERTICAL);
         panel.setPadding(dp(8), dp(12), dp(8), dp(10));
+        // "Regular" Liquid Glass: heavier dimming so the menu text stays legible over anything.
         LiquidGlass glass = new LiquidGlass(dp(20), 0xB81A1A20, glassSource, screenW, screenH, unit);
         glass.lens = dp(8);
         panel.setBackground(glass);
         panel.setClipChildren(false);
         panel.setClipToPadding(false);
+
         TextView head = text(11, Ui.font(this, "semibold"), 0.55f);
         head.setText(title);
         head.setShadowLayer(0, 0, 0, 0);
@@ -4274,6 +4312,7 @@ public class MainActivity extends Activity {
         head.setSingleLine(true);
         head.setEllipsize(TextUtils.TruncateAt.END);
         panel.addView(head);
+
         List<View> rows = new ArrayList<>();
         for (int i = 0; i < labels.size(); i++) {
             int idx = i;
@@ -4293,24 +4332,58 @@ public class MainActivity extends Activity {
             pill.setColor(Color.TRANSPARENT);
             row.setBackground(pill);
             row.setOnFocusChangeListener((v, has) -> {
-                pill.setColor(has ? Color.WHITE : Color.TRANSPARENT);
+                pill.setColor(has ? 0xFFFFFFFF : Color.TRANSPARENT);
                 row.setTextColor(has ? (idx == destructive ? 0xFFD7372A : 0xFF111114) : base);
             });
             row.setOnClickListener(v -> {
                 closeMenu();
-                if (idx < actions.size() && actions.get(idx) != null) actions.get(idx).run();
+                actions.get(idx).run();
             });
-            panel.addView(row, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            rlp.topMargin = dp(2);
+            panel.addView(row, rlp);
             rows.add(row);
         }
-        FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(dp(320), ViewGroup.LayoutParams.WRAP_CONTENT);
+        // Wrap focus top <-> bottom and keep it inside the menu.
+        for (int i = 0; i < rows.size(); i++) {
+            View r = rows.get(i);
+            r.setId(View.generateViewId());
+        }
+        for (int i = 0; i < rows.size(); i++) {
+            View r = rows.get(i);
+            r.setNextFocusUpId(rows.get((i - 1 + rows.size()) % rows.size()).getId());
+            r.setNextFocusDownId(rows.get((i + 1) % rows.size()).getId());
+            r.setNextFocusLeftId(r.getId());
+            r.setNextFocusRightId(r.getId());
+        }
+
+        int w = dp(236);
         int[] loc = new int[2];
-        if (anchor != null) anchor.getLocationOnScreen(loc);
-        plp.gravity = Gravity.TOP | Gravity.START;
-        plp.leftMargin = Math.max(dp(12), Math.min(screenW - dp(332), loc[0]));
-        plp.topMargin = Math.max(dp(12), Math.min(screenH - dp(180), loc[1] + dp(20)));
+        anchor.getLocationInWindow(loc);
+        float aw = anchor.getWidth() * anchor.getScaleX(), ah = anchor.getHeight() * anchor.getScaleY();
+        int x = (int) (loc[0] + aw + dp(18));
+        if (x + w > screenW - dp(24)) x = (int) (loc[0] - w - dp(18));
+        x = Math.max(dp(24), x);
+        panel.measure(View.MeasureSpec.makeMeasureSpec(w, View.MeasureSpec.EXACTLY), View.MeasureSpec.UNSPECIFIED);
+        int h = panel.getMeasuredHeight();
+        int y = (int) (loc[1] + ah / 2 - h / 2f);
+        y = Math.max(dp(24), Math.min(y, screenH - h - dp(24)));
+        FrameLayout.LayoutParams plp = new FrameLayout.LayoutParams(w, ViewGroup.LayoutParams.WRAP_CONTENT);
+        plp.leftMargin = x;
+        plp.topMargin = y;
         menuLayer.addView(panel, plp);
         root.addView(menuLayer, match());
+
+        // Pop in from the card's side.
+        panel.setPivotX(x > loc[0] ? 0 : w);
+        panel.setPivotY(h / 2f);
+        panel.setAlpha(0f);
+        panel.setScaleX(0.9f);
+        panel.setScaleY(0.9f);
+        panel.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(220).setInterpolator(LIFT).start();
+        menuLayer.animate().setDuration(220).start();
+        menuLayer.setBackgroundColor(0x59000000);
         if (!rows.isEmpty()) rows.get(0).requestFocus();
     }
 

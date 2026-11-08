@@ -827,7 +827,7 @@ final class SceneHome {
         }
     }
 
-    private void endDockMove() {
+    void endDockMove() {
         stopDockWiggle();
         int idx = moveDockIdx;
         moveDockIdx = -1;
