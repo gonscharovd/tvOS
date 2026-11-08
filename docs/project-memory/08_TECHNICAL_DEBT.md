@@ -35,3 +35,6 @@ PR #14 body и заголовок dependency map содержат старый �
 
 ### DEBT-007 — Preview signing
 Debug artifact годится для CI проверки/скачивания, но не гарантирует in-place update поверх release-signed app. Release workflow использует отдельные GitHub Secrets; значения секретов не документировать.
+
+### DEBT-008 — Migration test coverage
+`tests/SingleUserMigrationTest.java` содержит pure-Java regression cases для выбора профиля, сохранения legacy настроек и повторного запуска миграции. Но текущий `.github/workflows/build-apk.yml` запускает VersionComparatorTest и I18nDynamicTranslationTest, а отдельного шага для SingleUserMigrationTest нет. Добавить его в CI и проверить результат до merge PR #14.
