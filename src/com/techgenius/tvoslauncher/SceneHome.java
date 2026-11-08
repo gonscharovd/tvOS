@@ -749,7 +749,7 @@ final class SceneHome {
         actions.add(() -> host.promptChangeAppIcon(a, () -> {
             invalidateAppLogoCache(a);
             host.loadApps();
-            host.buildGrid();
+            
             rebuildDock();
             int targetIdx = Math.min(index, Math.max(0, dockTiles.size() - 1));
             focusDock(targetIdx);
