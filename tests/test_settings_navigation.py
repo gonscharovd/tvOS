@@ -111,7 +111,7 @@ print("Simplified settings navigation, Russian-only keyboard, single-user mode a
 # first-class selectable entries in the rotating scene gallery.
 scenes = (ROOT / "Scenes.java").read_text(encoding="utf-8")
 assert 'return LOOK_SCENES;' in scenes
-assert 'public static boolean isScenesLook(Context c) {\\n        return true;' in scenes
+assert 'public static boolean isScenesLook(Context c) {\n        return true;' in scenes
 assert 'LOOK_CLASSIC' not in scenes
 for scene_id in (
     'photo:tessellated-pavement.jpg', 'photo:grose-valley.jpg',
