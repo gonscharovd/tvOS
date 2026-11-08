@@ -3835,7 +3835,7 @@ public class MainActivity extends Activity {
                     apps.size() + " uygulama kapatıldı" + (freed > 0 ? " \u00b7 " + freed + " MB boşaltıldı" : "")));
         };
         if (PowerService.instance != null) {
-            closeProfilePicker();
+            closePicker();
             PowerService.forceStop(this, apps, () -> handler.postDelayed(done, 600));
         } else {
             handler.postDelayed(done, 800);
@@ -3937,7 +3937,7 @@ public class MainActivity extends Activity {
             int x = (i % 2) * (col + gap), y = top + (i / 2) * (cap + gap);
             cells.add(ccTile(panel, x, y, col, cap, Inputs.glyph(in), in.label,
                     in.disconnected ? () -> I18n.s(this, "Not connected", "Bağlı değil") : null, false, v -> {
-                        closeProfilePicker();
+                        closePicker();
                         if (!Inputs.open(this, in)) toast(I18n.s(this, "Can't switch to " + in.label, in.label + " girişine geçilemiyor"));
                     }));
         }
@@ -4196,7 +4196,7 @@ public class MainActivity extends Activity {
      */
     void enterAmbientShowcase() {
         ControlPanelOverlay.dismiss();
-        closeProfilePicker();
+        closePicker();
         closeMenu();
         if (sceneHome != null && sceneHome.isSheetOpen()) sceneHome.closeSheet();
         if (idle) exitIdle();
