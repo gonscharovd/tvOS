@@ -60,7 +60,6 @@ import android.widget.ScrollView;
 import android.widget.TextClock;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.service.notification.NotificationListenerService;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -192,7 +191,7 @@ public class MainActivity extends Activity {
     List<Suggestions.Item> heroItems = new ArrayList<>();
     int heroIndex;
     boolean heroShown;          // carousel currently forms the background
-    int heroVersion = -1;       // Suggestions.version() the items were loaded for
+    int heroVersion = -1;       // Legacy carousel generation marker
     String wallStyle;
     /** What Liquid Glass samples: a blurred copy of the wallpaper or of the carousel artwork. */
     Bitmap wallBlur, heroBlur, glassBg;
@@ -238,10 +237,36 @@ public class MainActivity extends Activity {
     };
     final Runnable reloadRun = () -> reload(currentKey());
 
+    private void cleanupRemovedFeatureData() {
+        android.content.SharedPreferences marker = getSharedPreferences("feature_cleanup", MODE_PRIVATE);
+        if (marker.getBoolean("recommendations_news_cloud_removed_v1", false)) return;
+        for (String name : new String[]{"suggestions", "nuvio_cloud", "stremio_cloud", "watch_cloud"}) {
+            getSharedPreferences(name, MODE_PRIVATE).edit().clear().apply();
+        }
+        try {
+            Profiles.homePrefs(this).edit()
+                    .remove("shelf_mode").remove("cw_enabled").remove("shelf")
+                    .remove("top_shelf_tab").apply();
+        } catch (Throwable ignored) { }
+        deleteLegacyFeatureFiles(new java.io.File(getCacheDir(), "tmdb"));
+        deleteLegacyFeatureFiles(new java.io.File(getFilesDir(), "continue.json"));
+        marker.edit().putBoolean("recommendations_news_cloud_removed_v1", true).apply();
+    }
+
+    private void deleteLegacyFeatureFiles(java.io.File file) {
+        if (file == null || !file.exists()) return;
+        if (file.isDirectory()) {
+            java.io.File[] children = file.listFiles();
+            if (children != null) for (java.io.File child : children) deleteLegacyFeatureFiles(child);
+        }
+        try { file.delete(); } catch (Throwable ignored) { }
+    }
+
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         activeInstance = this;
+        cleanupRemovedFeatureData();
         // The wallpaper/artwork always covers the screen: skip the window's own full-screen fill
         // (this Mali-450 GPU is fill-rate bound, so every hidden full-screen layer costs frames).
         getWindow().setBackgroundDrawable(null);
@@ -282,11 +307,6 @@ public class MainActivity extends Activity {
             wallPrefetchStyle = wall;
             new Thread((Runnable) wallPrefetch, "tvos-wallpaper").start();
         }
-        // After an update that changes what the top shelf holds, start from a fresh carousel.
-        if (Suggestions.prefs(this).getInt("cache_format", 0) != 3) {
-            Suggestions.changed(this);
-            Suggestions.prefs(this).edit().putInt("cache_format", 3).apply();
-        }
         buildChrome();
         try {
             appsTask.get();
@@ -300,13 +320,6 @@ public class MainActivity extends Activity {
             @Override public void onReceive(Context c, Intent i) {
                 AirPlayGuard.check(c, true);
                 LocalAdb.scheduleKeepAliveRepair(c, 1500L);
-                if (!Profiles.askOnWake(c) || Profiles.list(c).size() < 2) return;
-                if (resumed) {
-                    showProfilePicker(true);
-                } else {
-                    startActivity(new Intent(c, MainActivity.class).putExtra("pick_profile", true)
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-                }
             }
         };
         registerReceiver(wakeReceiver, new IntentFilter(Intent.ACTION_SCREEN_ON));
@@ -324,12 +337,6 @@ public class MainActivity extends Activity {
             I18n.setLang(this, lang);
             activeLang = I18n.getLang(this);
             recreate();
-            return;
-        }
-        if (intent.getBooleanExtra("pick_profile", false)) {
-            closeMenu();
-            if (launchOverlay != null) finishLaunchReturn();
-            showProfilePicker(true);
             return;
         }
         // adb perf probe: --es perf weather|status|hero|dockglass|shadows hides one layer to measure its GPU cost.
@@ -435,11 +442,9 @@ public class MainActivity extends Activity {
         updateStatusClockFormat();
         if (avatarView != null) {
             avatarView.setImageBitmap(Profiles.avatar(this, Profiles.current(this), avatarSize));
-            avatarView.setVisibility(Profiles.list(this).size() > 1 ? View.VISIBLE : View.GONE);
+            avatarView.setVisibility(View.GONE);
         }
-        // Signed in to Nuvio/Stremio: refresh continue watching in the background. Signed out: no-op.
         ensureTvListingsPermission(); // retained for the optional volume-key permission repair path
-        if (sceneHome != null) sceneHome.onWatchPopupsResume();
         if (Scenes.isScenesLook(this) && sceneHome != null) {
             sceneHome.sceneView.syncSettings();
             sceneHome.sceneView.start();
@@ -532,7 +537,6 @@ public class MainActivity extends Activity {
             exitAmbientShowcase();
         }
         if (sceneHome != null && !ambientShowcase) sceneHome.sceneView.stop();
-        if (sceneHome != null) sceneHome.onWatchPopupsPause();
         handler.removeCallbacks(heroAdvance);
         handler.removeCallbacks(weatherTick);
         handler.removeCallbacks(idleRunnable);
@@ -722,7 +726,7 @@ public class MainActivity extends Activity {
         timeChip.addView(time);
         clockBox.addView(timeChip, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, btn));
 
-        // Refresh: reloads every part of the carousel (recommendations, news, Continue Watching) and weather.
+        // Refresh weather data.
         refreshButton = new ImageView(this);
         refreshButton.setScaleType(ImageView.ScaleType.CENTER);
         refreshButton.setImageBitmap(Glyphs.get("refresh", dp(20), Color.WHITE));
@@ -814,7 +818,6 @@ public class MainActivity extends Activity {
             v.animate().withLayer().scaleX(has ? 1.14f : 1f).scaleY(has ? 1.14f : 1f)
                     .setDuration(180).setInterpolator(LIFT).start();
         });
-        avatar.setOnClickListener(v -> showProfilePicker(false));
 
         // Room around the buttons for their focus growth (1.12x / 1.18x) so nothing is clipped;
         // the margins shrink by the same amount, so the row sits exactly where it did.
@@ -1875,46 +1878,7 @@ public class MainActivity extends Activity {
         c.drawRect(0, 0, w, h * 0.2f, p);
     }
 
-    /**
-     * News layout (editorial, built for reading): a blurred, darkened copy of the photo fills the
-     * screen, the photo itself sits sharp on the right ~60% and fades in from the left, and the left
-     * side is a near-solid dark panel for the headline and summary. Baked once per story.
-     */
-    Bitmap bakeNews(Bitmap src) {
-        if (src == null) return null;
-        int tw = Math.min(1280, screenW), th = tw * screenH / screenW;
-        Bitmap out = Bitmap.createBitmap(tw, th, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(out);
-        Paint p = new Paint(Paint.FILTER_BITMAP_FLAG | Paint.DITHER_FLAG);
-        // Background: the photo shrunk to a few dozen pixels and stretched back (a cheap blur), darkened.
-        Bitmap tiny = Bitmap.createScaledBitmap(src, 32, Math.max(1, 32 * src.getHeight() / src.getWidth()), true);
-        c.drawBitmap(tiny, null, new android.graphics.RectF(0, 0, tw, th), p);
-        tiny.recycle();
-        c.drawColor(0xB30B0B10);
-        // The photo, centre-cropped into the right 60%, with a soft left edge.
-        android.graphics.RectF dst = new android.graphics.RectF(tw * 0.4f, 0, tw, th);
-        float scale = Math.max(dst.width() / src.getWidth(), dst.height() / src.getHeight());
-        float sw = dst.width() / scale, sh = dst.height() / scale;
-        Rect from = new Rect((int) ((src.getWidth() - sw) / 2), (int) ((src.getHeight() - sh) / 2),
-                (int) ((src.getWidth() + sw) / 2), (int) ((src.getHeight() + sh) / 2));
-        int layer = c.saveLayer(dst, null);
-        c.drawBitmap(src, from, dst, p);
-        Paint mask = new Paint();
-        mask.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.DST_IN));
-        mask.setShader(new LinearGradient(dst.left, 0, dst.left + dst.width() * 0.35f, 0, 0x00000000, 0xFF000000, Shader.TileMode.CLAMP));
-        c.drawRect(dst, mask);
-        c.restoreToCount(layer);
-        src.recycle();
-        // Reading panel on the left, then the usual bottom shade for the dock.
-        p.setShader(new LinearGradient(0, 0, tw * 0.62f, 0, new int[]{0xF20B0B10, 0xD90B0B10, 0x000B0B10},
-                new float[]{0f, 0.6f, 1f}, Shader.TileMode.CLAMP));
-        c.drawRect(0, 0, tw * 0.62f, th, p);
-        p.setShader(new LinearGradient(0, 0, 0, th, new int[]{0x00000000, 0x26000000, 0xB3000000},
-                null, Shader.TileMode.CLAMP));
-        c.drawRect(0, 0, tw, th, p);
-        topShade(c, tw, th);
-        return out;
-    }
+
 
     /** Info block sits just above the dock while a dock app is focused... */
     float heroInfoRestY() {
@@ -2034,61 +1998,23 @@ public class MainActivity extends Activity {
         return "continue".equals(shelfMode);
     }
 
-    /** Loads cached suggestions at once and refreshes them in the background when stale or reconfigured. */
+    /** Legacy hero content is disabled in this build. */
     String lastCwSig = "";
 
-    /**
-     * One carousel: news / recommendations (if this profile shows them) with Continue Watching
-     * titles mixed in (if it's on) — one after every two items; or Continue Watching alone.
-     */
+    /** Obsolete carousel mixing logic retained temporarily for source compatibility. */
     void loadHero() {
-        updateEmpty();
-        boolean shelf = Suggestions.enabled(this) && Suggestions.ready(this);
-        boolean cw = cwEnabled();
-        if (!shelf && !cw) {
-            heroItems = new ArrayList<>();
-            shelfView.setFocusable(false);
-            setHeroShown(false);
-            return;
-        }
-        int v = Suggestions.version(this) * 2 + (cw ? 1 : 0);
-        boolean reconfigured = v != heroVersion;
-        heroVersion = v;
-        io.execute(() -> {
-            List<Suggestions.Item> cwItems = new ArrayList<>();
-            StringBuilder sig = new StringBuilder();
-            for (Suggestions.Item it : cwItems) sig.append(it.key).append(it.progress).append(';');
-            boolean cwChanged = !sig.toString().equals(lastCwSig);
-            lastCwSig = sig.toString();
-            List<Suggestions.Item> base = shelf ? Suggestions.cached(this, true) : null;
-            List<Suggestions.Item> mixed = mixContinue(base, cwItems);
-            if (!mixed.isEmpty() && (reconfigured || cwChanged || heroItems.isEmpty())) {
-                handler.post(() -> setHeroItems(mixed));
-            } else if (mixed.isEmpty()) {
-                handler.post(() -> {
-                    heroItems = new ArrayList<>();
-                    shelfView.setFocusable(false);
-                    setHeroShown(false);
-                });
-            }
-            if (shelf && Suggestions.cached(this, false) == null) {
-                try {
-                    List<Suggestions.Item> fresh = Suggestions.fetch(this);
-                    List<Suggestions.Item> m2 = mixContinue(fresh, cwItems);
-                    handler.post(() -> setHeroItems(m2));
-                } catch (Exception e) {
-                    android.util.Log.w("TvHome", "suggestions: " + e);
-                }
-            }
-        });
+        // Recommendations, news and streaming-service continue-watching were removed.
+        // Keep the legacy artwork container hidden so existing home-screen layouts remain stable.
+        heroItems.clear();
+        heroIndex = 0;
+        if (shelfView != null) shelfView.setFocusable(false);
+        if (heroFront != null) heroFront.setImageDrawable(null);
+        if (heroBack != null) heroBack.setImageDrawable(null);
+        if (shelfView != null) setHeroShown(false);
     }
 
     /** Resume first: up to six recent Continue Watching titles, then news and recommendations. */
-    static List<Suggestions.Item> mixContinue(List<Suggestions.Item> base, List<Suggestions.Item> cw) {
-        List<Suggestions.Item> out = new ArrayList<>(cw.subList(0, Math.min(6, cw.size())));
-        if (base != null) out.addAll(base);
-        return out;
-    }
+
 
     void updateEmpty() {
         boolean show = continueMode() && heroItems.isEmpty() && !folderMode;
@@ -2175,10 +2101,6 @@ public class MainActivity extends Activity {
 
     void scheduleAdvance() {
         handler.removeCallbacks(heroAdvance);
-        if (continueMode()) return;  // Up Next stays put
-        int sec = Suggestions.advanceSeconds(this);
-        if (sec > 0 && heroIsNews()) sec = Math.max(sec, 15);  // time to read a story
-        if (sec > 0 && heroShown && resumed) handler.postDelayed(heroAdvance, sec * 1000L);
     }
 
     void heroStep(int dir, boolean user) {
@@ -2197,7 +2119,7 @@ public class MainActivity extends Activity {
         int want = index;
         io.execute(() -> {
             Bitmap raw = Suggestions.image(this, it.backdrop, "w1280", Math.min(1280, screenW));
-            Bitmap bd = "news".equals(it.type) ? bakeNews(raw) : bakeScrims(raw);
+            Bitmap bd = bakeScrims(raw);
             Bitmap bdBlur = Ui.glassBackdrop(bd, 160, 90);
             String logoPath = Suggestions.logoFor(this, it);
             Bitmap logo = logoPath.isEmpty() ? null : Suggestions.image(this, logoPath, "w500", 500);
@@ -2226,85 +2148,50 @@ public class MainActivity extends Activity {
 
     /** Title/meta/overview for an item, applied in the same frame as its artwork. */
     void applyHeroInfo(Suggestions.Item it, Bitmap logo, int dir) {
-        boolean news = "news".equals(it.type);
         if (removeSelected) selectRemove(false);
         heroRemove.setVisibility(!it.pkg.isEmpty() && shelfView.isFocused() ? View.VISIBLE : View.GONE);
-        if (shelfView.isFocused()) {
-            heroButton.setVisibility(news ? View.GONE : View.VISIBLE);
-            if (!news) heroButton.setAlpha(1f);
-        }
-        Ui.textSize(heroTitle, news ? 26 : 36);  // headlines are long: smaller, up to four lines
-        heroTitle.setMaxLines(news ? 4 : 2);
-        if (!news) {
-            heroOverview.setMaxLines(2);
-            Ui.textSize(heroOverview, 12.5f);
-            if (!shelfView.isFocused()) {  // titles keep tvOS behaviour: overview only when focused
-                heroOverview.animate().cancel();
-                heroOverview.setAlpha(0f);
-                heroOverview.setVisibility(View.GONE);
-            }
+        if (shelfView.isFocused()) heroButton.setVisibility(View.VISIBLE);
+        heroButton.setAlpha(1f);
+        Ui.textSize(heroTitle, 36);
+        heroTitle.setMaxLines(2);
+        heroOverview.setMaxLines(2);
+        Ui.textSize(heroOverview, 12.5f);
+        if (!shelfView.isFocused()) {
+            heroOverview.animate().cancel();
+            heroOverview.setAlpha(0f);
+            heroOverview.setVisibility(View.GONE);
         }
         heroTitle.setText(it.title);
         heroTitle.setVisibility(View.VISIBLE);
         heroLogo.setImageDrawable(null);
         heroLogo.setVisibility(View.GONE);
         selectStrip(heroIndex);
-        if (!it.pkg.isEmpty()) {  // Continue Watching entry
+        if (!it.pkg.isEmpty()) {
             List<String> meta = new ArrayList<>();
             meta.add(appLabel(it.pkg));
             if (it.remainingMin > 0) meta.add(it.remainingMin >= 60
-                    ? (it.remainingMin / 60) + " h " + (it.remainingMin % 60) + " min left" : it.remainingMin + " min left");
+                    ? (it.remainingMin / 60) + " h " + (it.remainingMin % 60) + " min left"
+                    : it.remainingMin + " min left");
             heroMeta.setText(String.join("  \u00B7  ", meta));
             heroOverview.setText(it.overview);
-            heroBtnText.setText(I18n.s(this, "▶  Resume", "▶  Продолжить"));
+            heroBtnText.setText("▶  Продолжить");
             try {
                 heroProvider.setImageDrawable(getPackageManager().getApplicationIcon(it.pkg));
                 heroProvider.setVisibility(View.VISIBLE);
             } catch (PackageManager.NameNotFoundException e) {
                 heroProvider.setVisibility(View.GONE);
             }
-            heroBtnIcon.setVisibility(View.GONE);
-            if (heroShown && dir != 0) {
-                heroInfo.animate().cancel();
-                heroInfo.setAlpha(0f);
-                heroInfo.setTranslationX(dp(28) * dir);
-                heroInfo.animate().withLayer().alpha(1f).translationX(0).setDuration(520).setInterpolator(EASE).start();
-            }
-            return;
-        }
-        if ("news".equals(it.type)) {
-            // News: section and newsroom, how long ago. No button: stories are read on the shelf.
-            String age = News.age(it.published);
-            heroMeta.setText(it.genres + (age.isEmpty() ? "" : "  \u00B7  " + age));
+        } else {
+            List<String> meta = new ArrayList<>();
+            if (!it.year.isEmpty()) meta.add(it.year);
+            if (!it.type.isEmpty()) meta.add(it.type.equals("tv") ? "Сериал" : "Фильм");
+            if (!it.genres.isEmpty()) meta.add(it.genres);
+            if (it.rating > 0) meta.add(String.format(java.util.Locale.US, "\u2605 %.1f", it.rating));
+            heroMeta.setText(String.join("  \u00B7  ", meta));
             heroOverview.setText(it.overview);
-            // Stories are for reading: the summary stays visible, up to four lines.
-            heroOverview.setMaxLines(4);
-            Ui.textSize(heroOverview, 13.5f);
-            heroOverview.animate().cancel();
-            heroOverview.setVisibility(it.overview.isEmpty() ? View.GONE : View.VISIBLE);
-            heroOverview.setAlpha(0.85f);
+            heroBtnText.setText("▶  Открыть");
             heroProvider.setVisibility(View.GONE);
-            heroBtnIcon.setVisibility(View.GONE);
-            if (heroShown && dir != 0) {
-                heroInfo.animate().cancel();
-                heroInfo.setAlpha(0f);
-                heroInfo.setTranslationX(dp(28) * dir);
-                heroInfo.animate().withLayer().alpha(1f).translationX(0).setDuration(520).setInterpolator(EASE).start();
-            }
-            return;
         }
-        List<String> meta = new ArrayList<>();
-        if (!it.year.isEmpty()) meta.add(it.year);
-        meta.add(it.type.equals("tv") ? "Series" : "Movie");
-        if (!it.genres.isEmpty()) meta.add(it.genres);
-        if (it.rating > 0) meta.add(String.format(java.util.Locale.US, "\u2605 %.1f", it.rating));
-        heroMeta.setText(String.join("  \u00B7  ", meta));
-        heroOverview.setText(it.overview);
-        Suggestions.Provider p = it.provider(this);
-        heroBtnText.setText(p != null && !Suggestions.installed(this, p.pkg) ? "Get" : "\u25B6  Open");
-        int icon = p == null ? 0 : getResources().getIdentifier("provider_" + p.jwShort, "drawable", getPackageName());
-        heroProvider.setImageResource(icon);
-        heroProvider.setVisibility(icon == 0 ? View.GONE : View.VISIBLE);
         heroBtnIcon.setVisibility(View.GONE);
         if (logo != null) {
             heroLogo.setImageBitmap(logo);
@@ -2312,7 +2199,6 @@ public class MainActivity extends Activity {
             heroTitle.setVisibility(View.GONE);
         }
         if (heroShown && dir != 0) {
-            // Text glides in from the side you pressed, like the artwork.
             heroInfo.animate().cancel();
             heroInfo.setAlpha(0f);
             heroInfo.setTranslationX(dp(28) * dir);
@@ -2395,7 +2281,7 @@ public class MainActivity extends Activity {
             heroInfo.animate().translationY(0).setDuration(380).setInterpolator(EASE).start();
             heroDots.animate().translationY(0).setDuration(380).setInterpolator(EASE).start();
             heroOverview.setVisibility(View.VISIBLE);
-            heroButton.setVisibility(heroIsNews() ? View.GONE : View.VISIBLE);
+            heroButton.setVisibility(View.VISIBLE);
             heroRemove.setVisibility(heroIsContinue() ? View.VISIBLE : View.GONE);
             heroRemove.setAlpha(1f);
             if (continueMode() && heroStrip.getChildCount() > 0) heroStrip.setVisibility(View.VISIBLE);
@@ -2411,10 +2297,8 @@ public class MainActivity extends Activity {
                     .setUpdateListener(null).withEndAction(this::invalidateGlass).start();
             heroInfo.animate().translationY(heroInfoRestY()).setDuration(340).setInterpolator(EASE).start();
             heroDots.animate().translationY(heroDotsRestY()).setDuration(340).setInterpolator(EASE).start();
-            if (!heroIsNews()) {
-                heroOverview.animate().alpha(0f).setDuration(160).setStartDelay(0)
-                        .withEndAction(() -> heroOverview.setVisibility(View.GONE)).start();
-            }
+            heroOverview.animate().alpha(0f).setDuration(160).setStartDelay(0)
+                    .withEndAction(() -> heroOverview.setVisibility(View.GONE)).start();
             heroButton.animate().alpha(0f).setDuration(160).setStartDelay(0)
                     .withEndAction(() -> heroButton.setVisibility(View.GONE)).start();
             if (removeSelected) selectRemove(false);
@@ -2447,10 +2331,7 @@ public class MainActivity extends Activity {
         loadHero();
     }
 
-    /** News stories have no button: they are read right on the shelf. */
-    boolean heroIsNews() {
-        return heroIndex >= 0 && heroIndex < heroItems.size() && "news".equals(heroItems.get(heroIndex).type);
-    }
+
 
     /** Carousel and capsule navigation: LEFT/RIGHT browse, OK opens, UP/DOWN move between capsule, carousel and dock. */
     boolean heroKeys(KeyEvent ev) {
@@ -2624,7 +2505,6 @@ public class MainActivity extends Activity {
     }
 
     void openHeroItem(Suggestions.Item it) {
-        if ("news".equals(it.type)) return;  // news is read on the shelf; there is nothing to open
         if (it.pkg.isEmpty()) {
             Suggestions.open(this, it);
             return;
@@ -4055,17 +3935,7 @@ public class MainActivity extends Activity {
                 ? I18n.s(this, "On", "Açık") : I18n.s(this, "Off", "Kapalı");
     }
 
-    void toggleDnd() {
-        MediaWatchService svc = MediaWatchService.instance;
-        if (svc == null) {
-            Perms.requestListener(this);
-            return;
-        }
-        android.app.NotificationManager nm = getSystemService(android.app.NotificationManager.class);
-        boolean on = nm.getCurrentInterruptionFilter() > android.app.NotificationManager.INTERRUPTION_FILTER_ALL;
-        svc.requestInterruptionFilter(on ? NotificationListenerService.INTERRUPTION_FILTER_ALL
-                : NotificationListenerService.INTERRUPTION_FILTER_PRIORITY);
-    }
+    void toggleDnd() { Perms.toggleDnd(this); }
 
     String audioOutput() {
         android.media.AudioManager am = getSystemService(android.media.AudioManager.class);
@@ -4320,18 +4190,13 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** Refresh button: fetch fresh recommendations and news, reload Continue Watching and weather. */
+    /** Refresh button: update weather data. */
     void refreshAll() {
         refreshButton.animate().cancel();
         refreshButton.setRotation(0);
         refreshButton.animate().rotation(360).setDuration(700).setInterpolator(EASE).start();
-        Suggestions.changed(this);
-        lastCwSig = "";
-        heroVersion = -1;
-        heroItems = new ArrayList<>();
-        loadHero();
         Weather.refresh(this, true, this::updateWeather);
-        toast("Refreshing");
+        toast("Погода обновлена");
     }
 
     // ---------------------------------------------------------------- built-in ambient mode & idle carousel
@@ -4534,7 +4399,7 @@ public class MainActivity extends Activity {
             heroButton.animate().alpha(1f).setDuration(300).start();
             handler.removeCallbacks(heroAdvance);  // browsing by hand: no auto-advance
         }
-        if (!idleOverviewShown && !heroIsNews()) {
+        if (!idleOverviewShown) {
             heroOverview.animate().alpha(0f).setDuration(200)
                     .withEndAction(() -> heroOverview.setVisibility(View.GONE)).start();
         }
@@ -5187,12 +5052,12 @@ public class MainActivity extends Activity {
         boolean multi = Profiles.list(this).size() > 1;
         if (avatarView != null) {
             avatarView.setImageBitmap(Profiles.avatar(this, Profiles.current(this), avatarSize));
-            avatarView.setVisibility(multi ? View.VISIBLE : View.GONE);
+            avatarView.setVisibility(View.GONE);
         }
         if (sceneHome != null) sceneHome.refreshWhoBar();
     }
 
-    /** Switch to a profile: its layout, background, top-shelf tab and Continue Watching. */
+    /** Legacy profile-switch callback; single-user builds keep the active profile unchanged. */
     void switchProfile(String id) {
         if (id.equals(Profiles.current(this).id) && prefs != null) {
             refreshAvatar();

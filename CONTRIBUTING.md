@@ -36,16 +36,20 @@ Key files (full map in **[docs/architecture.md](docs/architecture.md)**):
 
 | File | What lives there |
 |---|---|
-| `MainActivity.java` | Home: dock/grid, focus, carousel, status row, Control Center, profiles UI, Liquid Glass, idle mode |
-| `SettingsActivity.java` | Settings pages |
-| `SetupActivity.java` | First-time setup pages |
-| `Suggestions.java`, `News.java` | Carousel content (JustWatch/TMDB/Stremio recommendations, Indian news RSS) |
-| `Search.java`, `SearchPanel.java` | Search: titles on every service with Open / Get, apps and settings; the search screen |
-| `MediaWatchService.java` | Continue Watching from media sessions |
-| `Weather*.java` | Weather data, pill and forecast panel, icons |
-| `Perms.java`, `PowerService.java` | On-screen permission flows; accessibility service for Power Off / Clean |
-| `AirPlayGuard.java`, `Inputs.java`, `Clicks.java`, `Profiles.java` | AirPlay watchdog, TV inputs, sounds, profiles |
-| `Ui.java`, `Glyphs.java` | Sizing (960×540 design grid), fonts, glyphs drawn in code |
+| `MainActivity.java` | Home screen, dock/grid, remote focus, weather/status, Control Panel entry and idle behavior |
+| `SceneHome.java`, `Scenes.java` | Night Scenes layout, clock, dock and app-published TV Continue Watching row |
+| `SettingsActivity.java` | Four-group Settings navigation, D-pad focus, OTA progress and CleanYourTV menus |
+| `SetupActivity.java` | First-run setup (single user, Russian UI) |
+| `I18n.java` | Russian-only UI dictionary and dynamic labels |
+| `Search.java`, `SearchPanel.java` | App/settings/title search, voice input and Russian/English keyboard layouts |
+| `Suggestions.java` | Shared launch, URL, stream and artwork utilities; no recommendation/news feeds |
+| `AppUpdater.java`, `VersionComparator.java` | GitHub Releases OTA discovery, version comparison and PackageInstaller flow |
+| `CleanYourTv.java` | Model detection, protected package policy and verified disable/restore operations |
+| `LocalAdb.java`, `Perms.java` | Local ADB, accessibility repair, DND policy access and HOME selection |
+| `ButtonMapper.java`, `PowerService.java` | Remote-button mapping and accessibility service |
+| `ControlPanelOverlay.java`, `RecentAppsOverlay.java` | Universal Control Panel and Recent Apps switcher |
+| `CustomMedia.java` | Custom media and validated settings backup/restore |
+| `Weather*.java`, `Inputs.java`, `SleepReceiver.java`, `Clicks.java` | Weather, TV inputs, sleep timer and navigation sounds |
 
 Features are described in **[docs/features.md](docs/features.md)**.
 
@@ -127,37 +131,39 @@ Include the numbers in your PR. `--es perf <layer>` (see getting-started) helps 
 
 ## 6. Permissions and privacy rules
 
-- **adb is the last resort.** Every permission must have an on-screen path where the TV allows it
-  (runtime prompt, the system's own settings screen, accessibility switch, role request), and must
-  degrade gracefully with a clear message where the TV can't do it. Add new flows to `Perms.java`.
-- Detect what the device supports before offering a feature (e.g. low-RAM TVs can't grant
-  notification access; some TVs have no device-admin feature).
-- The accessibility service (`PowerService`) does only what the user asked from tvOS Launcher (sleep, close
-  apps). Don't extend it to read screen content.
-- No analytics, no tracking, no accounts. Network calls go only to the content sources a feature
-  needs (weather, news, recommendations, search, IP location) and never send personal data.
-  Search queries go only to JustWatch (and Stremio's Cinemeta when Stremio/Nuvio is installed);
-  recent searches stay on the TV.
-- The microphone is used only while the user is dictating in Search (after Android's own prompt);
-  tvOS Launcher never records or stores audio itself.
-- Never commit secrets (API tokens, passwords) — TMDB keys are entered by the user at runtime.
+- **ADB is the last resort.** Prefer Android runtime prompts, system settings pages and the Accessibility settings screen. Add new permission flows to `Perms.java`.
+- Detect device support before offering a feature and degrade gracefully when the TV firmware does not expose a required setting.
+- DND uses Android's Do Not Disturb policy access directly. Do not add a notification-listener service for DND.
+- The accessibility service (`PowerService`) only handles the actions the user enabled (remote mapping and supported power controls). Do not read screen content.
+- No analytics, tracking or user accounts. Network access is limited to the active feature: weather, JustWatch title search, IP-based location when requested and GitHub OTA checks/downloads. News and recommendation feeds and Nuvio/Stremio cloud integrations are not part of this build.
+- Search history and settings backups stay local. Do not include ADB/security state, disabled-package backups or credentials in general settings backups.
+- The microphone is used only during user-initiated voice search. The app does not record or store audio.
+- Never commit signing keys, passwords or tokens. Use repository secrets for release signing.
 
 ## 7. Testing a change
 
-There is no automated test suite yet; changes are verified on devices. For every change:
+CI runs Python regression guards, Java comparator/localization tests, APK build and signature/package verification. Relevant checks include:
 
-1. `./build.sh` succeeds with no new warnings you introduced.
-2. Install and exercise the change with the remote (or `adb shell input keyevent …`), including
-   Back and Home from every new screen.
-3. Take screenshots (`adb exec-out screencap -p > shot.png`) of new or changed screens; attach them
-   to the PR.
-4. If it touches the Home screen, record frame times (see §5).
-5. If it touches permissions, network or storage, test on both an Android 12 device and an
-   **Android 9 / 1 GB RAM** device, and with the network off.
+- `tests/test_clean_your_tv_protection.py`
+- `tests/test_memory_settings_cleanup.py`
+- `tests/test_settings_navigation.py`
+- `tests/test_settings_backup_safety.py`
+- `tests/test_ota_install_flow.py`
+- `tests/test_build_contract.py`
+- `tests/test_control_panel_russian_clock.py`
+- `tests/test_russian_localization_coverage.py`
+- `VersionComparatorTest.java` and `I18nDynamicTranslationTest.java`
+
+For every change:
+
+1. Ensure the CI run for the latest branch commit succeeds.
+2. Exercise the change on a TV with the remote, including Back and Home.
+3. Capture screenshots for changed screens.
+4. For home-screen changes, record `dumpsys gfxinfo` and memory use on target hardware.
+5. For permissions, network or storage changes, test on Android 9 as well as a newer Android TV device when available.
 6. Check `adb logcat -s TvHome AndroidRuntime` for errors and crashes.
 
-Checklist for UI changes: legible over bright and dark artwork · nothing clipped when focused ·
-reachable with arrows · Home returns to the dock · 720p and 1080p both look right.
+UI checklist: readable over bright and dark artwork · nothing clipped when focused · every action reachable with arrows · Back returns to the expected pane · Home returns to the launcher.
 
 ## 8. Pull requests
 
@@ -174,13 +180,13 @@ follow §6, code follows §3.
 
 ## 9. Good first areas
 
-- New weather icons (`WeatherIcons.java`) or connector icons (`Glyphs.java`).
-- More Indian city news feeds (`News.java`, `TOI_CITIES` and the city slugs).
-- More streaming services for recommendations (`Suggestions.java`, `PROVIDERS`).
-- Translations of setup and Settings text (no i18n yet — a good larger project).
-- Automated checks: a script that builds and lints, or JVM tests for the parsers (weather, news,
-  playlist model).
-- Accessibility: TalkBack labels on custom views.
+- Weather source reliability and weather icon coverage.
+- D-pad navigation, focus visibility and TalkBack labels.
+- Bounded artwork caches and startup/per-frame performance on low-memory TVs.
+- Regression tests for CleanYourTV, backup/restore, OTA and settings navigation.
+- Documentation and troubleshooting for supported Android TV firmware.
+
+Do not reintroduce removed news/recommendation feeds, multi-user profiles, non-Russian UI packs or cloud catalogue integrations without an explicit product decision.
 
 ## 10. Licensing
 

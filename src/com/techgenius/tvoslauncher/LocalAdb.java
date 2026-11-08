@@ -301,7 +301,7 @@ final class LocalAdb {
     }
 
     /**
-     * Restores the Accessibility Service (and Notification Listener if supported) directly in-process
+     * Restores the Accessibility Service directly in-process
      * using WRITE_SECURE_SETTINGS (ServiceRepair / GuardKeep style), without needing ADB or port 5555!
      */
     static boolean repairPermissionsViaSecureSettings(Context c) {
@@ -319,22 +319,6 @@ final class LocalAdb {
             } catch (Throwable ignored) {
             }
 
-            // Also restore NotificationListener in-process (even on low-RAM TVs where ro.config.low_ram=true,
-            // setting enabled_notification_listeners allows MediaSessionManager.getActiveSessions to work!)
-            try {
-                if (!MediaWatchService.granted(c)) {
-                    String pkg = c.getPackageName();
-                    String ourNotif = pkg + "/com.techgenius.tvoslauncher.MediaWatchService";
-                    String curNotif = Settings.Secure.getString(cr, "enabled_notification_listeners");
-                    if (curNotif == null || curNotif.trim().isEmpty() || "null".equalsIgnoreCase(curNotif.trim())) {
-                        Settings.Secure.putString(cr, "enabled_notification_listeners", ourNotif);
-                    } else if (!curNotif.contains(ourNotif)) {
-                        Settings.Secure.putString(cr, "enabled_notification_listeners", curNotif + ":" + ourNotif);
-                    }
-                }
-                MediaWatchService.ensureSessionTracking(c);
-            } catch (Throwable ignored) {
-            }
             return true;
         } catch (Throwable t) {
             return false;
@@ -844,23 +828,6 @@ final class LocalAdb {
             cmds.add("appops set " + pkg + " GET_USAGE_STATS allow 2>/dev/null");
             cmds.add("appops set " + pkg + " ACCESS_RESTRICTED_SETTINGS allow 2>/dev/null");
 
-            // 3. Notification Listener & MediaSession access (both cmd notification allow_listener and
-            // enabled_notification_listeners setting, so low-RAM Android TVs also allow MediaSessionManager!)
-            cmds.add("pm grant " + pkg + " android.permission.MEDIA_CONTENT_CONTROL 2>/dev/null");
-            if (!MediaWatchService.granted(c)) {
-                cmds.add("cmd notification allow_listener " + pkg + "/com.techgenius.tvoslauncher.MediaWatchService 2>/dev/null");
-                String ourNotif = pkg + "/com.techgenius.tvoslauncher.MediaWatchService";
-                String curNotif = "";
-                try {
-                    curNotif = Settings.Secure.getString(c.getContentResolver(), "enabled_notification_listeners");
-                } catch (Throwable ignored) {
-                }
-                String newNotif = (curNotif == null || curNotif.trim().isEmpty() || "null".equalsIgnoreCase(curNotif.trim()))
-                        ? ourNotif
-                        : (curNotif.contains(ourNotif) ? curNotif : (curNotif + ":" + ourNotif));
-                cmds.add("settings put secure enabled_notification_listeners '" + newNotif + "'");
-            }
-
             // 4. Accessibility Service (never toggle accessibility_enabled 0, only update if needed)
             String existingAcc = "";
             try {
@@ -1026,7 +993,7 @@ final class LocalAdb {
         }
         final String cleanAccStr = cleanAcc.toString();
 
-        // 3. If WRITE_SECURE_SETTINGS is granted, cleanly remove our Accessibility & Notification Listener in-process
+        // 3. If WRITE_SECURE_SETTINGS is granted, cleanly remove our Accessibility Service in-process.
         boolean updatedInProcess = false;
         if (hasWriteSecureSettings(appCtx)) {
             try {
@@ -1034,18 +1001,6 @@ final class LocalAdb {
                 Settings.Secure.putString(cr, Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES, cleanAccStr);
                 if (cleanAccStr.isEmpty()) {
                     Settings.Secure.putInt(cr, Settings.Secure.ACCESSIBILITY_ENABLED, 0);
-                }
-                String ourNotif = pkg + "/com.techgenius.tvoslauncher.MediaWatchService";
-                String curNotif = Settings.Secure.getString(cr, "enabled_notification_listeners");
-                if (curNotif != null && curNotif.contains(ourNotif)) {
-                    StringBuilder cleanNotif = new StringBuilder();
-                    for (String p : curNotif.split(":")) {
-                        String t = p == null ? "" : p.trim();
-                        if (t.isEmpty() || t.equals(ourNotif)) continue;
-                        if (cleanNotif.length() > 0) cleanNotif.append(':');
-                        cleanNotif.append(t);
-                    }
-                    Settings.Secure.putString(cr, "enabled_notification_listeners", cleanNotif.toString());
                 }
                 updatedInProcess = true;
             } catch (Throwable ignored) { }
@@ -1059,7 +1014,7 @@ final class LocalAdb {
             if (cleanAccStr.isEmpty()) {
                 cmds.add("settings put secure accessibility_enabled 0");
             }
-            cmds.add("cmd notification disallow_listener " + pkg + "/com.techgenius.tvoslauncher.MediaWatchService 2>/dev/null");
+            cmds.add("cmd notification disallow_dnd " + pkg + " 2>/dev/null");
             cmds.add("cmd role remove-role-holder --user 0 android.app.role.HOME " + pkg + " 2>/dev/null");
             cmds.add("cmd package clear-package-preferred-activities " + pkg + " 2>/dev/null");
 

@@ -1655,13 +1655,19 @@ public final class CustomMedia {
 
     public static final String SETTINGS_BACKUP_FILENAME = "tvos-launcher-settings.json";
 
+    // Only user-facing configuration is exported. Runtime state, ADB/security state,
+    // CleanYourTV package backups, search history and removed cloud features stay local.
     private static final String[] KNOWN_PREF_NAMES = {
-        "settings", "setup", "profiles", "home", "home_default",
-        "app_custom_names", "button_mapper", "control_panel",
-        "weather", "suggestions", "inputs", "clicks",
-        "media_watch", "cleanyourtv", "cleanyourtv_prefs", "local_adb", "present",
-        "custom_media", "app_updater", "screensaver"
+        "settings", "home", "home_default", "app_custom_names",
+        "button_mapper", "control_panel", "weather", "inputs", "clicks",
+        "custom_media", "screensaver"
     };
+
+    private static boolean isBackupPrefName(String name) {
+        if (name == null) return false;
+        for (String allowed : KNOWN_PREF_NAMES) if (allowed.equals(name)) return true;
+        return false;
+    }
 
     private static File resolveDownloadFolder() {
         File dl = null;
@@ -1689,23 +1695,11 @@ public final class CustomMedia {
     public static String buildSettingsBackupJson(Context c) throws Exception {
         org.json.JSONObject root = new org.json.JSONObject();
         root.put("format", "tvos-launcher-backup");
-        root.put("version", 1);
+        root.put("version", 2);
+        root.put("package", c.getPackageName());
         root.put("timestamp", System.currentTimeMillis());
 
         java.util.Set<String> prefNames = new java.util.LinkedHashSet<>(java.util.Arrays.asList(KNOWN_PREF_NAMES));
-        try {
-            File spDir = new File(c.getApplicationInfo().dataDir, "shared_prefs");
-            File[] files = spDir.listFiles();
-            if (files != null) {
-                for (File f : files) {
-                    String n = f.getName();
-                    if (n.endsWith(".xml")) {
-                        prefNames.add(n.substring(0, n.length() - 4));
-                    }
-                }
-            }
-        } catch (Throwable ignored) {
-        }
 
         org.json.JSONObject prefsObj = new org.json.JSONObject();
         for (String pName : prefNames) {
@@ -1755,55 +1749,89 @@ public final class CustomMedia {
         return root.toString(2);
     }
 
+    private static boolean validBackupItem(org.json.JSONObject item) {
+        if (item == null || !item.has("v") || item.isNull("v")) return false;
+        Object value = item.opt("v");
+        switch (item.optString("t", "")) {
+            case "bool": return value instanceof Boolean;
+            case "int":
+            case "long":
+            case "float": return value instanceof Number;
+            case "string": return value instanceof String;
+            case "set":
+                org.json.JSONArray array = item.optJSONArray("v");
+                if (array == null) return false;
+                for (int i = 0; i < array.length(); i++) {
+                    if (!(array.opt(i) instanceof String)) return false;
+                }
+                return true;
+            default: return false;
+        }
+    }
+
+    private static void putBackupItem(SharedPreferences.Editor editor, String key,
+                                      org.json.JSONObject item) {
+        Object value = item.opt("v");
+        switch (item.optString("t", "")) {
+            case "bool": editor.putBoolean(key, (Boolean) value); break;
+            case "int": editor.putInt(key, ((Number) value).intValue()); break;
+            case "long": editor.putLong(key, ((Number) value).longValue()); break;
+            case "float": editor.putFloat(key, ((Number) value).floatValue()); break;
+            case "string": editor.putString(key, (String) value); break;
+            case "set":
+                org.json.JSONArray array = item.optJSONArray("v");
+                java.util.Set<String> set = new java.util.LinkedHashSet<>();
+                for (int i = 0; i < array.length(); i++) set.add(array.optString(i));
+                editor.putStringSet(key, set);
+                break;
+        }
+    }
+
     public static boolean applySettingsBackupJson(Context c, String jsonText) throws Exception {
-        if (jsonText == null || jsonText.trim().isEmpty()) return false;
+        if (c == null || jsonText == null || jsonText.trim().isEmpty()
+                || jsonText.length() > 2 * 1024 * 1024) return false;
         org.json.JSONObject root = new org.json.JSONObject(jsonText);
+        if (!"tvos-launcher-backup".equals(root.optString("format", ""))) return false;
+        int version = root.optInt("version", -1);
+        if (version < 1 || version > 2) return false;
+        String sourcePackage = root.optString("package", "");
+        if (!sourcePackage.isEmpty() && !c.getPackageName().equals(sourcePackage)) return false;
         org.json.JSONObject prefsObj = root.optJSONObject("prefs");
         if (prefsObj == null) return false;
 
+        // Validate the complete backup before changing any preference file.
+        java.util.LinkedHashMap<String, java.util.LinkedHashMap<String, org.json.JSONObject>> validated =
+                new java.util.LinkedHashMap<>();
         java.util.Iterator<String> prefKeys = prefsObj.keys();
-        int restoredFiles = 0;
         while (prefKeys.hasNext()) {
-            String pName = prefKeys.next();
-            org.json.JSONObject entriesObj = prefsObj.optJSONObject(pName);
+            String prefName = prefKeys.next();
+            if (!isBackupPrefName(prefName)) continue;
+            org.json.JSONObject entriesObj = prefsObj.optJSONObject(prefName);
             if (entriesObj == null) continue;
-
-            SharedPreferences.Editor ed = c.getSharedPreferences(pName, Context.MODE_PRIVATE).edit();
-            ed.clear();
+            java.util.LinkedHashMap<String, org.json.JSONObject> entries = new java.util.LinkedHashMap<>();
             java.util.Iterator<String> entryKeys = entriesObj.keys();
             while (entryKeys.hasNext()) {
-                String k = entryKeys.next();
-                org.json.JSONObject item = entriesObj.optJSONObject(k);
-                if (item == null) continue;
-                String t = item.optString("t", "");
-                if ("bool".equals(t)) {
-                    ed.putBoolean(k, item.optBoolean("v", false));
-                } else if ("int".equals(t)) {
-                    ed.putInt(k, item.optInt("v", 0));
-                } else if ("long".equals(t)) {
-                    ed.putLong(k, item.optLong("v", 0L));
-                } else if ("float".equals(t)) {
-                    ed.putFloat(k, (float) item.optDouble("v", 0.0));
-                } else if ("string".equals(t)) {
-                    ed.putString(k, item.optString("v", ""));
-                } else if ("set".equals(t)) {
-                    org.json.JSONArray arr = item.optJSONArray("v");
-                    java.util.Set<String> set = new java.util.LinkedHashSet<>();
-                    if (arr != null) {
-                        for (int i = 0; i < arr.length(); i++) {
-                            set.add(arr.optString(i, ""));
-                        }
-                    }
-                    ed.putStringSet(k, set);
-                }
+                String key = entryKeys.next();
+                org.json.JSONObject item = entriesObj.optJSONObject(key);
+                if (!validBackupItem(item)) return false;
+                entries.put(key, item);
             }
-            ed.commit();
+            if (!entries.isEmpty()) validated.put(prefName, entries);
+        }
+
+        int restoredFiles = 0;
+        for (Map.Entry<String, java.util.LinkedHashMap<String, org.json.JSONObject>> pref : validated.entrySet()) {
+            SharedPreferences.Editor editor = c.getSharedPreferences(pref.getKey(), Context.MODE_PRIVATE).edit();
+            // Merge known settings instead of clearing the file: newer app versions may have
+            // additional defaults or runtime keys that are intentionally absent from this backup.
+            for (Map.Entry<String, org.json.JSONObject> entry : pref.getValue().entrySet()) {
+                putBackupItem(editor, entry.getKey(), entry.getValue());
+            }
+            if (!editor.commit()) return false;
             restoredFiles++;
         }
         I18n.resetCache();
-        if (PowerService.instance != null) {
-            PowerService.instance.syncVolumeHoldFix();
-        }
+        if (PowerService.instance != null) PowerService.instance.syncVolumeHoldFix();
         return restoredFiles > 0;
     }
 
@@ -1820,11 +1848,20 @@ public final class CustomMedia {
                 byte[] bytes = json.getBytes( java.nio.charset.StandardCharsets.UTF_8);
                 try {
                     if (!dlDir.exists()) dlDir.mkdirs();
-                    try (FileOutputStream fos = new FileOutputStream(outFile, false)) {
+                    android.util.AtomicFile atomic = new android.util.AtomicFile(outFile);
+                    FileOutputStream fos = null;
+                    try {
+                        fos = atomic.startWrite();
                         fos.write(bytes);
                         fos.flush();
+                        fos.getFD().sync();
+                        atomic.finishWrite(fos);
+                        fos = null;
+                        ok = outFile.exists() && outFile.length() > 0;
+                    } catch (Throwable atomicErr) {
+                        if (fos != null) atomic.failWrite(fos);
+                        throw atomicErr;
                     }
-                    ok = outFile.exists() && outFile.length() > 0;
                 } catch (Throwable writeErr) {
                     errMsg = writeErr.getMessage();
                     // Fallback on Android 10+ Scoped Storage if direct file write to existing file was blocked
@@ -2022,6 +2059,9 @@ public final class CustomMedia {
             boolean ok = false;
             String errMsg = null;
             try {
+                if (!file.isFile() || file.length() <= 0 || file.length() > 2L * 1024L * 1024L) {
+                    throw new IllegalArgumentException("Backup file is empty or exceeds 2 MB");
+                }
                 byte[] bytes;
                 try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
                     bytes = Suggestions.readAll(fis);

@@ -23,12 +23,10 @@ import java.util.List;
 final class Profiles {
     private Profiles() { }
 
-    /** At most three profiles. */
-    static final int MAX = 3;
+    /** This build intentionally supports one local user. */
+    static final int MAX = 1;
 
-    static boolean canAdd(Context c) {
-        return list(c).size() < MAX;
-    }
+    static boolean canAdd(Context c) { return false; }
 
     static final class Profile {
         String id, name, emoji = "";
@@ -74,43 +72,52 @@ final class Profiles {
     }
 
     static List<Profile> list(Context c) {
-        List<Profile> out = new ArrayList<>();
+        SharedPreferences prefs = store(c);
+        String selectedId = prefs.getString("current", "p1");
+        List<Profile> all = new ArrayList<>();
         try {
-            JSONArray a = new JSONArray(store(c).getString("list", "[]"));
+            JSONArray a = new JSONArray(prefs.getString("list", "[]"));
             for (int i = 0; i < a.length(); i++) {
                 JSONObject o = a.getJSONObject(i);
                 Profile p = new Profile();
-                p.id = o.getString("id");
-                p.name = o.getString("name");
+                p.id = o.optString("id", "");
+                p.name = o.optString("name", "Пользователь");
                 p.color = o.optInt("color", 0);
                 p.emoji = o.optString("emoji", "");
-                out.add(p);
+                if (!p.id.isEmpty()) all.add(p);
             }
         } catch (Exception ignored) {
         }
-        if (out.isEmpty()) {
-            Profile p1 = new Profile();
-            p1.id = "p1";
-            p1.name = "Person 1";
-            p1.color = 0;
-            out.add(p1);
+        if (all.isEmpty()) {
+            Profile p = new Profile();
+            p.id = "p1";
+            p.name = "Пользователь";
+            p.color = 0;
+            p.emoji = EMOJIS[0];
+            all.add(p);
         }
-        boolean fixed = false;
-        java.util.Set<String> used = new java.util.HashSet<>();
-        for (Profile p : out) {
-            if (p.emoji.isEmpty() || used.contains(p.emoji)) {
-                for (String e : EMOJIS) {
-                    if (!used.contains(e) && !emojiTakenLater(out, p, e)) {
-                        p.emoji = e;
-                        fixed = true;
-                        break;
-                    }
+        Profile selected = null;
+        for (Profile p : all) if (p.id.equals(selectedId)) { selected = p; break; }
+        if (selected == null) selected = all.get(0);
+        if (selected.name == null || selected.name.trim().isEmpty()) selected.name = "Пользователь";
+        if (selected.emoji == null || selected.emoji.isEmpty()) selected.emoji = EMOJIS[0];
+
+        // Remove data belonging to former extra profiles, preserving the currently selected one.
+        if (all.size() > 1) {
+            for (Profile p : all) {
+                if (!p.id.equals(selected.id)) {
+                    c.getSharedPreferences(prefsName(p.id), Context.MODE_PRIVATE).edit().clear().apply();
+                    new java.io.File(c.getFilesDir(), continueFile(p.id)).delete();
                 }
             }
-            used.add(p.emoji);
         }
-        if (fixed || store(c).getString("list", "").isEmpty()) save(c, out);
-        return out;
+        List<Profile> single = new ArrayList<>();
+        single.add(selected);
+        if (all.size() != 1 || !prefs.getString("list", "").contains("\"id\":\"" + selected.id + "\"")) {
+            save(c, single);
+        }
+        prefs.edit().putString("current", selected.id).putBoolean("ask_on_wake", false).apply();
+        return single;
     }
 
     private static boolean emojiTakenLater(List<Profile> ps, Profile self, String e) {
@@ -144,34 +151,11 @@ final class Profiles {
     }
 
     static void setCurrent(Context c, String id) {
-        store(c).edit().putString("current", id).apply();
+        // A single-user build has no profile switching.
     }
 
     static Profile add(Context c, String name) {
-        List<Profile> ps = list(c);
-        if (ps.size() >= MAX) return null;
-        int n = 1;
-        for (Profile p : ps) {
-            try {
-                n = Math.max(n, Integer.parseInt(p.id.substring(1)) + 1);
-            } catch (NumberFormatException ignored) {
-            }
-        }
-        Profile p = new Profile();
-        p.id = "p" + n;
-        p.name = name;
-        p.color = ps.size() % COLORS.length;
-        java.util.Set<String> used = new java.util.HashSet<>();
-        for (Profile x : ps) used.add(x.emoji);
-        for (String e : EMOJIS) {
-            if (!used.contains(e)) {
-                p.emoji = e;
-                break;
-            }
-        }
-        ps.add(p);
-        save(c, ps);
-        return p;
+        return null;
     }
 
     static void update(Context c, Profile changed) {
@@ -188,22 +172,13 @@ final class Profiles {
 
     /** Removes a profile and its layout and Continue Watching data (never the last profile). */
     static void delete(Context c, String id) {
-        List<Profile> ps = list(c);
-        if (ps.size() <= 1) return;
-        List<Profile> keep = new ArrayList<>();
-        for (Profile p : ps) if (!p.id.equals(id)) keep.add(p);
-        save(c, keep);
-        c.getSharedPreferences(prefsName(id), Context.MODE_PRIVATE).edit().clear().apply();
-        new java.io.File(c.getFilesDir(), continueFile(id)).delete();
-        if (current(c).id.equals(id) || store(c).getString("current", "p1").equals(id)) setCurrent(c, keep.get(0).id);
+        // The sole local profile is never removed.
     }
 
-    static boolean askOnWake(Context c) {
-        return store(c).getBoolean("ask_on_wake", false);
-    }
+    static boolean askOnWake(Context c) { return false; }
 
     static void setAskOnWake(Context c, boolean on) {
-        store(c).edit().putBoolean("ask_on_wake", on).apply();
+        store(c).edit().putBoolean("ask_on_wake", false).apply();
     }
 
     static String prefsName(String id) {

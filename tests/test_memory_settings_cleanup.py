@@ -23,14 +23,26 @@ assert "logo.recycle()" in main
 assert 'row(tr("Pair / Repair ADB connection"' not in settings
 assert 'row(tr("Disabled apps backup"' not in settings
 assert 'row(tr("Classic Top Shelf content"' not in settings
-assert 'row(tr("Classic Top Shelf suggestions"' in settings
+assert 'row(tr("Classic Top Shelf suggestions"' not in settings
+assert "void pageControlPanel()" not in settings
+assert "void pageProfiles()" not in settings
+assert "void pageLanguage()" not in settings
+assert "NuvioCloud" not in settings and "StremioCloud" not in settings
+assert "pageUpdates();" in settings
 
-for source in (main, scene, settings, power):
-    assert "MediaWatchService.Store" not in source
-    assert "MediaWatchService.pollActiveSessions" not in source
+perms = (ROOT / "Perms.java").read_text(encoding="utf-8")
+local_adb = (ROOT / "LocalAdb.java").read_text(encoding="utf-8")
+control = (ROOT / "ControlPanelOverlay.java").read_text(encoding="utf-8")
+manifest = Path("AndroidManifest.xml").read_text(encoding="utf-8")
+assert not (ROOT / "MediaWatchService.java").exists()
+for source in (main, scene, settings, power, perms, local_adb, control, manifest):
+    assert "MediaWatchService" not in source
+    assert "enabled_notification_listeners" not in source
+    assert "NotificationListenerService" not in source
+assert "Perms.toggleDnd(this)" in main
+assert "Perms.toggleDnd(c)" in control
+assert "setInterruptionFilter(" in perms
+assert "requestLocation(Activity a)" in perms
+assert "WRITE_EPG_DATA" not in manifest
 
-media = (ROOT / "MediaWatchService.java").read_text(encoding="utf-8")
-assert "static final class Store" not in media
-assert "pollActiveSessions" not in media
-
-print("Bounded artwork caches, memory-trim hooks, Settings de-duplication and dead media-hook cleanup passed.")
+print("Bounded artwork caches, memory-trim hooks, Settings de-duplication and unused media-service removal passed.")

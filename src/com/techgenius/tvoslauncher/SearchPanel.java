@@ -38,9 +38,8 @@ import java.util.concurrent.Executors;
 
 /**
  * Search, as on tvOS: the Home Screen blurred behind, what you typed at the top, a one-row
- * keyboard, and rows of results under it. Apps, settings and inputs match on every key press with
- * no network; movies and series (JustWatch, any service in India, and Stremio) are fetched once
- * typing pauses. OK on a title opens its "How to Watch" sheet with an Open / Get button per app.
+ * Russian/English keyboard, and rows of results under it. Apps, settings and inputs match on every
+ * key press with no network; title offers are fetched separately when available.
  *
  * Geometry in design units (960 x 540, half of Apple's 1920 x 1080 points): 48 side margin as the
  * Home Screen, query 26 high at the top, keys on a 30 pitch, poster lockups 96 x 144 (2:3).
@@ -50,12 +49,8 @@ final class SearchPanel {
     static final int REQ_VOICE = 7301, REQ_MIC = 7302;
     static final long DEBOUNCE_MS = 350;
     static final String LATIN = "abcdefghijklmnopqrstuvwxyz";
-    static final String TURKISH = "abc\u00e7defg\u011fh\u0131ijklmno\u00f6prs\u015ftu\u00fcvyzqwx";
+    static final String RUSSIAN = "йцукенгшщзхъфывапролджэячсмитьбюё";
     static final String DIGITS = "1234567890.-'&:!?";
-    static final String HINDI = "\u0905\u0906\u0907\u0908\u0909\u090a\u090f\u0910\u0913\u0914"
-            + "\u0915\u0916\u0917\u0918\u091a\u091b\u091c\u091d\u091f\u0920\u0921\u0922\u0923"
-            + "\u0924\u0925\u0926\u0927\u0928\u092a\u092b\u092c\u092d\u092e\u092f\u0930\u0932\u0935"
-            + "\u0936\u0937\u0938\u0939\u093e\u093f\u0940\u0941\u0942\u0947\u0948\u094b\u094c\u0902\u094d";
 
     final MainActivity a;
     final FrameLayout layer;
@@ -68,11 +63,6 @@ final class SearchPanel {
     final ExecutorService net = Executors.newFixedThreadPool(2), img = Executors.newSingleThreadExecutor();
     /** Recent searches' results, so deleting a letter shows the earlier results at once. */
     final Map<String, List<Search.Title>> cache = new LinkedHashMap<String, List<Search.Title>>(24, 0.75f, true) {
-        @Override protected boolean removeEldestEntry(Map.Entry<String, List<Search.Title>> e) {
-            return size() > 20;
-        }
-    };
-    final Map<String, List<Search.Title>> stremioCache = new LinkedHashMap<String, List<Search.Title>>(24, 0.75f, true) {
         @Override protected boolean removeEldestEntry(Map.Entry<String, List<Search.Title>> e) {
             return size() > 20;
         }
@@ -94,7 +84,7 @@ final class SearchPanel {
     String failed;
     FrameLayout sheet;
     View sheetReturn;
-    LinearLayout titleRow, stremioRow;
+    LinearLayout titleRow;
     TextView titleStatus;
     boolean closed;
 
@@ -185,24 +175,23 @@ final class SearchPanel {
     /** The one-row keyboard for the current mode, then space, delete, mode switches and the mic. */
     void buildKeys(String focusLabel) {
         keys.removeAllViews();
-        boolean isTr = I18n.isTr(a);
-        String chars = mode == 1 ? DIGITS : mode == 2 ? HINDI : (isTr ? TURKISH : LATIN);
+        String chars = mode == 1 ? DIGITS : mode == 2 ? RUSSIAN : LATIN;
         List<View> made = new ArrayList<>();
         for (int i = 0; i < chars.length(); i++) {
             String ch = String.valueOf(chars.charAt(i));
             made.add(key(ch, a.dp(30), () -> type(ch)));
         }
-        made.add(key(tr("space", "bo\u015fluk"), a.dp(64), () -> type(" ")));
-        made.add(key("\u232b", a.dp(40), this::backspace));
+        made.add(key("Пробел", a.dp(64), () -> type(" ")));
+        made.add(key("⌫", a.dp(40), this::backspace));
         made.add(key(mode == 1 ? "abc" : "123", a.dp(48), () -> switchMode(mode == 1 ? 0 : 1)));
-        if (!isTr) made.add(key(mode == 2 ? "abc" : "\u0905\u0906", a.dp(48), () -> switchMode(mode == 2 ? 0 : 2)));
-        made.add(key(tr("clear", "temizle"), a.dp(56), this::clear));
+        if (mode != 1) made.add(key(mode == 2 ? "ENG" : "РУС", a.dp(48),
+                () -> switchMode(mode == 2 ? 0 : 2)));
+        made.add(key("Очистить", a.dp(70), this::clear));
         View focus = made.get(0);
         for (View k : made) {
             keys.addView(k);
             if (focusLabel != null && focusLabel.equals(k.getTag())) focus = k;
         }
-        // The ends of the row stop focus instead of wrapping into the results.
         made.get(0).setNextFocusLeftId(made.get(0).getId());
         made.get(made.size() - 1).setNextFocusRightId(made.get(made.size() - 1).getId());
         if (focusLabel != null || keys.getTag() == null) focus.requestFocus();
@@ -240,7 +229,8 @@ final class SearchPanel {
     void switchMode(int m) {
         int prev = mode;
         mode = m;
-        buildKeys(m != 0 ? "abc" : prev == 1 ? "123" : "\u0905\u0906");
+        String focus = m == 1 ? "abc" : m == 2 ? "ENG" : prev == 2 ? "РУС" : "123";
+        buildKeys(focus);
     }
 
     void type(String s) {
@@ -594,22 +584,9 @@ final class SearchPanel {
         List<View> cards = new ArrayList<>();
         for (Search.Title t : ts) cards.add(titleCard(t));
         setItems(titleRow, cards);
-        // Stremio-only titles may have arrived first; drop the ones JustWatch now lists.
-        List<Search.Title> sh = stremioCache.get(q().toLowerCase());
-        if (sh != null) fillStremio(sh);
     }
 
-    /** Titles only Stremio's catalogue has (JustWatch lists the rest with their services). */
-    void fillStremio(List<Search.Title> ts) {
-        Set<String> listed = new HashSet<>();
-        List<Search.Title> jw = cache.get(q().toLowerCase());
-        if (jw != null) for (Search.Title t : jw) if (!t.imdb.isEmpty()) listed.add(t.imdb);
-        List<View> cards = new ArrayList<>();
-        for (Search.Title t : ts) if (!listed.contains(t.imdb)) cards.add(titleCard(t));
-        if (cards.isEmpty()) return;
-        if (stremioRow == null) stremioRow = addRow(tr("On ", "") + Suggestions.stremioApp(a).name + tr("", " \u00fczerinde"), cards, a.dp(176));
-        else setItems(stremioRow, cards);
-    }
+
 
     // ---------------------------------------------------------------- cards
 
