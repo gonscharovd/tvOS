@@ -81,7 +81,7 @@ public class MainActivity extends Activity {
     static final String PREF_OTHER = "other_apps";
     static final String TV_SETTINGS = "com.android.tv.settings";
 
-    /** Packages placed first (in this order) until the user rearranges the grid. */
+    /** Packages placed first (in this order) until the user rearranges the dock. */
     static final List<String> DEFAULT_ORDER = Arrays.asList(
             "com.netflix.ninja",
             "com.amazon.amazonvideo.livingroom",
@@ -147,12 +147,11 @@ public class MainActivity extends Activity {
         ed.apply();
     }
 
-    /** Scroll position is driven by focus changes, not by ScrollView's own key handling. */
     SharedPreferences prefs;
     final Map<String, AppEntry> all = new LinkedHashMap<>();
     /** Visible home apps, in user order. */
     final List<AppEntry> apps = new ArrayList<>();
-    /** Apps moved to "Other Apps" (not on first dock row / main grid, reachable from Other Apps button). */
+    /** Apps moved to Other Apps, reachable from the More Apps control. */
     final List<AppEntry> otherApps = new ArrayList<>();
     /** Other apps including any dock overflow when the dock is enlarged (> 100%). */
 
@@ -184,7 +183,7 @@ public class MainActivity extends Activity {
 
     BroadcastReceiver pkgReceiver;
 
-    /** Full-screen card that zooms out of a tile when an app is launched. */
+    /** Optional transient layer reserved for an external app transition. */
     View launchOverlay;
 
     static MainActivity activeInstance;
@@ -480,25 +479,6 @@ public class MainActivity extends Activity {
     }
 
     /** Round profile avatar: indigo-to-pink gradient with a person glyph. */
-    Bitmap avatarBitmap(int size) {
-        Bitmap b = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(b);
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setShader(new LinearGradient(0, 0, 0, size, 0xFFA8A8B0, 0xFF838389, Shader.TileMode.CLAMP));
-        float r = size / 2f;
-        c.drawCircle(r, r, r, p);
-        p.setShader(null);
-        p.setColor(0xF2FFFFFF);
-        c.drawCircle(r, size * 0.40f, size * 0.17f, p);
-        c.save();
-        android.graphics.Path clip = new android.graphics.Path();
-        clip.addCircle(r, r, r, android.graphics.Path.Direction.CW);
-        c.clipPath(clip);
-        c.drawOval(size * 0.20f, size * 0.64f, size * 0.80f, size * 1.10f, p);
-        c.restore();
-        return b;
-    }
-
     /** System/utility apps that get a drawn tvOS-style card instead of their Android art. */
     static final Set<String> TVOS_CARD_PKGS = new HashSet<>(Arrays.asList(
             TV_SETTINGS, "com.android.vending", "com.mitv.dream",
@@ -859,40 +839,7 @@ public class MainActivity extends Activity {
         };
     }
 
-    // ---------------------------------------------------------------- suggestions carousel
-
-    /** Title logo (or title), meta line, overview, "Open in \u2026" capsule and page dots, bottom-left of the shelf. */
-    /**
-     * Darkening for legibility (left side for the text, bottom for the dock), painted into the
-     * artwork once when it loads, so the GPU draws one full-screen image instead of three layers.
-     */
-    /** A soft shade along the top so the time and status icons stay legible over bright artwork. */
-    /** Info block sits just above the dock while a dock app is focused... */
-    /** ...and the page dots sit centred between the info and the dock. */
-    /** tvOS-style top tab bar: a glass capsule, top centre, with two text tabs. */
-    /** Selected tab: soft glass pill; white with dark text while the tab bar has focus (tvOS). */
-    /** Continue Watching is intentionally disabled in this device-specific build. */
-    /** The tab bar only appears when there are two things to switch between. */
-    /** Applies the profile's choices: hides the tab bar and picks the one remaining mode. */
-    /** Down from the status row: the tab bar, or (when it's hidden) the carousel or the dock. */
-    /** Up from the shelf/dock: the tab bar, or the status row when the tab bar is hidden. */
-    /** Legacy hero content is disabled in this build. */
-    String lastCwSig = "";
-
-    /** Obsolete carousel mixing logic retained temporarily for source compatibility. */
-    /** Resume first: up to six recent Continue Watching titles, then news and recommendations. */
-
-
-    /** Carousel vs launcher background: crossfade between them. */
-    /** dir: +1 next, -1 previous, 0 first show (no slide). */
-    /** Title/meta/overview for an item, applied in the same frame as its artwork. */
-    /**
-     * Artwork transition (tvOS carousel): the new image slides in from the side you pressed and
-     * fades up over the old one, which drifts the other way and fades out.
-     */
-    /** Carousel focused: the dock slides away and the artwork takes the whole screen (tvOS Top Shelf). */
-
-    /** The search screen while it is open (its layer is also pickerLayer, so Home and idle treat it as an overlay). */
+    /** Search screen while open; its layer is also the active picker overlay. */
     SearchPanel search;
 
     FrameLayout pickerLayer;
@@ -902,12 +849,8 @@ public class MainActivity extends Activity {
 
     /** Moves the highlight between Resume and Remove (the carousel keeps focus). */
     /** Carousel and capsule navigation: LEFT/RIGHT browse, OK opens, UP/DOWN move between capsule, carousel and dock. */
-    // ---------------------------------------------------------------- focus sway
-
-    /** Slow elliptical tilt of the focused card with the highlight drifting against it. */
     // ---------------------------------------------------------------- launch
 
-    View launchDimView;
 
     /**
      * Immediately halts all launcher animations and timers before starting an external app
@@ -919,20 +862,11 @@ public class MainActivity extends Activity {
         handler.removeCallbacks(lockIdleRunnable);
     }
 
-    void showLaunchDim() {
-        prepareForAppLaunch();
-    }
-
     void clearLaunchDim() {
         if (root != null) {
             root.animate().cancel();
             root.setScaleX(1f);
             root.setScaleY(1f);
-        }
-        if (launchDimView != null) {
-            launchDimView.animate().cancel();
-            launchDimView.setAlpha(0f);
-            launchDimView.setVisibility(View.GONE);
         }
     }
 
@@ -957,45 +891,10 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** Coming back to Home after a launch: the card fades away and the grid zooms back in. */
     /**
      * The colour the app paints first: its Android 12 splash background, else its window
      * background. Ending the zoom on this colour makes the handoff to the app seamless.
      */
-    int launchBackground(AppEntry a, int fallback) {
-        ComponentName cn = a.launch.getComponent();
-        if (cn == null) return fallback;
-        try {
-            ActivityInfo ai = getPackageManager().getActivityInfo(cn, 0);
-            Context pc = createPackageContext(cn.getPackageName(), 0);
-            Resources.Theme theme = pc.getResources().newTheme();
-            theme.applyStyle(ai.getThemeResource(), true);
-            int[] attrs = Build.VERSION.SDK_INT >= 31
-                    ? new int[]{android.R.attr.windowSplashScreenBackground, android.R.attr.windowBackground}
-                    : new int[]{android.R.attr.windowBackground};
-            TypedArray ta = theme.obtainStyledAttributes(attrs);
-            try {
-                for (int i = 0; i < attrs.length; i++) {
-                    TypedValue v = ta.peekValue(i);
-                    if (v == null) continue;
-                    int color = 0;
-                    if (v.type >= TypedValue.TYPE_FIRST_COLOR_INT && v.type <= TypedValue.TYPE_LAST_COLOR_INT) {
-                        color = v.data;
-                    } else {
-                        Drawable d = ta.getDrawable(i);
-                        if (d instanceof ColorDrawable) color = ((ColorDrawable) d).getColor();
-                    }
-                    if (Color.alpha(color) > 200) return color | 0xFF000000;
-                }
-            } finally {
-                ta.recycle();
-            }
-        } catch (Exception e) {
-            // Theme unreadable: keep the banner colour.
-        }
-        return fallback;
-    }
-
     static int colorDistance(int x, int y) {
         return Math.abs(Color.red(x) - Color.red(y)) + Math.abs(Color.green(x) - Color.green(y))
                 + Math.abs(Color.blue(x) - Color.blue(y));
@@ -1004,13 +903,6 @@ public class MainActivity extends Activity {
     static int blendArgb(int x, int y, float t) {
         return Color.argb(
                 (int) (Color.alpha(x) + (Color.alpha(y) - Color.alpha(x)) * t),
-                (int) (Color.red(x) + (Color.red(y) - Color.red(x)) * t),
-                (int) (Color.green(x) + (Color.green(y) - Color.green(x)) * t),
-                (int) (Color.blue(x) + (Color.blue(y) - Color.blue(x)) * t));
-    }
-
-    static int blend(int x, int y, float t) {
-        return Color.rgb(
                 (int) (Color.red(x) + (Color.red(y) - Color.red(x)) * t),
                 (int) (Color.green(x) + (Color.green(y) - Color.green(x)) * t),
                 (int) (Color.blue(x) + (Color.blue(y) - Color.blue(x)) * t));
@@ -1040,89 +932,8 @@ public class MainActivity extends Activity {
      * centre-cropped exactly like the card, with its edge pixels clamped outward, so the whole
      * screen continues the card's own background; the logo settles at ~42% of the screen.
      */
-    static class LaunchCard extends Drawable {
-        final RectF card;
-        final float r0;
-        final Bitmap art;
-        final Drawable icon;
-        final int color0, color1;
-        final Paint artPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
-        final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
-        final android.graphics.Matrix m = new android.graphics.Matrix();
-        final android.graphics.Path clip = new android.graphics.Path();
-        final RectF o = new RectF(), br = new RectF();
-        float f;
+    // ---------------------------------------------------------------- home focus routing
 
-        LaunchCard(RectF card, float r0, Bitmap art, Drawable icon, int color0, int color1) {
-            this.card = card;
-            this.r0 = r0;
-            this.art = art;
-            this.icon = icon;
-            this.color0 = color0;
-            this.color1 = color1;
-            if (art != null) {
-                artPaint.setShader(new android.graphics.BitmapShader(art, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
-            }
-        }
-
-        void setProgress(float f) {
-            this.f = f;
-            invalidateSelf();
-        }
-
-        static float lerp(float a, float b, float t) {
-            return a + (b - a) * t;
-        }
-
-        @Override public void draw(Canvas c) {
-            Rect b = getBounds();
-            float W = b.width(), H = b.height();
-            o.set(lerp(card.left, 0, f), lerp(card.top, 0, f), lerp(card.right, W, f), lerp(card.bottom, H, f));
-            float rad = r0 * (1f - f);
-            if (art != null) {
-                // Banner rect: starts as the card itself, ends centred at 42% of the screen.
-                float bw = lerp(card.width(), W * 0.42f, f), bh = lerp(card.height(), H * 0.42f, f);
-                br.set(o.centerX() - bw / 2, o.centerY() - bh / 2, o.centerX() + bw / 2, o.centerY() + bh / 2);
-                float scale = Math.max(br.width() / art.getWidth(), br.height() / art.getHeight());
-                m.setScale(scale, scale);
-                m.postTranslate(br.centerX() - art.getWidth() * scale / 2, br.centerY() - art.getHeight() * scale / 2);
-                artPaint.getShader().setLocalMatrix(m);
-                c.drawRoundRect(o, rad, rad, artPaint);
-            } else {
-                float t = Math.max(0f, Math.min(1f, (f - 0.55f) / 0.45f));
-                fill.setColor(blend(color0, color1, t));
-                c.drawRoundRect(o, rad, rad, fill);
-                if (icon != null) {
-                    float s = lerp(card.height() * 0.55f, H * 0.27f, f);
-                    Rect old = icon.copyBounds();
-                    icon.setBounds((int) (o.centerX() - s / 2), (int) (o.centerY() - s / 2),
-                            (int) (o.centerX() + s / 2), (int) (o.centerY() + s / 2));
-                    icon.draw(c);
-                    icon.setBounds(old);
-                }
-            }
-        }
-
-        @Override public void setAlpha(int a) { }
-        @Override public void setColorFilter(android.graphics.ColorFilter cf) { }
-        @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
-    }
-
-    Drawable copyOf(Drawable d) {
-        Drawable.ConstantState cs = d.getConstantState();
-        return cs != null ? cs.newDrawable(getResources()).mutate() : d;
-    }
-
-    // ---------------------------------------------------------------- focus & shelf
-
-    ObjectAnimator scrollAnim;
-
-    /**
-     * Row tops come from the fixed grid geometry rather than getTop(), so this also works right
-     * after the dock is rebuilt, before the new items have been laid out.
-     * Uses an explicit ObjectAnimator on scrollY instead of ScrollView.smoothScrollTo because
-     * Android's ScrollView aborts smooth scroll and jumps immediately if called twice within 250ms.
-     */
     void goTop() {
         if (sceneHome != null) {
             if (sceneHome.isSheetOpen()) sceneHome.closeSheet();
@@ -1927,7 +1738,7 @@ public class MainActivity extends Activity {
 
     // ---------------------------------------------------------------- inputs
 
-    /** Input picker under the status row: Control Center capsules, two columns. */
+    /** Input picker overlay opened from Control Center. */
     void showInputs(View from) {
         List<Inputs.Input> list = Inputs.list(this);
         if (list.isEmpty()) {
@@ -2004,8 +1815,6 @@ public class MainActivity extends Activity {
      * strength (unlit at 30%), or Ethernet; "!" beside it without internet (wifi.exclamationmark)
      * and a slash through dimmed bands with no network (wifi.slash).
      */
-    /** SF-style Wi-Fi: a wedge and two equal bands fanning 90 degrees from a point near the bottom. */
-    /** Ethernet: three solid nodes joined by lines, drawn bolder to match the Wi-Fi weight. */
     /** Android TV's system click on D-pad moves, select and Back (Settings -> Home -> Navigation sounds). */
     static void navSound(Context c, KeyEvent ev) {
         if (ev.getAction() != KeyEvent.ACTION_DOWN) return;
@@ -2131,7 +1940,7 @@ public class MainActivity extends Activity {
         if (wasLock && wasExternal) moveTaskToBack(true);
     }
 
-    /** Seconds without input before the dock slides away (Settings -> Home); 0 = never. */
+    /** Runs the configured lock-screen timeout when Home remains idle. */
 
     final Runnable lockIdleRunnable = () -> {
         if (resumed && !ambientShowcase) {
@@ -2147,10 +1956,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    /**
-     * No input for a while: the dock and grid slide down off screen, the weather card and tab bar
-     * fade, and the carousel keeps playing full screen with its title and summary at the bottom.
-     */
     // ---------------------------------------------------------------- weather
 
     final Runnable weatherTick = new Runnable() {
@@ -2234,8 +2039,6 @@ public class MainActivity extends Activity {
             updateWeather();
         });
     }
-
-    // ---------------------------------------------------------------- profiles
 
     List<View> pickerCells = new ArrayList<>();
 
@@ -2474,7 +2277,7 @@ public class MainActivity extends Activity {
         return true;
     }
 
-    /** Avatar (or glass +) with the name below; the current profile gets a green check. */
+    /** View to restore focus to after closing a popover. */
     View popoverReturn;
 
     void closePicker() {
@@ -2614,13 +2417,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    // ---------------------------------------------------------------- move mode
-
-    /** Window position of every visible card, keyed by app, for the move animation. */
-    /**
-     * tvOS-style reflow: after the grid is rebuilt in its new order, every card starts at its old
-     * on-screen position and glides to its new slot, so neighbours visibly make room.
-     */
     // ---------------------------------------------------------------- helpers
 
     TextView text(float sp, Typeface tf, float alpha) {
