@@ -11,6 +11,7 @@
 | DEBT-005 | PR description/dependency-map header отстают от фактического head | Вводят в заблуждение о выполненном Classic cleanup и CI status | PR body и начало dependency map говорят, что часть работ ещё pending; branch head и CI #293 показывают реализованный cleanup и success | P2 | OPEN |
 | DEBT-006 | Runtime validation PR #14 на целевом ТВ отсутствует | CI не покрывает D-pad/lifecycle/permissions/OTA на реальном Android 9 | Последняя проверка #293 — CI build/tests, не device run | P1 | OPEN |
 | DEBT-007 | CI preview APK подписан debug key runner | Нельзя считать preview artifact заменой установленного release APK | build-apk.yml вызывает build.sh без release keystore; runner создаёт свой debug keystore | P2 | EXPECTED LIMITATION |
+| DEBT-008 | SingleUserMigrationTest не подключён к CI workflow | Поведение migration helper не покрывается автоматическим запуском этого Java unit test | Файл `tests/SingleUserMigrationTest.java` есть, но в build-apk.yml нет javac/java шага для него | P2 | OPEN |
 
 ## Подробности
 
