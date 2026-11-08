@@ -82,15 +82,19 @@ missing = sorted(literal_settings_strings - dictionary)
 assert not missing, "Settings strings missing Russian translations: " + repr(missing)
 
 
-# Single-user and Russian-only build: obsolete pages and cloud catalogue code are absent.
-profiles = (ROOT / "Profiles.java").read_text(encoding="utf-8")
+# Single-user and Russian-only build: obsolete profile UI and media catalogue code are absent.
 setup = (ROOT / "SetupActivity.java").read_text(encoding="utf-8")
+main = (ROOT / "MainActivity.java").read_text(encoding="utf-8")
+scenes = (ROOT / "Scenes.java").read_text(encoding="utf-8")
 suggestions = (ROOT / "Suggestions.java").read_text(encoding="utf-8")
 search = (ROOT / "Search.java").read_text(encoding="utf-8")
 search_panel = (ROOT / "SearchPanel.java").read_text(encoding="utf-8")
-assert "static final int MAX = 1;" in profiles
-assert "static boolean canAdd(Context c) { return false; }" in profiles
-assert "static boolean askOnWake(Context c) { return false; }" in profiles
+assert not (ROOT / "Profiles.java").exists(), "Obsolete multi-profile model remains"
+assert "Profiles." not in main and "Profiles." not in scenes and "Profiles." not in settings
+assert "showProfilePicker" not in main and "profileMenu(" not in main
+assert "promptAddPerson" not in settings
+assert "SingleUserPrefs.userName(c)" in scenes
+assert "SingleUserPrefs.homePrefs(this)" in main
 assert "steps.add(this::profile)" not in setup
 assert "void profile()" not in setup and "void homeContent()" not in setup
 assert 'by.setText("by gonscharovd")' in setup

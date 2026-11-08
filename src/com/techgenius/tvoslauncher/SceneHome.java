@@ -39,9 +39,7 @@ import java.util.Set;
 /**
  * Couch-TV "Night scenes" Home Screen layout and interactions:
  * - Multi-layer scene background with giant refractive glass clock & foreground depth cutouts
- * - Top-left profile pill switcher ("Person 1 | Person 2")
  * - Top-right frosted glass Moon sleep timer / quick controls button
- * - "Keep watching" horizontal frosted glass notification cards with artwork & progress bars
  * - Bottom frosted glass dock with rounded-square app icons, Settings gear popup, and More (...)
  */
 final class SceneHome {

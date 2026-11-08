@@ -419,7 +419,7 @@ public class SetupActivity extends Activity {
 
 
 
-    /** Step 1: Choose Appearance (Night scenes vs Classic). Step 2: Choose Scenes or Classic Background. */
+    /** Choose which Night Scenes backgrounds are enabled for the home screen. */
     void look() {
         title(tr("Choose Your Scenes", "Выберите сцены"));
         TextView s = subtitle(tr("Choose which scenes take turns behind the glass clock.",

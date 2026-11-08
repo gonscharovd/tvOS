@@ -1485,16 +1485,8 @@ public final class Scenes {
             } else {
                 greet = I18n.s(c, "Good night", "İyi geceler");
             }
-            try {
-                Profiles.Profile cur = Profiles.current(c);
-                if (cur != null && cur.name != null) {
-                    String name = I18n.profileName(c, cur.name).trim();
-                    if (!name.isEmpty()) {
-                        return greet + ", " + name;
-                    }
-                }
-            } catch (Exception ignored) { }
-            return greet;
+            String name = SingleUserPrefs.userName(c);
+            return name == null || name.trim().isEmpty() ? greet : greet + ", " + name.trim();
         }
 
         private final android.graphics.Path duoClockPath = new android.graphics.Path();

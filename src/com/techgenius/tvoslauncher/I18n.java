@@ -2226,12 +2226,4 @@ public final class I18n {
         return new SimpleDateFormat("EEEE d MMMM", Locale.forLanguageTag("ru-RU")).format(date);
     }
 
-    public static String profileName(Context c, String name) {
-        if (name == null) return "";
-        if (name.equals("Default")) return "По умолчанию";
-        if (name.startsWith("Person ")) return "Профиль " + name.substring("Person ".length());
-        if (name.startsWith("Profile ")) return "Профиль " + name.substring("Profile ".length());
-        if (name.equals("Kids")) return "Детский профиль";
-        return name;
-    }
 }

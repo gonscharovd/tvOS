@@ -1163,29 +1163,6 @@ public class SettingsActivity extends Activity {
 
 
 
-    private void promptAddPerson() {
-        android.widget.EditText in = new android.widget.EditText(this);
-        in.setSingleLine(true);
-        in.setHint(tr("Name", "Ad"));
-        int pad = u(14);
-        FrameLayout box = new FrameLayout(this);
-        box.setPadding(pad, pad / 2, pad, 0);
-        box.addView(in);
-        AlertDialog dlg = dialog(tr("Add a person", "Kişi ekle"))
-                .setView(box)
-                .setPositiveButton(tr("Add", "Ekle"), (d, w) -> {
-                    String n = in.getText().toString().trim();
-                    if (!n.isEmpty()) {
-                        Profiles.add(this, n);
-                        selectSection(HOME, true, 6 + Profiles.list(this).size() - 1);
-                    }
-                })
-                .setNegativeButton(tr("Cancel", "İptal"), null)
-                .show();
-        Ui.setupDialogEditText(in, dlg);
-        in.requestFocus();
-    }
-
     void pageButtonMapper() {
         section(tr("ACCESSIBILITY SERVICE", "СЛУЖБА СПЕЦИАЛЬНЫХ ВОЗМОЖНОСТЕЙ"));
         row(tr("Button Mapper accessibility service", "Служба переназначения кнопок"),

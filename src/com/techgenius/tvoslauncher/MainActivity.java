@@ -380,7 +380,7 @@ public class MainActivity extends Activity {
         RecentAppsOverlay.dismiss();
         ControlPanelOverlay.dismiss();
         // Home always lands on the first app in the dock: close any overlay first
-        // (Control Center, profiles, Inputs, weather forecast, menus, move mode, folder).
+        // (Control Center, Inputs, weather forecast, menus and dock move mode).
         if (pickerLayer != null) {
             popoverReturn = null;
             FrameLayout l = pickerLayer;
@@ -440,10 +440,6 @@ public class MainActivity extends Activity {
         if (returningFromSettings && !folderMode && launchOverlay == null && moveIndex < 0) reload(currentKey());
         returningFromSettings = false;
         updateStatusClockFormat();
-        if (avatarView != null) {
-            avatarView.setImageBitmap(Profiles.avatar(this, Profiles.current(this), avatarSize));
-            avatarView.setVisibility(View.GONE);
-        }
         LocalAdb.grantVolumeLongPressPermissionIfNeeded(this, null);
         if (Scenes.isScenesLook(this) && sceneHome != null) {
             sceneHome.sceneView.syncSettings();
@@ -475,7 +471,6 @@ public class MainActivity extends Activity {
             getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
         updateWeather();
-        refreshAvatar();
         applyTabs();
         resetIdle();
         // Opened from the app list while another launcher is the home screen: offer once to take over.
@@ -766,33 +761,6 @@ public class MainActivity extends Activity {
         });
         ccButton.setOnClickListener(v -> showControlCenter());
 
-
-        int av = btn;
-        ImageView avatar = new ImageView(this);
-        avatar.setImageBitmap(Profiles.avatar(this, Profiles.current(this), av));
-        avatar.setFocusable(true);
-        avatar.setClickable(true);
-        avatar.setOutlineProvider(new ViewOutlineProvider() {
-            @Override public void getOutline(View v, Outline o) {
-                o.setOval(0, 0, v.getWidth(), v.getHeight());
-            }
-        });
-        avatar.setClipToOutline(true);
-        avatarView = avatar;
-        avatarSize = av;
-        avatar.setVisibility(Profiles.list(this).size() > 1 ? View.VISIBLE : View.GONE);
-        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(av, av);
-        alp.leftMargin = dp(12);
-        clockBox.addView(avatar, alp);
-        GradientDrawable avRing = new GradientDrawable();
-        avRing.setShape(GradientDrawable.OVAL);
-        avRing.setColor(Color.TRANSPARENT);
-        avRing.setStroke(dp(2), Color.WHITE);
-        avatar.setOnFocusChangeListener((v, has) -> {
-            avatar.setForeground(has ? avRing : null);
-            v.animate().withLayer().scaleX(has ? 1.14f : 1f).scaleY(has ? 1.14f : 1f)
-                    .setDuration(180).setInterpolator(LIFT).start();
-        });
 
         // Room around the buttons for their focus growth (1.12x / 1.18x) so nothing is clipped;
         // the margins shrink by the same amount, so the row sits exactly where it did.
@@ -2208,7 +2176,7 @@ public class MainActivity extends Activity {
     /** Carousel focused: the dock slides away and the artwork takes the whole screen (tvOS Top Shelf). */
     boolean heroRequested;
 
-    ImageView avatarView, ccButton, refreshButton, searchButton, netIcon;
+    ImageView ccButton, refreshButton, searchButton, netIcon;
     View timeChipView;
     TextClock statusClock;
 
@@ -2223,7 +2191,6 @@ public class MainActivity extends Activity {
     android.net.ConnectivityManager.NetworkCallback netCallback;
     WeatherView weatherCard;
     LiquidGlass weatherGlass;
-    int avatarSize;
     FrameLayout pickerLayer;
     BroadcastReceiver wakeReceiver;
 
@@ -2391,12 +2358,11 @@ public class MainActivity extends Activity {
                 default: return false;
             }
         }
-        if (f == refreshButton || f == searchButton || f == ccButton || f == avatarView) {
+        if (f == refreshButton || f == searchButton || f == ccButton) {
             // Status row, left to right: Refresh, Search, Control Center, profile.
             if (k == KeyEvent.KEYCODE_DPAD_LEFT) {
                 if (down) {
-                    if (f == avatarView) ccButton.requestFocus();
-                    else if (f == ccButton) searchButton.requestFocus();
+                    if (f == ccButton) searchButton.requestFocus();
                     else if (f == searchButton) refreshButton.requestFocus();
                     else if (switcher.getVisibility() == View.VISIBLE) switcher.requestFocus();
                     else if (weatherShown()) weatherCard.requestFocus();
@@ -2407,7 +2373,7 @@ public class MainActivity extends Activity {
                 if (down) {
                     if (f == refreshButton) searchButton.requestFocus();
                     else if (f == searchButton) ccButton.requestFocus();
-                    else if (f == ccButton && avatarView != null && avatarView.getVisibility() == View.VISIBLE) avatarView.requestFocus();
+                    
                 }
                 return true;
             }
@@ -3082,11 +3048,7 @@ public class MainActivity extends Activity {
             int pk = ev.getKeyCode();
             boolean pd = ev.getAction() == KeyEvent.ACTION_DOWN;
             if (pk == KeyEvent.KEYCODE_BACK) {
-                if (!pd) closeProfilePicker();
-                return true;
-            }
-            if (pk == KeyEvent.KEYCODE_MENU) {
-                if (!pd) profileMenu(getCurrentFocus());
+                if (!pd) closePicker();
                 return true;
             }
             if (pk == KeyEvent.KEYCODE_DPAD_UP || pk == KeyEvent.KEYCODE_DPAD_DOWN
@@ -4500,7 +4462,6 @@ public class MainActivity extends Activity {
      * two-column grid of round avatars, names in soft grey, a green check on the current profile,
      * and a glass "+" Add User. Content stays visible behind it.
      */
-    int profileAvatarSize;
 
     /**
      * The whole Home Screen (artwork, dock, cards, status row) blurred and dimmed behind an overlay:
@@ -4540,94 +4501,6 @@ public class MainActivity extends Activity {
      * behind, a centred title and a centred row of large avatars with a green check on the current
      * one, plus Add User.
      */
-    void showProfilePicker(boolean onWake) {
-        dropPicker();
-        popoverReturn = onWake ? null : (Scenes.isScenesLook(this) && sceneHome != null ? sceneHome.whoBar : avatarView);
-        stopSway(null);
-        FrameLayout layer = new FrameLayout(this);
-        layer.setClickable(true);
-        layer.setClipChildren(false);
-        addBlurredBackdrop(layer, 0xB3000000);
-
-        LinearLayout col = new LinearLayout(this);
-        col.setOrientation(LinearLayout.VERTICAL);
-        col.setGravity(Gravity.CENTER_HORIZONTAL);
-        col.setClipChildren(false);
-        col.setClipToPadding(false);
-        TextView title = text(30, Ui.font(this, "display"), 1f);
-        title.setText(onWake
-                ? I18n.s(this, "Who\u2019s Watching?", "Kim İzliyor?")
-                : I18n.s(this, "Switch Profile", "Profil Değiştir"));
-        title.setLetterSpacing(-0.02f);
-        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        tlp.bottomMargin = dp(34);
-        col.addView(title, tlp);
-
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER);
-        row.setClipChildren(false);
-        row.setClipToPadding(false);
-        profileAvatarSize = dp(120);
-        List<Profiles.Profile> ps = Profiles.list(this);
-        String cur = Profiles.current(this).id;
-        List<View> cells = new ArrayList<>();
-        for (Profiles.Profile p : ps) {
-            View cell = profileCell(Profiles.avatar(this, p, profileAvatarSize), I18n.profileName(this, p.name), false, p.id.equals(cur));
-            cell.setTag(p.id);
-            cell.setOnClickListener(v -> {
-                switchProfile(p.id);
-                popoverReturn = null;
-                closeProfilePicker();
-            });
-            // Long-press OK (like the Menu key): Change Emoji, Rename, Change Colour, Delete.
-            cell.setOnLongClickListener(v -> {
-                profileMenu(v);
-                return true;
-            });
-            cells.add(cell);
-        }
-        if (Profiles.canAdd(this)) {
-            View add = profileCell(null, I18n.s(this, "Add User", "Kullanıcı Ekle"), true, false);
-            add.setOnClickListener(v -> askName(I18n.s(this, "New Profile", "Yeni Profil"), "", name -> {
-                if (Profiles.add(this, name) != null) {
-                    refreshAvatar();
-                    showProfilePicker(false);
-                }
-            }));
-            cells.add(add);
-        }
-        // Each cell is as wide as its circle grown on focus plus room for the name, so they never overlap.
-        for (View c : cells) {
-            LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(profileAvatarSize + dp(44), ViewGroup.LayoutParams.WRAP_CONTENT);
-            clp.leftMargin = clp.rightMargin = dp(10);
-            row.addView(c, clp);
-        }
-        profileAvatarSize = 0;
-        col.addView(row);
-        pickerCells = cells;
-        layer.addView(col, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
-
-        root.addView(layer, match());
-        pickerLayer = layer;
-        layer.setAlpha(0f);
-        col.setScaleX(0.96f);
-        col.setScaleY(0.96f);
-        layer.animate().alpha(1f).setDuration(onWake ? 380 : 260).withEndAction(() -> hideUnderOverlay(layer)).start();
-        col.animate().scaleX(1f).scaleY(1f).setDuration(onWake ? 420 : 300).setInterpolator(EASE).start();
-        View focus = cells.isEmpty() ? null : cells.get(0);
-        for (View c : cells) if (cur.equals(c.getTag())) focus = c;
-        if (focus != null) {
-            focus.requestFocus();
-            // Rebuilt from a dialog (Add User / Rename): take focus once the dialog has gone.
-            View f = focus;
-            handler.postDelayed(() -> {
-                if (pickerLayer == layer && !pickerCells.contains(getCurrentFocus())) f.requestFocus();
-            }, 350);
-        }
-    }
-
     // ---------------------------------------------------------------- Search
 
     /** Opens search over the blurred Home Screen; q (adb hook, voice) starts with that text. */
@@ -4787,7 +4660,7 @@ public class MainActivity extends Activity {
 
     boolean statusFocused() {
         View f = getCurrentFocus();
-        return f != null && (f == ccButton || f == avatarView || f == refreshButton || f == searchButton);
+        return f != null && (f == ccButton || f == refreshButton || f == searchButton);
     }
 
     /** Directional focus inside a popover: nearest cell whose centre lies in that direction. */
@@ -4830,236 +4703,19 @@ public class MainActivity extends Activity {
     }
 
     /** Avatar (or glass +) with the name below; the current profile gets a green check. */
-    View profileCell(Bitmap avatar, String name, boolean isAdd, boolean current) {
-        int big = profileAvatarSize;
-        LinearLayout cell = new LinearLayout(this);
-        cell.setOrientation(LinearLayout.VERTICAL);
-        cell.setGravity(Gravity.CENTER_HORIZONTAL);
-        cell.setFocusable(true);
-        cell.setClickable(true);
-        cell.setClipChildren(false);
-        int size = big > 0 ? big : dp(80);
-        FrameLayout picBox = new FrameLayout(this);
-        picBox.setClipChildren(false);
-        View pic;
-        if (isAdd) {
-            TextView plus = text(34, Ui.font(this, "regular"), 0.9f);
-            plus.setText("+");
-            plus.setGravity(Gravity.CENTER);
-            plus.setShadowLayer(0, 0, 0, 0);
-            LiquidGlass g = new LiquidGlass(size / 2f, 0x1AFFFFFF, glassSource, screenW, screenH, unit).adaptive();
-            g.lens = dp(7);
-            plus.setBackground(g);
-            pic = plus;
-        } else {
-            ImageView iv = new ImageView(this);
-            iv.setImageBitmap(avatar);
-            pic = iv;
-            pic.setOutlineProvider(new ViewOutlineProvider() {
-                @Override public void getOutline(View v, Outline o) {
-                    o.setOval(0, 0, v.getWidth(), v.getHeight());
-                }
-            });
-            pic.setElevation(dp(3));
-        }
-        picBox.addView(pic, new FrameLayout.LayoutParams(size, size));
-        if (current) {
-            int cs = dp(22);
-            ImageView check = new ImageView(this);
-            check.setImageBitmap(checkBadge(cs));
-            check.setElevation(dp(5));
-            FrameLayout.LayoutParams clp = new FrameLayout.LayoutParams(cs, cs, Gravity.TOP | Gravity.END);
-            clp.topMargin = -dp(2);
-            clp.rightMargin = -dp(2);
-            picBox.addView(check, clp);
-        }
-        cell.addView(picBox, new LinearLayout.LayoutParams(size, size));
-        TextView label = text(big > 0 ? 15 : 12.5f, Ui.font(this, big > 0 ? "medium" : "regular"), 0.7f);
-        label.setText(name);
-        label.setGravity(Gravity.CENTER);
-        label.setSingleLine(true);
-        label.setEllipsize(TextUtils.TruncateAt.END);
-        LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(size + dp(16), ViewGroup.LayoutParams.WRAP_CONTENT);
-        llp.topMargin = dp(8);
-        cell.addView(label, llp);
-        cell.setOnFocusChangeListener((v, has) -> {
-            picBox.animate().scaleX(has ? 1.12f : 1f).scaleY(has ? 1.12f : 1f).translationZ(has ? dp(12) : 0)
-                    .setDuration(220).setInterpolator(LIFT).start();
-            label.animate().alpha(has ? 1f : 0.7f).translationY(has ? dp(5) : 0).setDuration(200).start();
-        });
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.leftMargin = dp(8);
-        lp.rightMargin = dp(8);
-        cell.setLayoutParams(lp);
-        return cell;
-    }
-
-    /** Green circle with a white check (current profile). */
-    Bitmap checkBadge(int s) {
-        Bitmap b = Bitmap.createBitmap(s, s, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(b);
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setColor(0xFF34C759);
-        c.drawCircle(s / 2f, s / 2f, s / 2f, p);
-        p.setColor(Color.WHITE);
-        p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(s * 0.11f);
-        p.setStrokeCap(Paint.Cap.ROUND);
-        p.setStrokeJoin(Paint.Join.ROUND);
-        android.graphics.Path path = new android.graphics.Path();
-        path.moveTo(s * 0.28f, s * 0.52f);
-        path.lineTo(s * 0.44f, s * 0.67f);
-        path.lineTo(s * 0.73f, s * 0.35f);
-        c.drawPath(path, p);
-        return b;
-    }
-
     View popoverReturn;
 
-    void closeProfilePicker() {
+    void closePicker() {
         restoreUnderOverlay();
         if (pickerLayer == null) return;
-        FrameLayout l = pickerLayer;
+        FrameLayout layer = pickerLayer;
         pickerLayer = null;
-        l.animate().alpha(0f).setDuration(220).withEndAction(() -> root.removeView(l)).start();
+        layer.animate().alpha(0f).setDuration(220).withEndAction(() -> root.removeView(layer)).start();
         weatherOpen = false;
-        weatherCard.animate().alpha(weatherAlpha()).setDuration(220).start();
+        if (weatherCard != null) weatherCard.animate().alpha(weatherAlpha()).setDuration(220).start();
         if (popoverReturn != null && popoverReturn.isAttachedToWindow()) popoverReturn.requestFocus();
         else goTop();
         popoverReturn = null;
-    }
-
-    /** Menu on a profile: Rename, Change Colour, Delete. */
-    void profileMenu(View cell) {
-        if (cell == null || !(cell.getTag() instanceof String)) return;
-        String id = (String) cell.getTag();
-        Profiles.Profile p = null;
-        for (Profiles.Profile x : Profiles.list(this)) if (x.id.equals(id)) p = x;
-        if (p == null) return;
-        Profiles.Profile prof = p;
-        List<String> l = new ArrayList<>();
-        List<Runnable> act = new ArrayList<>();
-        l.add(I18n.s(this, "Rename", "Yeniden Adlandır"));
-        act.add(() -> askName(I18n.s(this, "Rename Profile", "Profili Yeniden Adlandır"), prof.name, name -> {
-            prof.name = name;
-            Profiles.update(this, prof);
-            refreshAvatar();
-            showProfilePicker(false);
-        }));
-        l.add(I18n.s(this, "Change Emoji", "Emojiyi Değiştir"));
-        act.add(() -> {
-            List<String> free = Profiles.freeEmojis(this, prof.id);
-            String[] items = new String[free.size()];
-            int cur = -1;
-            for (int i = 0; i < free.size(); i++) {
-                items[i] = free.get(i) + "   " + Profiles.emojiName(free.get(i));
-                if (free.get(i).equals(prof.emoji)) cur = i;
-            }
-            new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle(I18n.s(this, "Emoji", "Эмодзи"))
-                    .setSingleChoiceItems(items, cur, (d, w) -> {
-                        prof.emoji = free.get(w);
-                        Profiles.update(this, prof);
-                        refreshAvatar();
-                        d.dismiss();
-                        showProfilePicker(false);
-                    }).show();
-        });
-        l.add(I18n.s(this, "Change Colour", "Rengi Değiştir"));
-        act.add(() -> new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(I18n.s(this, "Colour", "Renk"))
-                .setSingleChoiceItems(Profiles.COLOR_NAMES, prof.color, (d, w) -> {
-                    prof.color = w;
-                    Profiles.update(this, prof);
-                    refreshAvatar();
-                    d.dismiss();
-                    showProfilePicker(false);
-                }).show());
-        int del = -1;
-        if (Profiles.list(this).size() > 1) {
-            del = l.size();
-            l.add(I18n.s(this, "Delete", "Sil"));
-            act.add(() -> new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle(I18n.s(this, "Delete profile", "Удалить профиль") + " «" + prof.name + "»?")
-                    .setMessage(I18n.s(this, "Its layout and Continue Watching list will be removed.", "Düzeni ve İzlemeye Devam Et listesi kaldırılacak."))
-                    .setPositiveButton(I18n.s(this, "Delete", "Sil"), (d, w) -> {
-                        boolean wasCurrent = Profiles.current(this).id.equals(prof.id);
-                        Profiles.delete(this, prof.id);
-                        if (wasCurrent) switchProfile(Profiles.current(this).id);
-                        else refreshAvatar();
-                        showProfilePicker(false);
-                    })
-                    .setNegativeButton(I18n.s(this, "Cancel", "İptal"), null).show());
-        }
-        showMenu(cell, I18n.profileName(this, prof.name), l, act, del);
-    }
-
-    interface NameResult {
-        void ok(String name);
-    }
-
-    void askName(String title, String current, NameResult r) {
-        android.widget.EditText in = new android.widget.EditText(this);
-        in.setSingleLine(true);
-        in.setText(current);
-        in.setSelection(in.getText().length());
-        FrameLayout box = new FrameLayout(this);
-        int pad = dp(14);
-        box.setPadding(pad, pad / 2, pad, 0);
-        box.addView(in);
-        AlertDialog dlg = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(title)
-                .setView(box)
-                .setPositiveButton(I18n.s(this, "Save", "Kaydet"), (d, w) -> {
-                    String n = in.getText().toString().trim();
-                    if (!n.isEmpty()) r.ok(n.length() > 20 ? n.substring(0, 20) : n);
-                })
-                .setNegativeButton(I18n.s(this, "Cancel", "İptal"), null)
-                .show();
-        Ui.setupDialogEditText(in, dlg);
-        in.requestFocus();
-    }
-
-    void refreshAvatar() {
-        boolean multi = Profiles.list(this).size() > 1;
-        if (avatarView != null) {
-            avatarView.setImageBitmap(Profiles.avatar(this, Profiles.current(this), avatarSize));
-            avatarView.setVisibility(View.GONE);
-        }
-    }
-
-    /** Legacy profile-switch callback; single-user builds keep the active profile unchanged. */
-    void switchProfile(String id) {
-        if (id.equals(Profiles.current(this).id) && prefs != null) {
-            refreshAvatar();
-            return;
-        }
-        Profiles.setCurrent(this, id);
-        prefs = SingleUserPrefs.homePrefs(this);
-        refreshAvatar();
-        wallStyle = prefs.getString("wallpaper", "aurora");
-        setWallpaper(wallStyle);
-        folderMode = false;
-        moveIndex = -1;
-        String mode = prefs.getString("shelf_mode", "suggest");
-        shelfMode = mode;
-        styleTabs();
-        heroItems = new ArrayList<>();
-        heroIndex = 0;
-        heroVersion = -1;
-        heroFront.setImageDrawable(null);
-        heroBack.setImageDrawable(null);
-        setHeroShown(false);
-        loadApps();
-        buildGrid();
-        shelfEntry = null;
-        if (Scenes.isScenesLook(this) && sceneHome != null) {
-            sceneHome.rebuildDock();
-            sceneHome.focusDock(0);
-        } else {
-            focusIndex(0);
-            loadHero();
-        }
     }
 
     // ---------------------------------------------------------------- tvOS context menu
