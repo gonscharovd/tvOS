@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression guards for the grouped Settings navigation and preserved settings."""
+"""Regression guards for the simplified Russian-only Settings navigation."""
 from pathlib import Path
 import re
 
@@ -8,73 +8,68 @@ settings = (ROOT / "SettingsActivity.java").read_text(encoding="utf-8")
 
 sidebar = settings.split("private static final String[][] SIDEBAR_SECTIONS = {", 1)[1].split("};", 1)[0]
 expected = [
-    '{HOME, "house"}',
-    '{LOOK_SCENES, "scene"}',
-    '{WEATHER, "cloud"}',
-    '{CONTROL_PANEL, "controls"}',
-    '{APPS, "apps"}',
-    '{UPDATES, "update"}',
-    '{ABOUT, "info"}',
-    '{ADVANCED, "shield"}',
+    '{LOOK_SCENES, "scene", "ВНЕШНИЙ ВИД"}',
+    '{WEATHER, "cloud", ""}',
+    '{HOME, "house", "ОСНОВНЫЕ НАСТРОЙКИ"}',
+    '{ABOUT, "info", "ИНФОРМАЦИЯ"}',
+    '{ADVANCED, "shield", "РАСШИРЕННЫЕ НАСТРОЙКИ"}',
 ]
 positions = [sidebar.find(item) for item in expected]
-assert all(pos >= 0 for pos in positions), "A requested settings category is missing"
-assert positions == sorted(positions), "Settings categories are not in the requested order"
-assert "{BUTTON_MAPPER," not in sidebar
+assert all(pos >= 0 for pos in positions), "A settings section is missing"
+assert positions == sorted(positions), "Settings sections are not in the requested order"
+assert "CONTROL_PANEL" not in sidebar and "UPDATES" not in sidebar and "PROFILES" not in sidebar
 assert "private String currentSection = HOME;" in settings
 
-assert "case HOME:" in settings and "pageMainScreen();" in settings
-assert "case CONTROL_PANEL:" in settings and "pageControlPanel();" in settings
+# TV-remote navigation must stay within the two-pane Settings layout.
+navigation = settings.split("public boolean dispatchKeyEvent", 1)[1].split(
+    "private View findAdjacentFocusable", 1
+)[0]
+for key in ("KEYCODE_DPAD_UP", "KEYCODE_DPAD_DOWN", "KEYCODE_DPAD_LEFT",
+            "KEYCODE_DPAD_RIGHT", "KEYCODE_BACK", "requestFocus()",
+            "findAdjacentFocusable", "focusFirstRow()", "closeSubMenu()"):
+    assert key in navigation, f"D-pad navigation is missing {key}"
+
 assert "void pageMainScreen()" in settings
-assert "void pageControlPanel()" in settings
-assert "void pageLookAndScenes()" in settings and "pageLanguage();" in settings
-assert "void pageWeather()" in settings
-assert "void pageApps()" in settings
+assert "Звуки навигации" in settings
+assert "Повторить первоначальную настройку" in settings
+assert "Сбросить настройки testOS" in settings
+assert "void pageLookAndScenes()" in settings and "pageLanguage();" not in settings
+assert "Размер панели приложений" in settings
+assert "void pageWeather()" in settings and "Кнопка погоды на главном экране" in settings
+assert "void pageApps()" in settings and "Скрытые приложения" in settings
 assert "void pageUpdates()" in settings
-assert "void pageAbout()" in settings
+assert "void pageAbout()" in settings and "gonscharovd" in settings
+assert "Сохранить настройки в память ТВ" in settings
+assert "void pageAdvanced()" in settings
+assert "Выбор лаунчера по умолчанию" in settings
+assert "CleanYourTv.getSelectedModelSummary" in settings and "Очистить телевизор" in settings
+assert "pageButtonMapper();" in settings
+assert "Автовосстановление службы пульта" in settings
+assert "AdGuard DNS" in settings
+assert "Состояние подключения" in settings and "Просмотреть выданные разрешения" in settings
 
-main_page = settings.split("void pageMainScreen()", 1)[1].split("void pageControlPanel()", 1)[0]
-assert "Default home screen" in main_page
-assert "pageProfiles();" in main_page
-assert "Home screen weather shortcut" in main_page
-assert "Classic Top Shelf suggestions" in main_page
-
-apps_page = settings.split("void pageApps()", 1)[1].split("static final class HiddenAppItem", 1)[0]
-assert "Home screen weather shortcut" not in apps_page
-assert "Classic Top Shelf suggestions" not in apps_page
-
-control_page = settings.split("void pageControlPanel()", 1)[1].split("void pageAdvanced()", 1)[0]
-for action in ("ACTION_WIFI", "ACTION_BLUETOOTH", "ACTION_SOUND", "ACTION_INPUTS", "ACTION_AMBIENT"):
-    assert f"ControlPanelOverlay.{action}" in control_page
-assert "ControlPanelOverlay.getActionSummary(this, actionKey)" in control_page
-assert 'openSubMenu("cp_app:" + actionKey)' in control_page
-assert "clearAllCustomActions(this)" in control_page
+for removed in ("void pageLanguage()", "void pageProfiles()", "void pageControlPanel()",
+                "Classic Top Shelf suggestions", "confirmWatchSignOut(WatchCloud"):
+    assert removed not in settings, f"Removed settings feature still present: {removed}"
 
 advanced = settings.split("void pageAdvanced()", 1)[1].split("private volatile String advLaunchersSummary", 1)[0]
-for feature in ("CleanYourTv.getSelectedModelSummary", "pageButtonMapper();",
-                "Backup settings to Download", "Restore settings from folder",
-                "DIAGNOSTICS & RECOVERY", "ADB connection status", "Check permissions"):
-    assert feature in advanced, f"Advanced settings missing: {feature}"
-
-about = settings.split("void pageAbout()", 1)[1].split("private void confirmWatchSignOut", 1)[0]
-assert "BACKUP & RESTORE" not in about
-assert "Reset settings to defaults" in about
+assert "Backup settings to Download" not in advanced
+assert "Restore settings from folder" not in advanced
+about = settings.split("void pageAbout()", 1)[1].split("private void resetAllAppDataAndReturnToSetup", 1)[0]
+assert "pageUpdates();" in about
+assert "Сохранить настройки в память ТВ" in about
+assert "Восстановить настройки" in about
 
 routes = settings.split("private String resolvePageExtra", 1)[1].split("@Override", 1)[0]
-for route in ('return CONTROL_PANEL;', 'return HOME;', 'return LOOK_SCENES;', 'return ADVANCED;'):
+for route in ("return HOME;", "return LOOK_SCENES;", "return WEATHER;", "return ADVANCED;", "return ABOUT;"):
     assert route in routes
-
-
-# Every new user-facing label and explanatory sentence introduced by the grouped
-# navigation must have a direct Russian dictionary entry. I18n.s() intentionally
-# ignores the legacy second (Turkish) argument, so missing keys otherwise fall
-# back to English even though SettingsActivity.tr() appears to supply a fallback.
-i18n = (ROOT / "I18n.java").read_text(encoding="utf-8")
 
 def java_unescape(value):
     value = re.sub(r'\\u([0-9a-fA-F]{4})', lambda m: chr(int(m.group(1), 16)), value)
-    return value.replace(r'\n', "\n").replace(r'\t', "\t").replace(r'\"', '"').replace(r'\\', "\\")
+    escapes = {"n": "\n", "r": "\r", "t": "\t", '"': '"', "'": "'", "\\": "\\"}
+    return re.sub(r'\\([nrt"\'\\])', lambda m: escapes[m.group(1)], value)
 
+i18n = (ROOT / "I18n.java").read_text(encoding="utf-8")
 dictionary = {
     java_unescape(m.group(1))
     for m in re.finditer(r'add\("((?:\\.|[^"\\])*)",', i18n)
@@ -83,17 +78,40 @@ literal_settings_strings = {
     java_unescape(m.group(1))
     for m in re.finditer(r'tr\(\s*"((?:\\.|[^"\\])*)"\s*,', settings)
 }
-missing_russian = sorted(literal_settings_strings - dictionary)
-assert not missing_russian, "Settings strings missing Russian translations: " + repr(missing_russian)
+missing = sorted(literal_settings_strings - dictionary)
+assert not missing, "Settings strings missing Russian translations: " + repr(missing)
 
-print("Settings navigation grouping, legacy routes, feature placement and complete literal Russian coverage passed.")
+
+# Single-user and Russian-only build: obsolete pages and cloud catalogue code are absent.
+profiles = (ROOT / "Profiles.java").read_text(encoding="utf-8")
+setup = (ROOT / "SetupActivity.java").read_text(encoding="utf-8")
+suggestions = (ROOT / "Suggestions.java").read_text(encoding="utf-8")
+search = (ROOT / "Search.java").read_text(encoding="utf-8")
+search_panel = (ROOT / "SearchPanel.java").read_text(encoding="utf-8")
+assert "static final int MAX = 1;" in profiles
+assert "static boolean canAdd(Context c) { return false; }" in profiles
+assert "static boolean askOnWake(Context c) { return false; }" in profiles
+assert "steps.add(this::profile)" not in setup
+assert "void profile()" not in setup and "void homeContent()" not in setup
+assert 'by.setText("by gonscharovd")' in setup
+for removed_file in ("News.java", "NuvioCloud.java", "StremioCloud.java", "WatchCloud.java", "WatchPopup.java"):
+    assert not (ROOT / removed_file).exists(), f"Obsolete source remains: {removed_file}"
+for removed in ("Cinemeta", "stremio", "nuvio", "SHELF_RECS", "SHELF_NEWS", "fetch("):
+    assert removed.lower() not in suggestions.lower(), f"Removed feed engine remains: {removed}"
+for removed in ("Cinemeta", "stremio", "nuvio"):
+    assert removed.lower() not in search.lower(), f"Removed streaming integration remains in Search: {removed}"
+assert "TURKISH" not in search_panel and "HINDI" not in search_panel
+assert "RUSSIAN" in search_panel and "РУС" in search_panel and "ENG" in search_panel
+assert not (Path("res/values-tr") / "strings.xml").exists()
+
+print("Simplified settings navigation, Russian-only keyboard, single-user mode and removed media integrations passed.")
 
 
 # Night Scenes is the only home mode. Former Classic wallpapers are now
 # first-class selectable entries in the rotating scene gallery.
 scenes = (ROOT / "Scenes.java").read_text(encoding="utf-8")
 assert 'return LOOK_SCENES;' in scenes
-assert 'public static boolean isScenesLook(Context c) {\n        return true;' in scenes
+assert 'public static boolean isScenesLook(Context c) {\\n        return true;' in scenes
 assert 'LOOK_CLASSIC' not in scenes
 for scene_id in (
     'photo:tessellated-pavement.jpg', 'photo:grose-valley.jpg',
@@ -105,7 +123,7 @@ for scene_id in (
 assert 'migrateClassicBackgroundsToNightGallery' in scenes
 look_page = settings.split("void pageLookAndScenes()", 1)[1].split("void pageApps()", 1)[0]
 assert 'choiceRow(' not in look_page
-assert 'CLASSIC BACKGROUND' not in look_page
+assert 'КЛАССИЧЕСКИЙ ФОН' not in look_page
 assert 'sceneCheckRow(spec, sceneIdx, order);' in look_page
 assert 'scene-gradient:' in settings
 

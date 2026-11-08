@@ -2,96 +2,71 @@
 
 ## Requirements
 
-- An Android TV box on Android 7.0+ (tested on a Xiaomi Mi Box, `MIBOX4`, Android 12).
-- Developer options and **network debugging** turned on (Settings → Device Preferences → About →
-  click *Build* seven times).
-- A computer with `adb` (Android SDK platform-tools) on the same network.
+- Android TV / Google TV, Android 7.0+ (min API 24); target API 34.
+- Developer options and network debugging enabled.
+- A computer with Android SDK platform-tools for initial ADB setup, or the TV's supported local ADB workflow.
 
 ## Build
 
+Install JDK 17, Android SDK platform 34 and build-tools 34.0.0.
+
+Linux/macOS:
+
 ```sh
-./build.sh                        # uses JDK 17 and Android build-tools 34
-VERSION_CODE=62 VERSION_NAME=6.9 ./build.sh
+./build.sh
+VERSION_CODE=87 VERSION_NAME=2.1.72 ./build.sh
 ```
 
-On Windows, pass the same version variables before running PowerShell:
+Windows PowerShell:
 
 ```powershell
-$env:VERSION_CODE = "62"
-$env:VERSION_NAME = "6.9"
+$env:VERSION_CODE = "85"
+$env:VERSION_NAME = "2.1.72"
 .\build.ps1
 ```
 
-Both scripts produce `build/tvos-home.apk` (PowerShell: `build\tvos-home.apk`). They compile resources
-(`aapt2`), Java (`javac`), dexes (`d8`), align and sign.
+Both scripts produce `build/tvos-home.apk`.
 
-Development builds reuse an existing project `debug.keystore`; otherwise they use the standard
-user key at `~/.android/debug.keystore` (Windows: `%USERPROFILE%\.android\debug.keystore`). Set
-`DEBUG_KEYSTORE` and `DEBUG_KEY_ALIAS` to override it. Official builds use
-`RELEASE_KEYSTORE`, `RELEASE_KEYSTORE_PASS`, and optionally `RELEASE_KEY_ALIAS`.
+## Signing and updates
 
-Android only permits an in-place update when the APK certificate matches the installed app. Do not
-uninstall the current launcher just to work around a signature mismatch; first verify which key
-signed the installed APK and build with that same key. CI artifacts use a temporary debug key and
-are intended for build verification, not as OTA releases.
+Android allows an in-place update only when the APK certificate matches the installed app. Development builds use the selected debug keystore; preview and official release builds use the persistent release key configured in GitHub Actions. CI verifies the certificate fingerprint and package/version metadata.
 
-## Install and make it the home screen
+The PR workflow uploads a signed preview artifact but does not publish a release. Official OTA releases are built from `release/2.1.PATCH` branches; versionCode is `15 + PATCH`. The current preview is testOS 2.1.72 / versionCode 87.
+
+Do not uninstall the current launcher to work around a signature mismatch. Do not install an artifact whose certificate has not been verified against the release certificate.
+
+## Install and select HOME
+
+Connect to the TV and install:
 
 ```sh
-TV=192.168.1.13:5555
-adb connect $TV
-adb -s $TV install -r build/tvos-home.apk
-
-# Android TV keeps its own launcher in front unless it is disabled:
-adb -s $TV shell pm disable-user --user 0 com.google.android.tvlauncher
-adb -s $TV shell pm set-home-activity com.techgenius.tvoslauncher/.MainActivity
+adb connect TV_IP:5555
+adb install -r build/tvos-home.apk
+adb shell pm set-home-activity com.gonscharovd.tvoslauncher/.MainActivity
 ```
 
-Press Home on the remote — tvOS Launcher opens.
+If Android asks which Home app to use, select testOS. Keep the stock Sber launcher installed and enabled as a fallback; do not disable system launcher packages as part of normal setup.
 
-## One-time permissions
+## Permissions
 
-tvOS Launcher asks for these **on screen** (setup's last page and Settings → Permissions): Android's prompts,
-the system's own settings screens, or tvOS Launcher's accessibility switch. The commands below are only a
-last resort for TVs that have no such screen.
+Grant only the permissions required by the features you use:
 
-| Feature | Command |
+| Feature | Permission / route |
 |---|---|
-| Continue Watching + Do Not Disturb | `adb shell cmd notification allow_listener com.techgenius.tvoslauncher/com.techgenius.tvoslauncher.MediaWatchService` |
-| Power Off + Sleep Timer | `adb shell dpm set-active-admin com.techgenius.tvoslauncher/.SleepReceiver\$Admin` |
-| Wi-Fi name in Control Center | `adb shell pm grant com.techgenius.tvoslauncher android.permission.ACCESS_FINE_LOCATION` |
-| Search dictation (microphone) | `adb shell pm grant com.techgenius.tvoslauncher android.permission.RECORD_AUDIO` — not normally needed: without it, Search uses the TV's own voice prompt |
+| Remote Button Mapper | Enable testOS in Android Accessibility settings; follow the setup instructions for secure settings if requested |
+| Keep Alive / local ADB repair | `WRITE_SECURE_SETTINGS` through the supported setup flow |
+| DND toggle | Android Do Not Disturb policy access; if the TV has no settings page, an authorized ADB shell can run `adb shell cmd notification allow_dnd com.gonscharovd.tvoslauncher` |
+| Weather location / Wi-Fi name | Location permission when needed; manual city selection is available |
+| Voice search | Microphone permission or the TV's own voice prompt |
+| Custom wallpapers/icons and backup | Storage access requested by Android when required |
+| CleanYourTV | Local ADB connection; no root required |
 
-## Optional: recommendation source
+No notification-listener access is required. The old media-session tracking service has been removed.
 
-Recommendations use JustWatch by default (no setup). **Settings → Top Shelf → Source** also offers
-**Stremio** (Cinemeta's popular movies and series, no setup; titles open in the Stremio app, or in
-Nuvio when only Nuvio is installed) and **TMDB**. For TMDB, enter a free API key from themoviedb.org (Settings → API). The short v3 *API Key* is
-easiest to type with a remote. It can also be set from a computer:
+## Backup and restore
 
-```sh
-adb shell am start -n com.techgenius.tvoslauncher/.SettingsActivity --es tmdb_token <token>
-```
+Open Settings → Information. Save the settings backup to `Download/tvos-launcher-settings.json`; restore from that file or another JSON backup. The backup contains allowlisted preferences only, not the APK, installed apps or custom media files. CleanYourTV's disabled-package backup is separate.
 
-## Optional: AirPlay receiver
+## Rollback
 
-To AirPlay from a Mac, iPhone or iPad to the TV, install the open-source
-[AirPlay Server](https://github.com/jqssun/android-airplay-server) app (GPL-3.0; a separate app, not
-part of tvOS Launcher). Download `app-release.apk` from its
-[latest release](https://github.com/jqssun/android-airplay-server/releases/latest) and install it:
-
-```sh
-adb install -r app-release.apk
-```
-
-Open it once from tvOS Launcher, set a name (e.g. "Mi Box") in its Settings and keep *Start on boot* on. The
-TV then appears in AirPlay on Apple devices on the same Wi-Fi. tvOS Launcher's AirPlay guard keeps it visible
-after the TV sleeps ([features](features.md#airplay-with-the-airplay-server-app)). Tested with
-version 0.0.36 on a Mi Box (Android 12) and an Android 9 TV.
-
-## Undo
-
-```sh
-adb shell pm enable com.google.android.tvlauncher     # bring back the stock launcher
-adb uninstall com.techgenius.tvoslauncher
-```
+To return to the stock launcher, use Android's Home app selection in system settings and choose the stock Sber launcher. Keep it enabled. Once stock HOME is active, testOS can be uninstalled from Android's app settings if desired.
