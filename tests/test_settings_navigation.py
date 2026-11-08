@@ -146,3 +146,7 @@ setup = (ROOT / "SetupActivity.java").read_text(encoding="utf-8")
 assert "LOOK_CLASSIC" not in setup
 assert 'option(l, tr("Classic"' not in setup
 assert "Classic Backgrounds" not in setup
+assert "lookSubStep" not in setup
+assert 'section(tr("PHOTOS & GRADIENTS", "ФОТО И ГРАДИЕНТЫ"));' in settings
+assert "MainActivity.FOLDER_KEY" not in search_panel
+assert "buildAppBannerFromCustomIcon" in main and "buildClassicBannerFromCustomIcon" not in main
