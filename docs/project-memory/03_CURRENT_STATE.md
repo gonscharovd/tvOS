@@ -15,7 +15,7 @@
 | PR #14 diff | 20 файлов, 775 additions, 4,604 deletions |
 | Документационная ветка | `docs/project-memory-2026-11` |
 | PR #15 | Open / Draft, base — ветка PR #14; проверяй актуальный head непосредственно в GitHub |
-| PR #15 diff | 18 файлов: 11 новых project-memory документов и 7 обновлённых Markdown-файлов; 879 additions, 148 deletions |
+| PR #15 diff | 18 Markdown-файлов: 11 новых project-memory документов и 7 обновлённых docs-файлов |
 | Последний стабильный релиз | [v2.1.73](https://github.com/gonscharovd/tvOS/releases/tag/v2.1.73) |
 | Package ID релиза | `com.gonscharovd.tvoslauncher` |
 | versionCode релиза | 88 |
