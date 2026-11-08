@@ -88,7 +88,7 @@ final class Search {
     static List<String> recent(Context c) {
         List<String> out = new ArrayList<>();
         try {
-            JSONArray a = new JSONArray(Profiles.homePrefs(c).getString(K_RECENT, "[]"));
+            JSONArray a = new JSONArray(SingleUserPrefs.homePrefs(c).getString(K_RECENT, "[]"));
             for (int i = 0; i < a.length(); i++) out.add(a.getString(i));
         } catch (Exception ignored) {
         }
@@ -103,11 +103,11 @@ final class Search {
         r.add(0, q);
         JSONArray a = new JSONArray();
         for (int i = 0; i < Math.min(MAX_RECENT, r.size()); i++) a.put(r.get(i));
-        Profiles.homePrefs(c).edit().putString(K_RECENT, a.toString()).apply();
+        SingleUserPrefs.homePrefs(c).edit().putString(K_RECENT, a.toString()).apply();
     }
 
     static void clearRecent(Context c) {
-        Profiles.homePrefs(c).edit().remove(K_RECENT).apply();
+        SingleUserPrefs.homePrefs(c).edit().remove(K_RECENT).apply();
     }
 
     // ------------------------------------------------------------------ text matching

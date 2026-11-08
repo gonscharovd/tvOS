@@ -954,7 +954,7 @@ public class SettingsActivity extends Activity {
         }
         section("ПРИЛОЖЕНИЯ");
         row("Скрытые приложения", () -> {
-            Set<String> hidden = Profiles.homePrefs(this).getStringSet(MainActivity.PREF_HIDDEN, Collections.emptySet());
+            Set<String> hidden = SingleUserPrefs.homePrefs(this).getStringSet(MainActivity.PREF_HIDDEN, Collections.emptySet());
             int count = hidden != null ? hidden.size() : 0;
             return (count > 0 ? count + "  " : "") + "›";
         }, () -> {
@@ -966,7 +966,7 @@ public class SettingsActivity extends Activity {
                 dialog("Сбросить порядок приложений?")
                         .setMessage("Порядок приложений будет восстановлен, а скрытые приложения снова появятся на главном экране.")
                         .setPositiveButton("Сбросить", (d, w) -> {
-                            Profiles.homePrefs(this).edit().remove(MainActivity.PREF_ORDER)
+                            SingleUserPrefs.homePrefs(this).edit().remove(MainActivity.PREF_ORDER)
                                     .remove(MainActivity.PREF_OTHER).remove(MainActivity.PREF_HIDDEN).apply();
                             showStatusMsg("Порядок приложений сброшен.");
                             rebuildMainRows();
@@ -988,7 +988,7 @@ public class SettingsActivity extends Activity {
     private List<HiddenAppItem> listHiddenAppItems() {
         List<HiddenAppItem> out = new ArrayList<>();
         try {
-            Set<String> hidden = Profiles.homePrefs(this).getStringSet(MainActivity.PREF_HIDDEN, Collections.emptySet());
+            Set<String> hidden = SingleUserPrefs.homePrefs(this).getStringSet(MainActivity.PREF_HIDDEN, Collections.emptySet());
             if (hidden == null || hidden.isEmpty()) return out;
             PackageManager pm = getPackageManager();
             Set<String> seenPkgs = new HashSet<>();
@@ -1134,8 +1134,8 @@ public class SettingsActivity extends Activity {
         });
 
         r.setOnLongClickListener(view -> {
-            Set<String> hidden = new HashSet<>(Profiles.homePrefs(this).getStringSet(MainActivity.PREF_HIDDEN, Collections.emptySet()));
-            Set<String> other = new HashSet<>(Profiles.homePrefs(this).getStringSet(MainActivity.PREF_OTHER, Collections.emptySet()));
+            Set<String> hidden = new HashSet<>(SingleUserPrefs.homePrefs(this).getStringSet(MainActivity.PREF_HIDDEN, Collections.emptySet()));
+            Set<String> other = new HashSet<>(SingleUserPrefs.homePrefs(this).getStringSet(MainActivity.PREF_OTHER, Collections.emptySet()));
             if (item.key != null) {
                 hidden.remove(item.key);
                 other.remove(item.key);
@@ -1144,7 +1144,7 @@ public class SettingsActivity extends Activity {
                 hidden.remove(item.pkg);
                 other.remove(item.pkg);
             }
-            Profiles.homePrefs(this).edit()
+            SingleUserPrefs.homePrefs(this).edit()
                     .putStringSet(MainActivity.PREF_HIDDEN, hidden)
                     .putStringSet(MainActivity.PREF_OTHER, other)
                     .apply();
@@ -1979,12 +1979,12 @@ public class SettingsActivity extends Activity {
         mainHeadView.setText(tr("Ambient colour themes", "Ortam renk temaları"));
         backSubMenuRow();
         section(tr("AMBIENT THEMES", "ORTAM TEMALARI"));
-        String cur = Profiles.homePrefs(this).getString("wallpaper", "photo:tessellated-pavement.jpg");
+        String cur = SingleUserPrefs.homePrefs(this).getString("wallpaper", "photo:tessellated-pavement.jpg");
         for (int i = 0; i < MainActivity.WALL_KEYS.length; i++) {
             final String key = MainActivity.WALL_KEYS[i];
             final String name = MainActivity.wallName(this, i);
             choiceRow(name, null, key.equals(cur), () -> {
-                Profiles.homePrefs(this).edit().putString("wallpaper", key).apply();
+                SingleUserPrefs.homePrefs(this).edit().putString("wallpaper", key).apply();
                 rebuildMainRows();
             });
         }
@@ -3372,7 +3372,7 @@ public class SettingsActivity extends Activity {
                 bmp -> {
                     if (CustomMedia.setCustomClassicWallpaper(this, bmp)) {
                         SCENE_THUMB_CACHE.remove("custom_classic");
-                        Profiles.homePrefs(this).edit().putString("wallpaper", MainActivity.CUSTOM_WALL_KEY).apply();
+                        SingleUserPrefs.homePrefs(this).edit().putString("wallpaper", MainActivity.CUSTOM_WALL_KEY).apply();
                         rebuildMainRows();
                         showStatusMsg(tr("Custom background updated.", "Özel arka plan güncellendi."));
                     } else {
@@ -3467,7 +3467,7 @@ public class SettingsActivity extends Activity {
                 dialog(tr("Custom", "Özel"))
                         .setItems(opts, (d, which) -> {
                             if (which == 0) {
-                                Profiles.homePrefs(this).edit().putString("wallpaper", MainActivity.CUSTOM_WALL_KEY).apply();
+                                SingleUserPrefs.homePrefs(this).edit().putString("wallpaper", MainActivity.CUSTOM_WALL_KEY).apply();
                                 rebuildMainRows();
                             } else {
                                 pickCustomClassicWallpaper();
@@ -3650,7 +3650,7 @@ public class SettingsActivity extends Activity {
                 tr("Choose background folder to shuffle", "Karıştırılacak arka plan klasörünü seçin"),
                 dir -> {
                     SCENE_THUMB_CACHE.remove("folder_classic");
-                    Profiles.homePrefs(this).edit().putString("wallpaper", MainActivity.FOLDER_SHUFFLE_WALL_KEY).apply();
+                    SingleUserPrefs.homePrefs(this).edit().putString("wallpaper", MainActivity.FOLDER_SHUFFLE_WALL_KEY).apply();
                     rebuildMainRows();
                     showStatusMsg(tr("Folder shuffle enabled: " + dir.getName(),
                             "Klasör karıştırma etkinleştirildi: " + dir.getName()));
@@ -3749,7 +3749,7 @@ public class SettingsActivity extends Activity {
                 dialog(tr("Folder shuffle", "Klasör karıştırma"))
                         .setItems(opts, (d, which) -> {
                             if (which == 0) {
-                                Profiles.homePrefs(this).edit().putString("wallpaper", MainActivity.FOLDER_SHUFFLE_WALL_KEY).apply();
+                                SingleUserPrefs.homePrefs(this).edit().putString("wallpaper", MainActivity.FOLDER_SHUFFLE_WALL_KEY).apply();
                                 rebuildMainRows();
                             } else {
                                 pickFolderForClassicShuffle();

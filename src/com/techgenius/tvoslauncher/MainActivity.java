@@ -244,7 +244,7 @@ public class MainActivity extends Activity {
             getSharedPreferences(name, MODE_PRIVATE).edit().clear().apply();
         }
         try {
-            Profiles.homePrefs(this).edit()
+            SingleUserPrefs.homePrefs(this).edit()
                     .remove("shelf_mode").remove("cw_enabled").remove("shelf")
                     .remove("top_shelf_tab").apply();
         } catch (Throwable ignored) { }
@@ -270,7 +270,7 @@ public class MainActivity extends Activity {
         // The wallpaper/artwork always covers the screen: skip the window's own full-screen fill
         // (this Mali-450 GPU is fill-rate bound, so every hidden full-screen layer costs frames).
         getWindow().setBackgroundDrawable(null);
-        prefs = Profiles.homePrefs(this);
+        prefs = SingleUserPrefs.homePrefs(this);
         String initLang = getIntent() != null ? getIntent().getStringExtra("lang") : null;
         if (initLang != null && !initLang.isEmpty()) {
             I18n.setLang(this, initLang);
@@ -430,7 +430,7 @@ public class MainActivity extends Activity {
         clearLaunchDim();
         boolean wasReturningFromSettings = returningFromSettings;
         if (!Scenes.isScenesLook(this)) {
-            String ws = Profiles.homePrefs(this).getString("wallpaper", "photo:tessellated-pavement.jpg");
+            String ws = SingleUserPrefs.homePrefs(this).getString("wallpaper", "photo:tessellated-pavement.jpg");
             if (!ws.equals(wallStyle) || wallView.getDrawable() == null
                     || (wasReturningFromSettings && ("custom".equals(ws) || FOLDER_SHUFFLE_WALL_KEY.equals(ws)))) {
                 wallStyle = ws;
@@ -569,7 +569,7 @@ public class MainActivity extends Activity {
         // soft; a slow drift keeps it alive without a per-frame blur on this weak GPU.
         wallView = new ImageView(this);
         wallView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        wallStyle = Profiles.homePrefs(this).getString("wallpaper", "photo:tessellated-pavement.jpg");
+        wallStyle = SingleUserPrefs.homePrefs(this).getString("wallpaper", "photo:tessellated-pavement.jpg");
         if (!Scenes.isScenesLook(this)) {
             setWallpaper(wallStyle);
         }
@@ -1867,7 +1867,7 @@ public class MainActivity extends Activity {
 
     /** tvOS-style top tab bar: a glass capsule, top centre, with two text tabs. */
     void buildSwitcher() {
-        shelfMode = Profiles.homePrefs(this).getString("shelf_mode", "suggest");
+        shelfMode = SingleUserPrefs.homePrefs(this).getString("shelf_mode", "suggest");
         switcher = new LinearLayout(this);
         switcher.setOrientation(LinearLayout.HORIZONTAL);
         switcher.setGravity(Gravity.CENTER_VERTICAL);
@@ -1922,7 +1922,7 @@ public class MainActivity extends Activity {
     void setShelfMode(String mode) {
         if (mode.equals(shelfMode)) return;
         shelfMode = mode;
-        Profiles.homePrefs(this).edit().putString("shelf_mode", mode).apply();
+        SingleUserPrefs.homePrefs(this).edit().putString("shelf_mode", mode).apply();
         styleTabs();
         heroItems = new ArrayList<>();
         heroIndex = 0;
@@ -4306,7 +4306,7 @@ public class MainActivity extends Activity {
 
     /** Seconds without input before the dock slides away (Settings -> Home); 0 = never. */
     int idleSeconds() {
-        int sec = Profiles.homePrefs(this).getInt("idle_sec", 20);
+        int sec = SingleUserPrefs.homePrefs(this).getInt("idle_sec", 20);
         // testOS carousel chosen as the screensaver: it always takes over when idle.
         if (sec == 0 && !getSharedPreferences("screensaver", MODE_PRIVATE).getBoolean("allow", true)) sec = 20;
         return sec;
@@ -5038,7 +5038,7 @@ public class MainActivity extends Activity {
             return;
         }
         Profiles.setCurrent(this, id);
-        prefs = Profiles.homePrefs(this);
+        prefs = SingleUserPrefs.homePrefs(this);
         refreshAvatar();
         wallStyle = prefs.getString("wallpaper", "aurora");
         setWallpaper(wallStyle);
