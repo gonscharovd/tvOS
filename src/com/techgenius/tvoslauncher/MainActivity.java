@@ -153,9 +153,7 @@ public class MainActivity extends Activity {
     final List<AppEntry> apps = new ArrayList<>();
     /** Apps moved to Other Apps, reachable from the More Apps control. */
     final List<AppEntry> otherApps = new ArrayList<>();
-    /** Other apps including any dock overflow when the dock is enlarged (> 100%). */
 
-    /** Apps the user hid; reachable through Launcher Settings > Apps > Hidden apps. */
 
 
     final Handler handler = new Handler(Looper.getMainLooper());
@@ -163,16 +161,15 @@ public class MainActivity extends Activity {
     FrameLayout root;
 
 
-    /** tvOS-style capsule button: glass when idle, solid white with dark text when focused. */
 
 
+    Bitmap glassBg;
     final LiquidGlass.Backdrop glassSource = () -> glassBg;
 
     boolean returningFromSettings;
     final java.util.concurrent.ExecutorService io = java.util.concurrent.Executors.newSingleThreadExecutor();
 
     float unit = 2f;
-    Bitmap glassBg;
     int screenW, screenH, dockOuter;
 
     boolean resumed;
@@ -484,6 +481,26 @@ public class MainActivity extends Activity {
      * tvOS-style card: soft vertical gradient with a top sheen and the app's glyph centred.
      * Settings gets the silver card with a drawn gear, like tvOS.
      */
+    /** Builds generic app artwork for the shared banner/card renderer. */
+    Bitmap backdropSharp(AppEntry e, int w, int h) {
+        Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(b);
+        c.drawColor(e.banner != null ? 0xFF1C1C1E : e.color);
+        Drawable d = e.banner != null ? e.banner : e.icon;
+        if (d != null) {
+            Rect old = d.copyBounds();
+            if (e.banner != null) {
+                d.setBounds(0, 0, w, h);
+            } else {
+                int s = h * 6 / 10;
+                d.setBounds((w - s) / 2, (h - s) / 2, (w + s) / 2, (h + s) / 2);
+            }
+            d.draw(c);
+            d.setBounds(old);
+        }
+        return b;
+    }
+
     Bitmap tvosCard(AppEntry e) {
         int w = 360, h = 216;
         Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
