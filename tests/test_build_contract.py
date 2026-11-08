@@ -14,7 +14,15 @@ assert "${VERSION_CODE:-" in build_sh and "${VERSION_NAME:-" in build_sh
 assert 'build\\tvos-home.apk' in build_ps
 assert "build/tvos-home.apk" in build_sh
 assert "build/testOS.apk" not in build_sh
+assert "tools/prepare_assets.py" in build_ps and "tools/prepare_assets.py" in build_sh
+assert "build\\assets" in build_ps and "-A build/assets" in build_sh
+assert "ASSET_OPTIMIZE" in build_ps and "ASSET_OPTIMIZE" in build_sh
+assert "ASSET_PROFILE" in build_ps and "ASSET_PROFILE" in build_sh
 assert "path: build/tvos-home.apk" in workflow
+assert "ASSET_OPTIMIZE: \"1\"" in workflow
+assert "ASSET_PROFILE: \"sber\"" in workflow
+assert "fonttools" in workflow and "test_sber_font_subsetting.py" in workflow
+assert "test_asset_optimizer.py" in workflow
 assert "tvos-home.apk" in updater
 
 for name, source in (("PowerShell", build_ps), ("Bash", build_sh)):

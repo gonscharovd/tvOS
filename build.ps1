@@ -17,6 +17,14 @@ $JAR = "$SDK\platforms\android-34\android.jar"
 
 if (Test-Path "build") { Get-ChildItem -Path "build" | Remove-Item -Recurse -Force }
 New-Item -ItemType Directory -Force -Path "build\gen", "build\classes", "build\dex" | Out-Null
+if ($env:ASSET_OPTIMIZE -eq "1") {
+    $python = Get-Command python -ErrorAction SilentlyContinue
+    if (-not $python) { throw "Python 3 is required when ASSET_OPTIMIZE=1" }
+    & $python.Source tools/prepare_assets.py --source assets --dest build/assets --optimize --profile $(if ($env:ASSET_PROFILE) { $env:ASSET_PROFILE } else { "full" }) --quality 88 --max-width 1920 --max-height 1080
+    if ($LASTEXITCODE -ne 0) { throw "Asset optimization failed" }
+} else {
+    Copy-Item -Path assets -Destination build -Recurse
+}
 
 & "$BT\aapt2.exe" compile --dir res -o build\res.zip
 if ($LASTEXITCODE -ne 0) { throw "aapt2 compile failed" }
@@ -47,7 +55,7 @@ try {
     [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, (Resolve-Path "build\dex\classes.dex").Path, "classes.dex", [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null
 
     # Package assets with POSIX forward slashes (Windows aapt2 -A writes backslashes which Android AssetManager cannot open)
-    $assetsRoot = (Resolve-Path "assets").Path
+    $assetsRoot = (Resolve-Path "build\assets").Path
     $noCompressExts = @(".jpg", ".jpeg", ".png", ".webp", ".gif", ".mp3", ".wav", ".ogg", ".mp4", ".webm")
     Get-ChildItem -Recurse -File -Path $assetsRoot | ForEach-Object {
         $rel = $_.FullName.Substring($assetsRoot.Length + 1).Replace('\', '/')

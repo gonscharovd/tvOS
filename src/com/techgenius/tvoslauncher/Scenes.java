@@ -742,7 +742,12 @@ public final class Scenes {
                 opts.inSampleSize *= 2;
             }
             opts.inJustDecodeBounds = false;
-            opts.inPreferredConfig = Bitmap.Config.ARGB_8888;
+            // JPEG assets are opaque scene/photo backgrounds and glass plates.
+            // RGB_565 halves decoded pixel storage; alpha-capable PNG/WebP assets
+            // retain ARGB_8888 so foreground cutouts and logos keep transparency.
+            String lowerAssetPath = assetPath.toLowerCase(Locale.ROOT);
+            opts.inPreferredConfig = (lowerAssetPath.endsWith(".jpg") || lowerAssetPath.endsWith(".jpeg"))
+                    ? Bitmap.Config.RGB_565 : Bitmap.Config.ARGB_8888;
             try (InputStream is = openAssetStream(c, assetPath)) {
                 return BitmapFactory.decodeStream(is, null, opts);
             }
