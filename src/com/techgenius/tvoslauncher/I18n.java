@@ -726,6 +726,7 @@ public final class I18n {
         add("Home settings", "Настройки главного экрана");
         add("Home Settings", "Настройки главного экрана");
         add("Language, weather, scenes, apps and people", "Язык, погода, сцены, приложения и профили");
+        add("Language, weather, scenes, apps and home-screen options", "Язык, погода, сцены, приложения и настройки главного экрана");
         add("TV settings", "Настройки ТВ");
         add("TV Settings", "Настройки ТВ");
         add("Wi-Fi, picture, sound and the rest of the TV", "Wi-Fi, изображение, звук и другие настройки ТВ");
