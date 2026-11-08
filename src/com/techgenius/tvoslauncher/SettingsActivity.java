@@ -3503,7 +3503,7 @@ public class SettingsActivity extends Activity {
             lockSceneCheckRow(spec.id, spec.title(this), spec.bgAsset);
         }
 
-        section(tr("PHOTOS & GRADIENTS", "FOTOĞRAFLAR VE GRADYANLAR"));
+        section(tr("PHOTOS & GRADIENTS", "ФОТО И ГРАДИЕНТЫ"));
         for (int i = 0; i < Scenes.CLASSIC_PHOTOS.length; i++) {
             String photoFile = Scenes.CLASSIC_PHOTOS[i][0];
             String id = "photo:" + photoFile;
