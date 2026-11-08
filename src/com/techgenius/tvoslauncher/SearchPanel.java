@@ -467,7 +467,7 @@ final class SearchPanel {
     List<View> localResults(String q) {
         List<Object[]> hits = new ArrayList<>();
         for (MainActivity.AppEntry e : a.all.values()) {
-            if (e.key.equals(MainActivity.FOLDER_KEY) || e.key.equals(MainActivity.INPUTS_KEY)) continue;
+            if (e.key.equals(MainActivity.INPUTS_KEY)) continue;
             int s = Search.score(e.label, null, q);
             if (s >= 0) hits.add(new Object[]{s, appCard(e)});
         }
