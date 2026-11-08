@@ -1119,7 +1119,7 @@ public class MainActivity extends Activity {
 
     /**
      * Row tops come from the fixed grid geometry rather than getTop(), so this also works right
-     * after buildGrid() (e.g. while moving a card), before the new rows have been laid out.
+     * after the dock is rebuilt, before the new items have been laid out.
      * Uses an explicit ObjectAnimator on scrollY instead of ScrollView.smoothScrollTo because
      * Android's ScrollView aborts smooth scroll and jumps immediately if called twice within 250ms.
      */
