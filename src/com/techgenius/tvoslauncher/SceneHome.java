@@ -125,8 +125,7 @@ final class SceneHome {
 
     /** DPAD Up on a dock tile: moves into that tile's popup row, if one is open. */
 
-    /** Uptime until which Continue Watching rows show/hide instantly (set on resume). */
-
+    
     void invalidateSceneGlass() {
         if (weatherBtn != null) weatherBtn.invalidate();
         if (moonBtn != null) moonBtn.invalidate();
@@ -141,7 +140,7 @@ final class SceneHome {
         return host.dp(u);
     }
 
-    // ---------------------------------------------------------------- Top Bar (Profile pill & Control Panel in top-right)
+    // ---------------------------------------------------------------- Top Bar (quick actions and Control Center)
 
     private void buildTopBar() {
         LinearLayout topRightRow = new LinearLayout(host);
