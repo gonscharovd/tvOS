@@ -157,17 +157,14 @@ public class MainActivity extends Activity {
 
     /** Apps the user hid; reachable through Launcher Settings > Apps > Hidden apps. */
 
-    /** What the grid currently shows: home apps (+ folder tile) or the folder's contents. */
 
     final Handler handler = new Handler(Looper.getMainLooper());
 
     FrameLayout root;
 
-    /** Top shelf carousel: two crossfading backdrops + info panel. */
 
     /** tvOS-style capsule button: glass when idle, solid white with dark text when focused. */
 
-    /** What Liquid Glass samples: a blurred copy of the wallpaper or of the carousel artwork. */
 
     final LiquidGlass.Backdrop glassSource = () -> glassBg;
 
@@ -478,7 +475,6 @@ public class MainActivity extends Activity {
         return b;
     }
 
-    /** Round profile avatar: indigo-to-pink gradient with a person glyph. */
     /** System/utility apps that get a drawn tvOS-style card instead of their Android art. */
     static final Set<String> TVOS_CARD_PKGS = new HashSet<>(Arrays.asList(
             TV_SETTINGS, "com.android.vending", "com.mitv.dream",
@@ -845,10 +841,7 @@ public class MainActivity extends Activity {
     FrameLayout pickerLayer;
     BroadcastReceiver wakeReceiver;
 
-    /** Top shelf content: "suggest" (carousel) or "continue" (Continue Watching). */
 
-    /** Moves the highlight between Resume and Remove (the carousel keeps focus). */
-    /** Carousel and capsule navigation: LEFT/RIGHT browse, OK opens, UP/DOWN move between capsule, carousel and dock. */
     // ---------------------------------------------------------------- launch
 
 
@@ -941,9 +934,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    // ---------------------------------------------------------------- folder of hidden apps
-
-    /** Folder card: dark glass gradient, 3x3 app-grid glyph, title and hidden-app count. */
     /** Quick zoom-through between home and folder, so it reads as "opening" the folder. */
     // ---------------------------------------------------------------- keys
 
@@ -2042,16 +2032,7 @@ public class MainActivity extends Activity {
 
     List<View> pickerCells = new ArrayList<>();
 
-    /**
-     * tvOS 26 profile switcher (per Apple's UI): a popover under the top-right status area with a
-     * two-column grid of round avatars, names in soft grey, a green check on the current profile,
-     * and a glass "+" Add User. Content stays visible behind it.
-     */
 
-    /**
-     * The whole Home Screen (artwork, dock, cards, status row) blurred and dimmed behind an overlay:
-     * a quarter-size snapshot taken once when the overlay opens, then blurred off the GPU path.
-     */
     void addBlurredBackdrop(FrameLayout layer, int dim) {
         ImageView iv = new ImageView(this);
         iv.setScaleType(ImageView.ScaleType.FIT_XY);
@@ -2081,11 +2062,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    /**
-     * Full-screen profile switcher (Apple TV "Who's Watching?"): the Home Screen blurred and dimmed
-     * behind, a centred title and a centred row of large avatars with a green check on the current
-     * one, plus Add User.
-     */
     // ---------------------------------------------------------------- Search
 
     /** Opens search over the blurred Home Screen; q (adb hook, voice) starts with that text. */
