@@ -4,67 +4,74 @@
 **Репозиторий:** `gonscharovd/tvOS`  
 **Default branch:** `main`
 
-## Git и релиз
+## Git и PR
 
 | Объект | Подтверждённое состояние |
 |---|---|
 | main | `a765318b577e66fae66a8ffe28439dcd6233f38f` |
-| Активная рабочая ветка | `refactor/testos-core-cleanup-2026-11` |
-| Последний commit рабочей ветки | `c08bc91e06b7fa66f6bd185e3ab5633033884c33` |
-| Pull Request | [#14](https://github.com/gonscharovd/tvOS/pull/14), Open, Draft |
-| PR base | `main` at `a765318b577e66fae66a8ffe28439dcd6233f38f` |
-| PR head | `c08bc91e06b7fa66f6bd185e3ab5633033884c33` |
-| PR diff | 20 файлов, 775 additions, 4604 deletions |
-| Последний опубликованный стабильный релиз | [v2.1.73 / testOS 2.1.73](https://github.com/gonscharovd/tvOS/releases/tag/v2.1.73) |
-| Release APK | `tvos-home.apk`, 6,192,577 bytes |
+| Кодовая рабочая ветка | `refactor/testos-core-cleanup-2026-11` |
+| Последний commit кода | `c08bc91e06b7fa66f6bd185e3ab5633033884c33` |
+| PR #14 | Open / Draft, base `main`, head `c08bc91...` |
+| PR #14 diff | 20 файлов, 775 additions, 4,604 deletions |
+| Документационная ветка | `docs/project-memory-2026-11` |
+| PR #15 | Open / Draft, base — ветка PR #14, head `abdda24f2742a8bf4d0587c1667d8ff541995fd0` |
+| PR #15 diff | 18 файлов: 11 новых project-memory документов и 7 обновлённых Markdown-файлов; 879 additions, 148 deletions |
+| Последний стабильный релиз | [v2.1.73](https://github.com/gonscharovd/tvOS/releases/tag/v2.1.73) |
 | Package ID релиза | `com.gonscharovd.tvoslauncher` |
 | versionCode релиза | 88 |
+| Release APK | `tvos-home.apk`, 6,192,577 bytes |
+
+PR #15 намеренно основан на ветке PR #14, чтобы память и синхронизированная документация описывали именно проверяемый core-cleanup код. Ни один из PR не влит в main.
 
 ## Состояние PR #14
 
-Цель PR — упростить core testOS и удалить устаревшие функции.
-
-В текущем head реализовано:
+В текущем head подтверждено:
 - Night Scenes — единственный активный home root.
-- Удалены старые Classic grid, Classic wallpaper UI, Hero/Continue Watching UI и связанные dead code paths из MainActivity.
-- Удалена устаревшая multi-profile модель; введены SingleUserPrefs/SingleUserMigration для безопасного перехода к одному пользователю.
-- Legacy пользовательские wallpapers/folder metadata сохраняются и мигрируют в Night Scenes без перезаписи уже существующих данных.
-- Удалены старые feed/cloud integration paths и ненужные UI/settings entries, ранее перечисленные в dependency map.
-- Сохранены app launch, dock, More Apps, Search, Weather, Control Panel, Recent Apps, Button Mapper, CleanYourTV, OTA, shared artwork/backdrop и другие активные функции.
-- Добавлены/обновлены регрессионные проверки, в том числе SingleUserMigrationTest и проверки отсутствия Classic/Continue Watching/profile references.
+- Удалены Classic grid/wallpaper UI, Hero/Continue Watching shelf и связанный dead code.
+- Удалена старая multi-profile модель; используются `SingleUserPrefs` и `SingleUserMigration`.
+- Legacy preferences, wallpapers и wallpaper-folder metadata сохраняются для миграции/rollback.
+- Сохранены app launch, dock, More Apps, Search, Weather, Control Panel, Recent Apps, Button Mapper, CleanYourTV, OTA и shared artwork/backdrop helpers.
+- PR description и dependency map обновлены и больше не описывают удаление Classic UI как незавершённую работу.
 
-PR остаётся Draft и не merged. Код PR не считается частью main и не опубликован как OTA.
+PR #14 остаётся Draft и не merged. Код не опубликован как OTA.
 
 ## CI и сборка
 
-- Последняя проверка PR head: [run #293](https://github.com/gonscharovd/tvOS/actions/runs/42517077387), run ID `42517077387`, commit `c08bc91...`, conclusion `success`.
-- Ранее run #284 завершился failure на более раннем промежуточном commit; ошибка была исправлена последующими коммитами. Последующая проверка #293 успешна.
-- CI выполняет Python regression tests, Java comparator/I18n tests, сборку APK, apksigner verification и artifact upload. Отдельный `SingleUserMigrationTest.java` существует, но текущий workflow его не запускает (DEBT-008).
-- Последний CI preview использует debug signing key runner. Это не подтверждение совпадения сертификата с установленным на ТВ release APK.
-- Сборка на пользовательском ПК и runtime-проверка последнего PR APK на телевизоре в этой сессии не выполнялись.
+- Последняя проверка PR #14 head: [run #293](https://github.com/gonscharovd/tvOS/actions/runs/42517077387), run ID `42517077387`, commit `c08bc91...`, conclusion `success`.
+- В run #293 прошли настроенные Python regression tests и Java comparator/I18n tests; `build.sh` собрал APK; apksigner проверил подпись; artifact upload прошёл.
+- CI artifact: `testOS-ci-debug`, artifact ID `13631916994`. Это runner-generated debug-signed preview, не release OTA.
+- Artifact был скачан и распакован для инспекции бинарного AndroidManifest.xml. Подтверждено: APK package `com.gonscharovd.tvoslauncher`; HOME activity class `com.techgenius.tvoslauncher.MainActivity`. Корректный flattened component: `com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.MainActivity`.
+- `tests/SingleUserMigrationTest.java` существует, но workflow пока не запускает этот test (DEBT-008).
+- PR #15 не имеет отдельного CI run: текущий `build-apk.yml` слушает PR, направленные в `main`, а PR #15 направлен в ветку PR #14. В PR #15 меняется только Markdown.
+- Локальная сборка и runtime-проверка на телевизоре не выполнялись.
 
-## Реализовано в стабильном main / последнем релизе
+## Состояние документации
 
-- Русскоязычная однопользовательская конфигурация testOS.
-- Night Scenes и основные возможности launcher.
-- CleanYourTV с защитой системных пакетов и проверкой состояния после disable/restore.
-- OTA updater, VersionComparator, settings backup/restore.
-- Control Panel, Recent Apps, Button Mapper, Weather, Search и другие описанные в [README](../../README.md) функции.
-- Последний релиз — v2.1.73, опубликован 2026-11-08.
+В PR #15 синхронизированы:
+- `README.md`
+- `docs/features.md`
+- `docs/architecture.md`
+- `docs/install.md`
+- `docs/getting-started.md`
+- `docs/README.md`
+- `docs/refactor-cleanup-dependency-map.md`
 
-## Неподтверждённое / неизвестное
+Убраны устаревшие заявления о доступном Continue Watching/Hero UI, исправлено описание preview signing, обновлены stable release/version сведения и ADB component commands. TOS-003 выполнена в документационной ветке и ожидает review вместе с PR #15.
 
-- Точная версия и сертификат APK, установленного на телевизоре после последнего OTA-обновления, не инспектировались в этой сессии. Пользователь ранее подтвердил работу OTA и установленный testOS, но нельзя автоматически приравнивать установленную версию к latest release.
-- Runtime поведение PR #14 на Sber SDX-50U4123B после удаления Classic UI не проверено.
-- Реальный результат полного тест-плана на ТВ неизвестен.
-- Текущий доступ ADB к ТВ не проверялся.
-- Точное состояние пользовательских разрешений/пакетов на ТВ после последнего OTA не проверялось.
-- Совместимость Presentation-модуля с конкретной прошивкой не проверялась в этой сессии.
+## Открытые ограничения
 
-## Известные ограничения
+- `build.sh` defaults: 15 / `2.1.2-testOS1`; `build.ps1` defaults: 13 / `2.1.2-custom1`. Единый источник версии не создан.
+- `build.ps1` содержит machine-specific JDK fallback path.
+- Runtime regression PR #14 на Sber SDX-50U4123B не выполнена.
+- Сертификат установленного на ТВ APK не сверялся с release certificate в этой сессии.
+- Точное HOME component подтверждено по compiled APK, но фактическая команда PackageManager на телевизоре не тестировалась.
+- `SingleUserMigrationTest.java` не включён в CI workflow.
+- Стабильная `main` не изменена; OTA не выпускалась; APK на ТВ не устанавливался.
 
-- Для in-place APK update нужен тот же сертификат подписи.
-- CI preview artifact с временным debug key нельзя считать безопасной заменой release APK.
-- Сборочные defaults build.sh и build.ps1 расходятся; README заявляет единые defaults, что не соответствует фактическим скриптам.
-- README/features/architecture содержат устаревшие упоминания Continue Watching/старых UI.
-- PR #14 ещё не влит; main пока не содержит все его изменения.
+## Следующие приоритеты
+
+1. Review PR #15 и документационных изменений.
+2. TOS-002: унифицировать build version defaults через единый источник.
+3. TOS-004: убрать hard-coded JDK path из build.ps1.
+4. TOS-008: добавить SingleUserMigrationTest в CI.
+5. Runtime regression PR #14 и затем OTA/signing validation на целевом ТВ.
