@@ -41,7 +41,7 @@
 - PR #14: Open / Draft, base main, head `c08bc91e06b7fa66f6bd185e3ab5633033884c33`.
 - PR #14 latest CI: run #293 / ID `42517077387`, success.
 - PR #15: Open / Draft, base `refactor/testos-core-cleanup-2026-11`; актуальный head проверяется в GitHub перед продолжением.
-- PR #15 содержит 18 Markdown-файлов (11 новых project-memory + 7 обновлённых docs), 879 additions / 148 deletions.
+- PR #15 содержит 18 Markdown-файлов (11 новых project-memory + 7 обновлённых docs).
 - PR #15 не имеет отдельного CI run, так как workflow PR trigger настроен на base `main`; PR #15 направлен в feature branch.
 - Stable release: v2.1.73 / versionCode 88.
 - PR preview artifact — runner debug-signed; не устанавливать его поверх release APK без сравнения сертификата.
