@@ -43,12 +43,12 @@ The current MainActivity.buildChrome() creates SceneHome and its SceneView as th
 - Old Classic status chrome: clock/tabs, network glyphs, refresh/search/Control Center buttons and the old weather card.
 - Old carousel idle / full-screen transition logic and obsolete focus-sway / tile-grid handlers.
 
-The completed cleanup removed 2,101 lines from MainActivity.java (4,522 → 2,421 lines). The unused LaunchCard / launchBackground tile-to-full-screen animation and its helpers were removed because no active caller remained; current app launch still uses launchAnimated() and the Android activity transition, while SceneHome keeps its own dock focus and move animations.
+The completed cleanup removed 2,084 lines from MainActivity.java (4,522 → 2,438 lines). The unused LaunchCard / launchBackground tile-to-full-screen animation and its helpers were removed because no active caller remained; current app launch still uses launchAnimated() and the Android activity transition, while SceneHome keeps its own dock focus and move animations.
 
 ### Preserved Night Scenes and shared functionality
 
 - SceneHome.java remains the owner of the dock, MORE_KEY / moreExpanded, DPAD focus and navigation, app menus, dock reordering and Other Apps.
-- MainActivity.java keeps AppEntry, loadApps(), order / hidden / Other Apps persistence, package receiver, app launch, Search / Weather / Control Center / Recent Apps overlays, LiquidGlass, glassBg / glassSource, and the root container.
+- MainActivity.java keeps AppEntry, loadApps(), order / hidden / Other Apps persistence, package receiver, app launch, Search / Weather / Control Center / Recent Apps overlays, LiquidGlass, glassBg / glassSource, the generic backdropSharp() / tvosCard() app-artwork renderer, and the root container.
 - dispatchKeyEvent() continues to delegate home navigation to SceneHome.dispatchKey(). Search and overlay key handling remain in MainActivity.
 - weatherTick still refreshes Weather, performs the 15-minute AirPlayGuard check, repairs Local ADB permissions and checks connectivity recovery. The removed network glyph was UI-only.
 - MainActivity.makeWallpaperBase() remains because Setup and Settings use it for scene / gradient previews.
