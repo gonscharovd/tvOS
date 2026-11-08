@@ -30,14 +30,12 @@ Linux/macOS:
 
 ```sh
 ./build.sh
-VERSION_CODE=<code> VERSION_NAME=<name> ./build.sh
+./build.sh
 ```
 
 Windows PowerShell:
 
 ```powershell
-$env:VERSION_CODE = "<code>"
-$env:VERSION_NAME = "<name>"
 .\build.ps1
 ```
 
