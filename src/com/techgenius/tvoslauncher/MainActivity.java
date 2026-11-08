@@ -308,6 +308,7 @@ public class MainActivity extends Activity {
         if (intent == null) return;
         if (intent.hasExtra("dock_scale")) {
             Scenes.setDockScalePercent(this, intent.getIntExtra("dock_scale", 100));
+            if (sceneHome != null) sceneHome.rebuildDock();
         }
         String lang = intent.getStringExtra("lang");
         if (lang != null && !lang.isEmpty()) {
@@ -326,7 +327,7 @@ public class MainActivity extends Activity {
             ControlPanelOverlay.dismiss();
             if (panel.equals("cc")) showControlCenter();
             else if (panel.equals("recents")) RecentAppsOverlay.showInActivity(this);
-            else if (panel.equals("inputs")) ControlPanelOverlay.openInputs(this, () -> showInputs(sceneHome.moonBtn));
+            else if (panel.equals("inputs")) ControlPanelOverlay.openInputs(this, null);
             else if (panel.equals("weather")) showWeather();
             else if (panel.equals("settings")) showSettingsChooser();
             else if (panel.equals("search")) showSearch(intent.getStringExtra("q"));
@@ -347,7 +348,7 @@ public class MainActivity extends Activity {
         closeMenu();
         if (sceneHome != null && sceneHome.isSheetOpen()) sceneHome.closeSheet();
         if (sceneHome != null) {
-            if (sceneHome.isDockMoveActive()) sceneHome.cancelDockMove();
+            if (sceneHome.isDockMoveActive()) sceneHome.endDockMove();
             sceneHome.focusDock(sceneHome.focusedDockIdx);
         }
         resetIdle();
