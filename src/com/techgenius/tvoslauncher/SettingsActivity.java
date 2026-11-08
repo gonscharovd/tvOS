@@ -898,7 +898,6 @@ public class SettingsActivity extends Activity {
     /**
      * Exact Couch-TV "Look and scenes" layout (matching docs/screens/home-settings.jpg):
      * - DOCK: Dock resize option (-50% to +50%, default 100%)
-     * - LOOK: Night scenes vs Classic
      * - SCENES: Night, Golden hour, Waterline, Fog, Rainforest dawn (with 16:9 thumbnails & green circular checkmarks)
      * - Each scene stays: 20 seconds
      * - Clock: 12 hour / 24 hour
@@ -3504,7 +3503,7 @@ public class SettingsActivity extends Activity {
             lockSceneCheckRow(spec.id, spec.title(this), spec.bgAsset);
         }
 
-        section(tr("CLASSIC WALLPAPERS", "KLASİK DUVAR KAĞITLARI"));
+        section(tr("PHOTOS & GRADIENTS", "FOTOĞRAFLAR VE GRADYANLAR"));
         for (int i = 0; i < Scenes.CLASSIC_PHOTOS.length; i++) {
             String photoFile = Scenes.CLASSIC_PHOTOS[i][0];
             String id = "photo:" + photoFile;
@@ -3870,72 +3869,6 @@ public class SettingsActivity extends Activity {
             pickLockFolderShuffle();
             return true;
         });
-
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, u(40));
-        lp.bottomMargin = u(5);
-        list.addView(r, lp);
-    }
-
-    private void classicPhotoRow(String label, String assetPath, boolean checked, Runnable onClick) {
-        LinearLayout r = new LinearLayout(this);
-        r.setOrientation(LinearLayout.HORIZONTAL);
-        r.setGravity(Gravity.CENTER_VERTICAL);
-        r.setFocusable(true);
-        r.setClickable(true);
-        r.setPadding(u(14), u(6), u(16), u(6));
-
-        GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(u(13));
-        bg.setColor(0x14FFFFFF);
-        r.setBackground(bg);
-
-        int tw = u(46), th = u(26);
-        ImageView thumb = new ImageView(this);
-        thumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        bindAssetThumbAsync(thumb, assetPath, tw * 2, th * 2);
-        final float trad = u(5.5f);
-        thumb.setOutlineProvider(new ViewOutlineProvider() {
-            @Override
-            public void getOutline(View v, Outline o) {
-                o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), trad);
-            }
-        });
-        thumb.setClipToOutline(true);
-        LinearLayout.LayoutParams thlp = new LinearLayout.LayoutParams(tw, th);
-        thlp.rightMargin = u(12);
-        r.addView(thumb, thlp);
-
-        TextView l = new TextView(this);
-        l.setText(label);
-        l.setTextColor(0xEBF4F4F6);
-        l.setTypeface(Ui.font(this, "semibold"));
-        Ui.textSize(l, 14.5f);
-        l.setSingleLine(true);
-        r.addView(l, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-
-        int cs = u(17);
-        ImageView mark = new ImageView(this);
-        if (checked) {
-            mark.setImageBitmap(Glyphs.get("check", cs, Color.WHITE));
-        }
-        r.addView(mark, new LinearLayout.LayoutParams(cs, cs));
-
-        r.setOnFocusChangeListener((view, has) -> {
-            if (has) {
-                inRows = true;
-                updateSidebarStyles();
-                updateHintText(false);
-            }
-            bg.setColor(has ? Color.WHITE : 0x14FFFFFF);
-            l.setTextColor(has ? 0xFF111114 : 0xEBF4F4F6);
-            if (checked) {
-                mark.setImageBitmap(Glyphs.get("check", cs, has ? 0xFF111114 : Color.WHITE));
-            }
-            view.animate().scaleX(has ? 1.02f : 1f).scaleY(has ? 1.02f : 1f)
-                    .setDuration(160).start();
-        });
-        r.setOnClickListener(view -> onClick.run());
 
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, u(40));
