@@ -1218,7 +1218,7 @@ public class MainActivity extends Activity {
                 Bitmap cIcon = CustomMedia.getCustomAppIcon(this, e.key, e.pkg);
                 if (cIcon != null && !cIcon.isRecycled()) {
                     e.icon = new BitmapDrawable(getResources(), cIcon);
-                    e.banner = new BitmapDrawable(getResources(), CustomMedia.buildClassicBannerFromCustomIcon(cIcon, e.color));
+                    e.banner = new BitmapDrawable(getResources(), CustomMedia.buildAppBannerFromCustomIcon(cIcon, e.color));
                     continue;
                 }
             }
