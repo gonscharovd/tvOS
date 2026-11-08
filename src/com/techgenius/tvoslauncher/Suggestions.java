@@ -16,8 +16,6 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Small launcher utilities retained for safe app launching and cached artwork.
@@ -25,15 +23,6 @@ import java.util.List;
  */
 final class Suggestions {
 
-
-    static final class Item {
-        int id;
-        String type = "", title = "", overview = "", backdrop = "", logo = "", year = "", genres = "";
-        String link = "", pkg = "", key = "";
-        float progress = -1f;
-        int remainingMin = -1;
-        double rating;
-    }
 
     static boolean installed(Context c, String pkg) {
         if (c == null || pkg == null || pkg.isEmpty()) return false;
@@ -60,13 +49,9 @@ final class Suggestions {
         return pkg == null || pkg.isEmpty() ? i : i.setPackage(pkg);
     }
 
-    static void open(Context c, Item item) {
-        // No recommendation catalogue is present in the single-user Russian build.
-    }
-
     static String logoFor(Context c, Item item) { return ""; }
 
-        static Bitmap image(Context c, String path, String size, int maxWidth) {
+    static Bitmap image(Context c, String path, String size, int maxWidth) {
         if (path == null || path.isEmpty()) return null;
         if (path.startsWith("file://")) {
             path = Uri.parse(path).getPath();
@@ -133,7 +118,7 @@ final class Suggestions {
         return BitmapFactory.decodeFile(path, o);
     }
 
-        static byte[] readAll(InputStream in) throws Exception {
+    static byte[] readAll(InputStream in) throws Exception {
         try (InputStream is = in) {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             byte[] buf = new byte[16384];
