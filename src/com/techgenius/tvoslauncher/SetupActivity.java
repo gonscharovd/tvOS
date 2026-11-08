@@ -36,7 +36,6 @@ public class SetupActivity extends Activity {
     LinearLayout page;
     TextView skipBtn;
     int index = 0;
-    int lookSubStep = 0; // 0 = choose appearance, 1 = choose scenes, 2 = choose classic background
     final Handler handler = new Handler(Looper.getMainLooper());
 
     interface Step {
@@ -170,7 +169,6 @@ public class SetupActivity extends Activity {
 
     void show(int i, int dir) {
         handler.removeCallbacksAndMessages(null);
-        if (i != 2) lookSubStep = 0;
         index = Math.max(0, Math.min(i, steps.size() - 1));
         getSharedPreferences("setup", MODE_PRIVATE).edit().putInt("cur_step", index).apply();
         if (skipBtn != null) {
@@ -192,11 +190,6 @@ public class SetupActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        if (index == 2 && lookSubStep != 0) {
-            lookSubStep = 0;
-            show(2, -1);
-            return;
-        }
         if (index == 4 && permMode != 0) {
             permMode = 0;
             show(5, -1);
