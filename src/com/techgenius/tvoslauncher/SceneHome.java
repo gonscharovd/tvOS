@@ -152,7 +152,7 @@ final class SceneHome {
         int grow = dp(6);
         topRightRow.setPadding(grow, grow, grow, grow);
 
-        // Top-right Weather Shortcut Button (icon only; opens 5-day forecast UI like Classic Home)
+        // Top-right Weather Shortcut Button (icon only; opens the 5-day forecast overlay)
         int mSize = dp(42);
         weatherBtn = new LinearLayout(host);
         weatherBtn.setOrientation(LinearLayout.HORIZONTAL);
