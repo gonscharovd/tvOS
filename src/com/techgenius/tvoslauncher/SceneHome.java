@@ -1141,7 +1141,7 @@ final class SceneHome {
                 "sliders",
                 I18n.s(host, "Home settings", "Ana ekran ayarları"),
                 I18n.s(host, "Language, weather, scenes, apps and home-screen options",
-                        "Dil, hava durumu, sahneler, uygulamalar ve kişiler"),
+                        "Dil, hava durumu, sahneler, uygulamalar ve ana ekran seçenekleri"),
                 () -> {
                     closeSheetImmediate();
                     host.returningFromSettings = true;
