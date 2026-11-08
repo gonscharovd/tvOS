@@ -7,6 +7,10 @@ settings = (ROOT / "SettingsActivity.java").read_text(encoding="utf-8")
 main = (ROOT / "MainActivity.java").read_text(encoding="utf-8")
 scene = (ROOT / "SceneHome.java").read_text(encoding="utf-8")
 power = (ROOT / "PowerService.java").read_text(encoding="utf-8")
+suggestions = (ROOT / "Suggestions.java").read_text(encoding="utf-8")
+search_panel = (ROOT / "SearchPanel.java").read_text(encoding="utf-8")
+custom_media = (ROOT / "CustomMedia.java").read_text(encoding="utf-8")
+scenes = (ROOT / "Scenes.java").read_text(encoding="utf-8")
 perms = (ROOT / "Perms.java").read_text(encoding="utf-8")
 local_adb = (ROOT / "LocalAdb.java").read_text(encoding="utf-8")
 control = (ROOT / "ControlPanelOverlay.java").read_text(encoding="utf-8")
@@ -27,7 +31,8 @@ assert "refreshKeepWatching" not in scene and "onDockTileFocusForShelf" not in s
 
 # Classic grid, wallpaper and Hero Carousel are gone from MainActivity.
 for removed in ("cwEnabled(", "loadHero(", "heroKeys(", "heroItems", "Suggestions.Item",
-                "buildGrid(", "makeCell(", "applyLookMode(", "setWallpaper("):
+                "buildGrid(", "makeCell(", "applyLookMode(", "setWallpaper(",
+                "lastCwSig", "LaunchCard", "launchBackground(", "showLaunchDim(", "avatarBitmap("):
     assert removed not in main, f"Retired Classic home UI remains: {removed}"
 # Night Scenes still owns the shared backdrop and the service lifecycle.
 assert "Bitmap glassBg;" in main and "glassSource" in main
@@ -39,6 +44,16 @@ assert "LocalAdb.checkAndRepairPermissionsIfNeeded(MainActivity.this, false)" in
 assert "buildAppBannerFromCustomIcon" in main
 assert "buildClassicBannerFromCustomIcon" not in main
 assert "FOLDER_KEY" not in main
+assert "Classic" not in main
+assert "Classic Home" not in scene
+assert "MORE_KEY" in scene and "moreExpanded" in scene and "dispatchKey(" in scene
+assert "launchAnimated(" in main and "launchAnimated(" in scene
+assert "Suggestions.image(" in search_panel and "Suggestions.start(" in main
+assert "class Item" not in suggestions and "logoFor(" not in suggestions
+assert "buildAppBannerFromCustomIcon" in custom_media
+assert "SCOPE_CLASSIC" in custom_media
+assert "migrateClassicBackgroundsToNightGallery" in scenes
+assert "migrateClassicCustomAssets" in scenes
 
 assert 'row(tr("Pair / Repair ADB connection"' not in settings
 assert 'row(tr("Disabled apps backup"' not in settings
