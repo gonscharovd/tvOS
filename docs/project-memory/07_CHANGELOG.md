@@ -1,3 +1,13 @@
+## 2026-11-09 — синхронизация пользовательской документации с PR #14
+
+- README, docs index, features, architecture, install, getting-started и dependency map обновлены по фактическому Night Scenes-only коду PR #14.
+- Удалены устаревшие описания доступного Continue Watching/Hero UI; уточнено отсутствие user-created app folders.
+- Исправлено описание preview signing: PR CI использует runner-generated debug key, release workflow — persistent release key.
+- Stable release обновлён до v2.1.73 / versionCode 88.
+- По compiled CI APK manifest подтверждены package `com.gonscharovd.tvoslauncher` и HOME activity `com.techgenius.tvoslauncher.MainActivity`; исправлены ADB component commands.
+- PR #14 description актуализирован; PR #15 расширен до 18 Markdown-файлов (11 project-memory документов + 7 docs).
+- Изменения находятся в Draft PR #15, не влиты в PR #14 или main.
+
 # Значимые изменения testOS
 
 Этот журнал фиксирует только подтверждённые значимые изменения. Полный commit history остаётся в GitHub.
