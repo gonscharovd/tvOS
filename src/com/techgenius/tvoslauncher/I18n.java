@@ -9,10 +9,7 @@ import java.util.Map;
 
 /** Russian-only localization for this device-specific testOS build. */
 public final class I18n {
-    public static final String LANG_EN = "en", LANG_TR = "tr", LANG_SV = "sv", LANG_HI = "hi",
-            LANG_ES = "es", LANG_FR = "fr", LANG_DE = "de", LANG_IT = "it", LANG_RU = "ru",
-            LANG_PT = "pt", LANG_AR = "ar", LANG_JA = "ja", LANG_ZH = "zh", LANG_KO = "ko";
-    public static final String[][] LANGUAGES = {{LANG_RU, "Русский", "Использовать testOS на русском"}};
+    public static final String LANG_RU = "ru";
     private static String cachedLang;
     private static final Map<String, Map<String, String>> LANG_MAPS = new HashMap<>();
 
@@ -434,7 +431,7 @@ public final class I18n {
         add("ADB Debugging Needed", "Требуется отладка ADB");
         add("Could not connect to local ADB on port 5555.\n\n1. Open Settings → System → About and click Build 7 times.\n2. Open Developer Options and turn on USB Debugging / Network Debugging.\n3. Return here and tap Pair / Repair again.", "Не удалось подключиться к локальному ADB на порту 5555.\n\n1. Откройте «Настройки → Система → Об устройстве» и нажмите на номер сборки 7 раз.\n2. Откройте параметры разработчика и включите отладку по USB / сети.\n3. Вернитесь сюда и снова нажмите «Подключить / восстановить ADB».");
         add("Remove / Revoke All Permissions", "УДАЛИТЬ / ОТОЗВАТЬ ВСЕ РАЗРЕШЕНИЯ");
-        add("This will disable Keep Alive and remove Accessibility Service, Notification Access, Default Home Role, and launcher permissions (both locally and via ADB).", "Это выключит Keep Alive и отзовёт службу специальных возможностей, доступ к уведомлениям, роль приложения «Домой» и разрешения лаунчера — локально и через ADB.");
+        add("This will disable Keep Alive and remove Accessibility Service, Do Not Disturb access, Default Home Role, and launcher permissions (both locally and via ADB).", "Это выключит Keep Alive и отзовёт службу специальных возможностей, доступ к режиму «Не беспокоить», роль приложения «Домой» и разрешения лаунчера — локально и через ADB.");
         add("Revoke All Permissions", "Отозвать все разрешения");
         add("Revoking Permissions…", "Отзыв разрешений…");
         add("Revoking all permissions…", "Отзываем все разрешения…");
@@ -679,7 +676,6 @@ public final class I18n {
         add("Who’s Watching?", "Кто смотрит?");
         add("Delete profile", "Удалить профиль");
         add("Getting the weather…", "Загружаем погоду…");
-        add("Continue Watching & Do Not Disturb", "Продолжить просмотр и режим «Не беспокоить»");
         add("Set Default via Local ADB (Recommended)", "Назначить по умолчанию через локальный ADB (рекомендуется)");
         add("Disable Stock TV Launchers (TCL / Philips / Google TV)", "Отключить штатные лаунчеры ТВ (TCL / Philips / Google TV)");
         add("Enable Home Button Fix (Accessibility Remap)", "Включить перехват кнопки «Домой» (спец. возможности)");
@@ -784,6 +780,7 @@ public final class I18n {
         add("Cleaned · ", "Очищено · ");
         add(" free", " свободно");
         add("Do Not Disturb", "Не беспокоить");
+        add("Do Not Disturb access", "Доступ к режиму «Не беспокоить»");
         add("Audio", "Звук");
         add("Sound", "Звук");
         add("Output", "Вывод");
@@ -868,7 +865,6 @@ public final class I18n {
         add("Default home screen", "Главный экран по умолчанию");
         add("Set as default…", "Сделать по умолчанию…");
         add("Power Off & Sleep Timer permission", "Разрешение на выключение и таймер сна");
-        add("Continue Watching & DND permission", "Разрешение для «Продолжить просмотр» и «Не беспокоить»");
         add("Allowed", "Разрешено");
         add("Allow…", "Разрешить…");
         add("Not on this TV", "Недоступно на этом ТВ");
@@ -1496,7 +1492,7 @@ public final class I18n {
         ru.put("Switch to ", "Переключиться на ");
         ru.put("This TV does not have a built-in Accessibility Settings screen. You can enable the Button Mapper & Control Panel service automatically via Local ADB.", "На этом телевизоре нет встроенного экрана специальных возможностей. Включить службу Button Mapper и панели управления можно автоматически через локальный ADB.");
         ru.put("This runs 'settings put global adb_enabled 0' over Local ADB and verifies that port 5555 is closed on your home network.\\n\\n", "Выполняет команду 'settings put global adb_enabled 0' через локальный ADB и проверяет, что порт 5555 закрыт в домашней сети.\\n\\n");
-        ru.put("This will disable Keep Alive and remove Accessibility Service, Notification Access, Default Home Role, and launcher permissions (both locally and via ADB).", "Это отключит Keep Alive и отзовёт специальные возможности, доступ к уведомлениям, роль главного экрана и разрешения лаунчера (локально и через ADB).");
+        ru.put("This will disable Keep Alive and remove Accessibility Service, Do Not Disturb access, Default Home Role, and launcher permissions (both locally and via ADB).", "Это отключит Keep Alive и отзовёт специальные возможности, доступ к режиму «Не беспокоить», роль главного экрана и разрешения лаунчера (локально и через ADB).");
         ru.put("Tip: Hold OK on any app on the home screen dock to move or hide it.", "Совет: удерживайте OK на приложении в панели главного экрана, чтобы переместить или скрыть его.");
         ru.put("To sign in, focus the ", "Чтобы войти, выберите ");
         ru.put("Top shelf, 6-column app grid and custom wallpapers", "Верхняя карусель, сетка приложений на 6 столбцов и свои обои");
@@ -1586,7 +1582,6 @@ public final class I18n {
         ru.put("Closed ", "Закрыто: ");
         ru.put("Closing ADB…", "Выключение ADB…");
         ru.put("Colour", "Цвет");
-        ru.put("Continue Watching & DND (Notification Access)", "Продолжение просмотра и «Не беспокоить» (доступ к уведомлениям)");
         ru.put("Continue Watching cleared.", "История просмотра очищена.");
         ru.put("Continue Watching on dock", "Продолжение просмотра в панели приложений");
         ru.put("Continue watching", "Продолжить просмотр");

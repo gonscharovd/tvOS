@@ -18,7 +18,6 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!-- Normal-level & TV listings permissions: lets us read apps' published Watch Next & Preview rows. -->
     <uses-permission android:name="com.android.providers.tv.permission.READ_EPG_DATA" />
-    <uses-permission android:name="com.android.providers.tv.permission.WRITE_EPG_DATA" />
     <uses-permission android:name="android.permission.READ_TV_LISTINGS" />
     <!-- Custom app icons, custom wallpapers, and automatic GitHub APK updates. -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />

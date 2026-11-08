@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * First-time setup, in the style of Apple TV's own setup: one question per page, a large title
  * and a short line of help at the top, choices as a centred list (white when focused), OK moves
- * on and Back goes back. Pages: Welcome, profile, look, weather, home screen & permissions,
+ * on and Back goes back. Pages: Welcome, look, weather, home screen & permissions,
  * default home, button mapping, and finish. Shown once; Settings can run it again.
  */
 public class SetupActivity extends Activity {
@@ -71,7 +71,7 @@ public class SetupActivity extends Activity {
         page.setPadding(0, u(36), 0, u(22));
         root.addView(page, plp);
 
-        // Top-right "Skip Setup" pill button on the first setup screen (language selection)
+        // Top-right "Skip Setup" pill button on the welcome screen
         skipBtn = new TextView(this);
         skipBtn.setId(View.generateViewId());
         skipBtn.setText(tr("Skip Setup", "Kurulumu Atla") + "  \u203a");
@@ -110,7 +110,6 @@ public class SetupActivity extends Activity {
         setContentView(root);
 
         steps.add(this::hello);
-        steps.add(this::profile);
         steps.add(this::look);
         steps.add(this::weather);
         steps.add(this::homeAndPermissions);
@@ -133,6 +132,14 @@ public class SetupActivity extends Activity {
                 setupPrefs.edit().putInt("cur_step", oldStep - 1).apply();
             }
             setupPrefs.edit().putBoolean("testos_setup_step_migrated", true).apply();
+        }
+        // The former profile page is removed: the launcher now has one built-in user.
+        if (!setupPrefs.getBoolean("testos_single_profile_step_migrated", false)) {
+            int oldStep = setupPrefs.getInt("cur_step", 0);
+            if (!setupPrefs.getBoolean(K_DONE, false) && oldStep >= 2) {
+                setupPrefs.edit().putInt("cur_step", oldStep - 1).apply();
+            }
+            setupPrefs.edit().putBoolean("testos_single_profile_step_migrated", true).apply();
         }
         int savedStep = setupPrefs.getInt("cur_step", 0);
         show(getIntent().getIntExtra("step", savedStep), 0);  // adb: --ei step N opens a page directly
@@ -400,7 +407,7 @@ public class SetupActivity extends Activity {
             skipBtn.setNextFocusLeftId(startRow.getId());
         }
         TextView by = new TextView(this);
-        by.setText("by techgenius");
+        by.setText("by gonscharovd");
         by.setTextColor(0x80FFFFFF);
         by.setTypeface(Ui.font(this, "regular"));
         Ui.textSize(by, 13);
@@ -410,115 +417,13 @@ public class SetupActivity extends Activity {
         page.addView(by, byLp);
     }
 
-    void profile() {
-        title(tr("Create Your Profile", "Profilinizi Olu\u015fturun"));
-        subtitle(tr(
-                "Your name and an avatar. Each profile keeps its own apps, background and Home Screen. Up to three people can have one.",
-                "Ad\u0131n\u0131z ve bir avatar. Her profil kendi uygulamalar\u0131n\u0131, arka plan\u0131n\u0131 ve Ana Ekran\u0131n\u0131 saklar. En fazla \u00fc\u00e7 ki\u015fi kullanabilir."));
-        Profiles.Profile p = Profiles.current(this);
-        LinearLayout l = list();
-        View nameRow = option(l, tr("Name", "Ad"), I18n.profileName(this, p.name), false, () -> {
-            EditText in = new EditText(this);
-            in.setSingleLine(true);
-            in.setText(p.name);
-            in.setSelection(in.getText().length());
-            int pad = u(14);
-            FrameLayout box = new FrameLayout(this);
-            box.setPadding(pad, pad / 2, pad, 0);
-            box.addView(in);
-            android.app.AlertDialog dlg = new android.app.AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle(tr("Your name", "Ad\u0131n\u0131z")).setView(box)
-                    .setPositiveButton(tr("OK", "Tamam"), (d, w) -> {
-                        String n = in.getText().toString().trim();
-                        if (!n.isEmpty()) {
-                            p.name = n;
-                            Profiles.update(this, p);
-                        }
-                        show(index, 0);
-                    }).setNegativeButton(tr("Cancel", "\u0130ptal"), null).show();
-            Ui.setupDialogEditText(in, dlg);
-            in.requestFocus();
-        });
-        int nameId = View.generateViewId();
-        nameRow.setId(nameId);
 
-        // Avatar: a row of emoji, the current one ringed.
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER);
-        row.setClipChildren(false);
-        List<String> choices = new ArrayList<>(Profiles.freeEmojis(this, p.id));
-        if (!choices.contains(p.emoji)) choices.add(0, p.emoji);
-        int count = Math.min(8, choices.size());
-        int[] emojiIds = new int[count];
-        TextView[] emojiViews = new TextView[count];
-        GradientDrawable[] emojiBgs = new GradientDrawable[count];
-        int activeEmojiId = View.NO_ID;
-        for (int i = 0; i < count; i++) {
-            final int idx = i;
-            String e = choices.get(i);
-            TextView t = new TextView(this);
-            int eid = View.generateViewId();
-            t.setId(eid);
-            emojiIds[i] = eid;
-            emojiViews[i] = t;
-            if (e.equals(p.emoji) || activeEmojiId == View.NO_ID) activeEmojiId = eid;
-            t.setText(e);
-            Ui.textSize(t, 26);
-            t.setGravity(Gravity.CENTER);
-            t.setFocusable(true);
-            t.setClickable(true);
-            GradientDrawable g = new GradientDrawable();
-            g.setShape(GradientDrawable.OVAL);
-            g.setColor(e.equals(p.emoji) ? 0x59FFFFFF : 0x1FFFFFFF);
-            emojiBgs[i] = g;
-            t.setBackground(g);
-            t.setOnFocusChangeListener((v, has) -> {
-                g.setStroke(has ? u(2) : 0, Color.WHITE);
-                v.animate().scaleX(has ? 1.2f : 1f).scaleY(has ? 1.2f : 1f).setDuration(160).start();
-            });
-            t.setOnClickListener(v -> {
-                p.emoji = e;
-                Profiles.update(this, p);
-                for (int j = 0; j < count; j++) {
-                    boolean sel = choices.get(j).equals(p.emoji);
-                    emojiBgs[j].setColor(sel ? 0x59FFFFFF : 0x1FFFFFFF);
-                }
-                nameRow.setNextFocusDownId(emojiIds[idx]);
-            });
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(u(46), u(46));
-            lp.leftMargin = lp.rightMargin = u(5);
-            row.addView(t, lp);
-        }
-        LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        rlp.topMargin = u(6);
-        rlp.bottomMargin = u(14);
-        page.addView(row, rlp);
-        LinearLayout l2 = list();
-        View contRow = option(l2, tr("Continue", "Devam Et"), null, false, this::next);
-        int contId = View.generateViewId();
-        contRow.setId(contId);
-
-        if (activeEmojiId != View.NO_ID) {
-            nameRow.setNextFocusDownId(activeEmojiId);
-            contRow.setNextFocusUpId(activeEmojiId);
-            for (int i = 0; i < count; i++) {
-                emojiViews[i].setNextFocusUpId(nameId);
-                emojiViews[i].setNextFocusDownId(contId);
-                if (i > 0) emojiViews[i].setNextFocusLeftId(emojiIds[i - 1]);
-                if (i + 1 < count) emojiViews[i].setNextFocusRightId(emojiIds[i + 1]);
-            }
-        }
-        nameRow.requestFocus();
-        dots();
-    }
 
     /** Step 1: Choose Appearance (Night scenes vs Classic). Step 2: Choose Scenes or Classic Background. */
-    /** First-run appearance setup: Night Scenes is the only supported home experience. */
     void look() {
-        title(tr("Choose Your Scenes", "Sahnelerinizi Seçin"));
+        title(tr("Choose Your Scenes", "Выберите сцены"));
         TextView s = subtitle(tr("Choose which scenes take turns behind the glass clock.",
-                "Cam saatin arkasında hangi sahnelerin sırayla görüneceğini seçin."));
+                "Выберите сцены, которые будут сменять друг друга за стеклянными часами."));
         ((LinearLayout.LayoutParams) s.getLayoutParams()).bottomMargin = u(16);
         setBackdrop("scene_asset:" + Scenes.ALL[0].bgAsset);
         LinearLayout l = scrollableList();
@@ -527,7 +432,7 @@ public class SetupActivity extends Activity {
             boolean on = Scenes.isSceneEnabled(this, spec.id);
             final View[] rowRef = new View[1];
             View r = option(l, spec.title(this),
-                    on ? tr("Included in rotation", "Döngüye dahil") : tr("Off", "Kapalı"),
+                    on ? tr("Included in rotation", "В ротации") : tr("Off", "Выключено"),
                     on, () -> {
                         if (Scenes.toggleScene(this, spec.id)) {
                             boolean nowOn = Scenes.isSceneEnabled(this, spec.id);
@@ -537,7 +442,7 @@ public class SetupActivity extends Activity {
                                     View texts = vg.getChildAt(0);
                                     if (texts instanceof ViewGroup && ((ViewGroup) texts).getChildCount() >= 2) {
                                         TextView d = (TextView) ((ViewGroup) texts).getChildAt(1);
-                                        d.setText(nowOn ? tr("Included in rotation", "Döngüye dahil") : tr("Off", "Kapalı"));
+                                        d.setText(nowOn ? tr("Included in rotation", "В ротации") : tr("Off", "Выключено"));
                                     }
                                     View tick = vg.getChildAt(1);
                                     if (tick instanceof TextView) ((TextView) tick).setText(nowOn ? "✓" : "");
@@ -554,34 +459,10 @@ public class SetupActivity extends Activity {
             });
             if (i == 0) r.requestFocus();
         }
-        option(l, tr("Continue", "Devam Et"), null, false, this::next);
+        option(l, tr("Continue", "Продолжить"), null, false, this::next);
         dots();
     }
 
-    /** This profile's Home Screen: recommendations and/or news on the top shelf, as two switches. */
-    void homeContent() {
-        backdrop.animate().alpha(0.5f).setDuration(300).start();
-        title(tr("Your Home Screen", "Ana Ekran\u0131n\u0131z"));
-        subtitle(tr("What appears at the top of Home, behind your apps. Choose any, all or none.",
-                "Uygulamalar\u0131n\u0131z\u0131n arkas\u0131nda, Ana Ekran\u0131n \u00fcst k\u0131sm\u0131nda ne g\u00f6r\u00fcnece\u011fini se\u00e7in."));
-        boolean recs = Suggestions.showRecs(this), news = Suggestions.showNews(this);
-        LinearLayout l = list();
-        option(l, tr("Recommendations", "\u00d6neriler"),
-                tr("Popular movies and series on your streaming services", "Yay\u0131n servislerinizdeki pop\u00fcler filmler ve diziler"), recs, () -> {
-            Suggestions.setShelf(this, !recs, news);
-            show(index, 0);
-            focusRow(0);
-        });
-        option(l, tr("News", "Haberler"),
-                tr("Headlines from your city and the world", "\u015eehrinizden ve d\u00fcnyadan man\u015fetler"), news, () -> {
-            Suggestions.setShelf(this, recs, !news);
-            show(index, 0);
-            focusRow(1);
-        });
-        Profiles.homePrefs(this).edit().putBoolean("cw_enabled", false).apply();
-        option(l, tr("Continue", "Продолжить"), recs || news ? null : tr("Just your background for now", "Пока только фон"), false, this::next);
-        dots();
-    }
 
     /** After re-building a page, put focus back on the row that was pressed. */
     void focusRow(int i) {

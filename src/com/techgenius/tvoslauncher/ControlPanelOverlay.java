@@ -19,7 +19,6 @@ import android.net.wifi.WifiManager;
 import android.os.Handler;
 import android.os.Looper;
 import android.provider.Settings;
-import android.service.notification.NotificationListenerService;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -676,21 +675,7 @@ public final class ControlPanelOverlay {
                 ? I18n.s(c, "On", "Açık") : I18n.s(c, "Off", "Kapalı");
     }
 
-    public static void toggleDnd(Context c) {
-        MediaWatchService svc = MediaWatchService.instance;
-        if (svc == null) {
-            if (c instanceof android.app.Activity) {
-                Perms.requestListener((android.app.Activity) c);
-            } else {
-                startExternal(c, new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
-            }
-            return;
-        }
-        NotificationManager nm = c.getSystemService(NotificationManager.class);
-        boolean on = nm.getCurrentInterruptionFilter() > NotificationManager.INTERRUPTION_FILTER_ALL;
-        svc.requestInterruptionFilter(on ? NotificationListenerService.INTERRUPTION_FILTER_ALL
-                : NotificationListenerService.INTERRUPTION_FILTER_PRIORITY);
-    }
+    public static void toggleDnd(Context c) { Perms.toggleDnd(c); }
 
     public static String audioState(Context c) {
         AudioManager am = c.getSystemService(AudioManager.class);
