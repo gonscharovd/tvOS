@@ -64,10 +64,10 @@ See [install.md](install.md) for signing, permissions, backup and rollback detai
 adb shell am start -n com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.MainActivity
 
 # Open the Control Panel overlay
-adb shell am start -n com.gonscharovd.tvoslauncher/.MainActivity --es panel cc
+adb shell am start -n com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.MainActivity --es panel cc
 
 # Open Search with a query
-adb shell am start -n com.gonscharovd.tvoslauncher/.MainActivity --es panel search --es q youtube
+adb shell am start -n com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.MainActivity --es panel search --es q youtube
 
 # Open a Settings group
 adb shell am start -n com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.SettingsActivity --es page advanced
@@ -76,10 +76,10 @@ adb shell am start -n com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.S
 adb shell am start -n com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.SetupActivity --ei step 3
 
 # Mark setup as complete
-adb shell am start -n com.gonscharovd.tvoslauncher/.SetupActivity --ez skip true
+adb shell am start -n com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.SetupActivity --ez skip true
 
 # Performance probe (weather/status/dockglass/shadows; reset restores)
-adb shell am start -n com.gonscharovd.tvoslauncher/.MainActivity --es perf weather
+adb shell am start -n com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.MainActivity --es perf weather
 
 # Frame-time report
 adb shell dumpsys gfxinfo com.gonscharovd.tvoslauncher
