@@ -448,7 +448,6 @@ public class MainActivity extends Activity {
         if (Scenes.isScenesLook(this) && sceneHome != null) {
             sceneHome.sceneView.syncSettings();
             sceneHome.sceneView.start();
-            sceneHome.refreshWhoBar();
             sceneHome.refreshVpnIndicator();
             sceneHome.refreshMoonBtn();
             if (wasReturningFromSettings || sceneHome.dockTiles.isEmpty()) {
@@ -843,7 +842,6 @@ public class MainActivity extends Activity {
             if (scenes) {
                 sceneHome.sceneView.syncSettings();
                 sceneHome.sceneView.start();
-                sceneHome.refreshWhoBar();
                 sceneHome.refreshMoonBtn();
                 sceneHome.rebuildDock();
             } else {
@@ -5028,7 +5026,6 @@ public class MainActivity extends Activity {
             avatarView.setImageBitmap(Profiles.avatar(this, Profiles.current(this), avatarSize));
             avatarView.setVisibility(View.GONE);
         }
-        if (sceneHome != null) sceneHome.refreshWhoBar();
     }
 
     /** Legacy profile-switch callback; single-user builds keep the active profile unchanged. */
@@ -5057,7 +5054,6 @@ public class MainActivity extends Activity {
         buildGrid();
         shelfEntry = null;
         if (Scenes.isScenesLook(this) && sceneHome != null) {
-            sceneHome.refreshWhoBar();
             sceneHome.rebuildDock();
             sceneHome.focusDock(0);
         } else {

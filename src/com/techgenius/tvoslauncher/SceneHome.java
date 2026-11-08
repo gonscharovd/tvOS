@@ -53,7 +53,6 @@ final class SceneHome {
     final Scenes.SceneView sceneView;
     final FrameLayout overlay;
 
-    LinearLayout whoBar;
     LinearLayout weatherBtn;
     ImageView weatherIcon;
     LinearLayout vpnIndicator;
@@ -66,12 +65,12 @@ final class SceneHome {
 
     static boolean isWeatherShortcutEnabled(android.content.Context c) {
         if (c == null) return true;
-        return Profiles.homePrefs(c).getBoolean(KEY_WEATHER_SHORTCUT, true);
+        return SingleUserPrefs.homePrefs(c).getBoolean(KEY_WEATHER_SHORTCUT, true);
     }
 
     static void setWeatherShortcutEnabled(android.content.Context c, boolean enabled) {
         if (c == null) return;
-        Profiles.homePrefs(c).edit().putBoolean(KEY_WEATHER_SHORTCUT, enabled).apply();
+        SingleUserPrefs.homePrefs(c).edit().putBoolean(KEY_WEATHER_SHORTCUT, enabled).apply();
     }
 
     LinearLayout dockContainer;
@@ -102,11 +101,11 @@ final class SceneHome {
         this.focusedDockIdx = host.prefs.getInt("last_dock_idx", 0);
         this.sceneView = new Scenes.SceneView(host);
         this.sceneView.setOnSceneChangedListener(bg -> {
-            if (bg != null && Scenes.isScenesLook(host)) {
+            if (bg != null) {
                 host.io.execute(() -> {
                     Bitmap blurred = Ui.glassBackdrop(bg, 192, 108);
                     host.handler.post(() -> {
-                        if (blurred != null && Scenes.isScenesLook(host)) {
+                        if (blurred != null) {
                             host.glassBg = blurred;
                             host.invalidateGlass();
                             invalidateSceneGlass();
@@ -131,10 +130,13 @@ final class SceneHome {
     /** Uptime until which Continue Watching rows show/hide instantly (set on resume). */
 
     void invalidateSceneGlass() {
-        if (whoBar != null) whoBar.invalidate();
         if (weatherBtn != null) weatherBtn.invalidate();
         if (moonBtn != null) moonBtn.invalidate();
         if (dockBox != null) dockBox.invalidate();
+    }
+
+    boolean isDockMoveActive() {
+        return moveDockIdx >= 0;
     }
 
     private int dp(float u) {
@@ -151,55 +153,6 @@ final class SceneHome {
         topRightRow.setClipToPadding(false);
         int grow = dp(6);
         topRightRow.setPadding(grow, grow, grow, grow);
-
-        // Top-right Profile Switcher Pill (next to Control Panel button; hidden if only 1 person)
-        whoBar = new LinearLayout(host);
-        whoBar.setOrientation(LinearLayout.HORIZONTAL);
-        whoBar.setGravity(Gravity.CENTER_VERTICAL);
-        int pad = dp(3);
-        whoBar.setPadding(pad, pad, pad, pad);
-        MainActivity.LiquidGlass whoGlass = new MainActivity.LiquidGlass(
-                dp(22), 0x6614161C, host.glassSource, host.screenW, host.screenH, host.unit);
-        whoGlass.lens = dp(5);
-        whoGlass.rimStrength = 0.45f;
-        whoBar.setBackground(whoGlass);
-        whoBar.setFocusable(true);
-        whoBar.setClickable(true);
-        whoBar.setLongClickable(true);
-
-        GradientDrawable whoFocusRing = new GradientDrawable();
-        whoFocusRing.setCornerRadius(dp(22));
-        whoFocusRing.setColor(Color.TRANSPARENT);
-        whoFocusRing.setStroke(dp(2), Color.WHITE);
-
-        whoBar.setOnFocusChangeListener((v, has) -> {
-            v.setForeground(has ? whoFocusRing : null);
-            v.animate().scaleX(has ? 1.05f : 1f).scaleY(has ? 1.05f : 1f)
-                    .setDuration(180).setInterpolator(MainActivity.LIFT).start();
-        });
-        whoBar.setOnClickListener(v -> {
-            List<Profiles.Profile> ps = Profiles.list(host);
-            if (ps.size() == 2) {
-                String cur = Profiles.current(host).id;
-                String next = ps.get(0).id.equals(cur) ? ps.get(1).id : ps.get(0).id;
-                host.switchProfile(next);
-                refreshWhoBar();
-                        rebuildDock();
-                whoBar.requestFocus();
-            } else {
-                host.showProfilePicker(false);
-            }
-        });
-        whoBar.setOnLongClickListener(v -> {
-            host.showProfilePicker(false);
-            return true;
-        });
-
-        LinearLayout.LayoutParams wlp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        wlp.rightMargin = dp(10);
-        topRightRow.addView(whoBar, wlp);
-        refreshWhoBar();
 
         // Top-right Weather Shortcut Button (icon only; opens 5-day forecast UI like Classic Home)
         int mSize = dp(42);
@@ -315,38 +268,6 @@ final class SceneHome {
         trlp.rightMargin = dp(40) - grow;
         trlp.topMargin = dp(28) - grow;
         overlay.addView(topRightRow, trlp);
-    }
-
-    void refreshWhoBar() {
-        if (whoBar == null) return;
-        whoBar.removeAllViews();
-        List<Profiles.Profile> ps = Profiles.list(host);
-        if (ps.size() <= 1) {
-            whoBar.setVisibility(View.GONE);
-            return;
-        }
-        whoBar.setVisibility(View.VISIBLE);
-        String curId = Profiles.current(host).id;
-        for (Profiles.Profile p : ps) {
-            boolean active = p.id.equals(curId);
-            TextView pill = new TextView(host);
-            Ui.textSize(pill, 11f);
-            pill.setTypeface(Ui.font(host, "semibold"));
-            pill.setText(I18n.profileName(host, p.name));
-            pill.setPadding(dp(13), dp(6), dp(13), dp(6));
-            pill.setSingleLine(true);
-            if (active) {
-                GradientDrawable abg = new GradientDrawable();
-                abg.setCornerRadius(dp(18));
-                abg.setColor(0xF2FFFFFF);
-                pill.setBackground(abg);
-                pill.setTextColor(0xFF111114);
-            } else {
-                pill.setTextColor(0xB8F4F4F6);
-            }
-            whoBar.addView(pill, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        }
     }
 
     void refreshWeatherBtn() {
@@ -1219,7 +1140,7 @@ final class SceneHome {
         View btnHomeSettings = makeGearOptionRow(
                 "sliders",
                 I18n.s(host, "Home settings", "Ana ekran ayarları"),
-                I18n.s(host, "Language, weather, scenes, apps and people",
+                I18n.s(host, "Language, weather, scenes, apps and home-screen options",
                         "Dil, hava durumu, sahneler, uygulamalar ve kişiler"),
                 () -> {
                     closeSheetImmediate();
@@ -1576,35 +1497,10 @@ final class SceneHome {
         }
 
         // Top Bar navigation
-        boolean whoVisible = whoBar != null && whoBar.getVisibility() == View.VISIBLE;
-        boolean wxVisible = weatherBtn != null && weatherBtn.getVisibility() == View.VISIBLE;
-        if (f == whoBar || f == weatherBtn || f == moonBtn) {
-            if (k == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                if (down) {
-                    if (f == whoBar) {
-                        if (wxVisible) weatherBtn.requestFocus();
-                        else moonBtn.requestFocus();
-                    } else if (f == weatherBtn) {
-                        moonBtn.requestFocus();
-                    }
-                }
-                return true;
-            }
-            if (k == KeyEvent.KEYCODE_DPAD_LEFT) {
-                if (down) {
-                    if (f == moonBtn) {
-                        if (wxVisible) weatherBtn.requestFocus();
-                        else if (whoVisible) whoBar.requestFocus();
-                    } else if (f == weatherBtn && whoVisible) {
-                        whoBar.requestFocus();
-                    }
-                }
-                return true;
-            }
-            if (k == KeyEvent.KEYCODE_DPAD_DOWN) {
-                if (down) focusDock(focusedDockIdx);
-                return true;
-            }
+        if (f == weatherBtn || f == moonBtn) {
+            if (k == KeyEvent.KEYCODE_DPAD_RIGHT) { if (down && f == weatherBtn) moonBtn.requestFocus(); return true; }
+            if (k == KeyEvent.KEYCODE_DPAD_LEFT) { if (down && f == moonBtn) weatherBtn.requestFocus(); return true; }
+            if (k == KeyEvent.KEYCODE_DPAD_DOWN) { if (down) focusDock(focusedDockIdx); return true; }
             if (k == KeyEvent.KEYCODE_DPAD_UP) return true;
         }
 
