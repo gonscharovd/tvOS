@@ -444,14 +444,13 @@ public class MainActivity extends Activity {
             avatarView.setImageBitmap(Profiles.avatar(this, Profiles.current(this), avatarSize));
             avatarView.setVisibility(View.GONE);
         }
-        ensureTvListingsPermission(); // retained for the optional volume-key permission repair path
+        LocalAdb.grantVolumeLongPressPermissionIfNeeded(this, null);
         if (Scenes.isScenesLook(this) && sceneHome != null) {
             sceneHome.sceneView.syncSettings();
             sceneHome.sceneView.start();
             sceneHome.refreshWhoBar();
             sceneHome.refreshVpnIndicator();
             sceneHome.refreshMoonBtn();
-            sceneHome.refreshKeepWatching();
             if (wasReturningFromSettings || sceneHome.dockTiles.isEmpty()) {
                 sceneHome.rebuildDock();
             }
@@ -503,29 +502,6 @@ public class MainActivity extends Activity {
             getIntent().removeExtra("panel");
             getIntent().removeExtra("lock_from_external");
             enterLockScreen(ext);
-        }
-    }
-
-    private void ensureTvListingsPermission() {
-        try {
-            if (checkSelfPermission("android.permission.READ_TV_LISTINGS") == PackageManager.PERMISSION_GRANTED) {
-                return;
-            }
-            if (LocalAdb.getAdbMode(this) == LocalAdb.ADB_MODE_PERSISTENT) {
-                LocalAdb.grantVolumeLongPressPermissionIfNeeded(this, () -> {
-                    if (sceneHome != null && Scenes.isScenesLook(this)) {
-                        sceneHome.refreshKeepWatching();
-                    } else {
-                        loadHero();
-                    }
-                });
-                return;
-            }
-            if (SetupActivity.done(this) && cwEnabled() && !prefs.getBoolean("asked_tv_listings_perm", false)) {
-                prefs.edit().putBoolean("asked_tv_listings_perm", true).apply();
-                requestPermissions(new String[]{"android.permission.READ_TV_LISTINGS"}, 901);
-            }
-        } catch (Throwable ignored) {
         }
     }
 
@@ -869,7 +845,6 @@ public class MainActivity extends Activity {
                 sceneHome.sceneView.start();
                 sceneHome.refreshWhoBar();
                 sceneHome.refreshMoonBtn();
-                sceneHome.refreshKeepWatching();
                 sceneHome.rebuildDock();
             } else {
                 sceneHome.sceneView.releaseCache();
@@ -4806,7 +4781,6 @@ public class MainActivity extends Activity {
             search.onMicPermission(results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED);
         } else if (req == 901) {
             if (sceneHome != null && Scenes.isScenesLook(this)) {
-                sceneHome.refreshKeepWatching();
             } else {
                 loadHero();
             }
@@ -5084,7 +5058,6 @@ public class MainActivity extends Activity {
         shelfEntry = null;
         if (Scenes.isScenesLook(this) && sceneHome != null) {
             sceneHome.refreshWhoBar();
-            sceneHome.refreshKeepWatching();
             sceneHome.rebuildDock();
             sceneHome.focusDock(0);
         } else {

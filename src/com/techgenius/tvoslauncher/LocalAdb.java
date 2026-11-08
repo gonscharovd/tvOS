@@ -552,8 +552,6 @@ final class LocalAdb {
             String script = "pm grant " + pkg + " android.permission.WRITE_SECURE_SETTINGS 2>/dev/null; "
                     + "pm grant " + pkg + " android.permission.DUMP 2>/dev/null; "
                     + "pm grant " + pkg + " android.permission.SET_VOLUME_KEY_LONG_PRESS_LISTENER 2>/dev/null; "
-                    + "pm grant " + pkg + " android.permission.READ_TV_LISTINGS 2>/dev/null; "
-                    + "appops set " + pkg + " READ_TV_LISTINGS allow 2>/dev/null; "
                     + "settings put global hidden_api_policy 1 2>/dev/null; "
                     + "settings put global hidden_api_policy_p_apps 1 2>/dev/null; "
                     + "settings put global hidden_api_policy_pre_p_apps 1 2>/dev/null";
@@ -666,8 +664,6 @@ final class LocalAdb {
             String script = "pm grant " + pkg + " android.permission.WRITE_SECURE_SETTINGS 2>/dev/null; "
                     + "pm grant " + pkg + " android.permission.DUMP 2>/dev/null; "
                     + "pm grant " + pkg + " android.permission.SET_VOLUME_KEY_LONG_PRESS_LISTENER 2>/dev/null; "
-                    + "pm grant " + pkg + " android.permission.READ_TV_LISTINGS 2>/dev/null; "
-                    + "appops set " + pkg + " READ_TV_LISTINGS allow 2>/dev/null; "
                     + "settings put global hidden_api_policy 1 2>/dev/null; "
                     + "settings put global hidden_api_policy_p_apps 1 2>/dev/null; "
                     + "settings put global hidden_api_policy_pre_p_apps 1 2>/dev/null; "
@@ -783,12 +779,9 @@ final class LocalAdb {
             String pkg = c.getPackageName();
             List<String> cmds = new ArrayList<>();
 
-            // 0. Grant WRITE_SECURE_SETTINGS, DUMP, SET_VOLUME_KEY_LONG_PRESS_LISTENER, and READ_TV_LISTINGS
             cmds.add("pm grant " + pkg + " android.permission.WRITE_SECURE_SETTINGS 2>/dev/null");
             cmds.add("pm grant " + pkg + " android.permission.DUMP 2>/dev/null");
             cmds.add("pm grant " + pkg + " android.permission.SET_VOLUME_KEY_LONG_PRESS_LISTENER 2>/dev/null");
-            cmds.add("pm grant " + pkg + " android.permission.READ_TV_LISTINGS 2>/dev/null");
-            cmds.add("appops set " + pkg + " READ_TV_LISTINGS allow 2>/dev/null");
             cmds.add("settings put global hidden_api_policy 1 2>/dev/null");
             cmds.add("settings put global hidden_api_policy_p_apps 1 2>/dev/null");
             cmds.add("settings put global hidden_api_policy_pre_p_apps 1 2>/dev/null");
