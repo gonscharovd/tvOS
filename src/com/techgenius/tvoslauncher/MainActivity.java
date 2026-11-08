@@ -263,7 +263,6 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         activeInstance = this;
@@ -301,7 +300,6 @@ public class MainActivity extends Activity {
         LocalAdb.ensureKeepAliveWatchdog(this);
     }
 
-    @Override
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
@@ -364,7 +362,6 @@ public class MainActivity extends Activity {
         if (size.x != screenW || size.y != screenH || Ui.unit(this) != unit) recreate();
     }
 
-    @Override
     @Override
     protected void onResume() {
         super.onResume();
@@ -431,7 +428,6 @@ public class MainActivity extends Activity {
     }
 
     @Override
-    @Override
     protected void onPause() {
         super.onPause();
         resumed = false;
@@ -443,7 +439,6 @@ public class MainActivity extends Activity {
         handler.removeCallbacks(lockIdleRunnable);
     }
 
-    @Override
     @Override
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
@@ -2657,7 +2652,6 @@ public class MainActivity extends Activity {
 
     // ---------------------------------------------------------------- keys
 
-    @Override
     @Override
     public boolean dispatchKeyEvent(KeyEvent ev) {
         if (ambientShowcase) {
