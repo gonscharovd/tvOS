@@ -94,6 +94,6 @@ UI в `CleanYourTv.java` определяет модель/профиль из `
 
 ## 7. Тесты
 
-Python regression tests находятся в [tests/](../../tests/). В workflow включены проверки CleanYourTV, settings cleanup, backup safety, bitmap policy, asset optimizer, font subset, Settings navigation, OTA flow, Russian localization, Control Panel, build contract и Java comparator/I18n/migration tests.
+Python regression tests находятся в [tests/](../../tests/). В workflow включены проверки CleanYourTV, settings cleanup, backup safety, bitmap policy, asset optimizer, font subset, Settings navigation, OTA flow, Russian localization, Control Panel, build contract и Java comparator/I18n tests. Файл `tests/SingleUserMigrationTest.java` присутствует, но текущий `.github/workflows/build-apk.yml` не содержит шага его компиляции/запуска; наличие теста не означает, что он прошёл в CI.
 
-CI подтверждает компиляцию и проверяемые регрессионные условия, но не заменяет тестирование реального D-pad, lifecycle, разрешений, OTA install и производительности на Sber TV.
+CI подтверждает только реально запущенные шаги и не заменяет тестирование реального D-pad, lifecycle, разрешений, OTA install и производительности на Sber TV.
