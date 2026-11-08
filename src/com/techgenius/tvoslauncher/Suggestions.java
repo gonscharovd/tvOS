@@ -49,8 +49,6 @@ final class Suggestions {
         return pkg == null || pkg.isEmpty() ? i : i.setPackage(pkg);
     }
 
-    static String logoFor(Context c, Item item) { return ""; }
-
     static Bitmap image(Context c, String path, String size, int maxWidth) {
         if (path == null || path.isEmpty()) return null;
         if (path.startsWith("file://")) {
