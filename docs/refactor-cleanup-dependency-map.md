@@ -4,7 +4,7 @@
 **Repository:** `gonscharovd/tvOS`  
 **Audited base:** `main` / `a765318b577e66fae66a8ffe28439dcd6233f38f`  
 **Working branch:** `refactor/testos-core-cleanup-2026-11`  
-**Status (2026-11-09):** Classic home UI removal implemented in PR #14; latest CI on head `c08bc91` passed (run #293). Documentation sync is in progress on the PR #15 branch. No OTA release or TV installation.
+**Status (2026-11-09):** Classic home UI removal implemented in PR #14; latest CI on head `c08bc91` passed (run #293). Documentation sync completed on the PR #15 branch; see TOS-003. No OTA release or TV installation.
 
 ## Confirmed baseline
 
