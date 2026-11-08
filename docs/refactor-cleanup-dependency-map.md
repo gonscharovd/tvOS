@@ -1,10 +1,10 @@
 # testOS Launcher — dependency map for core cleanup
 
-**Audit date:** 2026-11-08  
+**Audit date:** 2026-11-09  
 **Repository:** `gonscharovd/tvOS`  
 **Audited base:** `main` / `a765318b577e66fae66a8ffe28439dcd6233f38f`  
 **Working branch:** `refactor/testos-core-cleanup-2026-11`  
-**Status:** dependency mapping only; no application source code changed at this stage.
+**Status:** Classic home UI removal implemented in PR #14; CI validation pending. No OTA release or TV installation.
 
 ## Confirmed baseline
 
@@ -28,47 +28,57 @@
 
 No image asset was confirmed as shelf-exclusive. Do not delete app logos, Search artwork or general image-loading code.
 
-## 2. Classic home UI
+## 2. Classic home UI — implementation status
 
-### Legacy UI to remove
+**Implemented in working branch; CI validation pending.**
 
-`MainActivity.java` currently creates Classic UI in `buildChrome()`, then hides it through `applyLookMode()`. `buildGrid()` still creates the old app grid and synthetic “Other Apps” folder. The old UI includes:
+The current MainActivity.buildChrome() creates SceneHome and its SceneView as the only home experience. The old Classic interface is no longer constructed or toggled.
 
-- Wallpaper / drift: `setWallpaper()`, `makeWallpaper()`, `startWallpaperDrift()`, old wallpaper views, prefetch and blur state.
-- Classic status chrome: old clock / tabs, weather card, refresh / search / Control Panel / avatar buttons, network glyphs.
-- Hero carousel / top shelf and all hero timers, cards and navigation.
-- Legacy grid: `buildGrid()`, `makeCell()`, grid focus / move / scroll, synthetic `FOLDER_KEY`, folder transitions and Classic reorder state.
-- Profile UI: profile picker, profile cells / menu, avatar refresh and switching.
-- Look-mode switches: `applyLookMode()`, `getLook()`, `isScenesLook()`, `setLook()` and all branches / guards.
+### Removed from MainActivity.java
 
-Replace the old root with only the existing Night Scenes `SceneView` and `SceneHome` overlay. Keep `MainActivity.root`: Search, Weather, Control Panel, Recent Apps and other overlays attach to it.
+- applyLookMode() and the old Classic look-mode switching path.
+- Classic app grid: buildGrid(), makeCell(), old grid focus / scrolling / move state, and the synthetic FOLDER_KEY pseudo-folder.
+- Classic wallpaper rendering: setWallpaper(), makeWallpaper(), wallpaper drift, prefetch, wallpaper blur and wallpaper selection state.
+- Hero / Continue Watching carousel, its models, View tree, navigation, animations, timers and permission result handling.
+- Old Classic status chrome: clock/tabs, network glyphs, refresh/search/Control Center buttons and the old weather card.
+- Old carousel idle / full-screen transition logic and obsolete focus-sway / tile-grid handlers.
 
-### Night Scenes and shared components to preserve
+The first source commit removed 1,873 lines from MainActivity.java (4,522 → 2,649 lines). The old finishLaunchReturn() tile/grid animation path was also removed because no active caller remained; current app launch still uses launchAnimated() and the Android activity transition, while SceneHome keeps its own dock focus and move animations.
 
-- `SceneHome.java`: `SceneView`, top bar, dock, `rebuildDock()`, `toggleMoreApps()`, app menus and dock reordering. Remove only shelf and profile pill.
-- `MainActivity.java`: `AppEntry`, `loadApps()`, `saveOrder()`, `setOtherApp()`, `setHidden()`, package receiver, app launch methods and `LiquidGlass`.
-- Keep `launchAnimated()`, `finishLaunchReturn()`, `launchBackground()`, `noteLaunched()`, glass source / invalidation and generic layout helpers.
-- `SearchPanel.java` and `RecentAppsOverlay.java` still use app banners / artwork. Preserve `AppEntry.banner` and the app-banner generator (rename the misleading Classic-named helper).
-- `Suggestions.image()` is still used by SearchPanel. Keep.
-- `MainActivity.makeWallpaperBase()` is used by Setup / Settings scene previews. Keep or move to a shared scene utility.
-- `Scenes.CLASSIC_PHOTOS` and `CLASSIC_GRADIENTS` are still used by Night Scenes gallery and lock-screen scene list. Keep these definitions and their assets.
-- Keep generic `CustomMedia` scene / lock wallpaper and folder APIs.
+### Preserved Night Scenes and shared functionality
+
+- SceneHome.java remains the owner of the dock, MORE_KEY / moreExpanded, DPAD focus and navigation, app menus, dock reordering and Other Apps.
+- MainActivity.java keeps AppEntry, loadApps(), order / hidden / Other Apps persistence, package receiver, app launch, Search / Weather / Control Center / Recent Apps overlays, LiquidGlass, glassBg / glassSource, and the root container.
+- dispatchKeyEvent() continues to delegate home navigation to SceneHome.dispatchKey(). Search and overlay key handling remain in MainActivity.
+- weatherTick still refreshes Weather, performs the 15-minute AirPlayGuard check, repairs Local ADB permissions and checks connectivity recovery. The removed network glyph was UI-only.
+- MainActivity.makeWallpaperBase() remains because Setup and Settings use it for scene / gradient previews.
+- CustomMedia.buildAppBannerFromCustomIcon() is the neutral name for the shared app-banner generator used by Search and Recent Apps.
+- Suggestions.image() and Suggestions.start() remain. The obsolete Suggestions.Item, open() and logoFor() Hero-only API has been removed.
+- Scenes.CLASSIC_PHOTOS, CLASSIC_GRADIENTS, the underlying assets, and Scenes.migrateClassicBackgroundsToNightGallery() / migrateClassicCustomAssets() remain. They are legacy data and image sources, not a Classic home UI.
+- CustomMedia legacy Classic wallpaper / folder readers remain for idempotent migration; old files and keys are not deleted.
+- Lock-screen photo and gradient choices remain available in Settings; their category is now PHOTOS & GRADIENTS. The unused classicPhotoRow() helper is removed.
+- SetupActivity.lookSubStep and its obsolete Classic appearance back-navigation branch are removed.
 
 ### “Folders” clarification
 
-The audited source has no separate user-created folder model. `FOLDER_KEY` is a synthetic Classic-grid “Other Apps” tile. Active Night Scenes uses `MORE_KEY` / `moreExpanded`, backed by `PREF_OTHER`. Preserve More Apps, app order (`PREF_ORDER`), hidden-app state (`PREF_HIDDEN`) and all current app menus. Remove only the obsolete Classic pseudo-folder / grid navigation.
+There is no user-created folder model in this flow. FOLDER_KEY represented only the old Classic-grid “Other Apps” tile. Active Night Scenes continues to use MORE_KEY / moreExpanded, backed by PREF_OTHER. App order (PREF_ORDER), hidden state (PREF_HIDDEN) and app menus are preserved. SearchPanel no longer filters the removed synthetic key.
 
-### Classic custom wallpaper migration
+### Migration and rollback safety
 
-`CustomMedia.java` still stores `custom_classic_wallpaper.jpg` and Classic folder-shuffle scope `classic`. Settings helpers `pickCustomClassicWallpaper()`, `customClassicPhotoRow()`, `pickFolderForClassicShuffle()`, `folderShuffleClassicRow()` and `classicPhotoRow()` have no active callers.
+The existing migration remains unchanged and idempotent:
+1. Copy a legacy Classic custom wallpaper into the Night Scenes custom-scene slot only if that slot is absent; preserve timestamp.
+2. Copy the legacy Classic folder path into Scene folder-shuffle scope only if the Scene scope is empty.
+3. Add migrated scenes to the enabled set. Apply an old preferred wallpaper only when no newer preference exists.
+4. Leave old files and keys untouched for rollback.
 
-Before removing those APIs:
-1. Copy an existing Classic custom wallpaper to the Night Scenes custom-scene slot only if the new slot is absent; preserve timestamp.
-2. Copy the legacy Classic folder path to Scene folder-shuffle scope only if Scene scope is empty.
-3. Add migrated scenes to the enabled set. If the old wallpaper preference selected one, set the Night Scenes preferred scene only if no newer preference exists.
-4. Make migration idempotent; leave old files / keys untouched for rollback.
-5. Keep lock-screen photo / gradient choices; rename “CLASSIC WALLPAPERS” to a neutral photos-and-gradients label.
+### Verification status
 
+- Static scan of the edited MainActivity.java: no remaining references to removed grid, Hero, Classic wallpaper or old status-row symbols.
+- AndroidManifest.xml at the current PR base has no READ_TV_LISTINGS / READ_EPG_DATA declarations; no manifest change was needed for this stage.
+- Regression tests updated: tests/test_memory_settings_cleanup.py and tests/test_settings_navigation.py.
+- **Pending:** run the PR CI suite and inspect the APK build. No runtime test on the TV has been performed. No merge, OTA release or APK installation is authorized by this task.
+
+---
 ## 3. Profiles → one user
 
 ### Current behavior
