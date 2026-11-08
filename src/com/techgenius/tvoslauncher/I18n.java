@@ -23,6 +23,7 @@ public final class I18n {
         add("Top shelf, 6-column app grid and custom wallpapers", "Верхняя полка, сетка приложений на 6 столбцов и собственные обои");
         add("Included in rotation", "Включено в ротацию");
         add("Classic photo", "Классическая фотография");
+        add("PHOTOS & GRADIENTS", "ФОТО И ГРАДИЕНТЫ");
         add("Classic look", "Классический вид");
         add("Your Home Screen", "Ваш главный экран");
         add("What appears at the top of Home, behind your apps. Choose any, all or none.", "То, что отображается в верхней части главного экрана за приложениями. Выберите любой вариант, все или ни одного.");
