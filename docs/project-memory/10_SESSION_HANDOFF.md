@@ -1,9 +1,9 @@
 # Session handoff — testOS
 
-**Последнее обновление:** 2026-11-09 02:05 +05:00  
+**Последнее обновление:** 2026-11-09 02:10 +05:00  
 **Проект:** `gonscharovd/tvOS`  
 **Кодовая точка:** PR #14, `refactor/testos-core-cleanup-2026-11`, commit `c08bc91e06b7fa66f6bd185e3ab5633033884c33`  
-**Документационная точка:** PR #15, `docs/project-memory-2026-11`, commit `abdda24f2742a8bf4d0587c1667d8ff541995fd0`
+**Документационная точка:** PR #15, `docs/project-memory-2026-11` (проверять актуальный branch HEAD в GitHub; этот handoff входит в тот же PR)
 
 ## Контекст
 
@@ -40,7 +40,7 @@
 - `main`: `a765318b577e66fae66a8ffe28439dcd6233f38f`.
 - PR #14: Open / Draft, base main, head `c08bc91e06b7fa66f6bd185e3ab5633033884c33`.
 - PR #14 latest CI: run #293 / ID `42517077387`, success.
-- PR #15: Open / Draft, base `refactor/testos-core-cleanup-2026-11`, head `abdda24f2742a8bf4d0587c1667d8ff541995fd0`.
+- PR #15: Open / Draft, base `refactor/testos-core-cleanup-2026-11`; актуальный head проверяется в GitHub перед продолжением.
 - PR #15 содержит 18 Markdown-файлов (11 новых project-memory + 7 обновлённых docs), 879 additions / 148 deletions.
 - PR #15 не имеет отдельного CI run, так как workflow PR trigger настроен на base `main`; PR #15 направлен в feature branch.
 - Stable release: v2.1.73 / versionCode 88.
