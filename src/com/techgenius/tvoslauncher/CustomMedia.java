@@ -703,8 +703,8 @@ public final class CustomMedia {
         if (f.exists()) f.delete();
     }
 
-    /** Creates a 360x216 banner Bitmap for Classic mode from a custom app icon bitmap. */
-    public static Bitmap buildClassicBannerFromCustomIcon(Bitmap rawIcon, int fallbackColor) {
+    /** Creates a 360x216 app banner Bitmap from a custom app icon bitmap. */
+    public static Bitmap buildAppBannerFromCustomIcon(Bitmap rawIcon, int fallbackColor) {
         Bitmap icon = trimTransparentPadding(rawIcon);
         int w = 360, h = 216;
         Bitmap out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
