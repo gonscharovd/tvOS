@@ -25,9 +25,20 @@ assert "pkgWatchCache" not in scene
 assert "shelfBox" not in scene and "hideShelf" not in scene
 assert "refreshKeepWatching" not in scene and "onDockTileFocusForShelf" not in scene
 
-assert "if (heroIndex != want || heroItems.isEmpty()) {" in main
-assert "bdBlur.recycle()" in main
-assert "logo.recycle()" in main
+# Classic grid, wallpaper and Hero Carousel are gone from MainActivity.
+for removed in ("cwEnabled(", "loadHero(", "heroKeys(", "heroItems", "Suggestions.Item",
+                "buildGrid(", "makeCell(", "applyLookMode(", "setWallpaper("):
+    assert removed not in main, f"Retired Classic home UI remains: {removed}"
+# Night Scenes still owns the shared backdrop and the service lifecycle.
+assert "Bitmap glassBg;" in main and "glassSource" in main
+assert "makeWallpaperBase(" in main
+assert "sceneHome.dispatchKey(ev)" in main
+assert "Weather.refresh(MainActivity.this, false" in main
+assert "AirPlayGuard.check(MainActivity.this, false)" in main
+assert "LocalAdb.checkAndRepairPermissionsIfNeeded(MainActivity.this, false)" in main
+assert "buildAppBannerFromCustomIcon" in main
+assert "buildClassicBannerFromCustomIcon" not in main
+assert "FOLDER_KEY" not in main
 
 assert 'row(tr("Pair / Repair ADB connection"' not in settings
 assert 'row(tr("Disabled apps backup"' not in settings
