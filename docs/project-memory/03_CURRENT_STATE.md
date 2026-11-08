@@ -39,7 +39,7 @@ PR остаётся Draft и не merged. Код PR не считается ча
 
 - Последняя проверка PR head: [run #293](https://github.com/gonscharovd/tvOS/actions/runs/42517077387), run ID `42517077387`, commit `c08bc91...`, conclusion `success`.
 - Ранее run #284 завершился failure на более раннем промежуточном commit; ошибка была исправлена последующими коммитами. Последующая проверка #293 успешна.
-- CI выполняет Python regression tests, Java tests, сборку APK, apksigner verification и artifact upload.
+- CI выполняет Python regression tests, Java comparator/I18n tests, сборку APK, apksigner verification и artifact upload. Отдельный `SingleUserMigrationTest.java` существует, но текущий workflow его не запускает (DEBT-008).
 - Последний CI preview использует debug signing key runner. Это не подтверждение совпадения сертификата с установленным на ТВ release APK.
 - Сборка на пользовательском ПК и runtime-проверка последнего PR APK на телевизоре в этой сессии не выполнялись.
 
