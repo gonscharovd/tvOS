@@ -43,7 +43,7 @@ The current MainActivity.buildChrome() creates SceneHome and its SceneView as th
 - Old Classic status chrome: clock/tabs, network glyphs, refresh/search/Control Center buttons and the old weather card.
 - Old carousel idle / full-screen transition logic and obsolete focus-sway / tile-grid handlers.
 
-The first source commit removed 1,873 lines from MainActivity.java (4,522 → 2,649 lines). The old finishLaunchReturn() tile/grid animation path was also removed because no active caller remained; current app launch still uses launchAnimated() and the Android activity transition, while SceneHome keeps its own dock focus and move animations.
+The completed cleanup removed 2,101 lines from MainActivity.java (4,522 → 2,421 lines). The unused LaunchCard / launchBackground tile-to-full-screen animation and its helpers were removed because no active caller remained; current app launch still uses launchAnimated() and the Android activity transition, while SceneHome keeps its own dock focus and move animations.
 
 ### Preserved Night Scenes and shared functionality
 
@@ -53,7 +53,7 @@ The first source commit removed 1,873 lines from MainActivity.java (4,522 → 2,
 - weatherTick still refreshes Weather, performs the 15-minute AirPlayGuard check, repairs Local ADB permissions and checks connectivity recovery. The removed network glyph was UI-only.
 - MainActivity.makeWallpaperBase() remains because Setup and Settings use it for scene / gradient previews.
 - CustomMedia.buildAppBannerFromCustomIcon() is the neutral name for the shared app-banner generator used by Search and Recent Apps.
-- Suggestions.image() and Suggestions.start() remain. The obsolete Suggestions.Item, open() and logoFor() Hero-only API has been removed.
+- Suggestions.image() and Suggestions.start() remain. The obsolete Suggestions.Item, open() and logoFor() Hero-only API has been removed. The unused profile avatar helper and stale Classic / Hero comments were also removed from MainActivity.
 - Scenes.CLASSIC_PHOTOS, CLASSIC_GRADIENTS, the underlying assets, and Scenes.migrateClassicBackgroundsToNightGallery() / migrateClassicCustomAssets() remain. They are legacy data and image sources, not a Classic home UI.
 - CustomMedia legacy Classic wallpaper / folder readers remain for idempotent migration; old files and keys are not deleted.
 - Lock-screen photo and gradient choices remain available in Settings; their category is now PHOTOS & GRADIENTS. The unused classicPhotoRow() helper is removed.
@@ -75,7 +75,7 @@ The existing migration remains unchanged and idempotent:
 
 - Static scan of the edited MainActivity.java: no remaining references to removed grid, Hero, Classic wallpaper or old status-row symbols.
 - AndroidManifest.xml at the current PR base has no READ_TV_LISTINGS / READ_EPG_DATA declarations; no manifest change was needed for this stage.
-- Regression tests updated: tests/test_memory_settings_cleanup.py and tests/test_settings_navigation.py.
+- Regression tests updated: tests/test_memory_settings_cleanup.py and tests/test_settings_navigation.py. I18n.java now contains the Russian translation for the neutral lock-screen gallery label.
 - **Pending:** run the PR CI suite and inspect the APK build. No runtime test on the TV has been performed. No merge, OTA release or APK installation is authorized by this task.
 
 ---
