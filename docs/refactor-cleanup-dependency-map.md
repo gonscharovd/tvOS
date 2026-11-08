@@ -76,7 +76,11 @@ The existing migration remains unchanged and idempotent:
 - Static scan of the edited MainActivity.java: no remaining references to removed grid, Hero, Classic wallpaper or old status-row symbols.
 - AndroidManifest.xml at the current PR base has no READ_TV_LISTINGS / READ_EPG_DATA declarations; no manifest change was needed for this stage.
 - Regression tests updated: tests/test_memory_settings_cleanup.py and tests/test_settings_navigation.py. I18n.java now contains the Russian translation for the neutral lock-screen gallery label.
-- **Pending:** run the PR CI suite and inspect the APK build. No runtime test on the TV has been performed. No merge, OTA release or APK installation is authorized by this task.
+- **CI passed:** run 42516960707 on commit 2f2b693c81e74dc9ed71d33b3dc121f10b383cbe. All Python / Java regression steps passed; build.sh compiled the APK; apksigner verified APK Signature Scheme v2 and v3; artifact upload succeeded.
+- Artifact: testOS-ci-debug, ID 13631916994, 6,039,282 bytes. APK package com.gonscharovd.tvoslauncher, versionCode 15, versionName 2.1.2-testOS1, minSdk 24, targetSdk 34.
+- The CI runner generated a temporary debug keystore (CN=testOS debug). Its certificate has not been compared with the installed TV launcher. Do not install this artifact over the TV app.
+- One earlier CI attempt failed on a Java forward reference for glassBg and a missing shared backdropSharp() helper. Both were corrected in commit 7767f32fa12b4f3efda4f73fe8ffb6ecb2d18065; the later full CI run passed.
+- No runtime test on the TV has been performed. PR #14 remains Open / Draft. No merge, OTA release or APK installation is authorized by this task.
 
 ---
 ## 3. Profiles → one user
