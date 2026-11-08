@@ -13,6 +13,7 @@
 | TOS-005 | Проверить HOME Activity component command по итоговому APK manifest и обновить install docs | P2 | READY | TOS-003 |
 | TOS-006 | Выполнить runtime regression на Sber SDX-50U4123B для PR #14 | P1 | BLOCKED | Нужен тест на телевизоре и release-compatible APK |
 | TOS-007 | Подтвердить сертификат установленного APK и OTA in-place update после PR #14 | P1 | BLOCKED | TOS-006, release signing |
+| TOS-008 | Подключить SingleUserMigrationTest.java к CI workflow | P2 | READY | TOS-001 |
 
 ## Детализация
 
