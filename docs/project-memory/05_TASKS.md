@@ -6,14 +6,14 @@
 
 | ID | Задача | Приоритет | Статус | Зависимости |
 |---|---|---:|---|---|
-| TOS-001 | Review core cleanup в PR #14: Night Scenes only, удаление Classic UI/старых профилей, миграция настроек | P1 | REVIEW | CI #321 success; migration JVM test included; требуется review и runtime validation |
+| TOS-001 | Review core cleanup в PR #14: Night Scenes only, удаление Classic UI/старых профилей, миграция настроек | P1 | REVIEW | CI #322 success; migration JVM test included; требуется review и runtime validation |
 | TOS-002 | Унифицировать build version defaults для build.sh/build.ps1/CI через единый источник | P1 | REVIEW | Реализовано в PR #14; CI #313 success, ожидает review вместе с PR |
 | TOS-003 | Синхронизировать README/features/architecture/install с поведением PR #14 | P1 | REVIEW | TOS-001; изменения внесены в PR #15, ожидают review |
 | TOS-004 | Удалить hard-coded путь JDK пользователя из build.ps1 и проверить Windows build | P2 | REVIEW | Реализовано; CI #317 Linux/Windows success; ожидает review PR #14 |
 | TOS-005 | Проверить HOME Activity component command по итоговому APK manifest и обновить install docs | P2 | BLOCKED | APK manifest подтверждён и docs обновлены; остаётся проверка PackageManager на ТВ |
 | TOS-006 | Выполнить runtime regression на Sber SDX-50U4123B для PR #14 | P1 | BLOCKED | Нужен тест на телевизоре и release-compatible APK |
 | TOS-007 | Подтвердить сертификат установленного APK и OTA in-place update после PR #14 | P1 | BLOCKED | TOS-006, release signing |
-| TOS-008 | Подключить SingleUserMigrationTest.java к CI workflow | P2 | REVIEW | TOS-001; Linux/Windows CI #321 success |
+| TOS-008 | Подключить SingleUserMigrationTest.java к CI workflow | P2 | REVIEW | TOS-001; Linux/Windows CI #322 success |
 
 ## Детализация
 
