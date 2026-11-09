@@ -13,6 +13,7 @@
 - Android SDK platform: android-34; build-tools: 34.0.0.
 - Сборка без Gradle и без Android Studio: `aapt2` → `javac` → `d8` → упаковка DEX/assets → `zipalign` → `apksigner`.
 - Скрипты: [build.sh](../../build.sh), [build.ps1](../../build.ps1).
+- Windows JDK discovery: `build.ps1` вызывает [tools/java.ps1](../../tools/java.ps1), который предпочитает валидный `JAVA_HOME` и при его отсутствии разрешает `javac`, `java`, `keytool` через `PATH`; machine-specific JDK paths запрещены.
 - Единый источник версии: [version.properties](../../version.properties); development defaults — `2.1.74` / versionCode `89`, release base — `15`, release prefix — `2.1.`.
 - Оба build script читают общий файл; `VERSION_CODE` и `VERSION_NAME` из environment имеют приоритет над defaults. PowerShell использует общий parser `tools/version.ps1`.
 - Общий выходной файл: `build/tvos-home.apk`.
