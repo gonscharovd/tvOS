@@ -14,7 +14,7 @@
 - Повторно прочитаны project memory и проверены GitHub branches, PR #14/#15, main и Actions.
 - `main` = `a765318b577e66fae66a8ffe28439dcd6233f38f`, без изменений.
 - PR #14 head = `84629601682518f0f70651a8d2a85330d7d20aad`, Open / Draft, base main.
-- PR #15 остаётся Open / Draft, base — PR #14 branch.
+- PR #15 остаётся Open / Draft, base ref — PR #14 branch. В GitHub API base SHA пока отображается старым `fa91b183...`, несмотря на актуальный base ref; проверить синхронизацию PR #15 перед merge.
 - Изучены `SingleUserMigration.java`, `SingleUserPrefs.java`, `tests/SingleUserMigrationTest.java`.
 - `SingleUserMigration` — pure-Java helper без Android API; существующий test — standalone `main`. Поэтому подключение не требует Android SDK stubs, Robolectric или instrumentation.
 - В `.github/workflows/build-apk.yml` добавлены независимые compile/run steps в Ubuntu и Windows jobs: `javac --release 11` + `java`.
