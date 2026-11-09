@@ -4,8 +4,8 @@
 - Добавлены compile/run steps через `javac --release 11` и `java` в Linux и Windows jobs workflow.
 - Добавлен `tests/test_single_user_migration_contract.py`: проверяет wiring обоих jobs, запуск test main, наличие legacy preservation/source immutability assertions.
 - Production migration code не менялся; миграция не запускалась на пользовательских данных; legacy files/preferences не удалялись.
-- CI [run #321](https://github.com/gonscharovd/tvOS/actions/runs/42607148094) прошёл полностью на Ubuntu/Linux и Windows, включая APK build, package/version/signature checks и artifact upload.
-- PR #14 обновлён; main, OTA и устройство не затрагивались.
+- CI [run #322](https://github.com/gonscharovd/tvOS/actions/runs/42607667504) прошёл полностью на Ubuntu/Linux и Windows, включая APK build, package/version/signature checks и artifact upload.
+- Промежуточные CI #319/#320 выявили неверное расположение шагов в workflow; размещение исправлено, финальный run #322 зелёный. PR #14 обновлён; main, OTA и устройство не затрагивались.
 
 ## 2026-11-09 — portable JDK discovery (TOS-004)
 
