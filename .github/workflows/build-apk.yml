@@ -49,16 +49,6 @@ jobs:
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
 
-      - name: Test single-user migration data
-        shell: pwsh
-        run: |
-          $testDir = Join-Path $env:RUNNER_TEMP "tvos-single-user-migration"
-          New-Item -ItemType Directory -Force -Path $testDir | Out-Null
-          & javac --release 11 -d $testDir src/com/techgenius/tvoslauncher/SingleUserMigration.java tests/SingleUserMigrationTest.java
-          if ($LASTEXITCODE -ne 0) { throw "Single-user migration test compilation failed" }
-          & java -cp $testDir com.techgenius.tvoslauncher.SingleUserMigrationTest
-          if ($LASTEXITCODE -ne 0) { throw "Single-user migration data test failed" }
-
       - name: Load shared build version defaults
         shell: bash
         run: |
@@ -114,6 +104,16 @@ jobs:
           mkdir -p /tmp/tvos-i18n-tests
           javac --release 11 -cp "$ANDROID_HOME/platforms/android-34/android.jar" -d /tmp/tvos-i18n-tests src/com/techgenius/tvoslauncher/I18n.java tests/i18n_stubs/com/techgenius/tvoslauncher/Scenes.java tests/I18nDynamicTranslationTest.java
           java -cp "/tmp/tvos-i18n-tests:$ANDROID_HOME/platforms/android-34/android.jar" com.techgenius.tvoslauncher.I18nDynamicTranslationTest
+
+      - name: Test single-user migration data
+        shell: pwsh
+        run: |
+          $testDir = Join-Path $env:RUNNER_TEMP "tvos-single-user-migration"
+          New-Item -ItemType Directory -Force -Path $testDir | Out-Null
+          & javac --release 11 -d $testDir src/com/techgenius/tvoslauncher/SingleUserMigration.java tests/SingleUserMigrationTest.java
+          if ($LASTEXITCODE -ne 0) { throw "Single-user migration test compilation failed" }
+          & java -cp $testDir com.techgenius.tvoslauncher.SingleUserMigrationTest
+          if ($LASTEXITCODE -ne 0) { throw "Single-user migration data test failed" }
 
       - name: Test single-user migration CI contract
         shell: pwsh
