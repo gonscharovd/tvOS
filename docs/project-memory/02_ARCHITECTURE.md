@@ -97,6 +97,6 @@ UI в `CleanYourTv.java` определяет модель/профиль из `
 
 ## 7. Тесты
 
-Python regression tests находятся в [tests/](../../tests/). В workflow включены проверки CleanYourTV, settings cleanup, backup safety, bitmap policy, asset optimizer, font subset, Settings navigation, OTA flow, Russian localization, Control Panel, build contract и Java comparator/I18n tests. `tests/SingleUserMigrationTest.java` компилируется и запускается в обоих jobs `.github/workflows/build-apk.yml`; CI run #321 прошёл на Linux и Windows. Тест проверяет pure-Java migration helper, а не Android SharedPreferences adapter/runtime на телевизоре.
+Python regression tests находятся в [tests/](../../tests/). В workflow включены проверки CleanYourTV, settings cleanup, backup safety, bitmap policy, asset optimizer, font subset, Settings navigation, OTA flow, Russian localization, Control Panel, build contract и Java comparator/I18n tests. `tests/SingleUserMigrationTest.java` компилируется и запускается в обоих jobs `.github/workflows/build-apk.yml`; CI run #322 прошёл на Linux и Windows. Тест проверяет pure-Java migration helper, а не Android SharedPreferences adapter/runtime на телевизоре.
 
 CI подтверждает только реально запущенные шаги и не заменяет тестирование реального D-pad, lifecycle, разрешений, OTA install и производительности на Sber TV.
