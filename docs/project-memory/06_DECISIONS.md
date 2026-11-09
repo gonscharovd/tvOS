@@ -74,3 +74,11 @@
 - **Причина:** исключить drift между Linux/Windows scripts и CI, сохранив исторический OTA numbering contract.
 - **Последствия:** при смене development defaults или release series изменять общий файл и соответствующие regression tests; не дублировать constants в build scripts/workflows.
 - **Статус:** реализовано и проверено Linux/Windows CI в PR #14; ожидает review.
+
+## DEC-010 — Portable JDK discovery for Windows builds
+- **Дата:** 2026-11-09, TOS-004
+- **Решение:** не хранить путь к JDK конкретного пользователя в `build.ps1`. Использовать валидный `JAVA_HOME` как приоритетный источник; если он не задан, искать `javac`, `java` и `keytool` в `PATH`.
+- **Причина:** скрипт должен работать на чистом Windows runner и на машинах других разработчиков без ручной правки репозитория.
+- **Поведение ошибки:** если `JAVA_HOME` задан, но его `bin` не содержит необходимые JDK tools, сборка останавливается с понятной диагностикой; автоматический переход на другой JDK не маскирует неверную конфигурацию.
+- **Проверка:** PowerShell regression tests на Ubuntu/Linux и Windows проверяют JAVA_HOME, PATH fallback и invalid JAVA_HOME; полный Windows build прошёл в CI #317.
+- **Статус:** реализовано в PR #14, ожидает review; main не изменён.
