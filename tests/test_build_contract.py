@@ -55,7 +55,7 @@ bash_probe = subprocess.run(
 assert bash_probe.stdout.strip() == "123|2.1.123-test"
 
 # Verify PowerShell delegates parsing to a testable helper and keeps env overrides.
-assert 'tools\\\\version.ps1' in build_ps or 'tools\\version.ps1' in build_ps
+assert 'tools/version.ps1' in build_ps
 assert "Get-TestOSBuildVersion" in build_ps
 assert "DEFAULT_VERSION_CODE" in ps_helper and "DEFAULT_VERSION_NAME" in ps_helper
 assert "$env:VERSION_CODE" in ps_helper and "$env:VERSION_NAME" in ps_helper
@@ -74,11 +74,11 @@ assert int(version["RELEASE_VERSION_CODE_BASE"]) + 73 == 88
 assert int(version["RELEASE_VERSION_CODE_BASE"]) + 74 == 89
 
 # Preserve output, asset and signing contracts.
-assert 'build\\\\tvos-home.apk' in build_ps or 'build\\tvos-home.apk' in build_ps
+assert r'build\\tvos-home.apk' in build_ps
 assert "build/tvos-home.apk" in build_sh
 assert "build/testOS.apk" not in build_sh
 assert "tools/prepare_assets.py" in build_ps and "tools/prepare_assets.py" in build_sh
-assert "build\\\\assets" in build_ps or "build\\assets" in build_ps
+assert r"build\\assets" in build_ps
 assert "-A build/assets" in build_sh
 assert "ASSET_OPTIMIZE" in build_ps and "ASSET_OPTIMIZE" in build_sh
 assert "ASSET_PROFILE" in build_ps and "ASSET_PROFILE" in build_sh
