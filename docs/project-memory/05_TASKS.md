@@ -77,6 +77,6 @@
 - **Аудит:** `SingleUserMigration.migrate` — чистая Java-функция без Android-зависимостей; `SingleUserMigrationTest.java` — standalone `main` test, поэтому не требуются Android SDK stubs, Robolectric или instrumentation.
 - **Изменения:** `.github/workflows/build-apk.yml` запускает compile/run `SingleUserMigration.java` + `SingleUserMigrationTest.java` через `javac --release 11` и `java` отдельно в Ubuntu и Windows jobs. Добавлен `tests/test_single_user_migration_contract.py`, проверяющий оба CI wiring и сохранность проверок legacy prefs/source immutability.
 - **Границы:** production `SingleUserMigration.java` и `SingleUserPrefs.java` не менялись; миграция не запускалась против пользовательского хранилища, legacy данные не удалялись.
-- **CI:** [run #321](https://github.com/gonscharovd/tvOS/actions/runs/42607148094) — success на обоих runners, включая тест и сборку APK.
+- **CI:** [run #322](https://github.com/gonscharovd/tvOS/actions/runs/42607667504) — success на обоих runners, включая тест и сборку APK.
 - **Статус:** REVIEW — implementation и CI validation завершены, ожидает review PR #14.
 - **Связанные файлы:** `.github/workflows/build-apk.yml`, `tests/SingleUserMigrationTest.java`, `tests/test_single_user_migration_contract.py`, `src/com/techgenius/tvoslauncher/SingleUserMigration.java`.
