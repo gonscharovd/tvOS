@@ -11,13 +11,15 @@
 1. Провести review изменений core cleanup и документационного PR.
 2. Синхронизировать пользовательскую документацию с фактическим кодом PR — **выполнено в Draft PR #15, ожидает review**.
 3. Устранить расхождения build version defaults и тестов контракта сборки (TOS-002) — реализация и Linux/Windows CI validation завершены в PR #14; ожидается review.
-4. Выполнить доступные регрессионные тесты на Sber TV (TOS-006).
+4. До установки PR build закрыть TOS-009: first-launch cleanup/legacy data retention и rollback.
+5. Выполнить runtime regression на Sber TV (TOS-006) только после read-only inventory и certificate gate.
 5. После review и одобрения Product Owner решить вопрос о merge. Не выполнять merge автоматически.
 
 ## Следующий технический этап
 
 - Удаление hard-coded локального пути JDK из build.ps1 (TOS-004) — реализовано и проверено Linux/Windows CI #317; ожидает review PR #14.
-- Подключение pure-Java SingleUserMigrationTest к Linux/Windows CI (TOS-008) — реализовано, полный CI #321 success; ожидает review PR #14.
+- Подключение pure-Java SingleUserMigrationTest к Linux/Windows CI (TOS-008) — реализовано, полный CI #322 success; ожидает review PR #14.
+- TOS-009 — обезопасить first-launch legacy cleanup до runtime migration; prerequisite для TOS-006.
 - Проверка install/launcher component command по итоговому APK manifest.
 - Проверка package ID, version metadata и release certificate перед OTA.
 - Обновление README, docs/features, docs/architecture, docs/install и dependency map.
@@ -25,6 +27,8 @@
 В dependency map указан target следующего development build: testOS 2.1.74 / versionCode 89. Это плановая цель ветки, не опубликованный релиз и не подтверждённая текущая версия.
 
 ## Проверка на целевом устройстве
+
+**Gate:** не устанавливать PR #14 до TOS-009 и до доказанного совпадения release certificate. CI preview debug APK запрещён для in-place update.
 
 После успешного CI и до релиза выполнить тест-план на Sber SDX-50U4123B:
 - HOME, D-pad, Back, More Apps, reorder/hide/launch.
