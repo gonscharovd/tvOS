@@ -74,11 +74,11 @@ assert int(version["RELEASE_VERSION_CODE_BASE"]) + 73 == 88
 assert int(version["RELEASE_VERSION_CODE_BASE"]) + 74 == 89
 
 # Preserve output, asset and signing contracts.
-assert r'build\\tvos-home.apk' in build_ps
+assert "build" + chr(92) + "tvos-home.apk" in build_ps
 assert "build/tvos-home.apk" in build_sh
 assert "build/testOS.apk" not in build_sh
 assert "tools/prepare_assets.py" in build_ps and "tools/prepare_assets.py" in build_sh
-assert r"build\\assets" in build_ps
+assert "build" + chr(92) + "assets" in build_ps
 assert "-A build/assets" in build_sh
 assert "ASSET_OPTIMIZE" in build_ps and "ASSET_OPTIMIZE" in build_sh
 assert "ASSET_PROFILE" in build_ps and "ASSET_PROFILE" in build_sh
