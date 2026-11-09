@@ -13,6 +13,8 @@
 - Android SDK platform: android-34; build-tools: 34.0.0.
 - Сборка без Gradle и без Android Studio: `aapt2` → `javac` → `d8` → упаковка DEX/assets → `zipalign` → `apksigner`.
 - Скрипты: [build.sh](../../build.sh), [build.ps1](../../build.ps1).
+- Единый источник версии: [version.properties](../../version.properties); development defaults — `2.1.74` / versionCode `89`, release base — `15`, release prefix — `2.1.`.
+- Оба build script читают общий файл; `VERSION_CODE` и `VERSION_NAME` из environment имеют приоритет над defaults. PowerShell использует общий parser `tools/version.ps1`.
 - Общий выходной файл: `build/tvos-home.apk`.
 - Встроенные ресурсы компилируются из [res/](../../res/), исходники — из [src/](../../src/).
 
@@ -86,9 +88,9 @@ UI в `CleanYourTv.java` определяет модель/профиль из `
 
 ## 6. CI/CD
 
-- [build-apk.yml](../../.github/workflows/build-apk.yml): PR/build workflow, Python regression tests, Java tests, APK build, signature verification и artifact upload.
+- [build-apk.yml](../../.github/workflows/build-apk.yml): Linux и Windows build jobs, Python/PowerShell build-contract tests, Java tests, APK build, package/version/signature verification и artifact upload.
 - [release.yml](../../.github/workflows/release.yml): release branch workflow, release signing через GitHub Secrets, версия из `release/2.1.PATCH`, GitHub Release/OTA asset.
-- Release version code по текущему правилу: `15 + PATCH`; v2.1.73 → 88.
+- Release version code по текущему правилу: `RELEASE_VERSION_CODE_BASE + PATCH`; база `15` берётся из `version.properties`, поэтому v2.1.73 → 88 и v2.1.74 → 89.
 - Build workflow не использует persistent release keystore; он собирает preview APK с debug key runner. Такой artifact не следует устанавливать поверх release-signed приложения без проверки сертификата.
 - Секреты release signing существуют как имена переменных/Secrets в workflow; их значения не читаются и не должны попадать в документацию.
 
