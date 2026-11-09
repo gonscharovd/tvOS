@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
 # Load the same version.properties contract as build.sh.
-. (Join-Path $PSScriptRoot "tools\\version.ps1")
+. (Join-Path $PSScriptRoot "tools/version.ps1")
 $buildVersion = Get-TestOSBuildVersion -ConfigPath (Join-Path $PSScriptRoot "version.properties")
 $versionCode = $buildVersion.VersionCode
 $versionName = $buildVersion.VersionName
