@@ -22,14 +22,13 @@ Install JDK 17 and Android command-line tools, then install:
 sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34"
 ```
 
-Set `ANDROID_HOME` (or `ANDROID_SDK_ROOT`) and ensure `javac` is available on PATH.
+Set `ANDROID_HOME` (or `ANDROID_SDK_ROOT`). For Java, set `JAVA_HOME` to a JDK 17+ installation or add `javac`, `java` and `keytool` to `PATH`. `build.ps1` prefers a valid `JAVA_HOME`; if it is empty, it resolves the JDK tools from `PATH`.
 
 ## 3. Build
 
 Linux/macOS:
 
 ```sh
-./build.sh
 ./build.sh
 ```
 
@@ -39,7 +38,7 @@ Windows PowerShell:
 .\build.ps1
 ```
 
-Both scripts create `build/tvos-home.apk` and accept explicit version overrides. Their defaults currently differ: build.sh uses `15 / 2.1.2-testOS1`, while build.ps1 uses `13 / 2.1.2-custom1`. This is tracked as an open build-contract task. Local builds normally use a debug key; configure a release keystore only when the matching signing materials are available. Do not install an APK with an unverified signing certificate over the existing launcher.
+Both scripts create `build/tvos-home.apk` and read the shared defaults from `version.properties` (`2.1.74` / versionCode `89`). Environment variables `VERSION_CODE` and `VERSION_NAME` override those defaults. Release numbering remains `15 + PATCH`; the development defaults are not a published release. Local builds normally use a debug key; configure a release keystore only when the matching signing materials are available. Do not install an APK with an unverified signing certificate over the existing launcher.
 
 ## 4. Install on a TV
 
