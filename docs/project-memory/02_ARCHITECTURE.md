@@ -67,7 +67,7 @@ Android запускает `MainActivity`; она создаёт `SceneHome`, з
 `PowerService` — AccessibilityService. Он получает разрешённые события пульта, выполняет ButtonMapper actions, поддерживает Keep Alive/repair и открывает системные overlays. Control Panel и Recent Apps могут отображаться через Accessibility overlay поверх других приложений; на HOME используется соответствующий Activity UI.
 
 ### Settings / local data
-Настройки хранятся локально в SharedPreferences. `SingleUserPrefs` выполняет одноразовую миграцию старых profile-scoped preferences в canonical `home`; `SingleUserMigration` содержит чистую Java-логику миграции и regression test. Legacy значения/файлы сохраняются для rollback. Общий settings backup экспортирует только allowlist в `Download/tvos-launcher-settings.json`; запись использует AtomicFile. Backup CleanYourTV — отдельный файл `cleanyourtv_disabled_backup.txt`, он не входит в общий backup.
+Настройки хранятся локально в SharedPreferences. `SingleUserPrefs` выполняет одноразовую миграцию старых profile-scoped preferences в canonical `home`; `SingleUserMigration` содержит чистую Java-логику миграции; standalone `SingleUserMigrationTest.java` запускается в Linux и Windows CI через JDK 11 language target. Regression contract проверяет CI wiring и наличие тестов сохранения legacy/source data. Legacy значения/файлы сохраняются для rollback. Общий settings backup экспортирует только allowlist в `Download/tvos-launcher-settings.json`; запись использует AtomicFile. Backup CleanYourTV — отдельный файл `cleanyourtv_disabled_backup.txt`, он не входит в общий backup.
 
 ### CleanYourTV
 UI в `CleanYourTv.java` определяет модель/профиль из `assets/cleanyourtv/`, проверяет hard-protected package policy, выполняет disable/restore через Local ADB и подтверждает результат чтением состояния PackageManager. Нельзя считать установление ADB-сессии подтверждением успешного disable.
@@ -97,6 +97,6 @@ UI в `CleanYourTv.java` определяет модель/профиль из `
 
 ## 7. Тесты
 
-Python regression tests находятся в [tests/](../../tests/). В workflow включены проверки CleanYourTV, settings cleanup, backup safety, bitmap policy, asset optimizer, font subset, Settings navigation, OTA flow, Russian localization, Control Panel, build contract и Java comparator/I18n tests. Файл `tests/SingleUserMigrationTest.java` присутствует, но текущий `.github/workflows/build-apk.yml` не содержит шага его компиляции/запуска; наличие теста не означает, что он прошёл в CI.
+Python regression tests находятся в [tests/](../../tests/). В workflow включены проверки CleanYourTV, settings cleanup, backup safety, bitmap policy, asset optimizer, font subset, Settings navigation, OTA flow, Russian localization, Control Panel, build contract и Java comparator/I18n tests. `tests/SingleUserMigrationTest.java` компилируется и запускается в обоих jobs `.github/workflows/build-apk.yml`; CI run #321 прошёл на Linux и Windows. Тест проверяет pure-Java migration helper, а не Android SharedPreferences adapter/runtime на телевизоре.
 
 CI подтверждает только реально запущенные шаги и не заменяет тестирование реального D-pad, lifecycle, разрешений, OTA install и производительности на Sber TV.
