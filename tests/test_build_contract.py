@@ -69,6 +69,14 @@ assert bash_defaults.stdout.strip() == "89|2.1.74"
 # Verify PowerShell delegates parsing to a testable helper and keeps env overrides.
 assert 'tools/version.ps1' in build_ps
 assert "Get-TestOSBuildVersion" in build_ps
+assert 'tools/java.ps1' in build_ps
+assert "Initialize-TestOSJava" in build_ps
+assert "C:\\Users\\asen4" not in build_ps
+java_helper = (ROOT / "tools/java.ps1").read_text(encoding="utf-8")
+assert "JAVA_HOME" in java_helper and "Get-Command" in java_helper
+assert all(f'"{tool}"' in java_helper for tool in ("javac", "java", "keytool"))
+assert "JAVA_HOME is set but" in java_helper
+assert "Set JAVA_HOME or add javac, java and keytool to PATH" in java_helper
 assert "DEFAULT_VERSION_CODE" in ps_helper and "DEFAULT_VERSION_NAME" in ps_helper
 assert "$env:VERSION_CODE" in ps_helper and "$env:VERSION_NAME" in ps_helper
 assert "VersionCodeOverride" in ps_test and "VersionNameOverride" in ps_test
