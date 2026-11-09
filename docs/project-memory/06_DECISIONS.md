@@ -65,3 +65,12 @@
 - **Альтернативы:** сторонний OTA backend или случайные CI artifacts.
 - **Последствия:** нельзя менять release key/package ID без миграционного плана; CI debug artifact не считать release-compatible.
 - **Статус:** принято.
+
+## DEC-009 — Единый источник build version metadata
+- **Дата:** 2026-11-09, TOS-002
+- **Решение:** хранить defaults development version и release numbering parameters в простом `version.properties`, который читают Bash, PowerShell и GitHub Actions.
+- **Значения:** development default `2.1.74` / versionCode `89`; release code base `15`; prefix `2.1.`.
+- **Приоритет:** переменные окружения `VERSION_CODE` и `VERSION_NAME` имеют приоритет над defaults для локальных/CI сборок; release workflow вычисляет versionCode как `15 + PATCH`.
+- **Причина:** исключить drift между Linux/Windows scripts и CI, сохранив исторический OTA numbering contract.
+- **Последствия:** при смене development defaults или release series изменять общий файл и соответствующие regression tests; не дублировать constants в build scripts/workflows.
+- **Статус:** реализовано в PR #14; ожидается итоговая проверка Linux/Windows CI.
