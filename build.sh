@@ -3,6 +3,11 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Shared version contract; exported environment overrides take precedence.
+source "$PWD/version.properties"
+VERSION_CODE="${VERSION_CODE:-$DEFAULT_VERSION_CODE}"
+VERSION_NAME="${VERSION_NAME:-$DEFAULT_VERSION_NAME}"
+
 # JDK 17+ and the Android SDK (build-tools 34.0.0, platform android-34). Override with the usual
 # variables: JAVA_HOME, ANDROID_HOME (or ANDROID_SDK_ROOT).
 if [ -z "${JAVA_HOME:-}" ] && [ -d "$HOME/.local/jdk-17.0.20.1+1/Contents/Home" ]; then
@@ -28,7 +33,7 @@ fi
 "$BT/aapt2" compile --dir res -o build/res.zip
 "$BT/aapt2" link -o build/unsigned.apk -I "$JAR" --manifest AndroidManifest.xml --rename-manifest-package com.gonscharovd.tvoslauncher \
     -A build/assets --java build/gen --min-sdk-version 24 --target-sdk-version 34 \
-    --version-code "${VERSION_CODE:-15}" --version-name "${VERSION_NAME:-2.1.2-testOS1}" build/res.zip
+    --version-code "$VERSION_CODE" --version-name "$VERSION_NAME" build/res.zip
 
 javac -encoding UTF-8 --release 11 -classpath "$JAR" \
     -d build/classes $(find src build/gen -name '*.java')
