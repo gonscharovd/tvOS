@@ -53,6 +53,18 @@ bash_probe = subprocess.run(
     text=True,
 )
 assert bash_probe.stdout.strip() == "123|2.1.123-test"
+bash_defaults = subprocess.run(
+    [
+        "bash",
+        "-c",
+        'source ./version.properties; printf "%s|%s\\n" "$DEFAULT_VERSION_CODE" "$DEFAULT_VERSION_NAME"',
+    ],
+    cwd=ROOT,
+    check=True,
+    capture_output=True,
+    text=True,
+)
+assert bash_defaults.stdout.strip() == "89|2.1.74"
 
 # Verify PowerShell delegates parsing to a testable helper and keeps env overrides.
 assert 'tools/version.ps1' in build_ps
@@ -66,6 +78,9 @@ assert "source ./version.properties" in workflow
 assert 'VERSION_CODE=${VERSION_CODE:-$DEFAULT_VERSION_CODE}' in workflow
 assert 'VERSION_NAME=${VERSION_NAME:-$DEFAULT_VERSION_NAME}' in workflow
 assert "shell: pwsh" in workflow and "tests/test_build_contract.ps1" in workflow
+assert "build-windows:" in workflow and "runs-on: windows-latest" in workflow
+assert "run: ./build.ps1" in workflow
+assert "APK package/version does not match shared version contract" in workflow
 assert "source ./version.properties" in release_workflow
 assert "RELEASE_VERSION_CODE_BASE + PATCH" in release_workflow
 assert "RELEASE_VERSION_PREFIX" in release_workflow
