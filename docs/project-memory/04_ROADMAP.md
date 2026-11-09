@@ -16,7 +16,7 @@
 
 ## Следующий технический этап
 
-- Удаление hard-coded локального пути JDK из build.ps1 (TOS-004).
+- Удаление hard-coded локального пути JDK из build.ps1 (TOS-004) — реализовано и проверено Linux/Windows CI #317; ожидает review PR #14.
 - Проверка install/launcher component command по итоговому APK manifest.
 - Проверка package ID, version metadata и release certificate перед OTA.
 - Обновление README, docs/features, docs/architecture, docs/install и dependency map.
