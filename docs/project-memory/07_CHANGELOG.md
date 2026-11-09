@@ -35,7 +35,7 @@
 - Удалена multi-profile модель; добавлена безопасная single-user preference migration.
 - Сохранены legacy user assets/preferences для rollback.
 - Добавлены/обновлены regression guards и Java migration test.
-- Последний commit на дату среза: `c08bc91e06b7fa66f6bd185e3ab5633033884c33`.
+- На момент завершения core cleanup head был `c08bc91e06b7fa66f6bd185e3ab5633033884c33`; позднее PR #14 расширен TOS-002 до `fa91b18305e57bae536d6664af88cb6230a4ec7e`.
 - PR #14 Open / Draft; merge и OTA не выполнялись.
 
 ## 2026-11-08 — testOS 2.1.73
@@ -56,4 +56,4 @@
 ## Ссылки
 - [PR #14](https://github.com/gonscharovd/tvOS/pull/14)
 - [Release v2.1.73](https://github.com/gonscharovd/tvOS/releases/tag/v2.1.73)
-- [Последний CI run #293](https://github.com/gonscharovd/tvOS/actions/runs/42517077387)
+- [Последний CI run #313](https://github.com/gonscharovd/tvOS/actions/runs/42561116519)
