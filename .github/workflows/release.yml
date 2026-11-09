@@ -96,6 +96,10 @@ jobs:
           javac --release 11 -d /tmp/tvos-version-tests src/com/techgenius/tvoslauncher/VersionComparator.java tests/VersionComparatorTest.java
           java -cp /tmp/tvos-version-tests com.techgenius.tvoslauncher.VersionComparatorTest
 
+      - name: Test PowerShell build version contract
+        shell: pwsh
+        run: ./tests/test_build_contract.ps1
+
       - name: Test cross-platform build contract
         run: python3 tests/test_build_contract.py
 
