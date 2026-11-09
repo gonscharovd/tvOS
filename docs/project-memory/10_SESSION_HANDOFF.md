@@ -1,61 +1,62 @@
 # Session handoff — testOS
 
-**Последнее обновление:** 2026-11-09 02:10 +05:00  
+**Последнее обновление:** 2026-11-09 09:25 +05:00  
 **Проект:** `gonscharovd/tvOS`  
-**Кодовая точка:** PR #14, `refactor/testos-core-cleanup-2026-11`, commit `c08bc91e06b7fa66f6bd185e3ab5633033884c33`  
+**Кодовая точка:** PR #14, `refactor/testos-core-cleanup-2026-11`, commit `fa91b18305e57bae536d6664af88cb6230a4ec7e`  
 **Документационная точка:** PR #15, `docs/project-memory-2026-11` (проверять актуальный branch HEAD в GitHub; этот handoff входит в тот же PR)
 
 ## Контекст
 
-Восстановлена последняя подтверждённая точка из предыдущего handoff. Classic UI cleanup в PR #14 завершён и CI прошёл. Текущий handoff был синхронизацией пользовательской документации с кодом PR #14 и устранением противоречий в PR descriptions.
+Выполнена TOS-002: единый источник version metadata для Bash, PowerShell и GitHub Actions. Оба build scripts собрали APK на соответствующих CI runners. PR #14 остаётся Draft, merge/OTA/TV install не выполнялись.
 
 ## Что проверено
 
-- Репозиторий metadata, default branch, ветки, последние commits, PR #14/#15, PR diff и GitHub Actions.
-- Все 11 документов `docs/project-memory/`.
-- README, docs index, features, architecture, install, getting-started и dependency map.
-- `MainActivity.java`, `SceneHome.java`, `SettingsActivity.java`, `SetupActivity.java`, `Suggestions.java`, `Scenes.java`.
-- `AndroidManifest.xml`, `build.sh`, `build.ps1`, `build-apk.yml`, `release.yml`.
-- Скачан CI artifact PR #14 и разобран binary AndroidManifest.xml: package `com.gonscharovd.tvoslauncher`, HOME class `com.techgenius.tvoslauncher.MainActivity`.
-- Проверена последняя успешная CI run #293 на PR #14 head c08bc91.
+- Прочитаны project-memory инструкции, актуальное состояние, список задач и предыдущий handoff.
+- Проверены PR #14/#15, ветки, main и актуальные GitHub Actions.
+- Изучены `build.sh`, `build.ps1`, `build-apk.yml`, `release.yml`, `tests/test_build_contract.py` и соответствующие docs.
+- Проверен текущий version contract: development defaults 2.1.74 / versionCode 89; release base 15, prefix 2.1.; v2.1.73 → 88.
+- PowerShell contract test прошёл на Windows runner и Linux PowerShell Core.
+- Python build-contract regression прошёл: Bash defaults/overrides, workflow wiring, release formula, artifact/signing/output contracts.
+- CI run #313 прошёл целиком: Ubuntu/Linux и Windows jobs; обе сборки APK, подписи и package/version metadata проверены; два debug artifacts загружены.
+- Полная Windows сборка подтвердила работоспособность `build.ps1` на Windows Server 2025 runner.
+- Не выполнялись локальная сборка на ПК пользователя и runtime test на физическом ТВ.
 
-## Что изменено
+## Что изменено в PR #14
 
-В документационной ветке PR #15 обновлены:
-- `README.md`
-- `docs/README.md`
-- `docs/features.md`
-- `docs/architecture.md`
-- `docs/install.md`
-- `docs/getting-started.md`
-- `docs/refactor-cleanup-dependency-map.md`
-- `docs/project-memory/03_CURRENT_STATE.md`
-- `docs/project-memory/05_TASKS.md`
-- `docs/project-memory/10_SESSION_HANDOFF.md`
-
-Также обновлены PR #14 и PR #15 descriptions, чтобы они отражали завершённый core cleanup, успешный CI и фактический объём документационного PR.
+- Добавлен `version.properties`:
+  - `DEFAULT_VERSION_CODE=89`
+  - `DEFAULT_VERSION_NAME=2.1.74`
+  - `RELEASE_VERSION_CODE_BASE=15`
+  - `RELEASE_VERSION_PREFIX=2.1.`
+- `build.sh` читает этот файл и сохраняет приоритет environment overrides.
+- `build.ps1` использует общий PowerShell helper `tools/version.ps1`; environment overrides сохраняются.
+- Добавлен `tests/test_build_contract.ps1` для defaults и overrides.
+- Расширен `tests/test_build_contract.py`: проверяет Bash defaults/overrides, PowerShell wiring, CI/release workflow contract, формулу 15 + PATCH, output/assets/signing controls.
+- `build-apk.yml` теперь имеет Linux и Windows jobs; проверяет package/version/signature и загружает отдельные debug artifacts.
+- `release.yml` получает release base/prefix из version.properties; формула 15 + PATCH сохранена.
+- PR #14 description обновлён с результатами run #313 и оставшимися ограничениями.
 
 ## Подтверждённое состояние GitHub
 
-- `main`: `a765318b577e66fae66a8ffe28439dcd6233f38f`.
-- PR #14: Open / Draft, base main, head `c08bc91e06b7fa66f6bd185e3ab5633033884c33`.
-- PR #14 latest CI: run #293 / ID `42517077387`, success.
-- PR #15: Open / Draft, base `refactor/testos-core-cleanup-2026-11`; актуальный head проверяется в GitHub перед продолжением.
-- PR #15 содержит 18 Markdown-файлов (11 новых project-memory + 7 обновлённых docs).
-- PR #15 не имеет отдельного CI run, так как workflow PR trigger настроен на base `main`; PR #15 направлен в feature branch.
+- `main`: `a765318b577e66fae66a8ffe28439dcd6233f38f` — не изменён.
+- PR #14: Open / Draft, base main, head `fa91b18305e57bae536d6664af88cb6230a4ec7e`.
+- Последний CI: [run #313](https://github.com/gonscharovd/tvOS/actions/runs/42561116519), success, commit `fa91b18...`.
+- Jobs run #313: Ubuntu/Linux success; Windows success.
+- Artifacts: `testOS-ci-debug` ID `13648674193`; `testOS-ci-debug-windows` ID `13649636643`. Оба подписаны runner-generated debug keys, не являются OTA-compatible гарантированно.
+- PR #15: Open / Draft, base — ветка PR #14; актуальный docs branch HEAD проверяется непосредственно в GitHub.
 - Stable release: v2.1.73 / versionCode 88.
-- PR preview artifact — runner debug-signed; не устанавливать его поверх release APK без сравнения сертификата.
-- Никаких изменений в main, OTA release или установок APK на телевизор не выполнялось.
+- Ни один PR не влит; OTA не выпущена; APK на ТВ не устанавливался.
 
 ## Осталось
 
 - PR #15 документационные изменения ожидают review.
-- build.sh и build.ps1 имеют разные version defaults.
-- build.ps1 содержит machine-specific JDK fallback.
-- SingleUserMigrationTest.java не включён в CI.
-- Runtime regression PR #14 на Sber TV не выполнена.
-- HOME component подтверждён по compiled APK manifest, но не проверен PackageManager на телевизоре.
+- TOS-004: удалить hard-coded JDK fallback path из build.ps1; использовать JAVA_HOME/PATH и сохранить текущую Windows build validation.
+- TOS-008: подключить `SingleUserMigrationTest.java` к CI.
+- Runtime regression PR #14 на Sber SDX-50U4123B не выполнена.
+- Сертификат установленного на ТВ APK не сверялся с release certificate.
+- HOME component подтверждён по compiled APK manifest, но PackageManager command на физическом ТВ не тестировалась.
+- CI debug artifacts не устанавливать поверх release APK без сравнения сертификатов.
 
 ## NEXT ACTION
 
-**Выполнить TOS-002: спроектировать и внедрить единый источник VERSION_CODE / VERSION_NAME для build.sh, build.ps1 и CI, сохранив environment overrides и текущую release formula; затем добавить/обновить build-contract tests.**
+**Выполнить TOS-004: удалить machine-specific JDK fallback из build.ps1, оставить приоритет JAVA_HOME и поиск javac в PATH, затем проверить Windows CI build и обновить project memory.**
