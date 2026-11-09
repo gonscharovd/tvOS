@@ -1,3 +1,13 @@
+## 2026-11-09 — portable JDK discovery (TOS-004)
+
+- Удалён machine-specific путь `C:\Users\asen4\...` из `build.ps1`.
+- Добавлен `tools/java.ps1`: приоритет у валидного `JAVA_HOME`; при пустом `JAVA_HOME` `javac`, `java`, `keytool` ищутся через `PATH`.
+- Некорректный непустой `JAVA_HOME` вызывает понятную ошибку вместо тихого fallback на случайный JDK.
+- `tests/test_build_contract.ps1` покрывает JAVA_HOME, PATH fallback и invalid JAVA_HOME; Python contract test проверяет отсутствие старого пути и подключение helper.
+- Обновлён `docs/getting-started.md`: требования JDK и единые version defaults приведены к актуальному состоянию.
+- CI run #317 прошёл на Ubuntu/Linux и Windows; PowerShell tests прошли на обоих runners; `build.sh` и `build.ps1` собрали APK, проверки подписи/package/version и artifact upload прошли.
+- PR #14 обновлён; merge, OTA release и установка APK на ТВ не выполнялись.
+
 ## 2026-11-09 — единый build version contract (TOS-002)
 
 - Добавлен общий `version.properties`: development defaults `2.1.74` / versionCode `89`, release base `15`, prefix `2.1.`.
