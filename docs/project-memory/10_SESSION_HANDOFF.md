@@ -2,7 +2,7 @@
 
 **Последнее обновление:** 2026-11-09  
 **Проект:** `gonscharovd/tvOS`  
-**Кодовая точка:** PR #14, `refactor/testos-core-cleanup-2026-11`, commit `84629601682518f0f70651a8d2a85330d7d20aad`  
+**Кодовая точка:** PR #14, `refactor/testos-core-cleanup-2026-11`, commit `d1523ade55d66f32139cfa6fc31bc60dac7f50b2`  
 **Документационная точка:** PR #15, `docs/project-memory-2026-11` (проверять актуальный branch HEAD в GitHub)
 
 ## Контекст
@@ -20,7 +20,7 @@
 - В `.github/workflows/build-apk.yml` добавлены независимые compile/run steps в Ubuntu и Windows jobs: `javac --release 11` + `java`.
 - Добавлен `tests/test_single_user_migration_contract.py`: проверяет наличие обоих шагов в каждом job и ключевые legacy-preservation/source-immutability assertions.
 - Production `SingleUserMigration.java` и `SingleUserPrefs.java` не изменялись. Миграция на пользовательском хранилище не запускалась, legacy data не удалялись.
-- CI [run #321](https://github.com/gonscharovd/tvOS/actions/runs/42607148094), commit `8462960...`: success на Linux и Windows. Migration compile/run, contract, все прежние regression checks, оба APK builds, signature/package/version checks и artifact uploads прошли.
+- CI [run #322](https://github.com/gonscharovd/tvOS/actions/runs/42607667504), commit `d1523ad...`: success на Linux и Windows. Migration compile/run, contract, все прежние regression checks, оба APK builds, signature/package/version checks и artifact uploads прошли.
 - PR #14 description и project memory обновлены.
 
 ## Ограничения
