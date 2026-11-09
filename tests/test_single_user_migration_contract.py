@@ -14,6 +14,10 @@ assert "android." not in source, "Pure migration helper must remain JVM-testable
 assert "public static void main(String[] args)" in test_source
 assert "SingleUserMigration.migrate(" in test_source
 assert "legacyHome.containsKey" in test_source, "Legacy home values must remain covered"
+assert "p1Selected" in test_source, "Canonical p1 selection must remain covered"
+assert "missingSelected" in test_source, "Missing selected profile fallback must remain covered"
+assert "secondPass" in test_source, "Repeated migration idempotency must remain covered"
+assert "preserveLegacyHome" in test_source, "Legacy preference preservation must remain covered"
 assert "p1.get(\"order\")" in test_source, "Source map immutability must remain covered"
 assert "selectedProfileAvailable" in source
 assert "new LinkedHashMap<>()" in source
