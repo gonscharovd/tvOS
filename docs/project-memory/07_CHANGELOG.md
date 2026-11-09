@@ -1,3 +1,13 @@
+## 2026-11-09 — единый build version contract (TOS-002)
+
+- Добавлен общий `version.properties`: development defaults `2.1.74` / versionCode `89`, release base `15`, prefix `2.1.`.
+- `build.sh` и `build.ps1` читают один источник; environment overrides `VERSION_CODE` / `VERSION_NAME` сохранены.
+- Добавлен PowerShell parser `tools/version.ps1` и regression test `tests/test_build_contract.ps1`; Python build-contract test проверяет Bash overrides, defaults, release formula и workflow wiring.
+- `build-apk.yml` запускает Linux и Windows build jobs, проверяет APK package/version и загружает отдельные debug artifacts.
+- `release.yml` читает release base/prefix из version.properties; формула остаётся `15 + PATCH`.
+- Linux build, signature/package/version checks и PowerShell contract tests прошли в CI run #309; полный Windows build в run #313 ожидает завершения на момент записи.
+- Изменения внесены в рабочую ветку PR #14; merge, OTA release и установка APK на ТВ не выполнялись.
+
 ## 2026-11-09 — синхронизация пользовательской документации с PR #14
 
 - README, docs index, features, architecture, install, getting-started и dependency map обновлены по фактическому Night Scenes-only коду PR #14.
