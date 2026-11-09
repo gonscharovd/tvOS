@@ -5,7 +5,7 @@
 - Добавлен PowerShell parser `tools/version.ps1` и regression test `tests/test_build_contract.ps1`; Python build-contract test проверяет Bash overrides, defaults, release formula и workflow wiring.
 - `build-apk.yml` запускает Linux и Windows build jobs, проверяет APK package/version и загружает отдельные debug artifacts.
 - `release.yml` читает release base/prefix из version.properties; формула остаётся `15 + PATCH`.
-- Linux build, signature/package/version checks и PowerShell contract tests прошли в CI run #309; полный Windows build в run #313 ожидает завершения на момент записи.
+- CI run #313 прошёл на Ubuntu/Linux и Windows: оба build scripts собрали APK, подписи и package/version metadata проверены, оба debug artifacts загружены.
 - Изменения внесены в рабочую ветку PR #14; merge, OTA release и установка APK на ТВ не выполнялись.
 
 ## 2026-11-09 — синхронизация пользовательской документации с PR #14
