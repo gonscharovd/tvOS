@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Stop"
-. (Join-Path $PSScriptRoot "..\\tools/version.ps1")
+. (Join-Path $PSScriptRoot "../tools/version.ps1")
 $configPath = Join-Path $PSScriptRoot "../version.properties"
 
 $defaults = Get-TestOSBuildVersion -ConfigPath $configPath -VersionCodeOverride "" -VersionNameOverride ""
