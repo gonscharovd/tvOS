@@ -6,14 +6,14 @@
 
 | ID | Задача | Приоритет | Статус | Зависимости |
 |---|---|---:|---|---|
-| TOS-001 | Review core cleanup в PR #14: Night Scenes only, удаление Classic UI/старых профилей, миграция настроек | P1 | REVIEW | CI #317 success; требуется review и runtime validation |
+| TOS-001 | Review core cleanup в PR #14: Night Scenes only, удаление Classic UI/старых профилей, миграция настроек | P1 | REVIEW | CI #321 success; migration JVM test included; требуется review и runtime validation |
 | TOS-002 | Унифицировать build version defaults для build.sh/build.ps1/CI через единый источник | P1 | REVIEW | Реализовано в PR #14; CI #313 success, ожидает review вместе с PR |
 | TOS-003 | Синхронизировать README/features/architecture/install с поведением PR #14 | P1 | REVIEW | TOS-001; изменения внесены в PR #15, ожидают review |
 | TOS-004 | Удалить hard-coded путь JDK пользователя из build.ps1 и проверить Windows build | P2 | REVIEW | Реализовано; CI #317 Linux/Windows success; ожидает review PR #14 |
 | TOS-005 | Проверить HOME Activity component command по итоговому APK manifest и обновить install docs | P2 | BLOCKED | APK manifest подтверждён и docs обновлены; остаётся проверка PackageManager на ТВ |
 | TOS-006 | Выполнить runtime regression на Sber SDX-50U4123B для PR #14 | P1 | BLOCKED | Нужен тест на телевизоре и release-compatible APK |
 | TOS-007 | Подтвердить сертификат установленного APK и OTA in-place update после PR #14 | P1 | BLOCKED | TOS-006, release signing |
-| TOS-008 | Подключить SingleUserMigrationTest.java к CI workflow | P2 | READY | TOS-001 |
+| TOS-008 | Подключить SingleUserMigrationTest.java к CI workflow | P2 | REVIEW | TOS-001; Linux/Windows CI #321 success |
 
 ## Детализация
 
@@ -52,3 +52,11 @@
 - **Описание:** проверить реальные remote navigation, lifecycle, permissions, migration, CleanYourTV и OTA.
 - **Критерии:** чек-лист из [04_ROADMAP.md](04_ROADMAP.md) пройден; APK имеет ожидаемые package/version/certificate; in-place update не требует удаления приложения.
 - **Ограничение:** CI build не подтверждает runtime на телевизоре.
+
+### TOS-008 — Single-user migration CI coverage
+- **Аудит:** `SingleUserMigration.migrate` — чистая Java-функция без Android-зависимостей; `SingleUserMigrationTest.java` — standalone `main` test, поэтому не требуются Android SDK stubs, Robolectric или instrumentation.
+- **Изменения:** `.github/workflows/build-apk.yml` запускает compile/run `SingleUserMigration.java` + `SingleUserMigrationTest.java` через `javac --release 11` и `java` отдельно в Ubuntu и Windows jobs. Добавлен `tests/test_single_user_migration_contract.py`, проверяющий оба CI wiring и сохранность проверок legacy prefs/source immutability.
+- **Границы:** production `SingleUserMigration.java` и `SingleUserPrefs.java` не менялись; миграция не запускалась против пользовательского хранилища, legacy данные не удалялись.
+- **CI:** [run #321](https://github.com/gonscharovd/tvOS/actions/runs/42607148094) — success на обоих runners, включая тест и сборку APK.
+- **Статус:** REVIEW — implementation и CI validation завершены, ожидает review PR #14.
+- **Связанные файлы:** `.github/workflows/build-apk.yml`, `tests/SingleUserMigrationTest.java`, `tests/test_single_user_migration_contract.py`, `src/com/techgenius/tvoslauncher/SingleUserMigration.java`.
