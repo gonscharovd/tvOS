@@ -70,4 +70,4 @@ testOS — собственный русскоязычный однопольз�
 - [PR #14 — core cleanup](https://github.com/gonscharovd/tvOS/pull/14)
 - [PR #15 — project memory and documentation sync](https://github.com/gonscharovd/tvOS/pull/15)
 - [Последний известный релиз v2.1.73](https://github.com/gonscharovd/tvOS/releases/tag/v2.1.73)
-- [Последняя успешная проверка ветки на момент фиксации: run #321](https://github.com/gonscharovd/tvOS/actions/runs/42607148094)
+- [Последняя успешная проверка ветки на момент фиксации: run #322](https://github.com/gonscharovd/tvOS/actions/runs/42607667504)
