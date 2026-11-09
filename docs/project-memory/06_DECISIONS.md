@@ -73,4 +73,4 @@
 - **Приоритет:** переменные окружения `VERSION_CODE` и `VERSION_NAME` имеют приоритет над defaults для локальных/CI сборок; release workflow вычисляет versionCode как `15 + PATCH`.
 - **Причина:** исключить drift между Linux/Windows scripts и CI, сохранив исторический OTA numbering contract.
 - **Последствия:** при смене development defaults или release series изменять общий файл и соответствующие regression tests; не дублировать constants в build scripts/workflows.
-- **Статус:** реализовано в PR #14; ожидается итоговая проверка Linux/Windows CI.
+- **Статус:** реализовано и проверено Linux/Windows CI в PR #14; ожидает review.
