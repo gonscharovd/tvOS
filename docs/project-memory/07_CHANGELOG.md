@@ -1,3 +1,12 @@
+## 2026-11-09 — Single-user migration test в CI (TOS-008)
+
+- Изучены `SingleUserMigration.java`, `SingleUserPrefs.java` и `tests/SingleUserMigrationTest.java`. Helper — pure Java без Android API; test — standalone main.
+- Добавлены compile/run steps через `javac --release 11` и `java` в Linux и Windows jobs workflow.
+- Добавлен `tests/test_single_user_migration_contract.py`: проверяет wiring обоих jobs, запуск test main, наличие legacy preservation/source immutability assertions.
+- Production migration code не менялся; миграция не запускалась на пользовательских данных; legacy files/preferences не удалялись.
+- CI [run #321](https://github.com/gonscharovd/tvOS/actions/runs/42607148094) прошёл полностью на Ubuntu/Linux и Windows, включая APK build, package/version/signature checks и artifact upload.
+- PR #14 обновлён; main, OTA и устройство не затрагивались.
+
 ## 2026-11-09 — portable JDK discovery (TOS-004)
 
 - Удалён machine-specific путь `C:\Users\asen4\...` из `build.ps1`.
