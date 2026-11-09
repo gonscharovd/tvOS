@@ -144,12 +144,14 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
 
       - name: Install Android SDK packages
         shell: pwsh
         run: |
-          & "$env:ANDROID_HOME\cmdline-tools\latest\bin\sdkmanager.bat" --licenses
-          & "$env:ANDROID_HOME\cmdline-tools\latest\bin\sdkmanager.bat" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          $sdkManager = (Get-Command sdkmanager.bat -ErrorAction Stop).Source
+          & $sdkManager "platforms;android-34" "build-tools;34.0.0"
 
       - name: Test PowerShell build version contract
         shell: pwsh
