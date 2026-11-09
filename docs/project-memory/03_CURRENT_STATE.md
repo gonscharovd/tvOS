@@ -10,9 +10,9 @@
 |---|---|
 | main | `a765318b577e66fae66a8ffe28439dcd6233f38f` |
 | Кодовая рабочая ветка | `refactor/testos-core-cleanup-2026-11` |
-| Последний commit кода | `84629601682518f0f70651a8d2a85330d7d20aad` |
-| PR #14 | Open / Draft, base `main`, head `8462960...` |
-| PR #14 diff | актуальный diff проверять в GitHub; TOS-008 добавляет workflow/test files |
+| Последний commit кода | `d1523ade55d66f32139cfa6fc31bc60dac7f50b2` |
+| PR #14 | Open / Draft, base `main`, head `d1523ad...` |
+| PR #14 diff | актуальный diff проверять в GitHub; TOS-008 добавила workflow/test files |
 | Документационная ветка | `docs/project-memory-2026-11` |
 | PR #15 | Open / Draft, base — ветка PR #14; проверяй актуальный head непосредственно в GitHub |
 | PR #15 diff | 18 Markdown-файлов: 11 новых project-memory документов и 7 обновлённых docs-файлов |
@@ -41,8 +41,8 @@ PR #14 остаётся Draft и не merged. Код не опубликован
 
 ## CI и сборка
 
-- Последняя проверка PR #14 head: [run #321](https://github.com/gonscharovd/tvOS/actions/runs/42607148094), run ID `42607148094`, commit `84629601682518f0f70651a8d2a85330d7d20aad`, conclusion `success`.
-- Run #321 завершился успешно в обоих jobs: Ubuntu/Linux и Windows. `SingleUserMigration.java` с `SingleUserMigrationTest.java` скомпилированы `javac --release 11` и выполнены на обоих runners; regression contract проверил wiring обоих jobs и защитные assertions legacy preservation. Все предыдущие Python/PowerShell contracts, Linux/Windows APK builds, signature и package/version assertions, artifacts — success.
+- Последняя проверка PR #14 head: [run #322](https://github.com/gonscharovd/tvOS/actions/runs/42607667504), run ID `42607667504`, commit `84629601682518f0f70651a8d2a85330d7d20aad`, conclusion `success`.
+- Run #322 завершился успешно в обоих jobs: Ubuntu/Linux и Windows. `SingleUserMigration.java` с `SingleUserMigrationTest.java` скомпилированы `javac --release 11` и выполнены на обоих runners; regression contract проверил wiring обоих jobs и защитные assertions legacy preservation. Все предыдущие Python/PowerShell contracts, Linux/Windows APK builds, signature и package/version assertions, artifacts — success.
 - Artifacts run #317: `testOS-ci-debug` (ID `13666833681`) и `testOS-ci-debug-windows` (ID `13667867069`), runner-generated debug-signed previews.
 - В run #293 прошли настроенные Python regression tests и Java comparator/I18n tests; `build.sh` собрал APK; apksigner проверил подпись; artifact upload прошёл.
 - CI artifact: `testOS-ci-debug`, artifact ID `13631916994`. Это runner-generated debug-signed preview, не release OTA.
@@ -77,5 +77,5 @@ PR #14 остаётся Draft и не merged. Код не опубликован
 ## Следующие приоритеты
 
 1. Review PR #15 и документационных изменений.
-2. TOS-008: подключена к CI и прошла Linux/Windows в run #321; ожидает review.
+2. TOS-008: подключена к CI и прошла Linux/Windows в run #322; ожидает review.
 3. Runtime regression PR #14 и затем OTA/signing validation на целевом ТВ.
