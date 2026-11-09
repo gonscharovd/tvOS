@@ -6,8 +6,8 @@
 
 | ID | Задача | Приоритет | Статус | Зависимости |
 |---|---|---:|---|---|
-| TOS-001 | Review core cleanup в PR #14: Night Scenes only, удаление Classic UI/старых профилей, миграция настроек | P1 | REVIEW | CI #293 success; требуется review и runtime validation |
-| TOS-002 | Унифицировать build version defaults для build.sh/build.ps1/CI через единый источник | P1 | READY | TOS-001 |
+| TOS-001 | Review core cleanup в PR #14: Night Scenes only, удаление Classic UI/старых профилей, миграция настроек | P1 | REVIEW | CI #313 success; требуется review и runtime validation |
+| TOS-002 | Унифицировать build version defaults для build.sh/build.ps1/CI через единый источник | P1 | REVIEW | Реализовано в PR #14; CI #313 success, ожидает review вместе с PR |
 | TOS-003 | Синхронизировать README/features/architecture/install с поведением PR #14 | P1 | REVIEW | TOS-001; изменения внесены в PR #15, ожидают review |
 | TOS-004 | Удалить hard-coded путь JDK пользователя из build.ps1 и проверить Windows build | P2 | READY | TOS-002 |
 | TOS-005 | Проверить HOME Activity component command по итоговому APK manifest и обновить install docs | P2 | BLOCKED | APK manifest подтверждён и docs обновлены; остаётся проверка PackageManager на ТВ |
@@ -23,9 +23,11 @@
 - **Связанные файлы:** `MainActivity.java`, `SceneHome.java`, `Scenes.java`, `SettingsActivity.java`, `SingleUserPrefs.java`, `SingleUserMigration.java`, `tests/`.
 
 ### TOS-002 — Version source
-- **Описание:** build.sh сейчас имеет defaults 15 / 2.1.2-testOS1; build.ps1 — 13 / 2.1.2-custom1; release workflow вычисляет code как 15 + PATCH.
-- **Критерии:** один canonical source; оба скрипта и CI читают одинаковые значения; environment overrides сохраняются; tests/test_build_contract.py проверяет контракт.
-- **Связанные файлы:** `build.sh`, `build.ps1`, `.github/workflows/build-apk.yml`, `.github/workflows/release.yml`, `tests/test_build_contract.py`.
+- **Результат:** добавлен `version.properties` с development defaults `2.1.74` / `89`, release base `15` и prefix `2.1.`. `build.sh`, `build.ps1` (через `tools/version.ps1`), build CI и release CI используют единый источник; environment overrides сохранены.
+- **Regression:** `tests/test_build_contract.py` проверяет Bash defaults/overrides, release formula и workflow wiring; `tests/test_build_contract.ps1` проверяет PowerShell parser/defaults/overrides. CI #313 прошёл на Ubuntu и Windows, обе APK собраны и проверены.
+- **Критерии:** выполнены; PR #14 остаётся Draft и ожидает review.
+- **Статус:** REVIEW — реализация и CI validation завершены, merge не выполнялся.
+- **Связанные файлы:** `version.properties`, `build.sh`, `build.ps1`, `tools/version.ps1`, `.github/workflows/build-apk.yml`, `.github/workflows/release.yml`, `tests/test_build_contract.py`, `tests/test_build_contract.ps1`.
 
 ### TOS-003 — Documentation sync
 - **Описание:** убрать устаревшие описания Continue Watching/Classic/profile UI и привести release/build/signing claims к коду.
