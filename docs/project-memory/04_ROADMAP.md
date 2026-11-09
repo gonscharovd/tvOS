@@ -10,14 +10,13 @@
 
 1. Провести review изменений core cleanup и документационного PR.
 2. Синхронизировать пользовательскую документацию с фактическим кодом PR — **выполнено в Draft PR #15, ожидает review**.
-3. Устранить расхождения build version defaults и тестов контракта сборки (TOS-002).
+3. Устранить расхождения build version defaults и тестов контракта сборки (TOS-002) — реализация добавлена в PR #14; ожидается итоговая проверка Linux/Windows CI.
 4. Выполнить доступные регрессионные тесты на Sber TV (TOS-006).
 5. После review и одобрения Product Owner решить вопрос о merge. Не выполнять merge автоматически.
 
 ## Следующий технический этап
 
-- Единый источник versionCode/versionName для Windows, Linux/macOS и CI.
-- Удаление hard-coded локального пути JDK из build.ps1.
+- Удаление hard-coded локального пути JDK из build.ps1 (TOS-004).
 - Проверка install/launcher component command по итоговому APK manifest.
 - Проверка package ID, version metadata и release certificate перед OTA.
 - Обновление README, docs/features, docs/architecture, docs/install и dependency map.
