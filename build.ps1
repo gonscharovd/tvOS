@@ -7,15 +7,10 @@ $buildVersion = Get-TestOSBuildVersion -ConfigPath (Join-Path $PSScriptRoot "ver
 $versionCode = $buildVersion.VersionCode
 $versionName = $buildVersion.VersionName
 
-if (-not $env:JAVA_HOME) {
-    $jdkCandidate = "C:\Users\asen4\AppData\Local\Programs\Microsoft\jdk-17.0.10.7-hotspot"
-    if (Test-Path $jdkCandidate) {
-        $env:JAVA_HOME = $jdkCandidate
-    }
-}
-if ($env:JAVA_HOME) {
-    $env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
-}
+# Prefer JAVA_HOME; otherwise require a complete JDK on PATH.
+. (Join-Path $PSScriptRoot "tools/java.ps1")
+$javaEnvironment = Initialize-TestOSJava
+Write-Host "Using JDK from $($javaEnvironment.Source): $($javaEnvironment.Bin)"
 
 $SDK = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT } else { "$env:LOCALAPPDATA\Android\Sdk" }
 $BT = "$SDK\build-tools\34.0.0"
