@@ -16,7 +16,7 @@
 ## Подробности
 
 ### DEBT-001 — Version source
-Release workflow вычисляет `VERSION_CODE = 15 + PATCH`; v2.1.73 соответствует 88. README утверждает, что Windows/Linux scripts имеют одинаковые defaults, но это не так. В dependency map обозначена цель следующего development build 2.1.74 / 89; это план, не опубликованный релиз.
+Устранено в PR #14: общий `version.properties` задаёт development defaults `2.1.74` / `89`, release code base `15` и prefix `2.1.`. `build.sh`, `build.ps1` (через `tools/version.ps1`), build CI и release workflow используют общий контракт. `VERSION_CODE` / `VERSION_NAME` environment overrides сохраняют приоритет. Release formula остаётся `15 + PATCH`; v2.1.73 → 88, v2.1.74 → 89. Linux CI прошёл на промежуточном commit; полная Windows build validation ожидает последнего CI run.
 
 ### DEBT-002 — Stale docs
 В текущем PR branch тесты и source удаляют Classic home UI, old Hero/Continue Watching shelf и связанные permission paths. При этом README всё ещё утверждает, что native Continue Watching row может отображаться; docs/features описывает shelf; docs/architecture упоминает shelf. README также содержит устаревшее preview version 2.1.72 и некорректное утверждение, что PR preview использует persistent release signing key.
