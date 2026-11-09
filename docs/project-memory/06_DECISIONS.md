@@ -82,3 +82,11 @@
 - **Поведение ошибки:** если `JAVA_HOME` задан, но его `bin` не содержит необходимые JDK tools, сборка останавливается с понятной диагностикой; автоматический переход на другой JDK не маскирует неверную конфигурацию.
 - **Проверка:** PowerShell regression tests на Ubuntu/Linux и Windows проверяют JAVA_HOME, PATH fallback и invalid JAVA_HOME; полный Windows build прошёл в CI #317.
 - **Статус:** реализовано в PR #14, ожидает review; main не изменён.
+
+## DEC-011 — Pure-Java single-user migration regression in CI
+- **Дата:** 2026-11-09, TOS-008
+- **Решение:** компилировать и запускать `SingleUserMigration.java` вместе с `SingleUserMigrationTest.java` напрямую через JDK в обоих build jobs (Ubuntu/Linux и Windows).
+- **Причина:** helper не зависит от Android API, а test уже имеет standalone `main`; Android test framework не требуется.
+- **Защита:** отдельный Python contract контролирует wiring обоих jobs и наличие сценариев p1 selection, missing-profile fallback, повторного запуска, legacy preservation и source immutability.
+- **Последствия:** изменения в pure-Java migration helper должны проходить тест в обоих CI jobs; это не заменяет runtime проверку Android SharedPreferences adapter на телевизоре.
+- **Статус:** реализовано в PR #14; CI #322 success; ожидает review.
