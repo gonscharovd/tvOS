@@ -1,15 +1,11 @@
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
-# Read the shared KEY=VALUE contract without overriding process environment values.
-$versionConfig = @{}
-Get-Content -LiteralPath (Join-Path $PSScriptRoot "version.properties") | ForEach-Object {
-    if ($_ -match "^\\s*([^#=\\s]+)\\s*=\\s*(.*?)\\s*$") {
-        $versionConfig[$matches[1]] = $matches[2]
-    }
-}
-$versionCode = if ($env:VERSION_CODE) { $env:VERSION_CODE } else { $versionConfig["DEFAULT_VERSION_CODE"] }
-$versionName = if ($env:VERSION_NAME) { $env:VERSION_NAME } else { $versionConfig["DEFAULT_VERSION_NAME"] }
+# Load the same version.properties contract as build.sh.
+. (Join-Path $PSScriptRoot "tools\\version.ps1")
+$buildVersion = Get-TestOSBuildVersion -ConfigPath (Join-Path $PSScriptRoot "version.properties")
+$versionCode = $buildVersion.VersionCode
+$versionName = $buildVersion.VersionName
 
 if (-not $env:JAVA_HOME) {
     $jdkCandidate = "C:\Users\asen4\AppData\Local\Programs\Microsoft\jdk-17.0.10.7-hotspot"
