@@ -172,8 +172,10 @@ jobs:
         run: |
           & "$env:ANDROID_HOME\build-tools\34.0.0\apksigner.bat" verify --verbose build\tvos-home.apk
           $badging = & "$env:ANDROID_HOME\build-tools\34.0.0\aapt.exe" dump badging build\tvos-home.apk
-          $badging | Select-String "package: name='com.gonscharovd.tvoslauncher' versionCode='$env:VERSION_CODE' versionName='$env:VERSION_NAME'"
-          if ($LASTEXITCODE -ne 0) { throw "APK package/version does not match shared version contract" }
+          $expected = "package: name='com.gonscharovd.tvoslauncher' versionCode='$env:VERSION_CODE' versionName='$env:VERSION_NAME'"
+          if (-not ($badging | Select-String -SimpleMatch $expected)) {
+              throw "APK package/version does not match shared version contract: $expected"
+          }
 
       - name: Upload Windows APK
         uses: actions/upload-artifact@v4
