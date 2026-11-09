@@ -1,3 +1,12 @@
+## 2026-11-09 — TOS-006 runtime regression preflight
+
+- Проверены текущие GitHub branches, PR #14/#15, main, release metadata и Actions. PR #14 head `d1523ade55d66f32139cfa6fc31bc60dac7f50b2`; CI #322 success; main unchanged.
+- Последний stable release подтверждён как `v2.1.73` / versionCode 88; PR #14 development target — 2.1.74 / code 89.
+- Release workflow проверяет SHA-256 certificate fingerprint `5dbf8846d9bb76a764928da8c8a833a837b44ba00f4a7c0b60dc77490319b10a`. Installed TV APK fingerprint пока неизвестен; debug CI artifacts не подходят для in-place update.
+- Изучены `AppUpdater`, `SingleUserPrefs`, `SingleUserMigration`, `MainActivity`, `SettingsActivity`, `SceneHome`, `CleanYourTv`, `CustomMedia` и workflow/tests.
+- Обнаружен P1 data-retention blocker: first-launch `cleanupRemovedFeatureData()` очищает retired-feature preferences/cache отдельно от migration. Добавлен TOS-009 / DEBT-009; TOS-006 runtime update заблокирован до решения.
+- Подготовлен runtime test plan: read-only inventory, signature gate, settings backup limits, migration validation, HOME/D-pad/Back/Night Scenes/Settings/CleanYourTV, lifecycle, rollback. Ни одной команды на ТВ не выполняли; APK не устанавливался; OTA не запускалась; main/PR merge не затрагивались.
+
 ## 2026-11-09 — Single-user migration test в CI (TOS-008)
 
 - Изучены `SingleUserMigration.java`, `SingleUserPrefs.java` и `tests/SingleUserMigrationTest.java`. Helper — pure Java без Android API; test — standalone main.
