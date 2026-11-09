@@ -11,7 +11,7 @@
 | DEBT-005 | PR description/dependency-map header отставали от фактического head | Вводили в заблуждение о выполненном Classic cleanup и CI status | PR #14 body и dependency map обновлены: Classic cleanup и TOS-002 завершены, CI #313 success | P2 | RESOLVED IN PR |
 | DEBT-006 | Runtime validation PR #14 на целевом ТВ отсутствует | CI не покрывает D-pad/lifecycle/permissions/OTA на реальном Android 9 | Последняя проверка #317 — CI build/tests на Linux и Windows, не device run | P1 | OPEN |
 | DEBT-007 | CI preview APK подписан debug key runner | Нельзя считать preview artifact заменой установленного release APK | build-apk.yml вызывает build.sh без release keystore; runner создаёт свой debug keystore | P2 | EXPECTED LIMITATION |
-| DEBT-008 | SingleUserMigrationTest не был подключён к CI workflow | Migration helper не проверялся автоматическим запуском unit test | TOS-008 добавила javac/java compile/run и regression contract в Linux и Windows jobs; CI #321 success | P2 | RESOLVED IN PR |
+| DEBT-008 | SingleUserMigrationTest не был подключён к CI workflow | Migration helper не проверялся автоматическим запуском unit test | TOS-008 добавила javac/java compile/run и regression contract в Linux и Windows jobs; CI #322 success | P2 | RESOLVED IN PR |
 
 ## Подробности
 
@@ -37,4 +37,4 @@ PR #14 body и dependency map актуализированы в GitHub: опис
 Debug artifact годится для CI проверки/скачивания, но не гарантирует in-place update поверх release-signed app. Release workflow использует отдельные GitHub Secrets; значения секретов не документировать.
 
 ### DEBT-008 — Migration test coverage
-Устранено в PR #14 (TOS-008). `SingleUserMigration.java` — pure-Java helper без Android API; workflow компилирует helper и `tests/SingleUserMigrationTest.java` с `javac --release 11`, затем запускает test main в Linux и Windows jobs. `tests/test_single_user_migration_contract.py` проверяет наличие обоих шагов в обоих jobs и сохраняет guardrails для legacy data/source immutability. CI run #321 прошёл. Runtime migration на пользовательском устройстве не выполнялась.
+Устранено в PR #14 (TOS-008). `SingleUserMigration.java` — pure-Java helper без Android API; workflow компилирует helper и `tests/SingleUserMigrationTest.java` с `javac --release 11`, затем запускает test main в Linux и Windows jobs. `tests/test_single_user_migration_contract.py` проверяет наличие обоих шагов в обоих jobs и сохраняет guardrails для legacy data/source immutability. CI run #322 прошёл. Runtime migration на пользовательском устройстве не выполнялась.
