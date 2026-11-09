@@ -67,6 +67,9 @@ jobs:
           echo "VERSION_CODE=${VERSION_CODE:-$DEFAULT_VERSION_CODE}" >> "$GITHUB_ENV"
           echo "VERSION_NAME=${VERSION_NAME:-$DEFAULT_VERSION_NAME}" >> "$GITHUB_ENV"
 
+      - name: Test single-user migration CI contract
+        run: python3 tests/test_single_user_migration_contract.py
+
       - name: Test CleanYourTV core package protection
         run: python3 tests/test_clean_your_tv_protection.py
       - name: Test artwork memory and Settings cleanup
@@ -111,6 +114,10 @@ jobs:
           mkdir -p /tmp/tvos-i18n-tests
           javac --release 11 -cp "$ANDROID_HOME/platforms/android-34/android.jar" -d /tmp/tvos-i18n-tests src/com/techgenius/tvoslauncher/I18n.java tests/i18n_stubs/com/techgenius/tvoslauncher/Scenes.java tests/I18nDynamicTranslationTest.java
           java -cp "/tmp/tvos-i18n-tests:$ANDROID_HOME/platforms/android-34/android.jar" com.techgenius.tvoslauncher.I18nDynamicTranslationTest
+
+      - name: Test single-user migration CI contract
+        shell: pwsh
+        run: python tests/test_single_user_migration_contract.py
 
       - name: Test PowerShell build version contract
         shell: pwsh
