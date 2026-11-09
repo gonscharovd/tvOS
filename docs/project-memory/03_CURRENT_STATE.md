@@ -69,6 +69,7 @@ PR #14 остаётся Draft и не merged. Код не опубликован
 
 - `build.sh` / `build.ps1` version defaults унифицированы в `version.properties`; DEBT-001 устранён в PR #14.
 - Machine-specific JDK fallback удалён из `build.ps1`; `JAVA_HOME` и `PATH` resolution подтверждены run #317.
+- **Rollback caveat:** migration переписывает `profiles.list/current` в single-user `p1`, сохраняя старые значения в новых `legacy_*` keys. Предыдущая версия приложения может не читать эти keys; downgrade не гарантирует автоматическое восстановление прежнего selected profile. Это требует отдельного rollback path до runtime test.
 - Runtime regression PR #14 на Sber SDX-50U4123B не выполнена. Подготовлен безопасный план TOS-006; исполнение заблокировано TOS-009 (first-launch destructive cleanup audit) и проверкой signing compatibility.
 - Сертификат установленного на ТВ APK не сверялся с release certificate в этой сессии. Release workflow проверяет ожидаемый SHA-256 certificate fingerprint `5dbf8846d9bb76a764928da8c8a833a837b44ba00f4a7c0b60dc77490319b10a`; совпадение с устройством не доказано.
 - Последний GitHub Release — `v2.1.73`, versionCode 88; PR #14 development target — `2.1.74`, versionCode 89. Официальный release asset не является PR preview.
