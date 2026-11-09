@@ -12,6 +12,7 @@
 | DEBT-006 | Runtime validation PR #14 на целевом ТВ отсутствует | CI не покрывает D-pad/lifecycle/permissions/OTA на реальном Android 9 | Последняя проверка #317 — CI build/tests на Linux и Windows, не device run | P1 | OPEN |
 | DEBT-007 | CI preview APK подписан debug key runner | Нельзя считать preview artifact заменой установленного release APK | build-apk.yml вызывает build.sh без release keystore; runner создаёт свой debug keystore | P2 | EXPECTED LIMITATION |
 | DEBT-008 | SingleUserMigrationTest не был подключён к CI workflow | Migration helper не проверялся автоматическим запуском unit test | TOS-008 добавила javac/java compile/run и regression contract в Linux и Windows jobs; CI #322 success | P2 | RESOLVED IN PR |
+| DEBT-009 | First-launch cleanup необратимо удаляет часть retired-feature prefs/cache | Потеря legacy data до runtime проверки single-user migration | `MainActivity.cleanupRemovedFeatureData()` очищает suggestions/nuvio_cloud/stremio_cloud/watch_cloud prefs, shelf keys, cache/tmdb и files/continue.json до основной инициализации HOME; Settings backup не включает profiles/CleanYourTV state | P1 | OPEN |
 
 ## Подробности
 
@@ -38,3 +39,8 @@ Debug artifact годится для CI проверки/скачивания, �
 
 ### DEBT-008 — Migration test coverage
 Устранено в PR #14 (TOS-008). `SingleUserMigration.java` — pure-Java helper без Android API; workflow компилирует helper и `tests/SingleUserMigrationTest.java` с `javac --release 11`, затем запускает test main в Linux и Windows jobs. `tests/test_single_user_migration_contract.py` проверяет наличие обоих шагов в обоих jobs и сохраняет guardrails для legacy data/source immutability. CI run #322 прошёл. Runtime migration на пользовательском устройстве не выполнялась.
+
+
+### DEBT-009 — First-launch legacy cleanup
+
+Подтверждено статическим чтением PR #14. В `MainActivity.onCreate()` вызывается `cleanupRemovedFeatureData()` до присвоения `prefs = SingleUserPrefs.homePrefs(this)`. Одноразовая очистка удаляет prefs-файлы `suggestions`, `nuvio_cloud`, `stremio_cloud`, `watch_cloud`; удаляет из canonical `home` ключи `shelf_mode`, `cw_enabled`, `shelf`, `top_shelf_tab`; рекурсивно удаляет `cache/tmdb` и `files/continue.json`. Marker `recommendations_news_cloud_removed_v1` предотвращает повторный запуск, но не предоставляет rollback. Эти операции не являются частью `SingleUserMigration` и не покрываются TOS-008 JVM test. `CustomMedia.buildSettingsBackupJson()` исключает `profiles` и CleanYourTV prefs; manifest `allowBackup=false`. До runtime update требуется TOS-009: определить non-destructive handling или подтверждённый backup/rollback для этих данных.
