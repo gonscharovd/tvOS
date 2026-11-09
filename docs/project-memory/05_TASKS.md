@@ -6,10 +6,10 @@
 
 | ID | Задача | Приоритет | Статус | Зависимости |
 |---|---|---:|---|---|
-| TOS-001 | Review core cleanup в PR #14: Night Scenes only, удаление Classic UI/старых профилей, миграция настроек | P1 | REVIEW | CI #313 success; требуется review и runtime validation |
+| TOS-001 | Review core cleanup в PR #14: Night Scenes only, удаление Classic UI/старых профилей, миграция настроек | P1 | REVIEW | CI #317 success; требуется review и runtime validation |
 | TOS-002 | Унифицировать build version defaults для build.sh/build.ps1/CI через единый источник | P1 | REVIEW | Реализовано в PR #14; CI #313 success, ожидает review вместе с PR |
 | TOS-003 | Синхронизировать README/features/architecture/install с поведением PR #14 | P1 | REVIEW | TOS-001; изменения внесены в PR #15, ожидают review |
-| TOS-004 | Удалить hard-coded путь JDK пользователя из build.ps1 и проверить Windows build | P2 | READY | TOS-002 |
+| TOS-004 | Удалить hard-coded путь JDK пользователя из build.ps1 и проверить Windows build | P2 | REVIEW | Реализовано; CI #317 Linux/Windows success; ожидает review PR #14 |
 | TOS-005 | Проверить HOME Activity component command по итоговому APK manifest и обновить install docs | P2 | BLOCKED | APK manifest подтверждён и docs обновлены; остаётся проверка PackageManager на ТВ |
 | TOS-006 | Выполнить runtime regression на Sber SDX-50U4123B для PR #14 | P1 | BLOCKED | Нужен тест на телевизоре и release-compatible APK |
 | TOS-007 | Подтвердить сертификат установленного APK и OTA in-place update после PR #14 | P1 | BLOCKED | TOS-006, release signing |
@@ -36,9 +36,11 @@
 - **Связанные файлы:** `README.md`, `docs/features.md`, `docs/architecture.md`, `docs/install.md`, `docs/getting-started.md`, `docs/README.md`, `docs/refactor-cleanup-dependency-map.md`.
 
 ### TOS-004 — Windows build
-- **Описание:** заменить путь JDK, привязанный к профилю другого разработчика, на JAVA_HOME/PATH и проверить сборку.
-- **Критерии:** build.ps1 работает на чистой Windows-среде с документированными требованиями.
-- **Связанные файлы:** `build.ps1`, `docs/getting-started.md`.
+- **Результат:** machine-specific JDK fallback удалён. Добавлен `tools/java.ps1`: валидный `JAVA_HOME` имеет приоритет; при пустом `JAVA_HOME` инструменты `javac`, `java`, `keytool` разрешаются из `PATH`; некорректный `JAVA_HOME` вызывает понятную ошибку.
+- **Regression:** `tests/test_build_contract.ps1` проверяет JAVA_HOME, PATH fallback и invalid JAVA_HOME; Python test запрещает старый абсолютный путь и проверяет wiring helper.
+- **CI:** run #317 прошёл на Ubuntu/Linux и Windows; PowerShell tests прошли на обоих runners; Windows `build.ps1` собрал APK, package/version/signature checks и artifact upload успешны.
+- **Статус:** REVIEW — реализация и CI validation завершены, PR #14 не merged.
+- **Связанные файлы:** `build.ps1`, `tools/java.ps1`, `tests/test_build_contract.ps1`, `tests/test_build_contract.py`, `docs/getting-started.md`.
 
 ### TOS-005 — Install component
 - **Описание:** проверить расхождение source namespace `com.techgenius.tvoslauncher` и final application ID `com.gonscharovd.tvoslauncher` в install commands.
