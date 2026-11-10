@@ -462,13 +462,17 @@ public final class CleanYourTv {
      * and recovery.py (never disables core system packages, TV input hardware services, or tvOS Launcher).
      */
     public static boolean isSafeToDisable(Context c, String pkg) {
+        return isSafeToDisable(c, pkg, AndroidHomeAppDetector.detect(c));
+    }
+
+    private static boolean isSafeToDisable(Context c, String pkg, HomeAppDetector.Result homeDetection) {
         if (c == null || pkg == null || pkg.isEmpty()) return false;
         if ("android".equals(pkg)) return false;
 
         // Never disable the selected HOME. If HOME selection or package visibility is unknown,
         // fail closed for candidate/unknown packages rather than guessing from OEM package names.
-        HomeAppDetector.PackageProtection homeProtection =
-                AndroidHomeAppDetector.detect(c).protectionFor(pkg);
+        HomeAppDetector.PackageProtection homeProtection = homeDetection == null
+                ? HomeAppDetector.PackageProtection.UNKNOWN : homeDetection.protectionFor(pkg);
         if (homeProtection != HomeAppDetector.PackageProtection.SAFE) {
             return false;
         }
@@ -1472,6 +1476,7 @@ public final class CleanYourTv {
         }
 
         PackageManager pm = c.getPackageManager();
+        HomeAppDetector.Result homeDetection = AndroidHomeAppDetector.detect(c);
         List<DebloatItem> primaryItems = new ArrayList<>();
         List<DebloatItem> optionalItems = new ArrayList<>();
 
@@ -1480,7 +1485,7 @@ public final class CleanYourTv {
         for (Map.Entry<String, String> e : activePkgComments.entrySet()) {
             String pkg = e.getKey();
             if (!installedPkgs.contains(pkg)) continue;
-            if (!isSafeToDisable(c, pkg)) continue;
+            if (!isSafeToDisable(c, pkg, homeDetection)) continue;
 
             boolean isSetupOrLauncher = "com.google.android.tungsten.setupwraith".equals(pkg)
                     || "com.google.android.apps.tv.launcherx".equals(pkg)
@@ -1506,7 +1511,7 @@ public final class CleanYourTv {
             String pkg = e.getKey();
             if (activePkgComments.containsKey(pkg)) continue;
             if (!installedPkgs.contains(pkg)) continue;
-            if (!isSafeToDisable(c, pkg)) continue;
+            if (!isSafeToDisable(c, pkg, homeDetection)) continue;
 
             String label = resolveAppLabel(pm, pkg);
             String desc = e.getValue();
@@ -1710,7 +1715,7 @@ public final class CleanYourTv {
                     if (found.containsKey(pkg)) continue;
                     if (homeDetection.protectionFor(pkg) != HomeAppDetector.PackageProtection.SAFE) continue;
                     if (isExcludedFromLauncherList(pkg, actName)) continue;
-                    if (!isSafeToDisable(c, pkg)) continue;
+                    if (!isSafeToDisable(c, pkg, homeDetection)) continue;
                     ApplicationInfo ai = ri.activityInfo.applicationInfo;
                     boolean isSystem = ai != null && ((ai.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0);
                     if (!isSystem) continue;
@@ -1754,6 +1759,7 @@ public final class CleanYourTv {
         PackageManager pm = c.getPackageManager();
         Set<String> savedDisabled = new HashSet<>(getSavedDisabledPackages(c));
         Map<String, DebloatItem> map = new LinkedHashMap<>();
+        HomeAppDetector.Result homeDetection = AndroidHomeAppDetector.detect(c);
 
         try {
             int flags = PackageManager.MATCH_UNINSTALLED_PACKAGES | PackageManager.MATCH_DISABLED_COMPONENTS;
@@ -1772,7 +1778,7 @@ public final class CleanYourTv {
                             : (isPackageCurrentlyEnabled(pm, pkg, ai) && !savedDisabled.contains(pkg));
                     String label = resolveAppLabel(pm, pkg);
                     boolean isCritical = isCriticalProtectedService(pkg, label);
-                    boolean coreWarning = isCritical || !isSafeToDisable(c, pkg);
+                    boolean coreWarning = isCritical || !isSafeToDisable(c, pkg, homeDetection);
                     String desc = isCritical
                             ? tr(c, "🛑 Critical system service — protected (cannot be disabled)", "🛑 Kritik sistem servisi — korumalı (devre dışı bırakılamaz)")
                             : (coreWarning
@@ -2313,8 +2319,9 @@ public final class CleanYourTv {
     private static void executeDebloatBatch(Activity activity, ModelEntry model,
                                             List<String> packagesToDisable, Runnable onChanged) {
         List<String> safePkgs = new ArrayList<>();
+        HomeAppDetector.Result homeDetection = AndroidHomeAppDetector.detect(activity);
         for (String pkg : packagesToDisable) {
-            if (isSafeToDisable(activity, pkg)) {
+            if (isSafeToDisable(activity, pkg, homeDetection)) {
                 safePkgs.add(pkg);
             }
         }
