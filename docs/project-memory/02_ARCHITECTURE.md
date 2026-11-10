@@ -115,3 +115,16 @@ TOS-009 removes `cleanupRemovedFeatureData()` and `deleteLegacyFeatureFiles()` f
 - **Optional Integrations:** CleanYourTV, VPN providers (Happ optional), weather and system tools. Missing integrations must not impair core launcher startup.
 
 TOS-011 adds a first isolated `DeviceProfile` model and `DeviceProfileResolver`; it is not yet wired into HOME, CleanYourTV or VPN decisions. Existing 341-entry CleanYourTV model database remains intact.
+
+
+## Dynamic HOME detection (TOS-012, implementation under CI review — 2026-11-10)
+
+- `HomeAppDetector` is a pure-Java policy model. It separates the explicitly selected HOME from the list of apps that can handle `ACTION_MAIN + CATEGORY_HOME`.
+- `AndroidHomeAppDetector` uses `PackageManager.queryIntentActivities` to enumerate HOME candidates and `PackageManager.getPreferredActivities` to identify an explicit preferred HOME. It does **not** use `resolveActivity` for selection because priority-based best-match resolution can select a high-priority candidate without proving that the user selected it.
+- On API 29+, public `RoleManager.isRoleHeld(ROLE_HOME)` confirms when testOS itself holds the HOME role. The public API does not expose other role holders; otherwise the implementation relies on explicit PackageManager preference evidence.
+- Candidate visibility is declared through the manifest HOME `<queries>` intent and existing `QUERY_ALL_PACKAGES` permission. PackageManager failures, missing preferences and ambiguous selections produce `UNKNOWN`.
+- `CleanYourTv.isSafeToDisable` protects the selected HOME and fails closed when HOME/candidate roles cannot be established. Launcher selection lists omit the currently selected HOME and ambiguous candidates.
+- `LocalAdb` removes role holders only for dynamically detected system HOME candidates; `PowerService` boot interception uses the dynamically discovered system HOME candidate set rather than a static vendor list.
+- OEM package names remain in CleanYourTV's separate profile/catalog and friendly-label tables; they are not used to identify the selected HOME.
+
+Runtime behavior of OEM firmware that intercepts the physical HOME key outside Android's standard HOME preference/role APIs remains device-specific and unverified. Unknown states are reported conservatively rather than guessed.
