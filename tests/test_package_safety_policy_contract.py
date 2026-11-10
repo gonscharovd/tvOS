@@ -10,6 +10,7 @@ POLICY = (ROOT / "src/com/techgenius/tvoslauncher/PackageSafetyPolicy.java").rea
 PERMS = (ROOT / "src/com/techgenius/tvoslauncher/Perms.java").read_text(encoding="utf-8")
 LOCAL_ADB = (ROOT / "src/com/techgenius/tvoslauncher/LocalAdb.java").read_text(encoding="utf-8")
 SCENE_HOME = (ROOT / "src/com/techgenius/tvoslauncher/SceneHome.java").read_text(encoding="utf-8")
+SETTINGS = (ROOT / "src/com/techgenius/tvoslauncher/SettingsActivity.java").read_text(encoding="utf-8")
 MANIFEST = (ROOT / "AndroidManifest.xml").read_text(encoding="utf-8")
 PROFILE = (ROOT / "src/com/techgenius/tvoslauncher/DeviceProfile.java").read_text(encoding="utf-8")
 RESOLVER = (ROOT / "src/com/techgenius/tvoslauncher/DeviceProfileResolver.java").read_text(encoding="utf-8")
@@ -27,6 +28,13 @@ def main() -> None:
             "single-package disable must construct the Android safety inspector")
     require("return safety.evaluate(pkg).isSafeToDisable();" in CLEAN,
             "CleanYourTV must delegate disable decisions to the shared policy")
+    require("if (disable && !isSafeToDisable(activity, pkg))" in CLEAN,
+            "single-package UI action must check policy before execution")
+    require("if (isSafeToDisable(activity, pkg, safety))" in CLEAN,
+            "batch selection must filter packages through the shared policy")
+    require("CleanYourTv.executeDebloatPackages" in SETTINGS
+            and "CleanYourTv.toggleSinglePackage" in SETTINGS,
+            "Settings UI routes must use the shared CleanYourTV execution methods")
     require("AndroidPackageSafetyInspector safety = AndroidPackageSafetyInspector.create" in CLEAN,
             "list and batch operations must reuse a read-only safety snapshot")
     require("SAFE_DISABLE_CACHE" not in CLEAN,
