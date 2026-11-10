@@ -8,6 +8,7 @@ migration = ROOT / "src/com/techgenius/tvoslauncher/SingleUserMigration.java"
 test = ROOT / "tests/SingleUserMigrationTest.java"
 workflow = (ROOT / ".github/workflows/build-apk.yml").read_text(encoding="utf-8")
 source = migration.read_text(encoding="utf-8")
+prefs_source = (ROOT / "src/com/techgenius/tvoslauncher/SingleUserPrefs.java").read_text(encoding="utf-8")
 test_source = test.read_text(encoding="utf-8")
 
 assert "android." not in source, "Pure migration helper must remain JVM-testable without Android SDK"
@@ -21,6 +22,14 @@ assert "preserveLegacyHome" in test_source, "Legacy preference preservation must
 assert "p1.get(\"order\")" in test_source, "Source map immutability must remain covered"
 assert "selectedProfileAvailable" in source
 assert "new LinkedHashMap<>()" in source
+
+# Preserve the legacy registry values so a previous APK can still select its old profile.
+assert 'legacy_list_before_single_user' in prefs_source
+assert 'legacy_current_before_single_user' in prefs_source
+assert '.putString("list", single.toString())' not in prefs_source
+assert '.putString("current", "p1")' not in prefs_source
+assert '.putBoolean("ask_on_wake", false)' not in prefs_source
+assert '.putString("single_user_name", selected.name)' in prefs_source
 
 linux_job = workflow.split("  build:\n", 1)[1].split("\n  build-windows:\n", 1)[0]
 windows_job = workflow.split("  build-windows:\n", 1)[1]
