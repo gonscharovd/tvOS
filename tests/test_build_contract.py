@@ -107,8 +107,9 @@ assert "ASSET_OPTIMIZE" in build_ps and "ASSET_OPTIMIZE" in build_sh
 assert "ASSET_PROFILE" in build_ps and "ASSET_PROFILE" in build_sh
 assert "path: build/tvos-home.apk" in workflow
 assert 'ASSET_OPTIMIZE: "1"' in workflow
-assert 'ASSET_PROFILE: "sber"' in workflow
-assert "fonttools" in workflow and "test_sber_font_subsetting.py" in workflow
+assert 'ASSET_PROFILE: "ru"' in workflow
+assert 'ASSET_PROFILE: "sber"' not in workflow
+assert "fonttools" in workflow and "test_ru_font_subsetting.py" in workflow
 assert "test_asset_optimizer.py" in workflow
 assert "tvos-home.apk" in updater
 
