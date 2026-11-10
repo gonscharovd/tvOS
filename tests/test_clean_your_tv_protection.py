@@ -67,6 +67,7 @@ def main() -> None:
     protected_exact = set(re.findall(r'NEVER_DISABLE_EXACT\.add\("([^"]+)"\)', SOURCE))
     assert "ru.sberdevices.SberDevicesServiceSystem" in protected_exact
     assert "ru.sberdevices.starlauncher" in protected_exact
+    assert "com.google.android.tungsten.setupwraith" in protected_exact
     assert "if (NEVER_DISABLE_EXACT.contains(pkg) || isCriticalProtectedService(pkg, null))" in SOURCE
     assert "if (disable && !isSafeToDisable(activity, pkg))" in SOURCE
     assert "allowAnySystemApp" not in SOURCE
