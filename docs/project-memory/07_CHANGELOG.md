@@ -4,7 +4,7 @@
 - SingleUserMigration helper не изменён. SingleUserPrefs сохраняет исходные profiles.list/current и ask_on_wake, добавляя только migration metadata; это сохраняет чтение выбранного профиля предыдущей версией.
 - Settings backup включает profiles и проецирует сохранённые legacy list/current в экспортируемый registry для уже мигрированных установок; импорт merge-based.
 - Обновлены backup safety и migration regression contracts; backup safety test подключён к Windows job (уже был в Linux job).
-- Полный CI для конечного TOS-009 HEAD ожидается. На ТВ не запускались ADB, backup/restore, APK install или OTA; main не менялся, PR не сливались.
+- Полный CI #330 для конечного TOS-009 HEAD прошёл success на Linux и Windows. На ТВ не запускались ADB, backup/restore, APK install или OTA; main не менялся, PR не сливались.
 
 ## 2026-11-09 — TOS-006 runtime regression preflight
 
