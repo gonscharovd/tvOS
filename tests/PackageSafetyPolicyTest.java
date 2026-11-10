@@ -9,7 +9,7 @@ public final class PackageSafetyPolicyTest {
             boolean rolesKnown, boolean criticalRole, boolean permissionsKnown,
             boolean criticalPermission, boolean knownOem, boolean inProfile) {
         return new PackageSafetyPolicy.Facts(PKG, true, false, false, false, home,
-                true, system, privileged, persistent, systemUid, ownerKnown, owner,
+                true, system, persistent, systemUid, ownerKnown, owner,
                 rolesKnown, criticalRole, permissionsKnown, criticalPermission, knownOem, inProfile);
     }
 
@@ -41,15 +41,15 @@ public final class PackageSafetyPolicyTest {
                         true, false, true, false, true, false, false, false), "unknown HOME");
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.OWN_APPLICATION,
                 new PackageSafetyPolicy.Facts(PKG, true, true, false, false,
-                        PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false, false, false,
+                        PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false, false,
                         true, false, true, false, true, false, false, false), "testOS self-protection");
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.LEGACY_HARD_PROTECTION,
                 new PackageSafetyPolicy.Facts(PKG, true, false, true, false,
-                        PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false, false, false,
+                        PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false, false,
                         true, false, true, false, true, false, false, false), "legacy exact deny");
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.CORE_ANDROID_PROTECTION,
                 new PackageSafetyPolicy.Facts(PKG, true, false, false, true,
-                        PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false, false, false,
+                        PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false, false,
                         true, false, true, false, true, false, false, false), "Android core regex");
 
         expect(PackageSafetyPolicy.State.UNKNOWN, PackageSafetyPolicy.Reason.PACKAGE_INFO_UNKNOWN,
