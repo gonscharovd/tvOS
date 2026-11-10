@@ -75,7 +75,7 @@ public final class CleanYourTv {
     );
 
     private static final Pattern CORE_OK = Pattern.compile(
-            "^com\\.android\\.(providers\\.calendar|providers\\.contacts|providers\\.userdictionary|dreams\\..*|printspooler|bips|stk|cellbroadcastreceiver|calllogbackup|managedprovisioning|StatementService)$"
+            "^com\\.android\\.(providers\\.calendar|providers\\.contacts|providers\\.userdictionary|dreams\\..*|printspooler|bips|stk|cellbroadcastreceiver|calllogbackup|managedprovisioning)$"
     );
 
     /**
