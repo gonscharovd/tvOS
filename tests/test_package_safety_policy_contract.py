@@ -49,8 +49,12 @@ def main() -> None:
             "policy must model uncertainty and HOME/OEM states explicitly")
     require("pm disable-user" not in PERMS,
             "Perms must not display a manual shell command that bypasses package safety")
-    require("pm disable-user" not in LOCAL_ADB and "pm uninstall" not in LOCAL_ADB,
-            "LocalAdb must not contain a package-disable/uninstall bypass")
+    require("PACKAGE_MUTATION_TOKEN" in LOCAL_ADB
+            and "packageMutationBlockReason(c, shellCmd, packageSafetySnapshot)" in LOCAL_ADB
+            and "safety.evaluate(pkg).isSafeToDisable()" in LOCAL_ADB,
+            "ADB transport must re-check every package mutation with the shared policy")
+    require("pm disable-user" not in PERMS,
+            "Perms must not display a manual shell command that bypasses package safety")
     require("deletePackage(" not in CLEAN and "pm uninstall" not in CLEAN,
             "CleanYourTV must not delete packages")
     require("pm enable --user 0 " in CLEAN,
