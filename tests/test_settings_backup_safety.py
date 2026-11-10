@@ -16,7 +16,7 @@ writer = media.split("public static void backupSettingsToDownload", 1)[1].split(
 )[0]
 
 for pref in (
-    '"settings"', '"home"', '"home_default"', '"app_custom_names"',
+    '"settings"', '"home"', '"home_default"', '"profiles"', '"app_custom_names"',
     '"button_mapper"', '"control_panel"', '"weather"', '"inputs"',
     '"clicks"', '"custom_media"', '"screensaver"',
 ):
