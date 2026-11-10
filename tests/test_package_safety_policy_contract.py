@@ -9,6 +9,7 @@ INSPECTOR = (ROOT / "src/com/techgenius/tvoslauncher/AndroidPackageSafetyInspect
 POLICY = (ROOT / "src/com/techgenius/tvoslauncher/PackageSafetyPolicy.java").read_text(encoding="utf-8")
 PERMS = (ROOT / "src/com/techgenius/tvoslauncher/Perms.java").read_text(encoding="utf-8")
 LOCAL_ADB = (ROOT / "src/com/techgenius/tvoslauncher/LocalAdb.java").read_text(encoding="utf-8")
+MANIFEST = (ROOT / "AndroidManifest.xml").read_text(encoding="utf-8")
 
 
 def require(condition: bool, message: str) -> None:
@@ -64,6 +65,14 @@ def main() -> None:
         require("pm disable-user" not in source and "pm uninstall" not in source
                 and "deletePackage(" not in source,
                 f"{path} must not add an alternate package mutation path")
+    require("REQUEST_DELETE_PACKAGES" not in MANIFEST,
+            "the app must not request the unused package deletion capability")
+    forbidden_delete_api = ("deletePackage(", "ACTION_DELETE", "ACTION_UNINSTALL_PACKAGE",
+                            "setApplicationEnabledSetting(")
+    for source_path in (ROOT / "src").rglob("*.java"):
+        source = source_path.read_text(encoding="utf-8")
+        for token in forbidden_delete_api:
+            require(token not in source, f"{source_path} must not introduce {token}")
     require("deletePackage(" not in CLEAN and "pm uninstall" not in CLEAN,
             "CleanYourTV must not delete packages")
     require("pm enable --user 0 " in CLEAN,
