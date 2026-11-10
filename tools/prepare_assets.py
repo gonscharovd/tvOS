@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create a build-only asset tree with optional Sber-specific font and JPEG optimization."""
+"""Create a build-only asset tree with optional language-aware font and JPEG optimization."""
 from __future__ import annotations
 
 import argparse
@@ -43,9 +43,9 @@ def _subset_font(path: Path, unicodes: set[int]) -> tuple[int, int]:
     return original_size, min(original_size, len(data))
 
 
-def subset_sber_fonts(font_dir: Path) -> tuple[int, int]:
-    # The Sber edition exposes Russian UI. Include Latin (including Turkish/Western accents),
-    # Cyrillic, combining marks, punctuation, currency, common symbols and the numero sign.
+def subset_ru_fonts(font_dir: Path) -> tuple[int, int]:
+    # Russian UI glyph set: Latin (including Turkish/Western accents), Cyrillic,
+    # combining marks, punctuation, currency, common symbols and the numero sign.
     ui_ranges = (
         (0x0020, 0x024F), (0x0300, 0x036F), (0x0400, 0x052F),
         (0x2000, 0x206F), (0x20A0, 0x20CF), (0x2100, 0x214F),
@@ -102,8 +102,8 @@ def prepare_assets(source: Path, destination: Path, optimize: bool, quality: int
             after += len(original)
     results["scene JPEGs"] = (before, after)
 
-    if profile == "sber":
-        results["fonts"] = subset_sber_fonts(destination / "fonts")
+    if profile == "ru":
+        results["fonts"] = subset_ru_fonts(destination / "fonts")
     return results
 
 
@@ -112,7 +112,7 @@ def main() -> None:
     parser.add_argument("--source", type=Path, required=True)
     parser.add_argument("--dest", type=Path, required=True)
     parser.add_argument("--optimize", action="store_true")
-    parser.add_argument("--profile", choices=("full", "sber"), default="full")
+    parser.add_argument("--profile", choices=("full", "ru"), default="full")
     parser.add_argument("--quality", type=int, default=88)
     parser.add_argument("--max-width", type=int, default=1920)
     parser.add_argument("--max-height", type=int, default=1080)

@@ -5,6 +5,7 @@ on:
   pull_request:
     branches:
       - main
+      - refactor/testos-core-cleanup-2026-11
   push:
     branches:
       - feature/ram-cleaner-happ-vpn
@@ -14,6 +15,7 @@ on:
       - fix/ota-installer-launch
       - feature/control-panel-navigation-clock-fonts
       - perf/sber-edition-asset-optimization
+      - feat/portable-android-tv-platform-2026-11
 
 permissions:
   contents: read
@@ -25,7 +27,7 @@ jobs:
       ANDROID_HOME: /usr/local/lib/android/sdk
       ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
       ASSET_OPTIMIZE: "1"
-      ASSET_PROFILE: "sber"
+      ASSET_PROFILE: "ru"
     steps:
       - name: Check out source
         uses: actions/checkout@v5
@@ -70,8 +72,8 @@ jobs:
         run: python3 tests/test_bitmap_decode_config.py
       - name: Test build-time asset optimization
         run: python3 tests/test_asset_optimizer.py
-      - name: Test Sber font subset
-        run: python3 tests/test_sber_font_subsetting.py
+      - name: Test Russian UI font subset
+        run: python3 tests/test_ru_font_subsetting.py
 
       - name: Test grouped Settings navigation
         run: python3 tests/test_settings_navigation.py
@@ -134,7 +136,7 @@ jobs:
     runs-on: windows-latest
     env:
       ASSET_OPTIMIZE: "1"
-      ASSET_PROFILE: "sber"
+      ASSET_PROFILE: "ru"
     steps:
       - name: Check out source
         uses: actions/checkout@v5

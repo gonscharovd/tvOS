@@ -26,6 +26,7 @@ build_sh = (ROOT / "build.sh").read_text(encoding="utf-8")
 ps_helper = (ROOT / "tools/version.ps1").read_text(encoding="utf-8")
 ps_test = (ROOT / "tests/test_build_contract.ps1").read_text(encoding="utf-8")
 workflow = (ROOT / ".github/workflows/build-apk.yml").read_text(encoding="utf-8")
+asset_tool = (ROOT / "tools/prepare_assets.py").read_text(encoding="utf-8")
 release_workflow = (ROOT / ".github/workflows/release.yml").read_text(encoding="utf-8")
 updater = (ROOT / "src/com/techgenius/tvoslauncher/AppUpdater.java").read_text(encoding="utf-8")
 
@@ -107,8 +108,13 @@ assert "ASSET_OPTIMIZE" in build_ps and "ASSET_OPTIMIZE" in build_sh
 assert "ASSET_PROFILE" in build_ps and "ASSET_PROFILE" in build_sh
 assert "path: build/tvos-home.apk" in workflow
 assert 'ASSET_OPTIMIZE: "1"' in workflow
-assert 'ASSET_PROFILE: "sber"' in workflow
-assert "fonttools" in workflow and "test_sber_font_subsetting.py" in workflow
+assert 'ASSET_PROFILE: "ru"' in workflow
+assert 'ASSET_PROFILE: "sber"' not in workflow
+assert 'feat/portable-android-tv-platform-2026-11' in workflow
+assert 'choices=("full", "ru")' in asset_tool
+assert "subset_ru_fonts" in asset_tool
+assert "subset_sber_fonts" not in asset_tool
+assert "fonttools" in workflow and "test_ru_font_subsetting.py" in workflow
 assert "test_asset_optimizer.py" in workflow
 assert "tvos-home.apk" in updater
 

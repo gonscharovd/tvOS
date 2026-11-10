@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify the Sber font subset retains Russian UI glyphs and digits while reducing size."""
+"""Verify the Russian UI font subset retains Russian UI glyphs and digits while reducing size."""
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import shutil
@@ -9,12 +9,12 @@ from fontTools.ttLib import TTFont
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
-from prepare_assets import subset_sber_fonts
+from prepare_assets import subset_ru_fonts
 
 with TemporaryDirectory() as tmp:
     font_dir = Path(tmp) / "fonts"
     shutil.copytree(ROOT / "assets" / "fonts", font_dir)
-    before, after = subset_sber_fonts(font_dir)
+    before, after = subset_ru_fonts(font_dir)
     assert after < before, (before, after)
 
     for name in ("Inter-Regular.ttf", "Inter-Medium.ttf", "Inter-SemiBold.ttf", "InterDisplay-Bold.ttf"):
@@ -30,4 +30,4 @@ with TemporaryDirectory() as tmp:
         missing = [ch for ch in "0123456789:" if ord(ch) not in cmap]
         assert not missing, f"{name} is missing clock glyphs: {missing}"
 
-print(f"PASS: Sber font subset retains required glyphs and reduces {before:,} -> {after:,} bytes")
+print(f"PASS: Russian UI font subset retains required glyphs and reduces {before:,} -> {after:,} bytes")
