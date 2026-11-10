@@ -96,3 +96,14 @@
 - **Причина:** пользовательские данные могут оставаться полезными для отката на предыдущую версию, даже если соответствующий UI удалён.
 - **Последствия:** MainActivity не вызывает first-launch destructive cleanup; SingleUserPrefs не переписывает profiles.list/current и ask_on_wake; SingleUserMigration helper остаётся без изменений. Settings backup включает профильный registry для ручного rollback.
 - **Статус:** принято в PR #14; CI #330 success, review ожидается.
+
+
+## DEC-012 — Fail-closed CleanYourTV package safety
+- **Дата:** 2026-11-10, TOS-013 / Draft PR #19.
+- **Решение:** ни одна package disable/delete операция не разрешается при неполном или противоречивом Android evidence. `UNKNOWN` всегда блокирует действие. UI и shell transport используют одну policy; transport повторно проверяет disable перед исполнением.
+- **OEM:** `DeviceProfile` — advisory identity, не разрешение на удаление. Для system-package candidate нужны Build identity, полный PackageManager inventory, отсутствие OEM conflicts, membership в выбранном model profile и независимые Android role/permission/UID/persistent checks.
+- **HOME:** выбранный и альтернативные HOME-кандидаты, включая disabled components, защищены. Не использовать candidate order или `resolveActivity()` для определения выбранного HOME.
+- **Удаление:** system/OEM/persistent apps не удаляются; user-app uninstall разрешается только после полной проверки и Android confirmation intent.
+- **Причина:** потеря штатного launcher, TV Input, Wi-Fi, boot/power/update или recovery services может лишить пользователя возможности управлять телевизором.
+- **Последствия:** некоторые OEM устройства могут получить `UNKNOWN` и не позволить debloat, пока не появятся проверяемые API evidence. Это ожидаемый fail-safe, а не ошибка, которую нужно обходить именами пакетов.
+- **Статус:** реализовано в Draft PR #19; CI #456 Linux/Windows success; runtime OEM validation не выполнена; merge не разрешён.
