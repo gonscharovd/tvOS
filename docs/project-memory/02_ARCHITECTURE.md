@@ -1,6 +1,6 @@
 # Архитектура testOS
 
-**Срез кода:** ветка `refactor/testos-core-cleanup-2026-11`, commit `7aa77d1cb3654f090cafdedfabf3274a7098d87b`  
+**Срез кода:** ветка `refactor/testos-core-cleanup-2026-11`, commit `6d3fc12a271ad8d5cb3681cc614e8182041fddcf`  
 **Основная ветка:** `main`, commit `a765318b577e66fae66a8ffe28439dcd6233f38f`  
 **Важно:** описание отражает код рабочей ветки PR #14; изменения PR ещё не влиты в main.
 
