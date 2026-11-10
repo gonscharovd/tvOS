@@ -112,3 +112,15 @@
 - CI run #363 (`42838478394`) — success на Linux и Windows, включая HOME policy tests, Android wiring contract, localization, APK builds и package/version checks.
 - Реализовано динамическое обнаружение HOME и fail-safe защита выбранного/альтернативных HOME-кандидатов от автоматического отключения.
 - Runtime на физических Android TV не проверялся; PR ожидает review. Не слит, OTA не выпущена, main не менялся.
+
+
+## 2026-11-10 — TOS-013 Universal CleanYourTV Safety Audit
+
+- Добавлены pure-Java `PackageSafetyPolicy`, Android evidence collector `AndroidPackageSafetyInspector` и shell mutation parser `PackageMutationCommandGuard`.
+- Все CleanYourTV disable flows проходят общую policy; LocalAdb выполняет последнюю проверку на transport boundary. Shell delete/compound/unsupported mutations блокируются. Restore принимает только валидные package names и точную enable-команду.
+- HOME detection теперь учитывает disabled alternate HOME components. OEM Build/package conflicts и incomplete package inventory не дают разрешения на system debloat.
+- Добавлена защита системных boot receivers и persistent apps; user-app uninstall проверяется общей delete policy перед Android confirmation.
+- Google TV setupwraith защищён от отключения во всех UI paths из-за Wi-Fi ownership risk; старый forget/re-add warning заменён на информационное сообщение.
+- Проверена база 341 профиля; массовых изменений нет. `NEVER_DISABLE_EXACT` содержит 24 защитных правила; ни одно существующее правило не удалялось.
+- GitHub Actions run #456 прошёл на Linux и Windows для code commit `22d46a96a5dba243ae95c1a516b6890c6e72015d`; APK build and artifacts succeeded. Последующий PR head update добавил только Markdown audit report.
+- Draft PR #19 основан на PR #18; merge, OTA, APK installation и TV package/HOME changes не выполнялись. Physical Android runtime validation не проводилась.
