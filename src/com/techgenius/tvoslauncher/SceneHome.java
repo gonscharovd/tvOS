@@ -25,6 +25,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewOutlineProvider;
+import android.widget.Toast;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -783,9 +784,16 @@ final class SceneHome {
             labels.add(I18n.s(host, "App Info", "Uygulama Bilgileri"));
             actions.add(() -> host.startSafe(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                     Uri.parse("package:" + a.pkg))));
-            if (!a.system) {
+            if (!a.system && CleanYourTv.isSafeToDelete(host, a.pkg)) {
                 labels.add(I18n.s(host, "Uninstall", "Kaldır"));
-                actions.add(() -> host.startSafe(new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + a.pkg))));
+                actions.add(() -> {
+                    if (!CleanYourTv.isSafeToDelete(host, a.pkg)) {
+                        Toast.makeText(host, I18n.s(host, "This app is protected", "Bu uygulama korunuyor"),
+                                Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    host.startSafe(new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + a.pkg)));
+                });
             }
         }
 
