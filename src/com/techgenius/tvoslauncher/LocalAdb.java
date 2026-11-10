@@ -891,9 +891,16 @@ final class LocalAdb {
         new Thread(() -> {
             String pkg = c.getPackageName();
             List<String> cmds = new ArrayList<>();
-            // Remove stock home role holders first (fixes Android 11 TVs where add-role-holder fails if stock holds it)
-            for (String stockPkg : Perms.getStockTvHomePackages()) {
-                cmds.add("cmd role remove-role-holder --user 0 android.app.role.HOME " + stockPkg + " 2>/dev/null");
+            // Remove only detected system HOME candidates. If PackageManager cannot enumerate them,
+            // do not guess OEM package names or issue role-removal commands.
+            HomeAppDetector.Result homeDetection = AndroidHomeAppDetector.detect(c);
+            if (homeDetection.candidatesKnown) {
+                for (HomeAppDetector.Candidate candidate : homeDetection.candidates) {
+                    if (candidate.packageName.equals(pkg) || !Boolean.TRUE.equals(candidate.systemApp)
+                            || Boolean.FALSE.equals(candidate.enabled)) continue;
+                    cmds.add("cmd role remove-role-holder --user 0 android.app.role.HOME "
+                            + candidate.packageName + " 2>/dev/null");
+                }
             }
             cmds.add("cmd role add-role-holder --user 0 android.app.role.HOME " + pkg + " 1 2>/dev/null");
             cmds.add("cmd role add-role-holder --user 0 android.app.role.HOME " + pkg + " 2>/dev/null");
