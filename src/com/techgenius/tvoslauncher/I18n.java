@@ -61,6 +61,9 @@ public final class I18n {
         add("Step 2: Disable System Launchers (Google TV / Android TV / OEM)", "Шаг 2. Отключить системные лаунчеры (Google TV / Android TV / производителя)");
         add("Review Other System HOME Apps", "Проверить другие системные приложения HOME");
         add("Current system HOME is protected", "Текущее системное приложение HOME защищено");
+        add("This app is protected", "Приложение защищено");
+        add("Google TV Wi-Fi Protection", "Защита Wi-Fi Google TV");
+        add("Google TV setupwraith is protected by testOS because some firmware versions store Wi-Fi ownership there. CleanYourTV will not disable it through any path. No Wi-Fi changes are needed.", "Google TV cihazlarda Wi-Fi ağının sahibi setupwraith olabildiğinden testOS bu paketi korur. CleanYourTV hiçbir yöntemle bu paketi devre dışı bırakmaz. Wi-Fi ayarlarını değiştirmeniz gerekmez.");
         add("HOME detected; other launcher roles are unknown and protected", "HOME обнаружен; роли других лаунчеров неизвестны, они защищены");
         add("HOME selection unknown — launcher actions are protected", "Выбор HOME неизвестен — действия с лаунчерами заблокированы");
         add("No other system HOME apps found", "Другие системные приложения HOME не найдены");

@@ -1328,6 +1328,31 @@ final class LocalAdb {
         return res.isEmpty() ? "" : res.get(0);
     }
 
+    /**
+     * Last-line guard at the ADB transport boundary. Package deletion is always rejected;
+     * a single package-disable command is re-evaluated using fresh Android safety evidence.
+     */
+    private static String packageMutationBlockReason(Context context, String command,
+            AndroidPackageSafetyInspector safetySnapshot) {
+        PackageMutationCommandGuard.Result mutation = PackageMutationCommandGuard.inspect(command);
+        if (mutation.type == PackageMutationCommandGuard.Type.NONE) return null;
+        if (mutation.type == PackageMutationCommandGuard.Type.DELETE) {
+            return "BLOCKED: package deletion is not supported";
+        }
+        if (mutation.type == PackageMutationCommandGuard.Type.UNSUPPORTED_MUTATION) {
+            return "BLOCKED: unsupported or compound package mutation command";
+        }
+        // Re-enabling is the recovery-only mutation. The command parser has already constrained
+        // it to one valid package name and user 0, with no shell chaining or extra arguments.
+        if (mutation.type == PackageMutationCommandGuard.Type.ENABLE) return null;
+        AndroidPackageSafetyInspector safety = safetySnapshot != null ? safetySnapshot
+                : AndroidPackageSafetyInspector.create(context, AndroidHomeAppDetector.detect(context));
+        if (!safety.evaluate(mutation.packageName).isSafeToDisable()) {
+            return "BLOCKED_BY_PACKAGE_SAFETY_POLICY";
+        }
+        return null;
+    }
+
     private static List<String> runShellCommandsOnHost(
             Context c, String host, int port, List<String> commands, BatchProgressListener progress) throws Exception {
         KeyPair kp = getOrCreateKeyPair(c);
@@ -1366,10 +1391,24 @@ final class LocalAdb {
 
             socket.setSoTimeout(15000);
             List<String> outputs = new java.util.ArrayList<>(commands.size());
+            AndroidPackageSafetyInspector packageSafetySnapshot = null;
+            for (String command : commands) {
+                if (PackageMutationCommandGuard.inspect(command).type
+                        == PackageMutationCommandGuard.Type.DISABLE) {
+                    packageSafetySnapshot = AndroidPackageSafetyInspector.create(c, AndroidHomeAppDetector.detect(c));
+                    break;
+                }
+            }
             int total = commands.size();
             for (int i = 0; i < total; i++) {
                 String shellCmd = commands.get(i);
                 int localId = i + 1;
+                String blockedMutation = packageMutationBlockReason(c, shellCmd, packageSafetySnapshot);
+                if (blockedMutation != null) {
+                    outputs.add(blockedMutation);
+                    if (progress != null) progress.onStep(i + 1, total, shellCmd, blockedMutation);
+                    continue;
+                }
                 byte[] openData = ("shell:" + shellCmd + "\0").getBytes(StandardCharsets.UTF_8);
                 sendPacket(out, A_OPEN, localId, 0, openData);
 

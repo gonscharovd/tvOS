@@ -8,6 +8,7 @@ on:
       - refactor/testos-core-cleanup-2026-11
       - feat/portable-android-tv-platform-2026-11
       - feat/device-profile-foundation-2026-11
+      - feat/dynamic-home-detection-2026-11
   push:
     branches:
       - feature/ram-cleaner-happ-vpn
@@ -20,6 +21,7 @@ on:
       - feat/portable-android-tv-platform-2026-11
       - feat/device-profile-foundation-2026-11
       - feat/dynamic-home-detection-2026-11
+      - feat/package-safety-policy-2026-11
 
 permissions:
   contents: read
@@ -92,6 +94,16 @@ jobs:
           mkdir -p "$test_dir"
           javac --release 11 -d "$test_dir" src/com/techgenius/tvoslauncher/HomeAppDetector.java tests/HomeAppDetectorTest.java
           java -cp "$test_dir" com.techgenius.tvoslauncher.HomeAppDetectorTest
+
+      - name: Test package safety policy
+        run: |
+          set -euo pipefail
+          test_dir="$RUNNER_TEMP/tvos-package-safety"
+          mkdir -p "$test_dir"
+          javac --release 11 -d "$test_dir" src/com/techgenius/tvoslauncher/PackageSafetyPolicy.java src/com/techgenius/tvoslauncher/PackageMutationCommandGuard.java tests/PackageSafetyPolicyTest.java tests/PackageMutationCommandGuardTest.java
+          java -cp "$test_dir" com.techgenius.tvoslauncher.PackageSafetyPolicyTest
+          java -cp "$test_dir" com.techgenius.tvoslauncher.PackageMutationCommandGuardTest
+          python3 tests/test_package_safety_policy_contract.py
 
       - name: Test device profile identity
         run: |
@@ -198,6 +210,20 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "HOME detection test compilation failed" }
           & java -cp $testDir com.techgenius.tvoslauncher.HomeAppDetectorTest
           if ($LASTEXITCODE -ne 0) { throw "HOME detection policy test failed" }
+
+      - name: Test package safety policy
+        shell: pwsh
+        run: |
+          $testDir = Join-Path $env:RUNNER_TEMP "tvos-package-safety"
+          New-Item -ItemType Directory -Force -Path $testDir | Out-Null
+          & javac --release 11 -d $testDir src/com/techgenius/tvoslauncher/PackageSafetyPolicy.java src/com/techgenius/tvoslauncher/PackageMutationCommandGuard.java tests/PackageSafetyPolicyTest.java tests/PackageMutationCommandGuardTest.java
+          if ($LASTEXITCODE -ne 0) { throw "Package safety policy compilation failed" }
+          & java -cp $testDir com.techgenius.tvoslauncher.PackageSafetyPolicyTest
+          if ($LASTEXITCODE -ne 0) { throw "Package safety policy tests failed" }
+          & java -cp $testDir com.techgenius.tvoslauncher.PackageMutationCommandGuardTest
+          if ($LASTEXITCODE -ne 0) { throw "Package mutation command guard tests failed" }
+          & python tests/test_package_safety_policy_contract.py
+          if ($LASTEXITCODE -ne 0) { throw "Package safety integration contract failed" }
 
       - name: Test device profile identity
         shell: pwsh

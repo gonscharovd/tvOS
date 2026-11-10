@@ -64,8 +64,8 @@ public final class CleanYourTv {
     private static final String BACKUP_FILENAME = "cleanyourtv_disabled_backup.txt";
 
     /**
-     * Exact safety regexes ported from cleanyourtv/tools/disable.sh (CORE_RE and CORE_OK).
-     * Any package matching CORE_RE and NOT matching CORE_OK is blocked from being disabled.
+     * Legacy package-name safety rules retained as defense in depth.
+     * PackageSafetyPolicy adds live HOME, DevicePolicyManager, PackageManager and OEM evidence.
      */
     private static final Pattern CORE_RE = Pattern.compile(
             "^(android"
@@ -75,15 +75,16 @@ public final class CleanYourTv {
     );
 
     private static final Pattern CORE_OK = Pattern.compile(
-            "^com\\.android\\.(providers\\.tv|providers\\.calendar|providers\\.contacts|providers\\.userdictionary|dreams\\..*|printspooler|bips|stk|cellbroadcastreceiver|calllogbackup|managedprovisioning|StatementService)$"
+            "^com\\.android\\.(providers\\.calendar|providers\\.contacts|providers\\.userdictionary|dreams\\..*|printspooler|bips|stk|cellbroadcastreceiver|calllogbackup|managedprovisioning)$"
     );
 
     /**
-     * Extra hardware/TV input packages from cleanyourtv/tools/recovery.py and CLAUDE.md
-     * that must never be disabled because they break HDMI/tuner inputs or our own launcher.
+     * Legacy exact deny rules retained until equivalent platform-role detection is proven
+     * across API 24+ and real OEM firmware. These names never authorize any other package.
      */
     private static final Set<String> NEVER_DISABLE_EXACT = new HashSet<>();
     static {
+        // testOS itself and legacy platform/TV-input services with no reliable cross-OEM identifier.
         NEVER_DISABLE_EXACT.add("com.techgenius.tvoslauncher");
         NEVER_DISABLE_EXACT.add("com.cltv.mal");
         NEVER_DISABLE_EXACT.add("com.mediatek.tis");
@@ -96,11 +97,15 @@ public final class CleanYourTv {
         NEVER_DISABLE_EXACT.add("com.google.android.gms");
         NEVER_DISABLE_EXACT.add("com.google.android.gsf");
         NEVER_DISABLE_EXACT.add("com.google.android.webview");
+        // Google TV setup wizard may own the saved Wi-Fi network; keep it protected in every UI path.
+        NEVER_DISABLE_EXACT.add("com.google.android.tungsten.setupwraith");
+        // Philips/DroidTV live-TV and tuner recovery components.
         NEVER_DISABLE_EXACT.add("org.droidtv.playtv");
         NEVER_DISABLE_EXACT.add("org.droidtv.tunerservice");
         NEVER_DISABLE_EXACT.add("org.droidtv.channels");
         NEVER_DISABLE_EXACT.add("com.android.tv");
         NEVER_DISABLE_EXACT.add("com.google.android.tv");
+        // Xiaomi Bluetooth services: retain until role/permission evidence covers older OEM builds.
         NEVER_DISABLE_EXACT.add("com.xiaomi.bluetooth");
         NEVER_DISABLE_EXACT.add("com.mi.bluetooth");
         NEVER_DISABLE_EXACT.add("com.xiaomi.mitv.bluetooth");
@@ -178,9 +183,6 @@ public final class CleanYourTv {
     private static List<ModelEntry> cachedModels;
     private static final java.util.concurrent.ConcurrentHashMap<String, String> APP_LABEL_CACHE =
             new java.util.concurrent.ConcurrentHashMap<>();
-    private static final java.util.concurrent.ConcurrentHashMap<String, Boolean> SAFE_DISABLE_CACHE =
-            new java.util.concurrent.ConcurrentHashMap<>();
-
     private CleanYourTv() {}
 
     private static String tr(Context c, String en, String tr) {
@@ -458,47 +460,39 @@ public final class CleanYourTv {
     }
 
     /**
-     * Checks whether a package is safe to disable according to cleanyourtv/tools/disable.sh
-     * and recovery.py (never disables core system packages, TV input hardware services, or tvOS Launcher).
+     * Checks whether a package is safe to disable through the shared Android-backed package policy.
      */
     public static boolean isSafeToDisable(Context c, String pkg) {
-        return isSafeToDisable(c, pkg, AndroidHomeAppDetector.detect(c));
+        return isSafeToDisable(c, pkg, AndroidPackageSafetyInspector.create(c, AndroidHomeAppDetector.detect(c)));
     }
 
-    private static boolean isSafeToDisable(Context c, String pkg, HomeAppDetector.Result homeDetection) {
+    public static boolean isSafeToDelete(Context c, String pkg) {
         if (c == null || pkg == null || pkg.isEmpty()) return false;
-        if ("android".equals(pkg)) return false;
+        AndroidPackageSafetyInspector safety =
+                AndroidPackageSafetyInspector.create(c, AndroidHomeAppDetector.detect(c));
+        return safety.evaluateDelete(pkg).isSafeToDelete();
+    }
 
-        // Never disable the selected HOME. If HOME selection or package visibility is unknown,
-        // fail closed for candidate/unknown packages rather than guessing from OEM package names.
-        HomeAppDetector.PackageProtection homeProtection = homeDetection == null
-                ? HomeAppDetector.PackageProtection.UNKNOWN : homeDetection.protectionFor(pkg);
-        if (homeProtection != HomeAppDetector.PackageProtection.SAFE) {
-            return false;
-        }
+    private static boolean isSafeToDisable(Context c, String pkg, AndroidPackageSafetyInspector safety) {
+        if (c == null || pkg == null || pkg.isEmpty() || safety == null) return false;
+        return safety.evaluate(pkg).isSafeToDisable();
+    }
 
-        Boolean cached = SAFE_DISABLE_CACHE.get(pkg);
-        if (cached != null) return cached;
-        if (NEVER_DISABLE_EXACT.contains(pkg) || isCriticalProtectedService(pkg, null)) {
-            SAFE_DISABLE_CACHE.put(pkg, false);
-            return false;
-        }
-        if (CORE_RE.matcher(pkg).matches() && !CORE_OK.matcher(pkg).matches()) {
-            SAFE_DISABLE_CACHE.put(pkg, false);
-            return false;
-        }
-        // Protect TV input hardware services (HDMI / tuner inputs)
-        try {
-            PackageManager pm = c.getPackageManager();
-            if (pm.checkPermission("android.permission.TV_INPUT_HARDWARE", pkg)
-                    == PackageManager.PERMISSION_GRANTED) {
-                SAFE_DISABLE_CACHE.put(pkg, false);
-                return false;
-            }
-        } catch (Throwable ignored) {
-        }
-        SAFE_DISABLE_CACHE.put(pkg, true);
-        return true;
+    static boolean isLegacyHardProtectedPackage(String pkg) {
+        if (NEVER_DISABLE_EXACT.contains(pkg) || isCriticalProtectedService(pkg, null)) return true;
+        return false;
+    }
+
+    static boolean isCoreAndroidProtectedPackage(String pkg) {
+        return pkg != null && CORE_RE.matcher(pkg).matches() && !CORE_OK.matcher(pkg).matches();
+    }
+
+    static boolean isSelectedModelProfileCandidate(Context c, String pkg, DeviceProfile profile) {
+        if (c == null || pkg == null || pkg.isEmpty() || profile == null || !profile.isKnownOem()) return false;
+        ModelEntry selected = findModelBySlug(c, getSelectedModelSlug(c));
+        if (selected == null || !selected.packages.contains(pkg)) return false;
+        Set<String> modelFamilies = detectOemFamiliesForModel(selected);
+        return modelFamilies.contains(profile.family.name().toLowerCase(Locale.US));
     }
 
     /**
@@ -601,6 +595,7 @@ public final class CleanYourTv {
     private static Set<String> detectOemFamiliesForModel(ModelEntry entry) {
         Set<String> families = new HashSet<>();
         String text = (entry.slug + " " + entry.title + " " + entry.headerMeta).toLowerCase(Locale.US);
+        if (text.contains("sber") || text.contains("salute")) families.add("sber");
         if (text.contains("tcl") || text.contains("ffalcon") || text.contains("thomson") || text.contains("ifalcon")) families.add("tcl");
         if (text.contains("philips") || text.contains("tpvision") || text.contains("droidtv") || text.contains("pus") || text.contains("pml") || text.contains("oled")) {
             if (text.contains("philips") || text.contains("tpvision") || text.contains("droidtv")) families.add("philips");
@@ -1477,6 +1472,7 @@ public final class CleanYourTv {
 
         PackageManager pm = c.getPackageManager();
         HomeAppDetector.Result homeDetection = AndroidHomeAppDetector.detect(c);
+        AndroidPackageSafetyInspector safety = AndroidPackageSafetyInspector.create(c, homeDetection);
         List<DebloatItem> primaryItems = new ArrayList<>();
         List<DebloatItem> optionalItems = new ArrayList<>();
 
@@ -1485,7 +1481,7 @@ public final class CleanYourTv {
         for (Map.Entry<String, String> e : activePkgComments.entrySet()) {
             String pkg = e.getKey();
             if (!installedPkgs.contains(pkg)) continue;
-            if (!isSafeToDisable(c, pkg, homeDetection)) continue;
+            if (!isSafeToDisable(c, pkg, safety)) continue;
 
             boolean isSetupOrLauncher = "com.google.android.tungsten.setupwraith".equals(pkg)
                     || "com.google.android.apps.tv.launcherx".equals(pkg)
@@ -1511,7 +1507,7 @@ public final class CleanYourTv {
             String pkg = e.getKey();
             if (activePkgComments.containsKey(pkg)) continue;
             if (!installedPkgs.contains(pkg)) continue;
-            if (!isSafeToDisable(c, pkg, homeDetection)) continue;
+            if (!isSafeToDisable(c, pkg, safety)) continue;
 
             String label = resolveAppLabel(pm, pkg);
             String desc = e.getValue();
@@ -1664,6 +1660,7 @@ public final class CleanYourTv {
         Set<String> savedDisabled = new HashSet<>(getSavedDisabledPackages(c));
         Map<String, DebloatItem> found = new LinkedHashMap<>();
         HomeAppDetector.Result homeDetection = AndroidHomeAppDetector.detect(c);
+        AndroidPackageSafetyInspector safety = AndroidPackageSafetyInspector.create(c, homeDetection);
 
         for (String[] row : KNOWN_SYSTEM_LAUNCHERS) {
             String pkg = row[0];
@@ -1715,7 +1712,7 @@ public final class CleanYourTv {
                     if (found.containsKey(pkg)) continue;
                     if (homeDetection.protectionFor(pkg) != HomeAppDetector.PackageProtection.SAFE) continue;
                     if (isExcludedFromLauncherList(pkg, actName)) continue;
-                    if (!isSafeToDisable(c, pkg, homeDetection)) continue;
+                    if (!isSafeToDisable(c, pkg, safety)) continue;
                     ApplicationInfo ai = ri.activityInfo.applicationInfo;
                     boolean isSystem = ai != null && ((ai.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0);
                     if (!isSystem) continue;
@@ -1778,6 +1775,7 @@ public final class CleanYourTv {
         Set<String> savedDisabled = new HashSet<>(getSavedDisabledPackages(c));
         Map<String, DebloatItem> map = new LinkedHashMap<>();
         HomeAppDetector.Result homeDetection = AndroidHomeAppDetector.detect(c);
+        AndroidPackageSafetyInspector safety = AndroidPackageSafetyInspector.create(c, homeDetection);
 
         try {
             int flags = PackageManager.MATCH_UNINSTALLED_PACKAGES | PackageManager.MATCH_DISABLED_COMPONENTS;
@@ -1796,7 +1794,7 @@ public final class CleanYourTv {
                             : (isPackageCurrentlyEnabled(pm, pkg, ai) && !savedDisabled.contains(pkg));
                     String label = resolveAppLabel(pm, pkg);
                     boolean isCritical = isCriticalProtectedService(pkg, label);
-                    boolean coreWarning = isCritical || !isSafeToDisable(c, pkg, homeDetection);
+                    boolean coreWarning = isCritical || !isSafeToDisable(c, pkg, safety);
                     String desc = isCritical
                             ? tr(c, "🛑 Critical system service — protected (cannot be disabled)", "🛑 Kritik sistem servisi — korumalı (devre dışı bırakılamaz)")
                             : (coreWarning
@@ -1824,7 +1822,7 @@ public final class CleanYourTv {
                         : !savedDisabled.contains(pkg);
                 String label = resolveAppLabel(pm, pkg);
                 boolean isCritical = isCriticalProtectedService(pkg, label);
-                boolean coreWarning = isCritical || !isSafeToDisable(c, pkg, homeDetection);
+                boolean coreWarning = isCritical || !isSafeToDisable(c, pkg, safety);
                 String desc = isCritical
                         ? tr(c, "🛑 Critical system service — protected (cannot be disabled)", "🛑 Kritik sistem servisi — korumalı (devre dışı bırakılamaz)")
                         : (coreWarning
@@ -2037,8 +2035,8 @@ public final class CleanYourTv {
 
         AlertDialog loading = dialog(activity, tr(activity, "Preparing CleanYourTV…", "CleanYourTV Hazırlanıyor…"))
                 .setMessage(tr(activity,
-                        "Checking installed packages and Wi-Fi status over ADB for " + model.title + "…",
-                        model.title + " için ADB üzerinden yüklü paketler ve Wi-Fi durumu kontrol ediliyor…"))
+                        "Checking installed packages over ADB for " + model.title + "…",
+                        model.title + " için ADB üzerinden yüklü paketler kontrol ediliyor…"))
                 .setCancelable(false)
                 .create();
         loading.show();
@@ -2048,22 +2046,9 @@ public final class CleanYourTv {
             Set<String> disabledPkgs = new HashSet<>();
             Set<String> installedPkgs = fetchInstalledPackages(activity, enabledPkgs, disabledPkgs);
 
-            // Check Google TV setupwraith Wi-Fi ownership (`dumpsys wifi | grep cname=`)
-            boolean hasSetupwraith = installedPkgs.contains("com.google.android.tungsten.setupwraith");
-            boolean isGoogleTv = hasSetupwraith || installedPkgs.contains("com.google.android.apps.tv.launcherx");
-            boolean wifiOwnedBySetupwraith = false;
-            if (isGoogleTv) {
-                try {
-                    String wifiDump = LocalAdb.execShellOutput(activity, "dumpsys wifi | grep -o 'cname=[^ ]*'");
-                    if (wifiDump != null && wifiDump.contains("com.google.android.tungsten.setupwraith")) {
-                        wifiOwnedBySetupwraith = true;
-                    }
-                } catch (Throwable ignored) {
-                }
-            }
-
+            boolean isGoogleTv = installedPkgs.contains("com.google.android.tungsten.setupwraith")
+                    || installedPkgs.contains("com.google.android.apps.tv.launcherx");
             final boolean finalIsGoogleTv = isGoogleTv;
-            final boolean finalWifiOwnedBySetupwraith = wifiOwnedBySetupwraith;
             activity.runOnUiThread(() -> {
                 if (activity.isFinishing()) return;
                 try {
@@ -2072,8 +2057,7 @@ public final class CleanYourTv {
                 }
 
                 if (finalIsGoogleTv) {
-                    showGoogleTvWifiWarningDialog(activity, model, installedPkgs, enabledPkgs,
-                            finalWifiOwnedBySetupwraith, onChanged);
+                    showGoogleTvWifiWarningDialog(activity, model, installedPkgs, enabledPkgs, onChanged);
                 } else {
                     showAppChecklistDialog(activity, model, installedPkgs, enabledPkgs, false, onChanged);
                 }
@@ -2082,58 +2066,23 @@ public final class CleanYourTv {
     }
 
     /**
-     * Google TV Wi-Fi setupwraith warning required by the CleanYourTV prompt:
-     * On Google TV, a Wi-Fi network saved during initial setup belongs to com.google.android.tungsten.setupwraith.
-     * Disabling setupwraith deletes that saved Wi-Fi network unless the user forgets & re-adds Wi-Fi in Settings first.
+     * Informational notice: setupwraith can own saved Wi-Fi state on Google TV.
+     * It is now hard-protected in the shared package policy, including Manual Debloat,
+     * so no Wi-Fi reset or special bypass is required.
      */
     private static void showGoogleTvWifiWarningDialog(Activity activity, ModelEntry model,
                                                       Set<String> installedPkgs, Set<String> enabledPkgs,
-                                                      boolean wifiOwnedBySetupwraith, Runnable onChanged) {
-        String statusLine = wifiOwnedBySetupwraith
-                ? tr(activity,
-                        "⚠️ Detected: Your current Wi-Fi network IS owned by setupwraith (cname=com.google.android.tungsten.setupwraith).\n\n",
-                        "⚠️ Tespit edildi: Mevcut Wi-Fi ağınız setupwraith tarafından kaydedilmiş (cname=com.google.android.tungsten.setupwraith).\n\n")
-                : tr(activity,
-                        "ℹ️ Google TV Notice (setupwraith Wi-Fi check):\n\n",
-                        "ℹ️ Google TV Uyarısı (setupwraith Wi-Fi kontrolü):\n\n");
-
-        String msg = statusLine + tr(activity,
-                "On Google TV sets, Wi-Fi networks saved during initial setup belong to com.google.android.tungsten.setupwraith. "
-                + "Disabling setupwraith so the stock Google TV launcher stays dead will delete a Wi-Fi network owned by setupwraith.\n\n"
-                + "Before disabling setupwraith:\n"
-                + "1. Open Wi-Fi Settings → select your Wi-Fi network → Forget network.\n"
-                + "2. Re-connect to your Wi-Fi network (it will now belong to com.android.tv.settings).\n"
-                + "3. Return here and tap \"I Forgot & Re-added Wi-Fi — Continue\".",
-                "Google TV cihazlarda ilk kurulum sırasında kaydedilen Wi-Fi ağı com.google.android.tungsten.setupwraith paketine aittir. "
-                + "Stok Google TV başlatıcısının kapanması için setupwraith devre dışı bırakıldığında bu Wi-Fi ağı silinir.\n\n"
-                + "Devam etmeden önce:\n"
-                + "1. Wi-Fi Ayarları'nı açın → Wi-Fi ağınızı seçip Ağı Unut deyin.\n"
-                + "2. Wi-Fi ağınıza yeniden bağlanın (artık com.android.tv.settings adına kaydedilir).\n"
-                + "3. Buraya dönüp \"Wi-Fi'yi Unutup Yeniden Ekledim — Devam Et\"e basın.");
-
-        String[] options = {
-            tr(activity, "✅ Re-added Wi-Fi (Continue)",
-                    "✅ Wi-Fi Yenilendi (Devam)"),
-            tr(activity, "📶 Wi-Fi Settings…",
-                    "📶 Wi-Fi Ayarları…"),
-            tr(activity, "🛡️ Skip setupwraith",
-                    "🛡️ setupwraith'i Atla")
-        };
-
-        AlertDialog dlg = dialog(activity, tr(activity, "Google TV Wi-Fi Warning", "Google TV Wi-Fi Uyarısı"))
+                                                      Runnable onChanged) {
+        String msg = tr(activity,
+                "Google TV setupwraith is protected by testOS because some firmware versions store Wi-Fi ownership there. "
+                        + "CleanYourTV will not disable it through any path. No Wi-Fi changes are needed.",
+                "Google TV cihazlarda Wi-Fi ağının sahibi setupwraith olabildiğinden testOS bu paketi korur. "
+                        + "CleanYourTV hiçbir yöntemle bu paketi devre dışı bırakmaz. Wi-Fi ayarlarını değiştirmeniz gerekmez.");
+        AlertDialog dlg = dialog(activity, tr(activity, "Google TV Wi-Fi Protection", "Google TV Wi-Fi Koruması"))
                 .setMessage(msg)
-                .setPositiveButton(options[0], (d, w) -> {
-                    showAppChecklistDialog(activity, model, installedPkgs, enabledPkgs, false, onChanged);
-                })
-                .setNeutralButton(options[1], (d, w) -> {
-                    Intent wifi = new Intent(Settings.ACTION_WIFI_SETTINGS);
-                    if (!Suggestions.start(activity, wifi)) {
-                        Suggestions.start(activity, new Intent(Settings.ACTION_SETTINGS));
-                    }
-                })
-                .setNegativeButton(options[2], (d, w) -> {
-                    showAppChecklistDialog(activity, model, installedPkgs, enabledPkgs, true, onChanged);
-                })
+                .setPositiveButton(tr(activity, "Continue", "Devam Et"),
+                        (d, w) -> showAppChecklistDialog(activity, model, installedPkgs, enabledPkgs, false, onChanged))
+                .setNegativeButton(tr(activity, "Cancel", "İptal"), null)
                 .create();
         dlg.show();
         styleDialogButtons(activity, dlg);
@@ -2331,15 +2280,16 @@ public final class CleanYourTv {
     }
 
     /**
-     * Executes `pm disable-user --user 0 <pkg>` one package per shell call (matching tools/disable.sh),
-     * saves the disabled package backup list, runs `sync`, and reports results.
+     * Executes only packages approved by PackageSafetyPolicy. LocalAdb re-checks each package
+     * mutation at the shell transport boundary before sending it, then records verified results.
      */
     private static void executeDebloatBatch(Activity activity, ModelEntry model,
                                             List<String> packagesToDisable, Runnable onChanged) {
         List<String> safePkgs = new ArrayList<>();
         HomeAppDetector.Result homeDetection = AndroidHomeAppDetector.detect(activity);
+        AndroidPackageSafetyInspector safety = AndroidPackageSafetyInspector.create(activity, homeDetection);
         for (String pkg : packagesToDisable) {
-            if (isSafeToDisable(activity, pkg, homeDetection)) {
+            if (isSafeToDisable(activity, pkg, safety)) {
                 safePkgs.add(pkg);
             }
         }
@@ -2566,15 +2516,22 @@ public final class CleanYourTv {
         new Thread(() -> {
             Set<String> installed = fetchInstalledPackages(activity, null, null);
             List<String> commands = new ArrayList<>();
+            final List<String> enabledPkgs = new ArrayList<>();
+            final List<String> failedPkgs = new ArrayList<>();
             for (String pkg : packagesToEnable) {
+                // Saved restore data is not trusted shell input. Reject malformed names before
+                // constructing even a recovery-only pm enable command.
+                if (!PackageSafetyPolicy.isValidPackageName(pkg)) {
+                    failedPkgs.add(pkg == null ? "(null)" : pkg);
+                    continue;
+                }
                 if (installed.isEmpty() || installed.contains(pkg)) {
                     commands.add("pm enable --user 0 " + pkg);
+                } else {
+                    failedPkgs.add(pkg);
                 }
             }
             commands.add("sync");
-
-            final List<String> enabledPkgs = new ArrayList<>();
-            final List<String> failedPkgs = new ArrayList<>();
             boolean connected = LocalAdb.execShellSequential(activity, commands, (idx, total, cmd, output) -> {
                 if (cmd.startsWith("pm enable --user 0 ")) {
                     String pkg = cmd.substring("pm enable --user 0 ".length()).trim();

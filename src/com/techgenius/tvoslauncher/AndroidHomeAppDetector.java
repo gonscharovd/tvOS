@@ -48,7 +48,8 @@ final class AndroidHomeAppDetector {
                 .addCategory(Intent.CATEGORY_HOME)
                 .addCategory(Intent.CATEGORY_DEFAULT);
         try {
-            resolvedHomes.addAll(pm.queryIntentActivities(homeIntent, PackageManager.MATCH_DEFAULT_ONLY));
+            int homeFlags = PackageManager.MATCH_DEFAULT_ONLY | PackageManager.MATCH_DISABLED_COMPONENTS;
+            resolvedHomes.addAll(pm.queryIntentActivities(homeIntent, homeFlags));
             candidatesQuerySucceeded = true;
         } catch (RuntimeException | LinkageError ignored) {
             // A restricted or broken PackageManager must not be replaced with a guessed package name.
@@ -72,7 +73,7 @@ final class AndroidHomeAppDetector {
             if (app == null) {
                 try {
                     app = pm.getApplicationInfo(activity.packageName, PackageManager.MATCH_DISABLED_COMPONENTS);
-                } catch (PackageManager.NameNotFoundException | RuntimeException ignored) {
+                } catch (PackageManager.NameNotFoundException | RuntimeException | LinkageError ignored) {
                     app = null;
                 }
             }

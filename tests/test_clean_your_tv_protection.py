@@ -37,6 +37,8 @@ def main() -> None:
         "com.android.server",
         "com.android.server.wm",
         "com.android.server.pm",
+        "com.android.providers.tv",
+        "com.android.statementservice",
         "com.android.defcontainer",
         "com.android.vending",
         "com.android.systemui",
@@ -48,10 +50,15 @@ def main() -> None:
         assert blocked_by_core_regex(package), f"Core package escaped protection: {package}"
 
     allowed_exceptions = (
-        "com.android.providers.tv",
         "com.android.providers.calendar",
         "com.android.providers.contacts",
         "com.android.providers.userdictionary",
+        "com.android.dreams.basic",
+        "com.android.printspooler",
+        "com.android.bips",
+        "com.android.stk",
+        "com.android.cellbroadcastreceiver",
+        "com.android.calllogbackup",
         "com.android.managedprovisioning",
     )
     for package in allowed_exceptions:
@@ -60,6 +67,9 @@ def main() -> None:
     protected_exact = set(re.findall(r'NEVER_DISABLE_EXACT\.add\("([^"]+)"\)', SOURCE))
     assert "ru.sberdevices.SberDevicesServiceSystem" in protected_exact
     assert "ru.sberdevices.starlauncher" in protected_exact
+    assert "com.google.android.tungsten.setupwraith" in protected_exact
+    assert "will not disable it through any path" in SOURCE
+    assert "I Forgot & Re-added Wi-Fi — Continue" not in SOURCE
     assert "if (NEVER_DISABLE_EXACT.contains(pkg) || isCriticalProtectedService(pkg, null))" in SOURCE
     assert "if (disable && !isSafeToDisable(activity, pkg))" in SOURCE
     assert "allowAnySystemApp" not in SOURCE

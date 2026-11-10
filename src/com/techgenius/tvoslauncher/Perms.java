@@ -182,8 +182,7 @@ final class Perms {
                                 } else {
                                     lastResort(a, I18n.s(a, "Home screen", "Ana ekran"),
                                             "adb shell cmd role add-role-holder --user 0 android.app.role.HOME com.techgenius.tvoslauncher\n"
-                                            + "adb shell cmd package set-home-activity com.techgenius.tvoslauncher/.MainActivity\n"
-                                            + "adb shell pm disable-user --user 0 com.google.android.tvlauncher");
+                                            + "adb shell cmd package set-home-activity com.techgenius.tvoslauncher/.MainActivity");
                                 }
                             }));
                             break;

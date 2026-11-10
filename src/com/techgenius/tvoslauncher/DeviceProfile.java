@@ -23,9 +23,11 @@ public final class DeviceProfile {
     public final String device;
     public final String product;
     public final Set<String> evidence;
+    public final boolean packageInventoryKnown;
 
     private DeviceProfile(Family family, String manufacturer, String brand, String model,
-                          String device, String product, Set<String> evidence) {
+                          String device, String product, Set<String> evidence,
+                          boolean packageInventoryKnown) {
         this.family = family;
         this.manufacturer = clean(manufacturer);
         this.brand = clean(brand);
@@ -33,26 +35,47 @@ public final class DeviceProfile {
         this.device = clean(device);
         this.product = clean(product);
         this.evidence = Collections.unmodifiableSet(new HashSet<>(evidence));
+        this.packageInventoryKnown = packageInventoryKnown;
     }
 
     public static DeviceProfile resolve(String manufacturer, String brand, String model,
                                         String device, String product, Set<String> installedPackages) {
+        return resolve(manufacturer, brand, model, device, product,
+                installedPackages, installedPackages != null);
+    }
+
+    public static DeviceProfile resolve(String manufacturer, String brand, String model,
+                                        String device, String product, Set<String> installedPackages,
+                                        boolean packageInventoryKnown) {
         String identity = join(manufacturer, brand, model, device, product).toLowerCase(Locale.US);
         Set<String> packages = installedPackages == null
                 ? Collections.<String>emptySet() : installedPackages;
         Set<String> evidence = new HashSet<>();
 
-        Family family = familyFromIdentity(identity);
-        if (family != Family.UNKNOWN) {
+        Family buildFamily = familyFromIdentity(identity);
+        Family packageFamily = familyFromPackages(packages, evidence);
+        boolean packageConflict = evidence.contains("conflicting-oem-package-evidence");
+        boolean buildPackageConflict = buildFamily != Family.UNKNOWN
+                && packageFamily != Family.UNKNOWN && buildFamily != packageFamily;
+
+        Family family;
+        if (packageConflict || buildPackageConflict) {
+            evidence.add("conflicting-build-and-package-oem-evidence");
+            family = Family.UNKNOWN;
+        } else if (buildFamily != Family.UNKNOWN) {
             evidence.add("build-properties");
+            family = buildFamily;
         } else {
-            family = familyFromPackages(packages, evidence);
+            family = packageFamily;
         }
-        if (family == Family.UNKNOWN && !identity.trim().isEmpty()) {
+
+        if (family == Family.UNKNOWN && !identity.trim().isEmpty()
+                && !packageConflict && !buildPackageConflict) {
             family = Family.OTHER_KNOWN;
             evidence.add("unclassified-build-identity");
         }
-        return new DeviceProfile(family, manufacturer, brand, model, device, product, evidence);
+        return new DeviceProfile(family, manufacturer, brand, model, device, product,
+                evidence, packageInventoryKnown);
     }
 
     private static Family familyFromIdentity(String value) {
