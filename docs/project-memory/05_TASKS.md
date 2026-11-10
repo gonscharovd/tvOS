@@ -75,7 +75,7 @@
 - **Ограничения backup:** CleanYourTV state, ADB/security state и custom media files остаются вне общего JSON backup, но TOS-009 их не удаляет. Android OS может очищать cache независимо от приложения.
 - **Regression:** обновлены `tests/test_settings_backup_safety.py` и `tests/test_single_user_migration_contract.py`; backup safety test подключён к Windows job, Linux уже запускал его.
 - **Критерии:** полный CI для текущего head зелёный; code review; никакого удаления legacy data; helper `SingleUserMigration` без изменений.
-- **Статус:** IN PROGRESS — изменения закоммичены в PR #14, CI/review ожидаются.
+- **Статус:** IN PROGRESS — изменения закоммичены в PR #14, полный CI run #330 выполняется.
 
 ### TOS-008 — Single-user migration CI coverage
 - **Аудит:** `SingleUserMigration.migrate` — чистая Java-функция без Android-зависимостей; `SingleUserMigrationTest.java` — standalone `main` test, поэтому не требуются Android SDK stubs, Robolectric или instrumentation.
