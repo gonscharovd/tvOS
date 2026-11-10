@@ -121,10 +121,22 @@ public final class PackageSafetyPolicyTest {
                         true, false, true, false, true, false, false, false));
         check(unknown.confidence == PackageSafetyPolicy.Confidence.INCOMPLETE,
                 "unknown decision must carry incomplete confidence");
-        check(PackageSafetyPolicy.evaluateDelete(safeUser).state == PackageSafetyPolicy.State.PROTECTED
+        check(PackageSafetyPolicy.evaluateDelete(safeUser).isSafeToDelete()
                         && PackageSafetyPolicy.evaluateDelete(safeUser).reason
-                        == PackageSafetyPolicy.Reason.PACKAGE_DELETE_NOT_SUPPORTED,
-                "package deletion must remain unsupported and denied");
+                        == PackageSafetyPolicy.Reason.SAFE_USER_APP_DELETE,
+                "ordinary user app may be uninstalled after all safety checks");
+        PackageSafetyPolicy.Facts systemApp = facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME,
+                true, false, false, true, false, true, false, true, false, true, true);
+        check(PackageSafetyPolicy.evaluateDelete(systemApp).state == PackageSafetyPolicy.State.PROTECTED
+                        && PackageSafetyPolicy.evaluateDelete(systemApp).reason
+                        == PackageSafetyPolicy.Reason.SYSTEM_PACKAGE_DELETE_NOT_ALLOWED,
+                "OEM/system package deletion must be denied");
+        PackageSafetyPolicy.Facts homeCandidate = facts(PackageSafetyPolicy.HomeState.HOME_CANDIDATE,
+                false, false, false, true, false, true, false, true, false, false, false);
+        check(PackageSafetyPolicy.evaluateDelete(homeCandidate).state == PackageSafetyPolicy.State.PROTECTED
+                        && PackageSafetyPolicy.evaluateDelete(homeCandidate).reason
+                        == PackageSafetyPolicy.Reason.HOME_CANDIDATE,
+                "HOME candidate deletion must be denied");
 
         check(!PackageSafetyPolicy.isValidPackageName("vendor.example.app; pm disable-user android"),
                 "shell metacharacters must not pass package validation");
