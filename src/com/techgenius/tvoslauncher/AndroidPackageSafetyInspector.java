@@ -196,14 +196,14 @@ final class AndroidPackageSafetyInspector {
         if (context == null || packageManager == null || pkg == null) {
             return PackageSafetyPolicy.evaluate(facts(pkg, false, false, false, false,
                     false, false, false, false, false, false, false, false, false,
-                    PackageSafetyPolicy.HomeState.UNKNOWN));
+                    PackageSafetyPolicy.HomeState.UNKNOWN, null));
         }
 
         boolean valid = PackageSafetyPolicy.isValidPackageName(pkg);
         if (!valid) {
             return PackageSafetyPolicy.evaluate(facts(pkg, false, false, false, false,
                     false, false, false, false, false, false, false, false, false,
-                    PackageSafetyPolicy.HomeState.SAFE_NON_HOME));
+                    PackageSafetyPolicy.HomeState.SAFE_NON_HOME, null));
         }
 
         PackageSafetyPolicy.HomeState homeState = homeState(pkg);
@@ -284,11 +284,11 @@ final class AndroidPackageSafetyInspector {
             boolean systemApp, boolean privileged, boolean persistent, boolean systemUid,
             boolean ownerKnown, boolean owner, boolean rolesKnown, boolean criticalRole,
             boolean permissionsKnown, boolean criticalPermission, boolean knownOem,
-            boolean inProfile, PackageSafetyPolicy.HomeState homeState) {
+            boolean inProfile, PackageSafetyPolicy.HomeState homeState, String appLabel) {
         boolean valid = PackageSafetyPolicy.isValidPackageName(pkg);
         boolean own = context != null && pkg != null && pkg.equals(context.getPackageName());
         boolean legacyProtected = CleanYourTv.isLegacyHardProtectedPackage(pkg)
-                || CleanYourTv.isCriticalProtectedService(pkg, null);
+                || CleanYourTv.isCriticalProtectedService(pkg, appLabel);
         boolean coreProtected = CleanYourTv.isCoreAndroidProtectedPackage(pkg);
         return new PackageSafetyPolicy.Facts(pkg, valid, own, legacyProtected, coreProtected,
                 homeState, packageInfoKnown, systemApp, privileged, persistent, systemUid,
