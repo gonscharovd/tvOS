@@ -38,6 +38,7 @@ def main() -> None:
         "com.android.server.wm",
         "com.android.server.pm",
         "com.android.providers.tv",
+        "com.android.statementservice",
         "com.android.defcontainer",
         "com.android.vending",
         "com.android.systemui",
@@ -52,6 +53,12 @@ def main() -> None:
         "com.android.providers.calendar",
         "com.android.providers.contacts",
         "com.android.providers.userdictionary",
+        "com.android.dreams.basic",
+        "com.android.printspooler",
+        "com.android.bips",
+        "com.android.stk",
+        "com.android.cellbroadcastreceiver",
+        "com.android.calllogbackup",
         "com.android.managedprovisioning",
     )
     for package in allowed_exceptions:
