@@ -38,7 +38,7 @@ def main() -> None:
         "isProfileOwnerApp(pkg)", "FLAG_SYSTEM", "FLAG_UPDATED_SYSTEM_APP",
         "FLAG_PRIVILEGED", "FLAG_PERSISTENT", "FIRST_APPLICATION_UID",
         "queryIntentServices", "queryIntentActivities", "checkPermission",
-        "getPermissionControllerPackageName", "HomeAppDetector.Result",
+        "android.intent.action.MANAGE_APP_PERMISSIONS", "HomeAppDetector.Result",
         "DeviceProfileResolver.fromSystem",
     ):
         require(token in INSPECTOR, f"Android safety inspector missing {token}")
