@@ -38,8 +38,8 @@ public final class PackageSafetyPolicyTest {
                 facts(PackageSafetyPolicy.HomeState.UNKNOWN, false, false, false,
                         true, false, true, false, true, false, false, false), "unknown HOME");
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.OWN_APPLICATION,
-                new PackageSafetyPolicy.Facts(PKG, true, true, false, false,
-                        PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false, false,
+                new PackageSafetyPolicy.Facts("com.gonscharovd.tvoslauncher", true, true, false, false,
+                        PackageSafetyPolicy.HomeState.SELECTED_HOME, true, false, false, false,
                         true, false, true, false, true, false, false, false), "testOS self-protection");
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.LEGACY_HARD_PROTECTION,
                 new PackageSafetyPolicy.Facts(PKG, true, false, true, false,
@@ -66,6 +66,25 @@ public final class PackageSafetyPolicyTest {
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.CRITICAL_SYSTEM_ROLE,
                 facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false,
                         true, false, true, true, true, false, false, false), "TV Input / IME / Settings role");
+        expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.CRITICAL_SYSTEM_ROLE,
+                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false,
+                        true, false, true, true, true, false, true, true), "System UI");
+        expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.CRITICAL_SYSTEM_ROLE,
+                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false,
+                        true, false, true, true, true, false, true, true), "Package Installer");
+        expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.CRITICAL_SYSTEM_ROLE,
+                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false,
+                        true, false, true, true, true, false, true, true), "Permission Controller");
+        expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.CRITICAL_SYSTEM_ROLE,
+                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false,
+                        true, false, true, true, true, false, true, true), "TV Input Framework");
+        expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.SELECTED_HOME,
+                facts(PackageSafetyPolicy.HomeState.SELECTED_HOME, true, false, false,
+                        true, false, true, false, true, false, true, true), "selected system HOME");
+        expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.HOME_CANDIDATE,
+                new PackageSafetyPolicy.Facts("com.gonscharovd.tvoslauncher", true, false, false, false,
+                        PackageSafetyPolicy.HomeState.HOME_CANDIDATE, true, false, false, false,
+                        true, false, true, false, true, false, true, true), "testOS HOME candidate");
         expect(PackageSafetyPolicy.State.UNKNOWN, PackageSafetyPolicy.Reason.CRITICAL_PERMISSION_QUERY_UNKNOWN,
                 facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false,
                         true, false, true, false, false, false, false, false), "permission query failure");
