@@ -2035,8 +2035,8 @@ public final class CleanYourTv {
 
         AlertDialog loading = dialog(activity, tr(activity, "Preparing CleanYourTV…", "CleanYourTV Hazırlanıyor…"))
                 .setMessage(tr(activity,
-                        "Checking installed packages and Wi-Fi status over ADB for " + model.title + "…",
-                        model.title + " için ADB üzerinden yüklü paketler ve Wi-Fi durumu kontrol ediliyor…"))
+                        "Checking installed packages over ADB for " + model.title + "…",
+                        model.title + " için ADB üzerinden yüklü paketler kontrol ediliyor…"))
                 .setCancelable(false)
                 .create();
         loading.show();
@@ -2046,22 +2046,9 @@ public final class CleanYourTv {
             Set<String> disabledPkgs = new HashSet<>();
             Set<String> installedPkgs = fetchInstalledPackages(activity, enabledPkgs, disabledPkgs);
 
-            // Check Google TV setupwraith Wi-Fi ownership (`dumpsys wifi | grep cname=`)
-            boolean hasSetupwraith = installedPkgs.contains("com.google.android.tungsten.setupwraith");
-            boolean isGoogleTv = hasSetupwraith || installedPkgs.contains("com.google.android.apps.tv.launcherx");
-            boolean wifiOwnedBySetupwraith = false;
-            if (isGoogleTv) {
-                try {
-                    String wifiDump = LocalAdb.execShellOutput(activity, "dumpsys wifi | grep -o 'cname=[^ ]*'");
-                    if (wifiDump != null && wifiDump.contains("com.google.android.tungsten.setupwraith")) {
-                        wifiOwnedBySetupwraith = true;
-                    }
-                } catch (Throwable ignored) {
-                }
-            }
-
+            boolean isGoogleTv = installedPkgs.contains("com.google.android.tungsten.setupwraith")
+                    || installedPkgs.contains("com.google.android.apps.tv.launcherx");
             final boolean finalIsGoogleTv = isGoogleTv;
-            final boolean finalWifiOwnedBySetupwraith = wifiOwnedBySetupwraith;
             activity.runOnUiThread(() -> {
                 if (activity.isFinishing()) return;
                 try {
@@ -2070,8 +2057,7 @@ public final class CleanYourTv {
                 }
 
                 if (finalIsGoogleTv) {
-                    showGoogleTvWifiWarningDialog(activity, model, installedPkgs, enabledPkgs,
-                            finalWifiOwnedBySetupwraith, onChanged);
+                    showGoogleTvWifiWarningDialog(activity, model, installedPkgs, enabledPkgs, onChanged);
                 } else {
                     showAppChecklistDialog(activity, model, installedPkgs, enabledPkgs, false, onChanged);
                 }
@@ -2080,58 +2066,23 @@ public final class CleanYourTv {
     }
 
     /**
-     * Google TV Wi-Fi setupwraith warning required by the CleanYourTV prompt:
-     * On Google TV, a Wi-Fi network saved during initial setup belongs to com.google.android.tungsten.setupwraith.
-     * Disabling setupwraith deletes that saved Wi-Fi network unless the user forgets & re-adds Wi-Fi in Settings first.
+     * Informational notice: setupwraith can own saved Wi-Fi state on Google TV.
+     * It is now hard-protected in the shared package policy, including Manual Debloat,
+     * so no Wi-Fi reset or special bypass is required.
      */
     private static void showGoogleTvWifiWarningDialog(Activity activity, ModelEntry model,
                                                       Set<String> installedPkgs, Set<String> enabledPkgs,
-                                                      boolean wifiOwnedBySetupwraith, Runnable onChanged) {
-        String statusLine = wifiOwnedBySetupwraith
-                ? tr(activity,
-                        "⚠️ Detected: Your current Wi-Fi network IS owned by setupwraith (cname=com.google.android.tungsten.setupwraith).\n\n",
-                        "⚠️ Tespit edildi: Mevcut Wi-Fi ağınız setupwraith tarafından kaydedilmiş (cname=com.google.android.tungsten.setupwraith).\n\n")
-                : tr(activity,
-                        "ℹ️ Google TV Notice (setupwraith Wi-Fi check):\n\n",
-                        "ℹ️ Google TV Uyarısı (setupwraith Wi-Fi kontrolü):\n\n");
-
-        String msg = statusLine + tr(activity,
-                "On Google TV sets, Wi-Fi networks saved during initial setup belong to com.google.android.tungsten.setupwraith. "
-                + "Disabling setupwraith so the stock Google TV launcher stays dead will delete a Wi-Fi network owned by setupwraith.\n\n"
-                + "Before disabling setupwraith:\n"
-                + "1. Open Wi-Fi Settings → select your Wi-Fi network → Forget network.\n"
-                + "2. Re-connect to your Wi-Fi network (it will now belong to com.android.tv.settings).\n"
-                + "3. Return here and tap \"I Forgot & Re-added Wi-Fi — Continue\".",
-                "Google TV cihazlarda ilk kurulum sırasında kaydedilen Wi-Fi ağı com.google.android.tungsten.setupwraith paketine aittir. "
-                + "Stok Google TV başlatıcısının kapanması için setupwraith devre dışı bırakıldığında bu Wi-Fi ağı silinir.\n\n"
-                + "Devam etmeden önce:\n"
-                + "1. Wi-Fi Ayarları'nı açın → Wi-Fi ağınızı seçip Ağı Unut deyin.\n"
-                + "2. Wi-Fi ağınıza yeniden bağlanın (artık com.android.tv.settings adına kaydedilir).\n"
-                + "3. Buraya dönüp \"Wi-Fi'yi Unutup Yeniden Ekledim — Devam Et\"e basın.");
-
-        String[] options = {
-            tr(activity, "✅ Re-added Wi-Fi (Continue)",
-                    "✅ Wi-Fi Yenilendi (Devam)"),
-            tr(activity, "📶 Wi-Fi Settings…",
-                    "📶 Wi-Fi Ayarları…"),
-            tr(activity, "🛡️ Skip setupwraith",
-                    "🛡️ setupwraith'i Atla")
-        };
-
-        AlertDialog dlg = dialog(activity, tr(activity, "Google TV Wi-Fi Warning", "Google TV Wi-Fi Uyarısı"))
+                                                      Runnable onChanged) {
+        String msg = tr(activity,
+                "Google TV setupwraith is protected by testOS because some firmware versions store Wi-Fi ownership there. "
+                        + "CleanYourTV will not disable it through any path. No Wi-Fi changes are needed.",
+                "Google TV cihazlarda Wi-Fi ağının sahibi setupwraith olabildiğinden testOS bu paketi korur. "
+                        + "CleanYourTV hiçbir yöntemle bu paketi devre dışı bırakmaz. Wi-Fi ayarlarını değiştirmeniz gerekmez.");
+        AlertDialog dlg = dialog(activity, tr(activity, "Google TV Wi-Fi Protection", "Google TV Wi-Fi Koruması"))
                 .setMessage(msg)
-                .setPositiveButton(options[0], (d, w) -> {
-                    showAppChecklistDialog(activity, model, installedPkgs, enabledPkgs, false, onChanged);
-                })
-                .setNeutralButton(options[1], (d, w) -> {
-                    Intent wifi = new Intent(Settings.ACTION_WIFI_SETTINGS);
-                    if (!Suggestions.start(activity, wifi)) {
-                        Suggestions.start(activity, new Intent(Settings.ACTION_SETTINGS));
-                    }
-                })
-                .setNegativeButton(options[2], (d, w) -> {
-                    showAppChecklistDialog(activity, model, installedPkgs, enabledPkgs, true, onChanged);
-                })
+                .setPositiveButton(tr(activity, "Continue", "Devam Et"),
+                        (d, w) -> showAppChecklistDialog(activity, model, installedPkgs, enabledPkgs, false, onChanged))
+                .setNegativeButton(tr(activity, "Cancel", "İptal"), null)
                 .create();
         dlg.show();
         styleDialogButtons(activity, dlg);
