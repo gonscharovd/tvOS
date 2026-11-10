@@ -1346,7 +1346,8 @@ final class LocalAdb {
      * is unsupported and always rejected. Compound shell commands containing package mutations
      * are rejected rather than parsed optimistically.
      */
-    private static String packageMutationBlockReason(Context context, String command) {
+    private static String packageMutationBlockReason(Context context, String command,
+            AndroidPackageSafetyInspector safetySnapshot) {
         if (command == null || !PACKAGE_MUTATION_TOKEN.matcher(command).find()) return null;
         if (PACKAGE_DELETE_TOKEN.matcher(command).find()) {
             return "BLOCKED: package deletion is not supported";
@@ -1354,8 +1355,10 @@ final class LocalAdb {
         Matcher matcher = PACKAGE_DISABLE_COMMAND.matcher(command);
         if (!matcher.matches()) return "BLOCKED: unsupported or compound package-disable command";
         String pkg = matcher.group(1);
+        AndroidPackageSafetyInspector safety = safetySnapshot != null ? safetySnapshot
+                : AndroidPackageSafetyInspector.create(context, AndroidHomeAppDetector.detect(context));
         if (!PackageSafetyPolicy.isValidPackageName(pkg)
-                || !CleanYourTv.isSafeToDisable(context, pkg)) {
+                || !safety.evaluate(pkg).isSafeToDisable()) {
             return "BLOCKED_BY_PACKAGE_SAFETY_POLICY";
         }
         return null;
@@ -1399,11 +1402,18 @@ final class LocalAdb {
 
             socket.setSoTimeout(15000);
             List<String> outputs = new java.util.ArrayList<>(commands.size());
+            AndroidPackageSafetyInspector packageSafetySnapshot = null;
+            for (String command : commands) {
+                if (command != null && PACKAGE_DISABLE_COMMAND.matcher(command).matches()) {
+                    packageSafetySnapshot = AndroidPackageSafetyInspector.create(c, AndroidHomeAppDetector.detect(c));
+                    break;
+                }
+            }
             int total = commands.size();
             for (int i = 0; i < total; i++) {
                 String shellCmd = commands.get(i);
                 int localId = i + 1;
-                String blockedMutation = packageMutationBlockReason(c, shellCmd);
+                String blockedMutation = packageMutationBlockReason(c, shellCmd, packageSafetySnapshot);
                 if (blockedMutation != null) {
                     outputs.add(blockedMutation);
                     if (progress != null) progress.onStep(i + 1, total, shellCmd, blockedMutation);
