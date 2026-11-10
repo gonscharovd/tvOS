@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 /**
  * Classifies package-state shell commands before they reach the ADB transport.
- * Only a single user-0 disable command is eligible for the shared safety policy.
+ * Only exact, single-package user-0 disable and recovery-enable commands are accepted.
  */
 public final class PackageMutationCommandGuard {
     public enum Type { NONE, DISABLE, ENABLE, DELETE, UNSUPPORTED_MUTATION }
