@@ -898,11 +898,9 @@ public class SettingsActivity extends Activity {
     /**
      * Exact Couch-TV "Look and scenes" layout (matching docs/screens/home-settings.jpg):
      * - DOCK: Dock resize option (-50% to +50%, default 100%)
-     * - LOOK: Night scenes vs Classic
      * - SCENES: Night, Golden hour, Waterline, Fog, Rainforest dawn (with 16:9 thumbnails & green circular checkmarks)
      * - Each scene stays: 20 seconds
      * - Clock: 12 hour / 24 hour
-     * - CLASSIC BACKGROUND: Couch-TV photos & ambient themes
      */
     void pageLookAndScenes() {
         section("ПАНЕЛЬ ПРИЛОЖЕНИЙ");
@@ -954,7 +952,7 @@ public class SettingsActivity extends Activity {
         }
         section("ПРИЛОЖЕНИЯ");
         row("Скрытые приложения", () -> {
-            Set<String> hidden = Profiles.homePrefs(this).getStringSet(MainActivity.PREF_HIDDEN, Collections.emptySet());
+            Set<String> hidden = SingleUserPrefs.homePrefs(this).getStringSet(MainActivity.PREF_HIDDEN, Collections.emptySet());
             int count = hidden != null ? hidden.size() : 0;
             return (count > 0 ? count + "  " : "") + "›";
         }, () -> {
@@ -966,7 +964,7 @@ public class SettingsActivity extends Activity {
                 dialog("Сбросить порядок приложений?")
                         .setMessage("Порядок приложений будет восстановлен, а скрытые приложения снова появятся на главном экране.")
                         .setPositiveButton("Сбросить", (d, w) -> {
-                            Profiles.homePrefs(this).edit().remove(MainActivity.PREF_ORDER)
+                            SingleUserPrefs.homePrefs(this).edit().remove(MainActivity.PREF_ORDER)
                                     .remove(MainActivity.PREF_OTHER).remove(MainActivity.PREF_HIDDEN).apply();
                             showStatusMsg("Порядок приложений сброшен.");
                             rebuildMainRows();
@@ -988,7 +986,7 @@ public class SettingsActivity extends Activity {
     private List<HiddenAppItem> listHiddenAppItems() {
         List<HiddenAppItem> out = new ArrayList<>();
         try {
-            Set<String> hidden = Profiles.homePrefs(this).getStringSet(MainActivity.PREF_HIDDEN, Collections.emptySet());
+            Set<String> hidden = SingleUserPrefs.homePrefs(this).getStringSet(MainActivity.PREF_HIDDEN, Collections.emptySet());
             if (hidden == null || hidden.isEmpty()) return out;
             PackageManager pm = getPackageManager();
             Set<String> seenPkgs = new HashSet<>();
@@ -1134,8 +1132,8 @@ public class SettingsActivity extends Activity {
         });
 
         r.setOnLongClickListener(view -> {
-            Set<String> hidden = new HashSet<>(Profiles.homePrefs(this).getStringSet(MainActivity.PREF_HIDDEN, Collections.emptySet()));
-            Set<String> other = new HashSet<>(Profiles.homePrefs(this).getStringSet(MainActivity.PREF_OTHER, Collections.emptySet()));
+            Set<String> hidden = new HashSet<>(SingleUserPrefs.homePrefs(this).getStringSet(MainActivity.PREF_HIDDEN, Collections.emptySet()));
+            Set<String> other = new HashSet<>(SingleUserPrefs.homePrefs(this).getStringSet(MainActivity.PREF_OTHER, Collections.emptySet()));
             if (item.key != null) {
                 hidden.remove(item.key);
                 other.remove(item.key);
@@ -1144,7 +1142,7 @@ public class SettingsActivity extends Activity {
                 hidden.remove(item.pkg);
                 other.remove(item.pkg);
             }
-            Profiles.homePrefs(this).edit()
+            SingleUserPrefs.homePrefs(this).edit()
                     .putStringSet(MainActivity.PREF_HIDDEN, hidden)
                     .putStringSet(MainActivity.PREF_OTHER, other)
                     .apply();
@@ -1162,29 +1160,6 @@ public class SettingsActivity extends Activity {
 
 
 
-
-    private void promptAddPerson() {
-        android.widget.EditText in = new android.widget.EditText(this);
-        in.setSingleLine(true);
-        in.setHint(tr("Name", "Ad"));
-        int pad = u(14);
-        FrameLayout box = new FrameLayout(this);
-        box.setPadding(pad, pad / 2, pad, 0);
-        box.addView(in);
-        AlertDialog dlg = dialog(tr("Add a person", "Kişi ekle"))
-                .setView(box)
-                .setPositiveButton(tr("Add", "Ekle"), (d, w) -> {
-                    String n = in.getText().toString().trim();
-                    if (!n.isEmpty()) {
-                        Profiles.add(this, n);
-                        selectSection(HOME, true, 6 + Profiles.list(this).size() - 1);
-                    }
-                })
-                .setNegativeButton(tr("Cancel", "İptal"), null)
-                .show();
-        Ui.setupDialogEditText(in, dlg);
-        in.requestFocus();
-    }
 
     void pageButtonMapper() {
         section(tr("ACCESSIBILITY SERVICE", "СЛУЖБА СПЕЦИАЛЬНЫХ ВОЗМОЖНОСТЕЙ"));
@@ -1897,8 +1872,6 @@ public class SettingsActivity extends Activity {
         if (subId == null) return;
         if ("dock_size".equals(subId)) {
             subMenuDockSize();
-        } else if ("ambient_themes".equals(subId)) {
-            subMenuAmbientThemes();
         } else if ("lock_screen_settings".equals(subId)) {
             subMenuLockScreenSettings();
         } else if ("weather_source".equals(subId)) {
@@ -1971,21 +1944,6 @@ public class SettingsActivity extends Activity {
                 Scenes.setDockScalePercent(this, pct);
                 rebuildMainRows();
                 showStatusMsg(tr("Dock size set to " + pct + "%.", "Dock boyutu %" + pct + " olarak ayarlandı."));
-            });
-        }
-    }
-
-    private void subMenuAmbientThemes() {
-        mainHeadView.setText(tr("Ambient colour themes", "Ortam renk temaları"));
-        backSubMenuRow();
-        section(tr("AMBIENT THEMES", "ORTAM TEMALARI"));
-        String cur = Profiles.homePrefs(this).getString("wallpaper", "photo:tessellated-pavement.jpg");
-        for (int i = 0; i < MainActivity.WALL_KEYS.length; i++) {
-            final String key = MainActivity.WALL_KEYS[i];
-            final String name = MainActivity.wallName(this, i);
-            choiceRow(name, null, key.equals(cur), () -> {
-                Profiles.homePrefs(this).edit().putString("wallpaper", key).apply();
-                rebuildMainRows();
             });
         }
     }
@@ -3360,136 +3318,6 @@ public class SettingsActivity extends Activity {
         list.addView(r, lp);
     }
 
-    private void pickCustomClassicWallpaper() {
-        CustomMedia.showImageFilePicker(
-                this,
-                tr("Choose custom background image", "Özel arka plan görseli seçin"),
-                false,
-                1920,
-                1080,
-                null,
-                null,
-                bmp -> {
-                    if (CustomMedia.setCustomClassicWallpaper(this, bmp)) {
-                        SCENE_THUMB_CACHE.remove("custom_classic");
-                        Profiles.homePrefs(this).edit().putString("wallpaper", MainActivity.CUSTOM_WALL_KEY).apply();
-                        rebuildMainRows();
-                        showStatusMsg(tr("Custom background updated.", "Özel arka plan güncellendi."));
-                    } else {
-                        Toast.makeText(
-                                this,
-                                tr("Could not load selected image.", "Seçilen görsel yüklenemedi."),
-                                Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-
-    private void customClassicPhotoRow(boolean checked) {
-        LinearLayout r = new LinearLayout(this);
-        r.setOrientation(LinearLayout.HORIZONTAL);
-        r.setGravity(Gravity.CENTER_VERTICAL);
-        r.setFocusable(true);
-        r.setClickable(true);
-        r.setLongClickable(true);
-        r.setPadding(u(14), u(6), u(16), u(6));
-
-        GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(u(13));
-        bg.setColor(0x14FFFFFF);
-        r.setBackground(bg);
-
-        int tw = u(46), th = u(26);
-        ImageView thumb = new ImageView(this);
-        thumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        if (CustomMedia.hasCustomClassicWallpaper(this)) {
-            bindCustomThumbAsync(thumb, "custom_classic", tw * 2, th * 2, () -> {
-                Bitmap full = CustomMedia.getCustomClassicWallpaper(this);
-                if (full == null) return null;
-                Bitmap scaled = Bitmap.createScaledBitmap(full, tw * 2, th * 2, true);
-                if (scaled != full) full.recycle();
-                return scaled;
-            });
-        } else {
-            thumb.setImageBitmap(buildPlaceholderThumb(tw * 2, th * 2));
-        }
-        final float trad = u(5.5f);
-        thumb.setOutlineProvider(new ViewOutlineProvider() {
-            @Override
-            public void getOutline(View v, Outline o) {
-                o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), trad);
-            }
-        });
-        thumb.setClipToOutline(true);
-        LinearLayout.LayoutParams thlp = new LinearLayout.LayoutParams(tw, th);
-        thlp.rightMargin = u(12);
-        r.addView(thumb, thlp);
-
-        TextView l = new TextView(this);
-        l.setText(tr("Custom", "Özel"));
-        l.setTextColor(0xEBF4F4F6);
-        l.setTypeface(Ui.font(this, "semibold"));
-        Ui.textSize(l, 14.5f);
-        l.setSingleLine(true);
-        r.addView(l, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-
-        int cs = u(17);
-        ImageView mark = new ImageView(this);
-        if (checked) {
-            mark.setImageBitmap(Glyphs.get("check", cs, Color.WHITE));
-        }
-        r.addView(mark, new LinearLayout.LayoutParams(cs, cs));
-
-        r.setOnFocusChangeListener((view, has) -> {
-            if (has) {
-                inRows = true;
-                updateSidebarStyles();
-                updateHintText(false);
-            }
-            bg.setColor(has ? Color.WHITE : 0x14FFFFFF);
-            l.setTextColor(has ? 0xFF111114 : 0xEBF4F4F6);
-            if (checked) {
-                mark.setImageBitmap(Glyphs.get("check", cs, has ? 0xFF111114 : Color.WHITE));
-            }
-            view.animate().scaleX(has ? 1.02f : 1f).scaleY(has ? 1.02f : 1f)
-                    .setDuration(160).start();
-        });
-
-        r.setOnClickListener(view -> {
-            if (!CustomMedia.hasCustomClassicWallpaper(this)) {
-                pickCustomClassicWallpaper();
-                return;
-            }
-            if (!checked) {
-                String[] opts = {
-                    tr("Use custom background", "Özel arka planı kullan"),
-                    tr("Choose image…", "Görsel seç…")
-                };
-                dialog(tr("Custom", "Özel"))
-                        .setItems(opts, (d, which) -> {
-                            if (which == 0) {
-                                Profiles.homePrefs(this).edit().putString("wallpaper", MainActivity.CUSTOM_WALL_KEY).apply();
-                                rebuildMainRows();
-                            } else {
-                                pickCustomClassicWallpaper();
-                            }
-                        })
-                        .show();
-            } else {
-                pickCustomClassicWallpaper();
-            }
-        });
-
-        r.setOnLongClickListener(view -> {
-            pickCustomClassicWallpaper();
-            return true;
-        });
-
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, u(40));
-        lp.bottomMargin = u(5);
-        list.addView(r, lp);
-    }
-
     private void pickFolderForSceneShuffle() {
         CustomMedia.showFolderPicker(
                 this,
@@ -3643,135 +3471,6 @@ public class SettingsActivity extends Activity {
         list.addView(r, lp);
     }
 
-    private void pickFolderForClassicShuffle() {
-        CustomMedia.showFolderPicker(
-                this,
-                CustomMedia.SCOPE_CLASSIC,
-                tr("Choose background folder to shuffle", "Karıştırılacak arka plan klasörünü seçin"),
-                dir -> {
-                    SCENE_THUMB_CACHE.remove("folder_classic");
-                    Profiles.homePrefs(this).edit().putString("wallpaper", MainActivity.FOLDER_SHUFFLE_WALL_KEY).apply();
-                    rebuildMainRows();
-                    showStatusMsg(tr("Folder shuffle enabled: " + dir.getName(),
-                            "Klasör karıştırma etkinleştirildi: " + dir.getName()));
-                });
-    }
-
-    private void folderShuffleClassicRow(boolean checked) {
-        boolean hasFolder = CustomMedia.hasWallpaperShuffleFolder(this, CustomMedia.SCOPE_CLASSIC);
-        final String baseTitle = tr("Folder shuffle", "Klasör karıştırma");
-
-        LinearLayout r = new LinearLayout(this);
-        r.setOrientation(LinearLayout.HORIZONTAL);
-        r.setGravity(Gravity.CENTER_VERTICAL);
-        r.setFocusable(true);
-        r.setClickable(true);
-        r.setLongClickable(true);
-        r.setPadding(u(14), u(6), u(16), u(6));
-
-        GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(u(13));
-        bg.setColor(0x14FFFFFF);
-        r.setBackground(bg);
-
-        int tw = u(46), th = u(26);
-        ImageView thumb = new ImageView(this);
-        thumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        if (hasFolder) {
-            bindCustomThumbAsync(thumb, "folder_classic", tw * 2, th * 2,
-                    () -> CustomMedia.getNextShuffledFolderBitmap(this, CustomMedia.SCOPE_CLASSIC, tw * 2, th * 2, false));
-        } else {
-            thumb.setImageBitmap(buildPlaceholderThumb(tw * 2, th * 2));
-        }
-        final float trad = u(5.5f);
-        thumb.setOutlineProvider(new ViewOutlineProvider() {
-            @Override
-            public void getOutline(View v, Outline o) {
-                o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), trad);
-            }
-        });
-        thumb.setClipToOutline(true);
-        LinearLayout.LayoutParams thlp = new LinearLayout.LayoutParams(tw, th);
-        thlp.rightMargin = u(12);
-        r.addView(thumb, thlp);
-
-        TextView l = new TextView(this);
-        l.setText(baseTitle);
-        l.setTextColor(0xEBF4F4F6);
-        l.setTypeface(Ui.font(this, "semibold"));
-        Ui.textSize(l, 14.5f);
-        l.setSingleLine(true);
-        l.setEllipsize(TextUtils.TruncateAt.END);
-        r.addView(l, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-        if (hasFolder) {
-            THUMB_EXEC.execute(() -> {
-                String summary = CustomMedia.getWallpaperShuffleFolderSummary(this, CustomMedia.SCOPE_CLASSIC);
-                if (!summary.isEmpty()) {
-                    runOnUiThread(() -> {
-                        if (!isFinishing()) l.setText(baseTitle + "  ·  " + summary);
-                    });
-                }
-            });
-        }
-
-        int cs = u(17);
-        ImageView mark = new ImageView(this);
-        if (checked) {
-            mark.setImageBitmap(Glyphs.get("check", cs, Color.WHITE));
-        }
-        r.addView(mark, new LinearLayout.LayoutParams(cs, cs));
-
-        r.setOnFocusChangeListener((view, has) -> {
-            if (has) {
-                inRows = true;
-                updateSidebarStyles();
-                updateHintText(false);
-            }
-            bg.setColor(has ? Color.WHITE : 0x14FFFFFF);
-            l.setTextColor(has ? 0xFF111114 : 0xEBF4F4F6);
-            if (checked) {
-                mark.setImageBitmap(Glyphs.get("check", cs, has ? 0xFF111114 : Color.WHITE));
-            }
-            view.animate().scaleX(has ? 1.02f : 1f).scaleY(has ? 1.02f : 1f)
-                    .setDuration(160).start();
-        });
-
-        r.setOnClickListener(view -> {
-            if (!CustomMedia.hasWallpaperShuffleFolder(this, CustomMedia.SCOPE_CLASSIC)) {
-                pickFolderForClassicShuffle();
-                return;
-            }
-            if (!checked) {
-                String[] opts = {
-                    tr("Use folder shuffle background", "Klasör karıştırma arka planını kullan"),
-                    tr("Choose folder…", "Klasör seç…")
-                };
-                dialog(tr("Folder shuffle", "Klasör karıştırma"))
-                        .setItems(opts, (d, which) -> {
-                            if (which == 0) {
-                                Profiles.homePrefs(this).edit().putString("wallpaper", MainActivity.FOLDER_SHUFFLE_WALL_KEY).apply();
-                                rebuildMainRows();
-                            } else {
-                                pickFolderForClassicShuffle();
-                            }
-                        })
-                        .show();
-            } else {
-                pickFolderForClassicShuffle();
-            }
-        });
-
-        r.setOnLongClickListener(view -> {
-            pickFolderForClassicShuffle();
-            return true;
-        });
-
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, u(40));
-        lp.bottomMargin = u(5);
-        list.addView(r, lp);
-    }
-
     private void subMenuLockScreenSettings() {
         mainHeadView.setText(tr("Lock screen settings", "Kilit ekranı ayarları"));
         backSubMenuRow();
@@ -3804,7 +3503,7 @@ public class SettingsActivity extends Activity {
             lockSceneCheckRow(spec.id, spec.title(this), spec.bgAsset);
         }
 
-        section(tr("CLASSIC WALLPAPERS", "KLASİK DUVAR KAĞITLARI"));
+        section(tr("PHOTOS & GRADIENTS", "ФОТО И ГРАДИЕНТЫ"));
         for (int i = 0; i < Scenes.CLASSIC_PHOTOS.length; i++) {
             String photoFile = Scenes.CLASSIC_PHOTOS[i][0];
             String id = "photo:" + photoFile;
@@ -4170,72 +3869,6 @@ public class SettingsActivity extends Activity {
             pickLockFolderShuffle();
             return true;
         });
-
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, u(40));
-        lp.bottomMargin = u(5);
-        list.addView(r, lp);
-    }
-
-    private void classicPhotoRow(String label, String assetPath, boolean checked, Runnable onClick) {
-        LinearLayout r = new LinearLayout(this);
-        r.setOrientation(LinearLayout.HORIZONTAL);
-        r.setGravity(Gravity.CENTER_VERTICAL);
-        r.setFocusable(true);
-        r.setClickable(true);
-        r.setPadding(u(14), u(6), u(16), u(6));
-
-        GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(u(13));
-        bg.setColor(0x14FFFFFF);
-        r.setBackground(bg);
-
-        int tw = u(46), th = u(26);
-        ImageView thumb = new ImageView(this);
-        thumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        bindAssetThumbAsync(thumb, assetPath, tw * 2, th * 2);
-        final float trad = u(5.5f);
-        thumb.setOutlineProvider(new ViewOutlineProvider() {
-            @Override
-            public void getOutline(View v, Outline o) {
-                o.setRoundRect(0, 0, v.getWidth(), v.getHeight(), trad);
-            }
-        });
-        thumb.setClipToOutline(true);
-        LinearLayout.LayoutParams thlp = new LinearLayout.LayoutParams(tw, th);
-        thlp.rightMargin = u(12);
-        r.addView(thumb, thlp);
-
-        TextView l = new TextView(this);
-        l.setText(label);
-        l.setTextColor(0xEBF4F4F6);
-        l.setTypeface(Ui.font(this, "semibold"));
-        Ui.textSize(l, 14.5f);
-        l.setSingleLine(true);
-        r.addView(l, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
-
-        int cs = u(17);
-        ImageView mark = new ImageView(this);
-        if (checked) {
-            mark.setImageBitmap(Glyphs.get("check", cs, Color.WHITE));
-        }
-        r.addView(mark, new LinearLayout.LayoutParams(cs, cs));
-
-        r.setOnFocusChangeListener((view, has) -> {
-            if (has) {
-                inRows = true;
-                updateSidebarStyles();
-                updateHintText(false);
-            }
-            bg.setColor(has ? Color.WHITE : 0x14FFFFFF);
-            l.setTextColor(has ? 0xFF111114 : 0xEBF4F4F6);
-            if (checked) {
-                mark.setImageBitmap(Glyphs.get("check", cs, has ? 0xFF111114 : Color.WHITE));
-            }
-            view.animate().scaleX(has ? 1.02f : 1f).scaleY(has ? 1.02f : 1f)
-                    .setDuration(160).start();
-        });
-        r.setOnClickListener(view -> onClick.run());
 
         LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, u(40));

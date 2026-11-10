@@ -1,15 +1,16 @@
 $ErrorActionPreference = "Stop"
 Set-Location $PSScriptRoot
 
-if (-not $env:JAVA_HOME) {
-    $jdkCandidate = "C:\Users\asen4\AppData\Local\Programs\Microsoft\jdk-17.0.10.7-hotspot"
-    if (Test-Path $jdkCandidate) {
-        $env:JAVA_HOME = $jdkCandidate
-    }
-}
-if ($env:JAVA_HOME) {
-    $env:PATH = "$env:JAVA_HOME\bin;$env:PATH"
-}
+# Load the same version.properties contract as build.sh.
+. (Join-Path $PSScriptRoot "tools/version.ps1")
+$buildVersion = Get-TestOSBuildVersion -ConfigPath (Join-Path $PSScriptRoot "version.properties")
+$versionCode = $buildVersion.VersionCode
+$versionName = $buildVersion.VersionName
+
+# Prefer JAVA_HOME; otherwise require a complete JDK on PATH.
+. (Join-Path $PSScriptRoot "tools/java.ps1")
+$javaEnvironment = Initialize-TestOSJava
+Write-Host "Using JDK from $($javaEnvironment.Source): $($javaEnvironment.Bin)"
 
 $SDK = if ($env:ANDROID_HOME) { $env:ANDROID_HOME } elseif ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT } else { "$env:LOCALAPPDATA\Android\Sdk" }
 $BT = "$SDK\build-tools\34.0.0"
@@ -28,9 +29,6 @@ if ($env:ASSET_OPTIMIZE -eq "1") {
 
 & "$BT\aapt2.exe" compile --dir res -o build\res.zip
 if ($LASTEXITCODE -ne 0) { throw "aapt2 compile failed" }
-
-$versionCode = if ($env:VERSION_CODE) { $env:VERSION_CODE } else { "13" }
-$versionName = if ($env:VERSION_NAME) { $env:VERSION_NAME } else { "2.1.2-custom1" }
 
 & "$BT\aapt2.exe" link -o build\unsigned.apk -I "$JAR" --manifest AndroidManifest.xml --rename-manifest-package "com.gonscharovd.tvoslauncher" `
     --java build\gen --min-sdk-version 24 --target-sdk-version 34 `

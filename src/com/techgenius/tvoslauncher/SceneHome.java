@@ -39,9 +39,7 @@ import java.util.Set;
 /**
  * Couch-TV "Night scenes" Home Screen layout and interactions:
  * - Multi-layer scene background with giant refractive glass clock & foreground depth cutouts
- * - Top-left profile pill switcher ("Person 1 | Person 2")
  * - Top-right frosted glass Moon sleep timer / quick controls button
- * - "Keep watching" horizontal frosted glass notification cards with artwork & progress bars
  * - Bottom frosted glass dock with rounded-square app icons, Settings gear popup, and More (...)
  */
 final class SceneHome {
@@ -53,7 +51,6 @@ final class SceneHome {
     final Scenes.SceneView sceneView;
     final FrameLayout overlay;
 
-    LinearLayout whoBar;
     LinearLayout weatherBtn;
     ImageView weatherIcon;
     LinearLayout vpnIndicator;
@@ -66,30 +63,13 @@ final class SceneHome {
 
     static boolean isWeatherShortcutEnabled(android.content.Context c) {
         if (c == null) return true;
-        return Profiles.homePrefs(c).getBoolean(KEY_WEATHER_SHORTCUT, true);
+        return SingleUserPrefs.homePrefs(c).getBoolean(KEY_WEATHER_SHORTCUT, true);
     }
 
     static void setWeatherShortcutEnabled(android.content.Context c, boolean enabled) {
         if (c == null) return;
-        Profiles.homePrefs(c).edit().putBoolean(KEY_WEATHER_SHORTCUT, enabled).apply();
+        SingleUserPrefs.homePrefs(c).edit().putBoolean(KEY_WEATHER_SHORTCUT, enabled).apply();
     }
-
-    LinearLayout shelfBox;
-    TextView shelfHeader;
-    android.widget.HorizontalScrollView shelfScroll;
-    LinearLayout shelfRow;
-    final List<View> shelfCards = new ArrayList<>();
-    private static final int MAX_SHELF_ITEMS = 5;
-    private final Map<String, List<WatchCardData>> pkgWatchCache = new java.util.concurrent.ConcurrentHashMap<>();
-    private final android.util.LruCache<String, Bitmap> shelfThumbs =
-            new android.util.LruCache<String, Bitmap>(3 * 1024 * 1024) {
-                @Override protected int sizeOf(String key, Bitmap value) {
-                    return value == null || value.isRecycled() ? 0 : Math.max(1, value.getAllocationByteCount());
-                }
-            };
-    private View activeShelfTile;
-    private String activeShelfPkg;
-    private int shelfLoadGen = 0;
 
     LinearLayout dockContainer;
     LinearLayout dockBox;
@@ -103,12 +83,10 @@ final class SceneHome {
                     return value == null || value.isRecycled() ? 0 : Math.max(1, value.getAllocationByteCount());
                 }
             };
-    private Bitmap demoArt1, demoArt2, demoArt3;
 
     boolean moreExpanded = false;
     boolean backDownInHome = false;
     int focusedDockIdx = 0;
-    int focusedShelfIdx = 0;
     int moveDockIdx = -1;
     int currentDockCols = 12;
     int currentMaxSingleRowApps = 10;
@@ -116,29 +94,16 @@ final class SceneHome {
     FrameLayout sheetLayer;
     View sheetReturnFocus;
 
-    static final class WatchCardData {
-        String key;
-        String pkg;
-        String appName;
-        String title;
-        String subtitle;
-        float progress;
-        Bitmap thumb;
-        String backdropUrl;
-        Suggestions.Item sourceItem;
-        boolean removable;
-    }
-
     SceneHome(MainActivity host) {
         this.host = host;
         this.focusedDockIdx = host.prefs.getInt("last_dock_idx", 0);
         this.sceneView = new Scenes.SceneView(host);
         this.sceneView.setOnSceneChangedListener(bg -> {
-            if (bg != null && Scenes.isScenesLook(host)) {
+            if (bg != null) {
                 host.io.execute(() -> {
                     Bitmap blurred = Ui.glassBackdrop(bg, 192, 108);
                     host.handler.post(() -> {
-                        if (blurred != null && Scenes.isScenesLook(host)) {
+                        if (blurred != null) {
                             host.glassBg = blurred;
                             host.invalidateGlass();
                             invalidateSceneGlass();
@@ -153,40 +118,29 @@ final class SceneHome {
         this.overlay.setClipToPadding(false);
 
         buildTopBar();
-        buildKeepWatchingShelf();
         buildBottomDock();
     }
 
     /** The continue-watching popup for a dock tile's app, or null when it has none. */
 
-
     /** DPAD Up on a dock tile: moves into that tile's popup row, if one is open. */
 
-
-
-
-    /** Uptime until which Continue Watching rows show/hide instantly (set on resume). */
-    private long suppressCwAnimUntil;
-
-    boolean cwAnimSuppressed() {
-        return android.os.SystemClock.uptimeMillis() < suppressCwAnimUntil;
-    }
-
-
-
+    
     void invalidateSceneGlass() {
-        if (whoBar != null) whoBar.invalidate();
         if (weatherBtn != null) weatherBtn.invalidate();
         if (moonBtn != null) moonBtn.invalidate();
         if (dockBox != null) dockBox.invalidate();
-        for (View c : shelfCards) c.invalidate();
+    }
+
+    boolean isDockMoveActive() {
+        return moveDockIdx >= 0;
     }
 
     private int dp(float u) {
         return host.dp(u);
     }
 
-    // ---------------------------------------------------------------- Top Bar (Profile pill & Control Panel in top-right)
+    // ---------------------------------------------------------------- Top Bar (quick actions and Control Center)
 
     private void buildTopBar() {
         LinearLayout topRightRow = new LinearLayout(host);
@@ -197,57 +151,7 @@ final class SceneHome {
         int grow = dp(6);
         topRightRow.setPadding(grow, grow, grow, grow);
 
-        // Top-right Profile Switcher Pill (next to Control Panel button; hidden if only 1 person)
-        whoBar = new LinearLayout(host);
-        whoBar.setOrientation(LinearLayout.HORIZONTAL);
-        whoBar.setGravity(Gravity.CENTER_VERTICAL);
-        int pad = dp(3);
-        whoBar.setPadding(pad, pad, pad, pad);
-        MainActivity.LiquidGlass whoGlass = new MainActivity.LiquidGlass(
-                dp(22), 0x6614161C, host.glassSource, host.screenW, host.screenH, host.unit);
-        whoGlass.lens = dp(5);
-        whoGlass.rimStrength = 0.45f;
-        whoBar.setBackground(whoGlass);
-        whoBar.setFocusable(true);
-        whoBar.setClickable(true);
-        whoBar.setLongClickable(true);
-
-        GradientDrawable whoFocusRing = new GradientDrawable();
-        whoFocusRing.setCornerRadius(dp(22));
-        whoFocusRing.setColor(Color.TRANSPARENT);
-        whoFocusRing.setStroke(dp(2), Color.WHITE);
-
-        whoBar.setOnFocusChangeListener((v, has) -> {
-            v.setForeground(has ? whoFocusRing : null);
-            v.animate().scaleX(has ? 1.05f : 1f).scaleY(has ? 1.05f : 1f)
-                    .setDuration(180).setInterpolator(MainActivity.LIFT).start();
-        });
-        whoBar.setOnClickListener(v -> {
-            List<Profiles.Profile> ps = Profiles.list(host);
-            if (ps.size() == 2) {
-                String cur = Profiles.current(host).id;
-                String next = ps.get(0).id.equals(cur) ? ps.get(1).id : ps.get(0).id;
-                host.switchProfile(next);
-                refreshWhoBar();
-                refreshKeepWatching();
-                rebuildDock();
-                whoBar.requestFocus();
-            } else {
-                host.showProfilePicker(false);
-            }
-        });
-        whoBar.setOnLongClickListener(v -> {
-            host.showProfilePicker(false);
-            return true;
-        });
-
-        LinearLayout.LayoutParams wlp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        wlp.rightMargin = dp(10);
-        topRightRow.addView(whoBar, wlp);
-        refreshWhoBar();
-
-        // Top-right Weather Shortcut Button (icon only; opens 5-day forecast UI like Classic Home)
+        // Top-right Weather Shortcut Button (icon only; opens the 5-day forecast overlay)
         int mSize = dp(42);
         weatherBtn = new LinearLayout(host);
         weatherBtn.setOrientation(LinearLayout.HORIZONTAL);
@@ -363,38 +267,6 @@ final class SceneHome {
         overlay.addView(topRightRow, trlp);
     }
 
-    void refreshWhoBar() {
-        if (whoBar == null) return;
-        whoBar.removeAllViews();
-        List<Profiles.Profile> ps = Profiles.list(host);
-        if (ps.size() <= 1) {
-            whoBar.setVisibility(View.GONE);
-            return;
-        }
-        whoBar.setVisibility(View.VISIBLE);
-        String curId = Profiles.current(host).id;
-        for (Profiles.Profile p : ps) {
-            boolean active = p.id.equals(curId);
-            TextView pill = new TextView(host);
-            Ui.textSize(pill, 11f);
-            pill.setTypeface(Ui.font(host, "semibold"));
-            pill.setText(I18n.profileName(host, p.name));
-            pill.setPadding(dp(13), dp(6), dp(13), dp(6));
-            pill.setSingleLine(true);
-            if (active) {
-                GradientDrawable abg = new GradientDrawable();
-                abg.setCornerRadius(dp(18));
-                abg.setColor(0xF2FFFFFF);
-                pill.setBackground(abg);
-                pill.setTextColor(0xFF111114);
-            } else {
-                pill.setTextColor(0xB8F4F4F6);
-            }
-            whoBar.addView(pill, new LinearLayout.LayoutParams(
-                    ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        }
-    }
-
     void refreshWeatherBtn() {
         if (weatherBtn == null) return;
         boolean show = isWeatherShortcutEnabled(host) && Weather.enabled(host);
@@ -425,588 +297,9 @@ final class SceneHome {
         moonBtn.setMinimumWidth(mSize);
     }
 
-    // ---------------------------------------------------------------- Keep Watching Glass Shelf
-
-    /** Where the Keep Watching shelf sits. the inactive media shelf uses the same spot. */
-    static final float SHELF_LEFT_DP = 40, SHELF_TOP_DP = 312, SHELF_HEADER_GAP_DP = 7;
-    static final float SHELF_CARD_W_DP = 282, SHELF_CARD_H_DP = 64, SHELF_CARD_GAP_DP = 12;
-
-    private void buildKeepWatchingShelf() {
-        int pad = dp(SHELF_HEADER_GAP_DP);
-        shelfBox = new LinearLayout(host) {
-            @Override public boolean hasOverlappingRendering() { return false; }
-        };
-        shelfBox.setOrientation(LinearLayout.VERTICAL);
-        shelfBox.setClipChildren(false);
-        shelfBox.setClipToPadding(false);
-        shelfBox.setVisibility(View.GONE);
-
-        shelfHeader = new TextView(host);
-        Ui.textSize(shelfHeader, 11.5f);
-        shelfHeader.setTypeface(Ui.font(host, "semibold"));
-        shelfHeader.setTextColor(0xC7F4F4F6);
-        shelfHeader.setShadowLayer(dp(6), 0, dp(1), 0x80000000);
-        shelfHeader.setText(I18n.s(host, "Continue watching", "İzlemeye devam et"));
-        LinearLayout.LayoutParams hlp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        hlp.bottomMargin = 0;
-        hlp.leftMargin = pad + dp(2);
-        shelfBox.addView(shelfHeader, hlp);
-
-        shelfRow = new LinearLayout(host) {
-            @Override public boolean hasOverlappingRendering() { return false; }
-        };
-        shelfRow.setOrientation(LinearLayout.HORIZONTAL);
-        shelfRow.setClipChildren(false);
-        shelfRow.setClipToPadding(false);
-        shelfRow.setPadding(pad, pad, pad, pad);
-
-        shelfScroll = new android.widget.HorizontalScrollView(host);
-        shelfScroll.setHorizontalScrollBarEnabled(false);
-        shelfScroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        shelfScroll.setFocusable(false);
-        shelfScroll.setClipChildren(false);
-        shelfScroll.setClipToPadding(false);
-        shelfScroll.addView(shelfRow, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        shelfBox.addView(shelfScroll, new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-
-        FrameLayout.LayoutParams slp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT,
-                Gravity.TOP | Gravity.START);
-        slp.leftMargin = dp(SHELF_LEFT_DP) - pad;
-        slp.rightMargin = dp(SHELF_LEFT_DP) - pad;
-        slp.topMargin = dp(SHELF_TOP_DP);
-        overlay.addView(shelfBox, slp);
+    void releaseTransientCaches() {
+        logoCache.evictAll();
     }
-
-    void refreshKeepWatching() {
-        if (shelfRow == null) return;
-        shelfHeader.setText(I18n.s(host, "Continue watching", "İzlemeye devam et"));
-        if (!host.cwEnabled() || moreExpanded) {
-            pkgWatchCache.clear();
-            hideShelf();
-            return;
-        }
-        final String curPkg = activeShelfPkg;
-        final List<String> dockPkgs = new ArrayList<>();
-        for (MainActivity.AppEntry e : dockEntries) {
-            if (e != null && e.pkg != null && !e.pkg.isEmpty()
-                    && !GEAR_KEY.equals(e.key) && !MORE_KEY.equals(e.key)) {
-                dockPkgs.add(e.pkg);
-            }
-        }
-        final int gen = ++shelfLoadGen;
-        host.io.execute(() -> {
-            if (curPkg != null && !curPkg.isEmpty()) {
-                List<WatchCardData> curCards = loadWatchCardsForPackage(curPkg);
-                pkgWatchCache.put(curPkg, curCards);
-                host.handler.post(() -> {
-                    if (gen != shelfLoadGen || !curPkg.equals(activeShelfPkg)) return;
-                    populateWatchRow(curPkg, curCards);
-                });
-            }
-            for (String p : dockPkgs) {
-                if (p.equals(curPkg)) continue;
-                List<WatchCardData> cards = loadWatchCardsForPackage(p);
-                pkgWatchCache.put(p, cards);
-                for (WatchCardData cd : cards) {
-                    if (cd.thumb == null && cd.backdropUrl != null && !cd.backdropUrl.isEmpty()) {
-                        Bitmap b = Suggestions.image(host, cd.backdropUrl, "w300", 240);
-                        if (b != null) {
-                            shelfThumbs.put(cd.backdropUrl, b);
-                            cd.thumb = b;
-                        }
-                    }
-                }
-            }
-        });
-    }
-
-    void onDockTileFocusForShelf(View tile, MainActivity.AppEntry a, boolean isGear, boolean isMore, boolean has) {
-        if (has) {
-            if (isGear || isMore || a == null || a.pkg == null || a.pkg.isEmpty()
-                    || moveDockIdx >= 0 || !host.cwEnabled() || moreExpanded) {
-                hideShelf();
-                return;
-            }
-            showShelfForPackage(tile, a.pkg);
-        } else {
-            overlay.post(this::hideShelfIfFocusLeft);
-        }
-    }
-
-    private boolean shelfHiding;
-
-    private void showShelfForPackage(View tile, String pkg) {
-        activeShelfTile = tile;
-        activeShelfPkg = pkg;
-        shelfHeader.setText(I18n.s(host, "Continue watching", "İzlemeye devam et"));
-        List<WatchCardData> cached = pkgWatchCache.get(pkg);
-        if (cached != null && !cached.isEmpty()) {
-            populateWatchRow(pkg, cached);
-        } else if (cached != null) {
-            animateShelfOut();
-        }
-        final int gen = ++shelfLoadGen;
-        final String targetPkg = pkg;
-        host.io.execute(() -> {
-            List<WatchCardData> fresh = loadWatchCardsForPackage(targetPkg);
-            pkgWatchCache.put(targetPkg, fresh);
-            host.handler.post(() -> {
-                if (gen != shelfLoadGen || !targetPkg.equals(activeShelfPkg)) return;
-                populateWatchRow(targetPkg, fresh);
-            });
-        });
-    }
-
-    private void hideShelfIfFocusLeft() {
-        View f = host.getCurrentFocus();
-        if (f != null && (f == activeShelfTile || shelfCards.contains(f)
-                || host.menuLayer != null || sheetLayer != null)) {
-            return;
-        }
-        if (f != null && dockTiles.contains(f)) {
-            return;
-        }
-        hideShelf();
-    }
-
-    void hideShelf() {
-        // A continue-watching popup took over (or the launcher just resumed): swap instantly.
-        if (isAnyPopupShowing() || cwAnimSuppressed()) {
-            hideShelfImmediate();
-            return;
-        }
-        activeShelfTile = null;
-        activeShelfPkg = null;
-        animateShelfOut();
-    }
-
-    /** Whether the Keep Watching shelf is on screen (and not fading away). */
-    boolean isShelfShowing() {
-        return shelfBox != null && shelfBox.getVisibility() == View.VISIBLE && !shelfHiding && !shelfCards.isEmpty();
-    }
-
-    boolean isAnyPopupShowing() {
-        return false;
-    }
-
-
-
-    void hideShelfImmediate() {
-        activeShelfTile = null;
-        activeShelfPkg = null;
-        lastWatchSig = "";
-        shelfHiding = false;
-        if (shelfRow != null) shelfRow.removeAllViews();
-        shelfCards.clear();
-        if (shelfBox != null) {
-            shelfBox.animate().cancel();
-            shelfBox.setAlpha(1f);
-            shelfBox.setTranslationY(0f);
-            shelfBox.setVisibility(View.GONE);
-        }
-    }
-
-    private void animateShelfOut() {
-        lastWatchSig = "";
-        shelfCards.clear();
-        if (shelfBox == null || shelfBox.getVisibility() != View.VISIBLE) {
-            shelfHiding = false;
-            if (shelfRow != null) shelfRow.removeAllViews();
-            if (shelfBox != null) shelfBox.setVisibility(View.GONE);
-            return;
-        }
-        if (shelfHiding) return;
-        shelfHiding = true;
-        shelfBox.animate().cancel();
-        shelfBox.animate()
-                .alpha(0f)
-                .translationY(dp(8))
-                .setDuration(140)
-                .withEndAction(() -> {
-                    if (shelfHiding) {
-                        shelfHiding = false;
-                        shelfBox.setVisibility(View.GONE);
-                        shelfBox.setTranslationY(0f);
-                        if (shelfRow != null) shelfRow.removeAllViews();
-                    }
-                })
-                .start();
-    }
-
-    private List<WatchCardData> loadWatchCardsForPackage(String pkg) {
-        // Android playback-history integration is intentionally unavailable in this build.
-        return new ArrayList<>();
-    }
-
-    private String lastWatchSig = "";
-
-    private void populateWatchRow(String pkg, List<WatchCardData> cards) {
-        if (cards == null || cards.isEmpty() || !host.cwEnabled() || moreExpanded || moveDockIdx >= 0
-                || pkg == null || !pkg.equals(activeShelfPkg)) {
-            boolean wasFocusedInShelf = shelfCards.contains(host.getCurrentFocus());
-            animateShelfOut();
-            if (wasFocusedInShelf) {
-                focusDock(focusedDockIdx);
-            }
-            return;
-        }
-        boolean wasVisible = shelfBox.getVisibility() == View.VISIBLE && !shelfHiding;
-        StringBuilder sb = new StringBuilder(pkg).append("::");
-        for (int i = 0; i < cards.size() && i < MAX_SHELF_ITEMS; i++) {
-            WatchCardData c = cards.get(i);
-            sb.append(c.key).append('|').append(c.title).append('|').append(c.subtitle).append('|').append(c.progress).append(';');
-        }
-        String sig = sb.toString();
-        if (sig.equals(lastWatchSig) && !shelfCards.isEmpty() && wasVisible) {
-            return;
-        }
-        int focusedSlot = shelfCards.indexOf(host.getCurrentFocus());
-        lastWatchSig = sig;
-        shelfRow.removeAllViews();
-        shelfCards.clear();
-        if (shelfScroll != null) shelfScroll.scrollTo(0, 0);
-        int cardW = dp(SHELF_CARD_W_DP);
-        int cardH = dp(SHELF_CARD_H_DP);
-        int gap = dp(SHELF_CARD_GAP_DP);
-        for (int i = 0; i < cards.size() && i < MAX_SHELF_ITEMS; i++) {
-            final int idx = i;
-            WatchCardData data = cards.get(i);
-            View card = buildWatchCard(data, idx, cardW, cardH);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(cardW, cardH);
-            if (i > 0) lp.leftMargin = gap;
-            shelfRow.addView(card, lp);
-            shelfCards.add(card);
-        }
-        boolean wasHiding = shelfHiding;
-        shelfHiding = false;
-        shelfBox.animate().cancel();
-        shelfBox.setVisibility(View.VISIBLE);
-        if (wasVisible || isAnyPopupShowing() || cwAnimSuppressed()) {
-            // Switching between apps that both have a continue-watching row: no re-animation.
-            shelfBox.setAlpha(1f);
-            shelfBox.setTranslationY(0f);
-        } else {
-            if (!wasHiding) {
-                shelfBox.setAlpha(0f);
-                shelfBox.setTranslationY(dp(10));
-            }
-            shelfBox.animate()
-                    .alpha(1f)
-                    .translationY(0f)
-                    .setDuration(180)
-                    .setInterpolator(MainActivity.LIFT)
-                    .withEndAction(null)
-                    .start();
-        }
-        if (focusedSlot >= 0 && !shelfCards.isEmpty()) {
-            shelfCards.get(Math.min(focusedSlot, shelfCards.size() - 1)).requestFocus();
-        }
-    }
-
-    private View buildWatchCard(WatchCardData d, int index, int cardW, int cardH) {
-        View card = watchCard(d, cardW, cardH, (v, has) -> {
-            if (has) {
-                focusedShelfIdx = index;
-            } else {
-                overlay.post(this::hideShelfIfFocusLeft);
-            }
-        });
-        card.setLongClickable(true);
-        card.setOnClickListener(v -> openWatchCard(d));
-        card.setOnLongClickListener(v -> {
-            showWatchCardMenu(v, d);
-            return true;
-        });
-        if (d.thumb == null && d.backdropUrl != null && !d.backdropUrl.isEmpty()) {
-            final ImageView thumbIv = card.findViewWithTag(WATCH_THUMB);
-            final String url = d.backdropUrl;
-            if (thumbIv != null) {
-                host.io.execute(() -> {
-                    Bitmap b = shelfThumbs.get(url);
-                    if (b == null) {
-                        b = Suggestions.image(host, url, "w300", 240);
-                        if (b != null) shelfThumbs.put(url, b);
-                    }
-                    if (b != null) {
-                        final Bitmap bmp = b;
-                        d.thumb = bmp;
-                        host.handler.post(() -> {
-                            if (thumbIv.isAttachedToWindow()) {
-                                thumbIv.setImageBitmap(bmp);
-                            }
-                        });
-                    }
-                });
-            }
-        }
-        return card;
-    }
-
-    /** Tag on a watch card's thumbnail ImageView, for art that loads after the card is built. */
-    static final String WATCH_THUMB = "watch_thumb";
-
-    /**
-     * The Keep Watching glass card: thumbnail, app name, title, subtitle, progress bar.
-     * Shared glass card renderer for the media shelf. Callers set click handling.
-     */
-    View watchCard(WatchCardData d, int cardW, int cardH, View.OnFocusChangeListener onFocus) {
-        LinearLayout card = new LinearLayout(host) {
-            @Override public boolean hasOverlappingRendering() { return false; }
-        };
-        card.setOrientation(LinearLayout.HORIZONTAL);
-        card.setGravity(Gravity.CENTER_VERTICAL);
-        int pad = dp(8);
-        card.setPadding(pad, pad, dp(12), pad);
-        card.setFocusable(true);
-        card.setClickable(true);
-
-        float r = dp(15);
-        MainActivity.LiquidGlass glass = new MainActivity.LiquidGlass(
-                r, 0x5C1E141C, host.glassSource, host.screenW, host.screenH, host.unit);
-        glass.lens = dp(6);
-        glass.rimStrength = 0.42f;
-        card.setBackground(glass);
-
-        GradientDrawable focusRing = new GradientDrawable();
-        focusRing.setCornerRadius(r);
-        focusRing.setColor(Color.TRANSPARENT);
-        focusRing.setStroke(dp(2), Color.WHITE);
-
-        // Left thumbnail (16:9)
-        int tw = dp(84), th = dp(48);
-        ImageView thumb = new ImageView(host);
-        thumb.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        GradientDrawable tbg = new GradientDrawable();
-        tbg.setCornerRadius(dp(8.5f));
-        tbg.setColor(0xFF1A1C22);
-        thumb.setBackground(tbg);
-        thumb.setOutlineProvider(host.roundedOutline(new float[]{dp(8.5f)}));
-        thumb.setClipToOutline(true);
-        thumb.setTag(WATCH_THUMB);
-        if (d.thumb != null) thumb.setImageBitmap(d.thumb);
-        card.addView(thumb, new LinearLayout.LayoutParams(tw, th));
-
-        // Right text column + progress bar
-        LinearLayout body = new LinearLayout(host);
-        body.setOrientation(LinearLayout.VERTICAL);
-        body.setGravity(Gravity.CENTER_VERTICAL);
-        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        blp.leftMargin = dp(10);
-        card.addView(body, blp);
-
-        // App icon + uppercase app name
-        LinearLayout metaRow = new LinearLayout(host);
-        metaRow.setOrientation(LinearLayout.HORIZONTAL);
-        metaRow.setGravity(Gravity.CENTER_VERTICAL);
-        Bitmap appLogo = getSquareAppLogo(d.pkg);
-        if (appLogo != null) {
-            ImageView aiv = new ImageView(host);
-            aiv.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            aiv.setImageBitmap(appLogo);
-            aiv.setOutlineProvider(host.roundedOutline(new float[]{dp(2.5f)}));
-            aiv.setClipToOutline(true);
-            LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(dp(10), dp(10));
-            alp.rightMargin = dp(4.5f);
-            metaRow.addView(aiv, alp);
-        }
-        TextView appTxt = new TextView(host);
-        Ui.textSize(appTxt, 8f);
-        appTxt.setTypeface(Ui.font(host, "semibold"));
-        appTxt.setTextColor(0xB8F4F4F6);
-        appTxt.setLetterSpacing(0.06f);
-        appTxt.setSingleLine(true);
-        appTxt.setEllipsize(TextUtils.TruncateAt.END);
-        appTxt.setText(d.appName != null ? d.appName.toUpperCase(I18n.locale(host)) : "");
-        metaRow.addView(appTxt);
-        body.addView(metaRow);
-
-        // Title
-        TextView titleTxt = new TextView(host);
-        Ui.textSize(titleTxt, 11.5f);
-        titleTxt.setTypeface(Ui.font(host, "semibold"));
-        titleTxt.setTextColor(0xFFF4F4F6);
-        titleTxt.setSingleLine(true);
-        titleTxt.setEllipsize(TextUtils.TruncateAt.END);
-        titleTxt.setText(d.title);
-        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        tlp.topMargin = dp(1);
-        body.addView(titleTxt, tlp);
-
-        // Subtitle
-        TextView subTxt = new TextView(host);
-        Ui.textSize(subTxt, 9.2f);
-        subTxt.setTypeface(Ui.font(host, "regular"));
-        subTxt.setTextColor(0xB8F4F4F6);
-        subTxt.setSingleLine(true);
-        subTxt.setEllipsize(TextUtils.TruncateAt.END);
-        subTxt.setText(d.subtitle);
-        body.addView(subTxt);
-
-        // Progress bar
-        FrameLayout barTrack = new FrameLayout(host);
-        GradientDrawable trBg = new GradientDrawable();
-        trBg.setCornerRadius(dp(1.5f));
-        trBg.setColor(0x2EFFFFFF);
-        barTrack.setBackground(trBg);
-        View barFill = new View(host);
-        GradientDrawable flBg = new GradientDrawable();
-        flBg.setCornerRadius(dp(1.5f));
-        flBg.setColor(0xEBFFFFFF);
-        barFill.setBackground(flBg);
-        int maxBarW = cardW - tw - dp(30);
-        int fillW = Math.max(dp(6), Math.round(maxBarW * Math.max(0.05f, Math.min(1f, d.progress))));
-        barTrack.addView(barFill, new FrameLayout.LayoutParams(fillW, ViewGroup.LayoutParams.MATCH_PARENT));
-        LinearLayout.LayoutParams prlp = new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(2.5f));
-        prlp.topMargin = dp(4.5f);
-        body.addView(barTrack, prlp);
-
-        card.setOnFocusChangeListener((v, has) -> {
-            v.setForeground(has ? focusRing : null);
-            v.animate().scaleX(has ? 1.035f : 1f).scaleY(has ? 1.035f : 1f)
-                    .translationY(has ? -dp(2) : 0)
-                    .setDuration(180).setInterpolator(MainActivity.LIFT).start();
-            if (onFocus != null) onFocus.onFocusChange(v, has);
-        });
-        return card;
-    }
-
-    /**
-     * Placeholder version of {@link #watchCard}: same glass card and layout, with soft blocks
-     * where the thumbnail, app name, title, subtitle and progress bar go. The blocks pulse
-     * gently; {@code index} staggers the pulse so a row of them ripples. Not focusable.
-     */
-    View ghostWatchCard(int index) {
-        LinearLayout card = new LinearLayout(host);
-        card.setOrientation(LinearLayout.HORIZONTAL);
-        card.setGravity(Gravity.CENTER_VERTICAL);
-        int pad = dp(8);
-        card.setPadding(pad, pad, dp(12), pad);
-        MainActivity.LiquidGlass glass = new MainActivity.LiquidGlass(
-                dp(15), 0x5C1E141C, host.glassSource, host.screenW, host.screenH, host.unit);
-        glass.lens = dp(6);
-        glass.rimStrength = 0.42f;
-        card.setBackground(glass);
-
-        List<View> blocks = new ArrayList<>();
-        View thumb = ghostBlock(dp(8.5f));
-        card.addView(thumb, new LinearLayout.LayoutParams(dp(84), dp(48)));
-        blocks.add(thumb);
-
-        LinearLayout body = new LinearLayout(host);
-        body.setOrientation(LinearLayout.VERTICAL);
-        body.setGravity(Gravity.CENTER_VERTICAL);
-        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-        blp.leftMargin = dp(10);
-        card.addView(body, blp);
-
-        // App name, title, subtitle: widths vary a little per card so the row doesn't look stamped.
-        float[][] lines = {{44, 7, 0}, {index % 2 == 0 ? 132 : 108, 11, 5}, {index % 2 == 0 ? 78 : 92, 8, 5}};
-        for (float[] l : lines) {
-            View b = ghostBlock(dp(3.5f));
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(l[0]), dp(l[1]));
-            lp.topMargin = dp(l[2]);
-            body.addView(b, lp);
-            blocks.add(b);
-        }
-        View bar = ghostBlock(dp(1.5f));
-        LinearLayout.LayoutParams plp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(2.5f));
-        plp.topMargin = dp(7);
-        body.addView(bar, plp);
-        blocks.add(bar);
-
-        ValueAnimator pulse = ValueAnimator.ofFloat(0.45f, 1f);
-        pulse.setDuration(850);
-        pulse.setStartDelay(index * 140L);
-        pulse.setRepeatMode(ValueAnimator.REVERSE);
-        pulse.setRepeatCount(ValueAnimator.INFINITE);
-        pulse.addUpdateListener(a -> {
-            float alpha = (float) a.getAnimatedValue();
-            for (View v : blocks) v.setAlpha(alpha);
-        });
-        card.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
-            @Override public void onViewAttachedToWindow(View v) {
-                if (!pulse.isStarted()) pulse.start();
-            }
-
-            @Override public void onViewDetachedFromWindow(View v) {
-                pulse.cancel();
-            }
-        });
-        return card;
-    }
-
-    private View ghostBlock(float radius) {
-        View v = new View(host);
-        GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(radius);
-        bg.setColor(0x2EFFFFFF);
-        v.setBackground(bg);
-        return v;
-    }
-
-    /**
-     * Fades the Keep Watching row out while a continue-watching popup sits in front of it.
-     * Checks all popups, so moving from one app's tile straight to another's keeps it hidden.
-     */
-    void updateShelfDim() {
-        if (shelfHeader != null) shelfHeader.setAlpha(1f);
-        if (shelfRow != null) shelfRow.setAlpha(1f);
-    }
-
-    private void openWatchCard(WatchCardData d) {
-        if (d.sourceItem != null) {
-            host.openHeroItem(d.sourceItem);
-            return;
-        }
-        if (d.pkg != null && !d.pkg.isEmpty()) {
-            for (MainActivity.AppEntry e : host.all.values()) {
-                if (d.pkg.equals(e.pkg) && e.launch != null) {
-                    host.launchAnimated(null, e);
-                    return;
-                }
-            }
-            Intent launch = host.getPackageManager().getLeanbackLaunchIntentForPackage(d.pkg);
-            if (launch == null) launch = host.getPackageManager().getLaunchIntentForPackage(d.pkg);
-            if (launch != null) {
-                host.prepareForAppLaunch();
-                if (Suggestions.start(host, launch)) {
-                    host.overridePendingTransition(R.anim.app_open_enter, R.anim.app_open_exit);
-                    final String pkg = d.pkg;
-                    host.io.execute(() -> host.noteLaunched(pkg));
-                }
-                return;
-            }
-        }
-        // Fallback: open first streaming app or show toast
-        if (!host.apps.isEmpty()) {
-            host.launchAnimated(shelfCards.get(Math.min(focusedShelfIdx, shelfCards.size() - 1)), host.apps.get(0));
-        }
-    }
-
-    private void showWatchCardMenu(View anchor, WatchCardData d) {
-        List<String> labels = new ArrayList<>();
-        List<Runnable> actions = new ArrayList<>();
-        labels.add(I18n.s(host, "Resume", "Devam Et"));
-        actions.add(() -> openWatchCard(d));
-        int destructive = -1;
-        if (d.removable && d.key != null) {
-            destructive = labels.size();
-            labels.add(I18n.s(host, "Remove from Keep Watching", "İzlemeye Devam Et'ten Kaldır"));
-            actions.add(() -> {
-                if (d.pkg != null) pkgWatchCache.remove(d.pkg);
-                refreshKeepWatching();
-            });
-        }
-        host.showMenu(anchor, d.title, labels, actions, destructive);
-    }
-
-    // ---------------------------------------------------------------- Bottom Frosted Glass Dock
 
     private void buildBottomDock() {
         dockContainer = new LinearLayout(host);
@@ -1218,9 +511,6 @@ final class SceneHome {
         boolean hasAnyOtherOrOverflow = !otherPool.isEmpty() || (homePool.size() > cols);
         if (!hasAnyOtherOrOverflow && moreExpanded) {
             moreExpanded = false;
-            if (shelfBox != null) {
-                shelfBox.setVisibility((!host.cwEnabled() || shelfCards.isEmpty()) ? View.GONE : View.VISIBLE);
-            }
         }
 
         int maxFirstRowApps = hasAnyOtherOrOverflow ? Math.max(1, cols - 1) : cols;
@@ -1340,7 +630,6 @@ final class SceneHome {
         focusRing.setStroke(dp(2.2f), Color.WHITE);
 
         tile.setOnFocusChangeListener((v, has) -> {
-            onDockTileFocusForShelf(v, a, isGear, isMore, has);
             v.setPivotX(v.getWidth() > 0 ? v.getWidth() / 2f : size / 2f);
             v.setPivotY(v.getHeight() > 0 ? v.getHeight() / 2f : size / 2f);
             v.setForeground(has ? focusRing : null);
@@ -1428,7 +717,6 @@ final class SceneHome {
     private void toggleMoreApps() {
         moreExpanded = !moreExpanded;
         if (moreExpanded) {
-            hideShelf();
         }
         rebuildDock();
         focusDock(Math.min(focusedDockIdx, dockTiles.size() - 1));
@@ -1460,7 +748,7 @@ final class SceneHome {
         actions.add(() -> host.promptChangeAppIcon(a, () -> {
             invalidateAppLogoCache(a);
             host.loadApps();
-            host.buildGrid();
+            
             rebuildDock();
             int targetIdx = Math.min(index, Math.max(0, dockTiles.size() - 1));
             focusDock(targetIdx);
@@ -1515,7 +803,6 @@ final class SceneHome {
 
     private void startDockMove(int index) {
         moveDockIdx = index;
-        hideShelf();
         focusDock(index);
         if (index >= 0 && index < dockTiles.size()) {
             startDockWiggle(dockTiles.get(index));
@@ -1539,7 +826,7 @@ final class SceneHome {
         }
     }
 
-    private void endDockMove() {
+    void endDockMove() {
         stopDockWiggle();
         int idx = moveDockIdx;
         moveDockIdx = -1;
@@ -1576,13 +863,11 @@ final class SceneHome {
         boolean alreadyFocused = tile.isFocused();
         tile.requestFocus();
         // Coming back to Home with focus still on the same dock tile fires no focus change,
-        // so the shelf is refreshed directly.
         if (alreadyFocused && moveDockIdx < 0 && clamped < dockEntries.size()) {
             MainActivity.AppEntry entry = dockEntries.get(clamped);
             String pkg = entry.pkg;
             boolean isGear = GEAR_KEY.equals(entry.key);
             boolean isMore = MORE_KEY.equals(entry.key);
-            onDockTileFocusForShelf(tile, entry, isGear, isMore, true);
         }
     }
 
@@ -1596,24 +881,6 @@ final class SceneHome {
     }
 
     /** Drop transient artwork when Android hides the launcher under memory pressure. */
-    void releaseTransientCaches() {
-        shelfLoadGen++;
-        pkgWatchCache.clear();
-        shelfThumbs.evictAll();
-        logoCache.evictAll();
-        lastWatchSig = "";
-        if (shelfRow != null) {
-            shelfRow.removeAllViews();
-            shelfCards.clear();
-        }
-        if (shelfBox != null) {
-            shelfBox.animate().cancel();
-            shelfBox.setVisibility(View.GONE);
-            shelfBox.setAlpha(0f);
-            shelfBox.setTranslationY(0f);
-        }
-    }
-
     Bitmap getSquareAppIcon(MainActivity.AppEntry a) {
         if (a == null) return null;
         if (CustomMedia.hasCustomAppIcon(host, a.key, a.pkg)) {
@@ -1856,10 +1123,6 @@ final class SceneHome {
         sheetLayer.setClickable(true);
         sheetLayer.setClipChildren(false);
         sheetLayer.setClipToPadding(false);
-        if (shelfBox != null && shelfBox.getVisibility() == View.VISIBLE) {
-            shelfBox.animate().alpha(0f).setDuration(150).start();
-        }
-
         LinearLayout card = new LinearLayout(host);
         card.setOrientation(LinearLayout.VERTICAL);
         card.setClipChildren(true);
@@ -1874,8 +1137,8 @@ final class SceneHome {
         View btnHomeSettings = makeGearOptionRow(
                 "sliders",
                 I18n.s(host, "Home settings", "Ana ekran ayarları"),
-                I18n.s(host, "Language, weather, scenes, apps and people",
-                        "Dil, hava durumu, sahneler, uygulamalar ve kişiler"),
+                I18n.s(host, "Language, weather, scenes, apps and home-screen options",
+                        "Dil, hava durumu, sahneler, uygulamalar ve ana ekran seçenekleri"),
                 () -> {
                     closeSheetImmediate();
                     host.returningFromSettings = true;
@@ -2144,10 +1407,6 @@ final class SceneHome {
         FrameLayout l = sheetLayer;
         sheetLayer = null;
         sheetReturnFocus = null;
-        if (shelfBox != null && shelfBox.getVisibility() == View.VISIBLE) {
-            shelfBox.animate().cancel();
-            shelfBox.setAlpha(1f);
-        }
         l.animate().cancel();
         host.root.removeView(l);
     }
@@ -2156,9 +1415,6 @@ final class SceneHome {
         if (sheetLayer == null) return;
         FrameLayout l = sheetLayer;
         sheetLayer = null;
-        if (shelfBox != null && shelfBox.getVisibility() == View.VISIBLE) {
-            shelfBox.animate().alpha(1f).setDuration(150).start();
-        }
         l.animate().alpha(0f).setDuration(150).withEndAction(() -> host.root.removeView(l)).start();
         if (sheetReturnFocus != null && sheetReturnFocus.isAttachedToWindow()) {
             sheetReturnFocus.requestFocus();
@@ -2238,63 +1494,11 @@ final class SceneHome {
         }
 
         // Top Bar navigation
-        boolean whoVisible = whoBar != null && whoBar.getVisibility() == View.VISIBLE;
-        boolean wxVisible = weatherBtn != null && weatherBtn.getVisibility() == View.VISIBLE;
-        if (f == whoBar || f == weatherBtn || f == moonBtn) {
-            if (k == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                if (down) {
-                    if (f == whoBar) {
-                        if (wxVisible) weatherBtn.requestFocus();
-                        else moonBtn.requestFocus();
-                    } else if (f == weatherBtn) {
-                        moonBtn.requestFocus();
-                    }
-                }
-                return true;
-            }
-            if (k == KeyEvent.KEYCODE_DPAD_LEFT) {
-                if (down) {
-                    if (f == moonBtn) {
-                        if (wxVisible) weatherBtn.requestFocus();
-                        else if (whoVisible) whoBar.requestFocus();
-                    } else if (f == weatherBtn && whoVisible) {
-                        whoBar.requestFocus();
-                    }
-                }
-                return true;
-            }
-            if (k == KeyEvent.KEYCODE_DPAD_DOWN) {
-                if (down) {
-                    if (shelfBox.getVisibility() == View.VISIBLE && !shelfCards.isEmpty()) {
-                        shelfCards.get(shelfCards.size() - 1).requestFocus();
-                    } else {
-                        focusDock(focusedDockIdx);
-                    }
-                }
-                return true;
-            }
+        if (f == weatherBtn || f == moonBtn) {
+            if (k == KeyEvent.KEYCODE_DPAD_RIGHT) { if (down && f == weatherBtn) moonBtn.requestFocus(); return true; }
+            if (k == KeyEvent.KEYCODE_DPAD_LEFT) { if (down && f == moonBtn) weatherBtn.requestFocus(); return true; }
+            if (k == KeyEvent.KEYCODE_DPAD_DOWN) { if (down) focusDock(focusedDockIdx); return true; }
             if (k == KeyEvent.KEYCODE_DPAD_UP) return true;
-        }
-
-        // Keep Watching Shelf navigation
-        int sIdx = shelfCards.indexOf(f);
-        if (sIdx >= 0) {
-            if (k == KeyEvent.KEYCODE_DPAD_LEFT) {
-                if (down && sIdx > 0) shelfCards.get(sIdx - 1).requestFocus();
-                return true;
-            }
-            if (k == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                if (down && sIdx + 1 < shelfCards.size()) shelfCards.get(sIdx + 1).requestFocus();
-                return true;
-            }
-            if (k == KeyEvent.KEYCODE_DPAD_UP) {
-                if (down) moonBtn.requestFocus();
-                return true;
-            }
-            if (k == KeyEvent.KEYCODE_DPAD_DOWN) {
-                if (down) focusDock(focusedDockIdx);
-                return true;
-            }
         }
 
         // Bottom Dock navigation
@@ -2313,8 +1517,6 @@ final class SceneHome {
                 if (down) {
                     if (dIdx >= cols) {
                         focusDock(dIdx - cols);
-                    } else if (shelfBox.getVisibility() == View.VISIBLE && !shelfCards.isEmpty()) {
-                        shelfCards.get(0).requestFocus();
                     } else {
                         moonBtn.requestFocus();
                     }

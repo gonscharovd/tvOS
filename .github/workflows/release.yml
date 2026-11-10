@@ -58,13 +58,18 @@ jobs:
       - name: Derive release version from branch
         run: |
           set -euo pipefail
+          source ./version.properties
           VERSION_NAME="${GITHUB_REF_NAME#release/}"
-          if [[ ! "$VERSION_NAME" =~ ^2\.1\.[0-9]+$ ]]; then
-            echo "Expected branch release/2.1.PATCH, got: $GITHUB_REF_NAME" >&2
+          case "$VERSION_NAME" in
+            "$RELEASE_VERSION_PREFIX"*) ;;
+            *) echo "Expected branch release/${RELEASE_VERSION_PREFIX}PATCH, got: $GITHUB_REF_NAME" >&2; exit 1 ;;
+          esac
+          PATCH="${VERSION_NAME#"$RELEASE_VERSION_PREFIX"}"
+          if [[ ! "$PATCH" =~ ^[0-9]+$ ]]; then
+            echo "Invalid release PATCH in version: $VERSION_NAME" >&2
             exit 1
           fi
-          PATCH="${VERSION_NAME##*.}"
-          VERSION_CODE=$((15 + PATCH))
+          VERSION_CODE=$((RELEASE_VERSION_CODE_BASE + PATCH))
           echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_ENV"
           echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
           echo "Building testOS $VERSION_NAME (versionCode $VERSION_CODE)"
@@ -90,6 +95,10 @@ jobs:
           mkdir -p /tmp/tvos-version-tests
           javac --release 11 -d /tmp/tvos-version-tests src/com/techgenius/tvoslauncher/VersionComparator.java tests/VersionComparatorTest.java
           java -cp /tmp/tvos-version-tests com.techgenius.tvoslauncher.VersionComparatorTest
+
+      - name: Test PowerShell build version contract
+        shell: pwsh
+        run: ./tests/test_build_contract.ps1
 
       - name: Test cross-platform build contract
         run: python3 tests/test_build_contract.py

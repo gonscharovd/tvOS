@@ -70,19 +70,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** tvOS-style home screen: blurred backdrop, top shelf title, rounded app tile grid. */
+/** testOS home host: Night Scenes, application dock, overlays and lifecycle coordination. */
 public class MainActivity extends Activity {
 
-    static final int COLS = 6;
     static final String SETTINGS_KEY = "special:settings";
     static final String INPUTS_KEY = "special:inputs";
-    static final String FOLDER_KEY = "special:folder";
+
     static final String PREF_ORDER = "order";
     static final String PREF_HIDDEN = "hidden";
     static final String PREF_OTHER = "other_apps";
     static final String TV_SETTINGS = "com.android.tv.settings";
 
-    /** Packages placed first (in this order) until the user rearranges the grid. */
+    /** Packages placed first (in this order) until the user rearranges the dock. */
     static final List<String> DEFAULT_ORDER = Arrays.asList(
             "com.netflix.ninja",
             "com.amazon.amazonvideo.livingroom",
@@ -97,7 +96,7 @@ public class MainActivity extends Activity {
 
     static final PathInterpolator EASE = new PathInterpolator(0.2f, 0f, 0f, 1f);
     /** tvOS focused icon is ~1.2x its resting size (303x183 vs 248x148 px in Apple's reference). */
-    static final float FOCUS_SCALE = 1.2f;
+
     /** Focus lift with a slight spring, like tvOS. */
     static final android.view.animation.OvershootInterpolator LIFT =
             new android.view.animation.OvershootInterpolator(1.3f);
@@ -148,173 +147,71 @@ public class MainActivity extends Activity {
         ed.apply();
     }
 
-    /** Scroll position is driven by focus changes, not by ScrollView's own key handling. */
-    static class ShelfScrollView extends ScrollView {
-        ShelfScrollView(Context c) { super(c); }
-        @Override protected int computeScrollDeltaToGetChildRectOnScreen(Rect r) { return 0; }
-        @Override public boolean executeKeyEvent(KeyEvent e) { return false; }
-    }
-
     SharedPreferences prefs;
     final Map<String, AppEntry> all = new LinkedHashMap<>();
     /** Visible home apps, in user order. */
     final List<AppEntry> apps = new ArrayList<>();
-    /** Apps moved to "Other Apps" (not on first dock row / main grid, reachable from Other Apps button). */
+    /** Apps moved to Other Apps, reachable from the More Apps control. */
     final List<AppEntry> otherApps = new ArrayList<>();
-    /** Other apps including any dock overflow when the dock is enlarged (> 100%). */
-    final List<AppEntry> effectiveOtherApps = new ArrayList<>();
-    int currentDockCols = COLS;
-    /** Apps the user hid; reachable through Launcher Settings > Apps > Hidden apps. */
-    final List<AppEntry> hiddenApps = new ArrayList<>();
-    /** What the grid currently shows: home apps (+ folder tile) or the folder's contents. */
-    final List<AppEntry> shown = new ArrayList<>();
-    final List<View> tiles = new ArrayList<>();
+
+
+
     final Handler handler = new Handler(Looper.getMainLooper());
 
     FrameLayout root;
-    ImageView wallView;
-    /** Top shelf carousel: two crossfading backdrops + info panel. */
-    ImageView heroBack, heroFront;
-    View heroScrim, shade;
-    FrameLayout shelfView;
-    LinearLayout heroInfo, heroDots;
-    ImageView heroLogo;
-    TextView heroTitle, heroMeta, heroOverview, heroRemove;
-    GradientDrawable heroRemoveBg;
-    boolean removeSelected;
-    /** tvOS-style capsule button: glass when idle, solid white with dark text when focused. */
-    LinearLayout heroButton;
-    TextView heroBtnText;
-    ImageView heroBtnIcon;
-    ImageView heroProvider;
-    GradientDrawable heroBtnBg;
-    List<Suggestions.Item> heroItems = new ArrayList<>();
-    int heroIndex;
-    boolean heroShown;          // carousel currently forms the background
-    int heroVersion = -1;       // Legacy carousel generation marker
-    String wallStyle;
-    /** What Liquid Glass samples: a blurred copy of the wallpaper or of the carousel artwork. */
-    Bitmap wallBlur, heroBlur, glassBg;
+
+
+
+
+    Bitmap glassBg;
     final LiquidGlass.Backdrop glassSource = () -> glassBg;
-    View dockRow;
+
     boolean returningFromSettings;
     final java.util.concurrent.ExecutorService io = java.util.concurrent.Executors.newSingleThreadExecutor();
-    final Runnable heroAdvance = () -> {
-        if (this.search != null) scheduleAdvance();  // nothing to see under search; keep the slot
-        else heroStep(1, false);
-    };
-    ShelfScrollView scroll;
-    LinearLayout content;
-    LinearLayout clockBox;
-    LinearLayout titleBox;
-    View chevron;
-    TextView shelfTitle, shelfHint;
+
     float unit = 2f;
-    int screenW, screenH, tileW, tileH, gap, side, shelfH, labelH, radius, dockPadV, dockInset, dockOuter;
-    int focusedIndex = 0;
-    int moveIndex = -1;
-    boolean folderMode;
+    int screenW, screenH, dockOuter;
+
     boolean resumed;
-    ObjectAnimator wiggle;
-    AppEntry shelfEntry;
+    boolean swallowUp;
+
     BroadcastReceiver pkgReceiver;
 
-    /** Full-screen card that zooms out of a tile when an app is launched. */
+    /** Optional transient layer reserved for an external app transition. */
     View launchOverlay;
-    View launchTile;
+
     static MainActivity activeInstance;
     SceneHome sceneHome;
     String activeLang;
-    String activeLook;
 
-    final Runnable shelfUpdate = () -> {
-        if (focusedIndex >= 0 && focusedIndex < shown.size()) {
-            updateShelf(shown.get(focusedIndex));
-            if (!folderMode && prefs != null) {
-                prefs.edit().putInt("last_classic_idx", focusedIndex).apply();
-            }
-        }
-    };
-    final Runnable reloadRun = () -> reload(currentKey());
-
-    private void cleanupRemovedFeatureData() {
-        android.content.SharedPreferences marker = getSharedPreferences("feature_cleanup", MODE_PRIVATE);
-        if (marker.getBoolean("recommendations_news_cloud_removed_v1", false)) return;
-        for (String name : new String[]{"suggestions", "nuvio_cloud", "stremio_cloud", "watch_cloud"}) {
-            getSharedPreferences(name, MODE_PRIVATE).edit().clear().apply();
-        }
-        try {
-            Profiles.homePrefs(this).edit()
-                    .remove("shelf_mode").remove("cw_enabled").remove("shelf")
-                    .remove("top_shelf_tab").apply();
-        } catch (Throwable ignored) { }
-        deleteLegacyFeatureFiles(new java.io.File(getCacheDir(), "tmdb"));
-        deleteLegacyFeatureFiles(new java.io.File(getFilesDir(), "continue.json"));
-        marker.edit().putBoolean("recommendations_news_cloud_removed_v1", true).apply();
-    }
-
-    private void deleteLegacyFeatureFiles(java.io.File file) {
-        if (file == null || !file.exists()) return;
-        if (file.isDirectory()) {
-            java.io.File[] children = file.listFiles();
-            if (children != null) for (java.io.File child : children) deleteLegacyFeatureFiles(child);
-        }
-        try { file.delete(); } catch (Throwable ignored) { }
-    }
+    final Runnable reloadRun = this::reload;
 
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         activeInstance = this;
-        cleanupRemovedFeatureData();
-        // The wallpaper/artwork always covers the screen: skip the window's own full-screen fill
-        // (this Mali-450 GPU is fill-rate bound, so every hidden full-screen layer costs frames).
         getWindow().setBackgroundDrawable(null);
-        prefs = Profiles.homePrefs(this);
+        prefs = SingleUserPrefs.homePrefs(this);
         String initLang = getIntent() != null ? getIntent().getStringExtra("lang") : null;
-        if (initLang != null && !initLang.isEmpty()) {
-            I18n.setLang(this, initLang);
-        }
-        focusedIndex = Math.max(0, prefs.getInt("last_classic_idx", 0));
+        if (initLang != null && !initLang.isEmpty()) I18n.setLang(this, initLang);
         activeLang = I18n.getLang(this);
-        activeLook = Scenes.getLook(this);
 
         android.graphics.Point size = Ui.screen(this);
         screenW = size.x;
         screenH = size.y;
         unit = Ui.unit(this);
-        // Apple tvOS style geometry: slightly larger app cards and rounder squircle-like corners
-        // for both app icons (~16% of card width) and the frosted glass dock, with symmetrical
-        // horizontal and vertical padding so focused edge cards never crowd the dock rim.
         dockOuter = dp(18);
-        dockInset = dp(24);
-        side = dockOuter + dockInset;
-        gap = dp(18);
-        tileW = (screenW - 2 * side - (COLS - 1) * gap) / COLS;
-        tileH = tileW * 3 / 5;
-        labelH = dp(30);
-        radius = Math.round(tileW * 0.16f);
-        shelfH = (int) (screenH * 0.72f);
-        dockPadV = dp(19);
 
         Clicks.init(this);
-        // Startup: the app list (package manager, banners, icon colours) and the wallpaper are
-        // prepared in the background while the window's views are built (~250 ms saved on 1 GHz TVs).
         java.util.concurrent.Future<?> appsTask = io.submit(this::loadApps);
-        if (!Scenes.isScenesLook(this)) {
-            String wall = prefs.getString("wallpaper", "photo:tessellated-pavement.jpg");
-            wallPrefetch = new java.util.concurrent.FutureTask<>(() -> makeWallpaper(wall));
-            wallPrefetchStyle = wall;
-            new Thread((Runnable) wallPrefetch, "tvos-wallpaper").start();
-        }
         buildChrome();
         try {
             appsTask.get();
         } catch (Exception e) {
             loadApps();
         }
-        buildGrid();
-        applyLookMode();
+        sceneHome.rebuildDock();
+        sceneHome.focusDock(prefs.getInt("last_dock_idx", 0));
         registerPackageReceiver();
         wakeReceiver = new BroadcastReceiver() {
             @Override public void onReceive(Context c, Intent i) {
@@ -329,8 +226,10 @@ public class MainActivity extends Activity {
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        if (intent == null) return;
         if (intent.hasExtra("dock_scale")) {
             Scenes.setDockScalePercent(this, intent.getIntExtra("dock_scale", 100));
+            if (sceneHome != null) sceneHome.rebuildDock();
         }
         String lang = intent.getStringExtra("lang");
         if (lang != null && !lang.isEmpty()) {
@@ -339,28 +238,17 @@ public class MainActivity extends Activity {
             recreate();
             return;
         }
-        // adb perf probe: --es perf weather|status|hero|dockglass|shadows hides one layer to measure its GPU cost.
-        String perf = intent.getStringExtra("perf");
-        if (perf != null) {
-            switch (perf) {
-                case "weather": weatherCard.setVisibility(View.GONE); break;
-                case "status": clockBox.setVisibility(View.GONE); break;
-                case "hero": heroFront.setVisibility(View.GONE); heroBack.setVisibility(View.GONE); break;
-                case "dockglass": if (dockRow != null) dockRow.setBackground(null); break;
-                case "shadows": for (View t : tiles) t.setElevation(0); break;
-                default: recreate(); break;
-            }
-            return;
-        }
-        // adb hook for screenshots: am start -n com.techgenius.tvoslauncher/.MainActivity --es panel cc|inputs|weather|recents
         String panel = intent.getStringExtra("panel");
         if (panel != null) {
+            dropPicker();
+            pickerLayer = null;
+            popoverReturn = null;
             closeMenu();
             RecentAppsOverlay.dismiss();
             ControlPanelOverlay.dismiss();
             if (panel.equals("cc")) showControlCenter();
             else if (panel.equals("recents")) RecentAppsOverlay.showInActivity(this);
-            else if (panel.equals("inputs")) ControlPanelOverlay.openInputs(this, () -> showInputs(ccButton));
+            else if (panel.equals("inputs")) ControlPanelOverlay.openInputs(this, null);
             else if (panel.equals("weather")) showWeather();
             else if (panel.equals("settings")) showSettingsChooser();
             else if (panel.equals("search")) showSearch(intent.getStringExtra("q"));
@@ -375,38 +263,18 @@ public class MainActivity extends Activity {
             return;
         }
         if (ambientShowcase) exitAmbientShowcase();
-        if (idle) exitIdle();
+        dropPicker();
+        pickerLayer = null;
+        popoverReturn = null;
+        closeMenu();
+        if (sceneHome != null && sceneHome.isSheetOpen()) sceneHome.closeSheet();
+        if (sceneHome != null) {
+            if (sceneHome.isDockMoveActive()) sceneHome.endDockMove();
+            sceneHome.focusDock(sceneHome.focusedDockIdx);
+        }
         resetIdle();
         RecentAppsOverlay.dismiss();
         ControlPanelOverlay.dismiss();
-        // Home always lands on the first app in the dock: close any overlay first
-        // (Control Center, profiles, Inputs, weather forecast, menus, move mode, folder).
-        if (pickerLayer != null) {
-            popoverReturn = null;
-            FrameLayout l = pickerLayer;
-            releaseSearch();
-            pickerLayer = null;
-            weatherOpen = false;
-            root.removeView(l);
-            weatherCard.setAlpha(weatherAlpha());
-        }
-        closeMenu();
-        if (sceneHome != null && sceneHome.isSheetOpen()) sceneHome.closeSheet();
-        // Home pressed while already on the home screen: jump back to the top of the home grid.
-        if (moveIndex >= 0) endMove();
-        if (folderMode) {
-            folderMode = false;
-            switcher.setAlpha(1f);
-            weatherCard.setAlpha(weatherAlpha());
-            launchTile = null;
-            buildGrid();
-            shelfEntry = null;
-            scroll.scrollTo(0, 0);
-            focusIndex(0);
-        } else if (launchOverlay == null) {
-            closeMenu();
-            goTop();
-        }
     }
 
     /** A different display, resolution or density: rebuild so every size is recomputed. */
@@ -421,7 +289,7 @@ public class MainActivity extends Activity {
     protected void onResume() {
         super.onResume();
         AppUpdater.resumePendingInstallIfAllowed(this);
-        if (!I18n.getLang(this).equals(activeLang) || !Scenes.getLook(this).equals(activeLook)) {
+        if (!I18n.getLang(this).equals(activeLang)) {
             recreate();
             return;
         }
@@ -429,66 +297,34 @@ public class MainActivity extends Activity {
         activeInstance = this;
         clearLaunchDim();
         boolean wasReturningFromSettings = returningFromSettings;
-        if (!Scenes.isScenesLook(this)) {
-            String ws = Profiles.homePrefs(this).getString("wallpaper", "photo:tessellated-pavement.jpg");
-            if (!ws.equals(wallStyle) || wallView.getDrawable() == null
-                    || (wasReturningFromSettings && ("custom".equals(ws) || FOLDER_SHUFFLE_WALL_KEY.equals(ws)))) {
-                wallStyle = ws;
-                setWallpaper(ws);
-            }
-        }
-        if (returningFromSettings && !folderMode && launchOverlay == null && moveIndex < 0) reload(currentKey());
         returningFromSettings = false;
-        updateStatusClockFormat();
-        if (avatarView != null) {
-            avatarView.setImageBitmap(Profiles.avatar(this, Profiles.current(this), avatarSize));
-            avatarView.setVisibility(View.GONE);
+        if (wasReturningFromSettings) {
+            loadApps();
+            sceneHome.rebuildDock();
         }
-        ensureTvListingsPermission(); // retained for the optional volume-key permission repair path
-        if (Scenes.isScenesLook(this) && sceneHome != null) {
+        LocalAdb.grantVolumeLongPressPermissionIfNeeded(this, null);
+        if (sceneHome != null) {
             sceneHome.sceneView.syncSettings();
             sceneHome.sceneView.start();
-            sceneHome.refreshWhoBar();
             sceneHome.refreshVpnIndicator();
             sceneHome.refreshMoonBtn();
-            sceneHome.refreshKeepWatching();
-            if (wasReturningFromSettings || sceneHome.dockTiles.isEmpty()) {
-                sceneHome.rebuildDock();
-            }
+            sceneHome.refreshWeatherBtn();
+            if (sceneHome.dockTiles.isEmpty()) sceneHome.rebuildDock();
             if (pickerLayer == null && menuLayer == null && !sceneHome.isSheetOpen()) {
                 sceneHome.focusDock(sceneHome.focusedDockIdx);
             }
-        } else {
-            loadHero();
-            if (pickerLayer == null && menuLayer == null && !statusFocused() && !shelfView.hasFocus()) {
-                focusIndex(focusedIndex);
-            }
         }
-        if (launchOverlay != null) finishLaunchReturn();
-        // Setup not finished (e.g. Home was pressed during it): pick it up again.
         if (!SetupActivity.done(this)) {
             startActivity(new Intent(this, SetupActivity.class));
             return;
         }
-        // Screensaver: testOS never holds the screen on unless the user turned the screensaver off here.
         if (getSharedPreferences("screensaver", MODE_PRIVATE).getBoolean("allow", true)) {
             getWindow().clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         } else {
             getWindow().addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         }
         updateWeather();
-        refreshAvatar();
-        applyTabs();
         resetIdle();
-        // Opened from the app list while another launcher is the home screen: offer once to take over.
-        if (SetupActivity.done(this) && !Perms.isDefaultHome(this) && !prefs.getBoolean("asked_default_home", false)) {
-            prefs.edit().putBoolean("asked_default_home", true).apply();
-            new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle(I18n.s(this, "Make testOS your home screen?", "testOS ana ekranınız yapılsın mı?"))
-                    .setMessage(I18n.s(this, "The Home button on the remote will open testOS.", "Kumandadaki Ana Ekran düğmesi testOS'ı açacaktır."))
-                    .setPositiveButton(I18n.s(this, "Make Home Screen", "Ana Ekran Yap"), (d, w) -> Perms.requestDefaultHome(this))
-                    .setNegativeButton(I18n.s(this, "Not Now", "Şimdi Değil"), null).show();
-        }
         handler.removeCallbacks(weatherTick);
         handler.post(weatherTick);
         LocalAdb.ensureKeepAliveWatchdog(this);
@@ -504,28 +340,13 @@ public class MainActivity extends Activity {
             getIntent().removeExtra("lock_from_external");
             enterLockScreen(ext);
         }
-    }
-
-    private void ensureTvListingsPermission() {
-        try {
-            if (checkSelfPermission("android.permission.READ_TV_LISTINGS") == PackageManager.PERMISSION_GRANTED) {
-                return;
-            }
-            if (LocalAdb.getAdbMode(this) == LocalAdb.ADB_MODE_PERSISTENT) {
-                LocalAdb.grantVolumeLongPressPermissionIfNeeded(this, () -> {
-                    if (sceneHome != null && Scenes.isScenesLook(this)) {
-                        sceneHome.refreshKeepWatching();
-                    } else {
-                        loadHero();
-                    }
-                });
-                return;
-            }
-            if (SetupActivity.done(this) && cwEnabled() && !prefs.getBoolean("asked_tv_listings_perm", false)) {
-                prefs.edit().putBoolean("asked_tv_listings_perm", true).apply();
-                requestPermissions(new String[]{"android.permission.READ_TV_LISTINGS"}, 901);
-            }
-        } catch (Throwable ignored) {
+        if (SetupActivity.done(this) && !Perms.isDefaultHome(this) && !prefs.getBoolean("asked_default_home", false)) {
+            prefs.edit().putBoolean("asked_default_home", true).apply();
+            new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                    .setTitle(I18n.s(this, "Make testOS your home screen?", "testOS ana ekranınız yapılsın mı?"))
+                    .setMessage(I18n.s(this, "The Home button on the remote will open testOS.", "Kumandadaki Ana Ekran düğmesi testOS'ı açacaktır."))
+                    .setPositiveButton(I18n.s(this, "Make Home Screen", "Ana Ekran Yap"), (d, w) -> Perms.requestDefaultHome(this))
+                    .setNegativeButton(I18n.s(this, "Not Now", "Şimdi Değil"), null).show();
         }
     }
 
@@ -533,35 +354,20 @@ public class MainActivity extends Activity {
     protected void onPause() {
         super.onPause();
         resumed = false;
-        if (ambientShowcase && (android.os.SystemClock.uptimeMillis() - ambientEnterTime > 1000L)) {
+        if (ambientShowcase && android.os.SystemClock.uptimeMillis() - ambientEnterTime > 1000L) {
             exitAmbientShowcase();
         }
         if (sceneHome != null && !ambientShowcase) sceneHome.sceneView.stop();
-        handler.removeCallbacks(heroAdvance);
         handler.removeCallbacks(weatherTick);
-        handler.removeCallbacks(idleRunnable);
         handler.removeCallbacks(lockIdleRunnable);
-        if (idle) exitIdle();
     }
 
     @Override
     public void onTrimMemory(int level) {
         super.onTrimMemory(level);
-        if (level >= TRIM_MEMORY_UI_HIDDEN) {
-            if (heroFront != null) heroFront.setImageDrawable(null);
-            if (heroBack != null) heroBack.setImageDrawable(null);
-            heroBlur = null;
-            glassBg = wallBlur;
-            if (sceneHome != null) sceneHome.releaseTransientCaches();
-            if (Scenes.isScenesLook(this)) {
-                if (wallView != null && wallView.getDrawable() instanceof BitmapDrawable) {
-                    Bitmap wb = ((BitmapDrawable) wallView.getDrawable()).getBitmap();
-                    wallView.setImageDrawable(null);
-                    if (wb != null && !wb.isRecycled()) wb.recycle();
-                }
-            } else if (sceneHome != null) {
-                sceneHome.sceneView.releaseCache();
-            }
+        if (level >= TRIM_MEMORY_UI_HIDDEN && sceneHome != null) {
+            sceneHome.releaseTransientCaches();
+            sceneHome.sceneView.releaseCache();
         }
         if (level >= TRIM_MEMORY_BACKGROUND && !resumed && sceneHome != null) {
             sceneHome.sceneView.releaseCache();
@@ -572,13 +378,6 @@ public class MainActivity extends Activity {
     protected void onDestroy() {
         super.onDestroy();
         if (pkgReceiver != null) unregisterReceiver(pkgReceiver);
-        if (netCallback != null) {
-            try {
-                getSystemService(android.net.ConnectivityManager.class).unregisterNetworkCallback(netCallback);
-            } catch (Exception ignored) {
-                // already unregistered
-            }
-        }
         if (wakeReceiver != null) unregisterReceiver(wakeReceiver);
         handler.removeCallbacksAndMessages(null);
     }
@@ -588,584 +387,20 @@ public class MainActivity extends Activity {
     void buildChrome() {
         root = new FrameLayout(this);
         root.setBackground(null);
-
-        // One ambient wallpaper for every app. It is drawn tiny and upscaled, so it is already
-        // soft; a slow drift keeps it alive without a per-frame blur on this weak GPU.
-        wallView = new ImageView(this);
-        wallView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        wallStyle = Profiles.homePrefs(this).getString("wallpaper", "photo:tessellated-pavement.jpg");
-        if (!Scenes.isScenesLook(this)) {
-            setWallpaper(wallStyle);
-        }
-        root.addView(wallView, match());
-
         sceneHome = new SceneHome(this);
         root.addView(sceneHome.sceneView, match());
-
-        heroBack = heroLayer();
-        heroFront = heroLayer();
-        root.addView(heroBack, match());
-        root.addView(heroFront, match());
-
-        shade = new View(this);
-        shade.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{0x14000000, 0x40000000, 0xB3000000}));
-        root.addView(shade, match());
-        shade.setVisibility(View.GONE);  // baked into wallpaper + artwork instead
-
-        // Left-side scrim so the carousel's title and text stay legible over any artwork.
-        heroScrim = new View(this);
-        heroScrim.setBackground(new GradientDrawable(GradientDrawable.Orientation.LEFT_RIGHT,
-                new int[]{0xCC000000, 0x66000000, 0x00000000}));
-        heroScrim.setAlpha(0f);
-        root.addView(heroScrim, new FrameLayout.LayoutParams(screenW * 3 / 4, ViewGroup.LayoutParams.MATCH_PARENT));
-
-        scroll = new ShelfScrollView(this);
-        scroll.setVerticalScrollBarEnabled(false);
-        scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
-        scroll.setClipChildren(false);
-        scroll.setFillViewport(true);
-        scroll.setOnScrollChangeListener((v, x, y, ox, oy) -> {
-            if (y == oy) return;
-            float ca = clockAlpha();
-            if (launchOverlay == null && !statusFocused() && Math.abs(clockBox.getAlpha() - ca) > 0.005f) {
-                clockBox.setAlpha(ca);
-            }
-            if (launchOverlay == null && !switcher.isFocused()) {
-                float sa = folderMode ? 0f : ca;
-                if (Math.abs(switcher.getAlpha() - sa) > 0.005f) switcher.setAlpha(sa);
-            }
-            if (launchOverlay == null && weatherCard != null && !weatherCard.isFocused()) {
-                float wa = weatherAlpha();
-                if (Math.abs(weatherCard.getAlpha() - wa) > 0.005f) weatherCard.setAlpha(wa);
-            }
-            int dockMaxY = shelfH + tileH + 2 * dockPadV;
-            if (dockRow != null && (y < dockMaxY || oy < dockMaxY)) {
-                dockRow.invalidate();
-            }
-        });
-
-        content = new LinearLayout(this);
-        content.setOrientation(LinearLayout.VERTICAL);
-        content.setClipChildren(false);
-        content.setClipToPadding(false);
-        content.setPadding(0, 0, 0, dp(80));
-        scroll.addView(content, new ViewGroup.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        root.addView(scroll, match());
-
-        // Top shelf: header shown only inside the More Apps folder.
-        FrameLayout shelf = new FrameLayout(this);
-        shelfView = shelf;
-        buildHeroInfo(shelf);
-        titleBox = new LinearLayout(this);
-        titleBox.setOrientation(LinearLayout.VERTICAL);
-        titleBox.setPadding(side, 0, side, dp(26));
-        shelfTitle = text(46, Ui.font(this, "display"), 1f);
-        shelfTitle.setSingleLine(true);
-        shelfTitle.setEllipsize(TextUtils.TruncateAt.END);
-        shelfHint = text(15, Ui.font(this, "regular"), 0.6f);
-        titleBox.addView(shelfTitle);
-        titleBox.addView(shelfHint);
-        shelf.addView(titleBox, new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM));
-        // Wide, thin chevron above the dock, as on tvOS.
-        int cw = dp(30), ch = dp(9);
-        Bitmap cb = Bitmap.createBitmap(cw, ch, Bitmap.Config.ARGB_8888);
-        Paint cp = new Paint(Paint.ANTI_ALIAS_FLAG);
-        cp.setColor(0xCCFFFFFF);
-        cp.setStyle(Paint.Style.STROKE);
-        cp.setStrokeWidth(dp(2));
-        cp.setStrokeCap(Paint.Cap.ROUND);
-        cp.setStrokeJoin(Paint.Join.ROUND);
-        android.graphics.Path cpath = new android.graphics.Path();
-        float pad = dp(2);
-        cpath.moveTo(pad, ch - pad);
-        cpath.lineTo(cw / 2f, pad);
-        cpath.lineTo(cw - pad, ch - pad);
-        new Canvas(cb).drawPath(cpath, cp);
-        ImageView chevronView = new ImageView(this);
-        chevronView.setImageBitmap(cb);
-        chevron = chevronView;
-        FrameLayout.LayoutParams chp = new FrameLayout.LayoutParams(cw, ch,
-                Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-        chp.bottomMargin = dp(14);
-        shelf.addView(chevron, chp);
-        content.addView(shelf, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, shelfH));
-
-        // tvOS 26 status row (per Apple's Control Center reference): plain time, then a glass
-        // Control Center button and the profile avatar; each turns white/lifts when focused.
-        int btn = dp(34);
-        clockBox = new LinearLayout(this);
-        clockBox.setOrientation(LinearLayout.HORIZONTAL);
-        clockBox.setGravity(Gravity.CENTER_VERTICAL);
-        clockBox.setClipChildren(false);
-        TextClock time = new TextClock(this);
-        statusClock = time;
-        Ui.textSize(time, 16);
-        time.setTypeface(Ui.font(this, "medium"));
-        time.setTextColor(Color.WHITE);
-        time.setShadowLayer(dp(6), 0, dp(1), 0x66000000);
-        updateStatusClockFormat();
-        time.setAllCaps(true);
-        // Internet status, left of the time: white when online, orange when there is no internet.
-        netIcon = new ImageView(this);
-        LinearLayout.LayoutParams nlp = new LinearLayout.LayoutParams(dp(24), dp(20));
-        nlp.rightMargin = dp(8);
-        // Liquid Glass capsule behind the network icon and time, matching the top-right glass buttons.
-        LinearLayout timeChip = new LinearLayout(this);
-        timeChip.setOrientation(LinearLayout.HORIZONTAL);
-        timeChip.setGravity(Gravity.CENTER_VERTICAL);
-        timeChip.setPadding(dp(12), 0, dp(14), 0);
-        LiquidGlass chipGlass = new LiquidGlass(btn / 2f, 0x1F000000, glassSource, screenW, screenH, unit).adaptive();
-        chipGlass.lens = dp(4);
-        timeChip.setBackground(chipGlass);
-        timeChipView = timeChip;
-        time.setShadowLayer(dp(8), 0, dp(1), 0x99000000);
-        timeChip.addView(netIcon, nlp);
-        timeChip.addView(time);
-        clockBox.addView(timeChip, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, btn));
-
-        // Refresh weather data.
-        refreshButton = new ImageView(this);
-        refreshButton.setScaleType(ImageView.ScaleType.CENTER);
-        refreshButton.setImageBitmap(Glyphs.get("refresh", dp(20), Color.WHITE));
-        LiquidGlass rfGlass = new LiquidGlass(btn / 2f, 0x1F000000, glassSource, screenW, screenH, unit).adaptive();
-        rfGlass.lens = dp(4);
-        refreshButton.setBackground(rfGlass);
-        refreshButton.setFocusable(true);
-        refreshButton.setClickable(true);
-        LinearLayout.LayoutParams rblp = new LinearLayout.LayoutParams(btn, btn);
-        rblp.leftMargin = dp(18);
-        clockBox.addView(refreshButton, rblp);
-        GradientDrawable rfLit = new GradientDrawable();
-        rfLit.setShape(GradientDrawable.OVAL);
-        rfLit.setColor(Color.WHITE);
-        refreshButton.setOnFocusChangeListener((v, has) -> {
-            refreshButton.setBackground(has ? rfLit : rfGlass);
-            refreshButton.setImageBitmap(Glyphs.get("refresh", dp(20), has ? 0xFF111114 : Color.WHITE));
-            v.animate().scaleX(has ? 1.12f : 1f).scaleY(has ? 1.12f : 1f).setDuration(200).setInterpolator(LIFT).start();
-        });
-        refreshButton.setOnClickListener(v -> refreshAll());
-
-        // Search, beside Control Center: apps, settings, and movies and shows on every service.
-        searchButton = new ImageView(this);
-        searchButton.setScaleType(ImageView.ScaleType.CENTER);
-        searchButton.setImageBitmap(Glyphs.get("search", dp(20), Color.WHITE));
-        LiquidGlass seGlass = new LiquidGlass(btn / 2f, 0x1F000000, glassSource, screenW, screenH, unit).adaptive();
-        seGlass.lens = dp(4);
-        searchButton.setBackground(seGlass);
-        searchButton.setFocusable(true);
-        searchButton.setClickable(true);
-        LinearLayout.LayoutParams sblp = new LinearLayout.LayoutParams(btn, btn);
-        sblp.leftMargin = dp(12);
-        clockBox.addView(searchButton, sblp);
-        GradientDrawable seLit = new GradientDrawable();
-        seLit.setShape(GradientDrawable.OVAL);
-        seLit.setColor(Color.WHITE);
-        searchButton.setOnFocusChangeListener((v, has) -> {
-            searchButton.setBackground(has ? seLit : seGlass);
-            searchButton.setImageBitmap(Glyphs.get("search", dp(20), has ? 0xFF111114 : Color.WHITE));
-            v.animate().scaleX(has ? 1.12f : 1f).scaleY(has ? 1.12f : 1f).setDuration(200).setInterpolator(LIFT).start();
-        });
-        searchButton.setOnClickListener(v -> showSearch(null));
-
-        ccButton = new ImageView(this);
-        ccButton.setScaleType(ImageView.ScaleType.CENTER);
-        ccButton.setImageBitmap(Glyphs.get("controls", dp(20), Color.WHITE));
-        LiquidGlass ccGlass = new LiquidGlass(btn / 2f, 0x1F000000, glassSource, screenW, screenH, unit).adaptive();
-        ccGlass.lens = dp(4);
-        ccButton.setBackground(ccGlass);
-        ccButton.setFocusable(true);
-        ccButton.setClickable(true);
-        LinearLayout.LayoutParams cblp = new LinearLayout.LayoutParams(btn, btn);
-        cblp.leftMargin = dp(12);
-        clockBox.addView(ccButton, cblp);
-        GradientDrawable ccLit = new GradientDrawable();
-        ccLit.setShape(GradientDrawable.OVAL);
-        ccLit.setColor(Color.WHITE);
-        ccButton.setOnFocusChangeListener((v, has) -> {
-            ccButton.setBackground(has ? ccLit : ccGlass);
-            ccButton.setImageBitmap(Glyphs.get("controls", dp(20), has ? 0xFF111114 : Color.WHITE));
-            v.animate().scaleX(has ? 1.12f : 1f).scaleY(has ? 1.12f : 1f).setDuration(200).setInterpolator(LIFT).start();
-        });
-        ccButton.setOnClickListener(v -> showControlCenter());
-
-
-        int av = btn;
-        ImageView avatar = new ImageView(this);
-        avatar.setImageBitmap(Profiles.avatar(this, Profiles.current(this), av));
-        avatar.setFocusable(true);
-        avatar.setClickable(true);
-        avatar.setOutlineProvider(new ViewOutlineProvider() {
-            @Override public void getOutline(View v, Outline o) {
-                o.setOval(0, 0, v.getWidth(), v.getHeight());
-            }
-        });
-        avatar.setClipToOutline(true);
-        avatarView = avatar;
-        avatarSize = av;
-        avatar.setVisibility(Profiles.list(this).size() > 1 ? View.VISIBLE : View.GONE);
-        LinearLayout.LayoutParams alp = new LinearLayout.LayoutParams(av, av);
-        alp.leftMargin = dp(12);
-        clockBox.addView(avatar, alp);
-        GradientDrawable avRing = new GradientDrawable();
-        avRing.setShape(GradientDrawable.OVAL);
-        avRing.setColor(Color.TRANSPARENT);
-        avRing.setStroke(dp(2), Color.WHITE);
-        avatar.setOnFocusChangeListener((v, has) -> {
-            avatar.setForeground(has ? avRing : null);
-            v.animate().withLayer().scaleX(has ? 1.14f : 1f).scaleY(has ? 1.14f : 1f)
-                    .setDuration(180).setInterpolator(LIFT).start();
-        });
-
-        // Room around the buttons for their focus growth (1.12x / 1.18x) so nothing is clipped;
-        // the margins shrink by the same amount, so the row sits exactly where it did.
-        int grow = dp(6);
-        clockBox.setPadding(grow, grow, grow, grow);
-        clockBox.setClipToPadding(false);
-        FrameLayout.LayoutParams clp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, btn + 2 * grow, Gravity.TOP | Gravity.END);
-        clp.topMargin = dp(24) - grow;
-        clp.rightMargin = dockOuter - grow;
-        root.addView(clockBox, clp);
-        watchNetwork();
-
-        // Weather overview in the top-left corner, over the top shelf; OK opens the forecast.
-        weatherCard = new WeatherView(this, false, unit);
-        weatherGlass = new LiquidGlass(dp(WeatherView.COMPACT_H) / 2f, 0x2E000000, glassSource, screenW, screenH, unit).adaptive();
-        weatherGlass.lens = dp(6);
-        weatherCard.setBackground(weatherGlass);
-        weatherCard.setFocusable(true);
-        weatherCard.setClickable(true);
-        weatherCard.setOnFocusChangeListener((v, has) -> {
-            weatherGlass.setLit(has);
-            if (has) v.setAlpha(1f);
-            v.animate().scaleX(has ? 1.05f : 1f).scaleY(has ? 1.05f : 1f).translationZ(has ? dp(10) : 0)
-                    .setDuration(200).setInterpolator(LIFT).start();
-        });
-        weatherCard.setPivotX(0);
-        weatherCard.setPivotY(0);
-        weatherCard.setOnClickListener(v -> showWeather());
-        // Top left, level with the status row and inside the same 48 px edge margin.
-        FrameLayout.LayoutParams wlp = new FrameLayout.LayoutParams(dp(WeatherView.COMPACT_W), dp(WeatherView.COMPACT_H),
-                Gravity.TOP | Gravity.START);
-        wlp.topMargin = dp(24);
-        wlp.leftMargin = dockOuter;
-        root.addView(weatherCard, wlp);
         root.addView(sceneHome.overlay, match());
-        updateWeather();
-
         setContentView(root);
     }
 
-    void applyLookMode() {
-        boolean scenes = Scenes.isScenesLook(this);
-        if (sceneHome != null) {
-            sceneHome.sceneView.setVisibility(scenes ? View.VISIBLE : View.GONE);
-            sceneHome.overlay.setVisibility(scenes ? View.VISIBLE : View.GONE);
-            if (scenes) {
-                sceneHome.sceneView.syncSettings();
-                sceneHome.sceneView.start();
-                sceneHome.refreshWhoBar();
-                sceneHome.refreshMoonBtn();
-                sceneHome.refreshKeepWatching();
-                sceneHome.rebuildDock();
-            } else {
-                sceneHome.sceneView.releaseCache();
-            }
-        }
-        if (scenes) {
-            if (wallView.getDrawable() instanceof BitmapDrawable) {
-                Bitmap wb = ((BitmapDrawable) wallView.getDrawable()).getBitmap();
-                wallView.setImageDrawable(null);
-                if (wb != null && !wb.isRecycled()) wb.recycle();
-            }
-            if (wallBlur != null && !wallBlur.isRecycled()) {
-                wallBlur.recycle();
-                wallBlur = null;
-            }
-        } else if (wallView.getDrawable() == null) {
-            setWallpaper(wallStyle);
-        }
-        wallView.setVisibility(scenes ? View.GONE : View.VISIBLE);
-        heroBack.setVisibility(scenes || !heroShown ? View.GONE : View.VISIBLE);
-        heroFront.setVisibility(scenes || !heroShown ? View.GONE : View.VISIBLE);
-        scroll.setVisibility(scenes ? View.GONE : View.VISIBLE);
-        heroInfo.setVisibility(scenes ? View.GONE : View.VISIBLE);
-        heroDots.setVisibility(scenes ? View.GONE : View.VISIBLE);
-        if (switcher != null) switcher.setVisibility(scenes || !tabsShown() ? View.GONE : View.VISIBLE);
-        clockBox.setVisibility(scenes ? View.GONE : View.VISIBLE);
-        if (weatherCard != null) {
-            weatherCard.setVisibility(scenes ? View.GONE : (Weather.enabled(this) && Weather.cached(this) != null ? View.VISIBLE : View.GONE));
-        }
-        if (scenes && sceneHome != null) {
-            Bitmap bg = sceneHome.sceneView.getCurrentBgBitmap();
-            if (bg != null) glassBg = Ui.glassBackdrop(bg, 192, 108);
-            sceneHome.focusDock(sceneHome.focusedDockIdx);
-        } else {
-            focusIndex(focusedIndex);
-        }
-    }
-
-    void buildGrid() {
-        stopWiggle();
-        shown.clear();
-        effectiveOtherApps.clear();
-
-        // Classic appearance uses fixed 100% scale (dock resizing is only for Night Scenes dock).
-        // When a tile in the dock is focused, it scales by FOCUS_SCALE (1.20x), expanding outward
-        // by (FOCUS_SCALE - 1)/2 on each side. Account for that growth so the focused first and
-        // last dock cards have symmetrical left/right and top/bottom margins inside the dock rim.
-        int focusGrowX = Math.round(tileW * (FOCUS_SCALE - 1f) / 2f);
-        int focusGrowY = Math.round(tileH * (FOCUS_SCALE - 1f) / 2f);
-        int focusedRimMargin = dp(11);
-        int dockPadH = focusGrowX + focusedRimMargin;
-        int dockPadVScaled = focusGrowY + focusedRimMargin;
-        currentDockCols = COLS;
-
-        effectiveOtherApps.addAll(otherApps);
-        if (folderMode && effectiveOtherApps.isEmpty()) {
-            folderMode = false;
-        }
-        if (folderMode) {
-            shown.addAll(effectiveOtherApps);
-        } else {
-            shown.addAll(apps);
-            if (!effectiveOtherApps.isEmpty()) shown.add(folderEntry());
-        }
-        // Like tvOS, the home grid has no big title; only the folder gets a header.
-        titleBox.setVisibility(folderMode ? View.VISIBLE : View.GONE);
-        chevron.setVisibility(folderMode ? View.GONE : View.VISIBLE);
-        shelfTitle.setText(I18n.s(this, "Other Apps", "Diğer Uygulamalar"));
-        shelfHint.setText(I18n.s(this, "Back to return   \u00b7   Hold OK for options", "Dönmek için Geri   \u00b7   Seçenekler için OK'e basılı tutun"));
-
-        // Removing the focused card would make Android hand focus to the first card (and scroll
-        // to the top); block that while rebuilding \u2014 callers focus the right card afterwards.
-        content.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
-        while (content.getChildCount() > 1) content.removeViewAt(1);
-        tiles.clear();
-        LinearLayout row = null;
-        int rowInnerW = COLS * tileW + (COLS - 1) * gap;
-        for (int i = 0; i < shown.size(); i++) {
-            boolean inDockRow = hasDock() && i < COLS;
-            boolean startNewRow = (i % COLS == 0);
-            if (startNewRow) {
-                row = new LinearLayout(this);
-                row.setOrientation(LinearLayout.HORIZONTAL);
-                row.setClipChildren(false);
-                row.setClipToPadding(false);
-                if (i == 0 && hasDock()) {
-                    // tvOS dock: the top row sits on one frosted glass panel, centered with symmetrical focus margins.
-                    row.setPadding(dockPadH, dockPadVScaled, dockPadH, dockPadVScaled);
-                    LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                    rlp.gravity = Gravity.CENTER_HORIZONTAL;
-                    rlp.bottomMargin = dockGapBelow();
-                    row.setBackground(dockBackground());
-                    dockRow = row;
-                    content.addView(row, rlp);
-                } else {
-                    row.setPadding(dockPadH, 0, dockPadH, 0);
-                    LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
-                            rowInnerW + 2 * dockPadH, ViewGroup.LayoutParams.WRAP_CONTENT);
-                    rlp.gravity = Gravity.CENTER_HORIZONTAL;
-                    rlp.bottomMargin = gap / 2;
-                    content.addView(row, rlp);
-                }
-            }
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(tileW, ViewGroup.LayoutParams.WRAP_CONTENT);
-            if (!startNewRow) lp.leftMargin = gap;
-            row.addView(makeCell(shown.get(i), i, inDockRow, tileW, tileH, radius, labelH), lp);
-        }
-        content.setDescendantFocusability(ViewGroup.FOCUS_AFTER_DESCENDANTS);
-    }
-
-    View makeCell(AppEntry a, int index, boolean inDock, int cardW, int cardH, float cardRadius, int cellLabelH) {
-        LinearLayout cell = new LinearLayout(this);
-        cell.setOrientation(LinearLayout.VERTICAL);
-        cell.setClipChildren(false);
-
-        FrameLayout tile = new FrameLayout(this);
-        tile.setFocusable(true);
-        tile.setClickable(true);
-        tile.setLongClickable(true);
-        GradientDrawable bg = new GradientDrawable();
-        bg.setCornerRadius(cardRadius);
-        bg.setColor(a.banner != null ? 0xFF1C1C1E : a.color);
-        tile.setBackground(bg);
-        tile.setOutlineProvider(roundedOutline(new float[]{cardRadius}));
-        tile.setClipToOutline(true);
-
-        ImageView iv = new ImageView(this);
-        if (a.banner != null) {
-            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            iv.setImageDrawable(a.banner);
-            tile.addView(iv, match());
-        } else {
-            iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
-            iv.setImageDrawable(a.icon);
-            int s = cardH * 55 / 100;
-            tile.addView(iv, new FrameLayout.LayoutParams(s, s, Gravity.CENTER));
-        }
-
-        // tvOS focus has no outline ring: a soft top sheen on the hardware-cached tile.
-        View topSheen = new View(this);
-        topSheen.setBackground(new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{0x1AFFFFFF, 0x00FFFFFF}));
-        topSheen.setAlpha(0f);
-        tile.addView(topSheen, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, cardH / 2, Gravity.TOP));
-
-        TextView label = text(15, Ui.font(this, "medium"), 0f);
-        label.setText(a.label);
-        label.setSingleLine(true);
-        label.setEllipsize(TextUtils.TruncateAt.END);
-        label.setGravity(Gravity.CENTER);
-
-        cell.addView(tile, new LinearLayout.LayoutParams(cardW, cardH));
-        if (!inDock) cell.addView(label, new LinearLayout.LayoutParams(cardW, cellLabelH));
-
-        tile.setOnFocusChangeListener((v, has) -> {
-            if (has) {
-                cell.setTranslationZ(dp(10));
-                if (moveIndex >= 0) {
-                    // Rebuilt while moving: appear already lifted, or every step would "pop".
-                    v.setScaleX(FOCUS_SCALE);
-                    v.setScaleY(FOCUS_SCALE);
-                    label.setAlpha(1f);
-                    label.setTranslationY(cardH * (FOCUS_SCALE - 1f) / 2f);
-                } else {
-                    v.animate().scaleX(FOCUS_SCALE).scaleY(FOCUS_SCALE).setDuration(180)
-                            .setInterpolator(LIFT).start();
-                    label.animate().alpha(1f).translationY(cardH * (FOCUS_SCALE - 1f) / 2f).setDuration(160).start();
-                }
-                topSheen.setAlpha(1f);
-                onTileFocused(index);
-            } else {
-                cell.setTranslationZ(0);
-                stopSway(v);
-                v.animate().scaleX(1f).scaleY(1f).setDuration(140).setInterpolator(EASE).start();
-                label.animate().alpha(0f).translationY(0).setDuration(120).start();
-                topSheen.setAlpha(0f);
-            }
-        });
-        tile.setCameraDistance(9000 * unit);
-        tile.setOnClickListener(v -> {
-            if (moveIndex >= 0 || launchOverlay != null) return;
-            stopSway(v);
-            if (FOLDER_KEY.equals(a.key)) {
-                enterFolder();
-            } else {
-                launchAnimated(v, a);
-            }
-        });
-        tile.setOnLongClickListener(v -> {
-            if (moveIndex < 0 && !FOLDER_KEY.equals(a.key)) showOptions(index);
-            return true;
-        });
-        tiles.add(tile);
-        return cell;
-    }
-
     /** tvOS-style ambient colour field: soft glows of indigo, teal, magenta and amber on navy. */
-    java.util.concurrent.FutureTask<Bitmap> wallPrefetch;
-    String wallPrefetchStyle;
-
-    void setWallpaper(String style) {
-        Bitmap wp = null;
-        if (wallPrefetch != null && style.equals(wallPrefetchStyle)) {
-            try {
-                wp = wallPrefetch.get();
-            } catch (Exception ignored) {
-                // generate below
-            }
-        }
-        wallPrefetch = null;
-        if (wp == null) wp = makeWallpaper(style);
-        Bitmap oldWp = wallView.getDrawable() instanceof BitmapDrawable
-                ? ((BitmapDrawable) wallView.getDrawable()).getBitmap() : null;
-        wallView.setImageBitmap(wp);
-        if (oldWp != null && oldWp != wp && !oldWp.isRecycled()) oldWp.recycle();
-        Bitmap oldBlur = wallBlur;
-        wallBlur = Ui.glassBackdrop(wp, 192, 108);
-        if (!heroShown || heroBlur == null) glassBg = wallBlur;
-        if (oldBlur != null && oldBlur != wallBlur && !oldBlur.isRecycled()) oldBlur.recycle();
-        invalidateGlass();
-    }
 
     void invalidateGlass() {
-        if (dockRow != null) dockRow.invalidate();
-        if (clockBox != null) clockBox.invalidate();
-        if (timeChipView != null) timeChipView.invalidate();
-        if (refreshButton != null) refreshButton.invalidate();
-        if (searchButton != null) searchButton.invalidate();
-        if (ccButton != null) ccButton.invalidate();
-        if (weatherCard != null) weatherCard.invalidate();
         if (sceneHome != null) sceneHome.invalidateSceneGlass();
         if (menuLayer != null && menuLayer.getChildCount() > 0) menuLayer.getChildAt(0).invalidate();
     }
 
-    static final String[] WALL_KEYS = {
-        "photo:tessellated-pavement.jpg",
-        "photo:grose-valley.jpg",
-        "photo:albury-storm.jpg",
-        "photo:aresquiers-beach.jpg",
-        "photo:vang-vieng-sunset.jpg",
-        "aurora", "midnight", "sunset", "ocean", "graphite"
-    };
-    static final String[] WALL_NAMES = {
-        "Tessellated Pavement", "Grose Valley", "Albury Storm", "Aresquiers Beach", "Vang Vieng Sunset",
-        "Aurora", "Midnight", "Sunset", "Ocean", "Graphite"
-    };
-    static final String[] WALL_NAMES_TR = {
-        "Tessellated Pavement", "Grose Vadisi", "Albury F\u0131rt\u0131nas\u0131", "Aresquiers Plaj\u0131", "Vang Vieng G\u00fcn Bat\u0131m\u0131",
-        "Kuzey I\u015f\u0131klar\u0131", "Gece Yar\u0131s\u0131", "G\u00fcn Bat\u0131m\u0131", "Okyanus", "Grafit"
-    };
-
-    static String wallName(Context c, int i) {
-        if (i < 0 || i >= WALL_NAMES.length) return "";
-        return I18n.isTr(c) ? WALL_NAMES_TR[i] : WALL_NAMES[i];
-    }
-
-    static final String CUSTOM_WALL_KEY = "custom";
-    static final String FOLDER_SHUFFLE_WALL_KEY = "folder_shuffle";
-
-    Bitmap makeWallpaper(String style) {
-        if (FOLDER_SHUFFLE_WALL_KEY.equals(style)) {
-            Bitmap folderBmp = CustomMedia.getNextShuffledFolderBitmap(this, CustomMedia.SCOPE_CLASSIC, 1920, 1080, true);
-            if (folderBmp != null && !folderBmp.isRecycled()) {
-                Bitmap copy = folderBmp.copy(Bitmap.Config.ARGB_8888, true);
-                if (copy != folderBmp) folderBmp.recycle();
-                return bakeShade(copy);
-            }
-        }
-        if (CUSTOM_WALL_KEY.equals(style)) {
-            Bitmap custom = CustomMedia.getCustomClassicWallpaper(this);
-            if (custom != null && !custom.isRecycled()) {
-                Bitmap copy = custom.copy(Bitmap.Config.ARGB_8888, true);
-                return bakeShade(copy);
-            }
-        }
-        if (style != null && style.startsWith("photo:")) {
-            Bitmap ph = Scenes.loadAssetBitmap(this, "backgrounds/" + style.substring(6), 1280, 720);
-            if (ph != null) {
-                Bitmap copy = ph.copy(Bitmap.Config.ARGB_8888, true);
-                if (copy != ph) ph.recycle();
-                return bakeShade(copy);
-            }
-        }
-        return bakeShade(makeWallpaperBase(style != null ? style : "aurora"));
-    }
-
     /** The bottom darkening that keeps the dock and labels legible, painted into the image. */
-    static Bitmap bakeShade(Bitmap b) {
-        Paint p = new Paint(Paint.DITHER_FLAG);
-        p.setShader(new LinearGradient(0, 0, 0, b.getHeight(), new int[]{0x14000000, 0x40000000, 0xB3000000},
-                null, Shader.TileMode.CLAMP));
-        new Canvas(b).drawRect(0, 0, b.getWidth(), b.getHeight(), p);
-        return b;
-    }
-
     static Bitmap makeWallpaperBase(String style) {
         int w = 192, h = 108;
         Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
@@ -1211,39 +446,6 @@ public class MainActivity extends Activity {
         return b;
     }
 
-    void startWallpaperDrift() {
-        ObjectAnimator dx = ObjectAnimator.ofFloat(wallView, View.TRANSLATION_X, -dp(60), dp(60));
-        dx.setDuration(38000);
-        ObjectAnimator dy = ObjectAnimator.ofFloat(wallView, View.TRANSLATION_Y, dp(30), -dp(30));
-        dy.setDuration(29000);
-        for (ObjectAnimator an : new ObjectAnimator[]{dx, dy}) {
-            an.setRepeatCount(ValueAnimator.INFINITE);
-            an.setRepeatMode(ValueAnimator.REVERSE);
-            an.setInterpolator(new PathInterpolator(0.45f, 0f, 0.55f, 1f));
-            an.start();
-        }
-    }
-
-    /** Round profile avatar: indigo-to-pink gradient with a person glyph. */
-    Bitmap avatarBitmap(int size) {
-        Bitmap b = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(b);
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setShader(new LinearGradient(0, 0, 0, size, 0xFFA8A8B0, 0xFF838389, Shader.TileMode.CLAMP));
-        float r = size / 2f;
-        c.drawCircle(r, r, r, p);
-        p.setShader(null);
-        p.setColor(0xF2FFFFFF);
-        c.drawCircle(r, size * 0.40f, size * 0.17f, p);
-        c.save();
-        android.graphics.Path clip = new android.graphics.Path();
-        clip.addCircle(r, r, r, android.graphics.Path.Direction.CW);
-        c.clipPath(clip);
-        c.drawOval(size * 0.20f, size * 0.64f, size * 0.80f, size * 1.10f, p);
-        c.restore();
-        return b;
-    }
-
     /** System/utility apps that get a drawn tvOS-style card instead of their Android art. */
     static final Set<String> TVOS_CARD_PKGS = new HashSet<>(Arrays.asList(
             TV_SETTINGS, "com.android.vending", "com.mitv.dream",
@@ -1253,6 +455,26 @@ public class MainActivity extends Activity {
      * tvOS-style card: soft vertical gradient with a top sheen and the app's glyph centred.
      * Settings gets the silver card with a drawn gear, like tvOS.
      */
+    /** Builds generic app artwork for the shared banner/card renderer. */
+    Bitmap backdropSharp(AppEntry e, int w, int h) {
+        Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        Canvas c = new Canvas(b);
+        c.drawColor(e.banner != null ? 0xFF1C1C1E : e.color);
+        Drawable d = e.banner != null ? e.banner : e.icon;
+        if (d != null) {
+            Rect old = d.copyBounds();
+            if (e.banner != null) {
+                d.setBounds(0, 0, w, h);
+            } else {
+                int s = h * 6 / 10;
+                d.setBounds((w - s) / 2, (h - s) / 2, (w + s) / 2, (h + s) / 2);
+            }
+            d.draw(c);
+            d.setBounds(old);
+        }
+        return b;
+    }
+
     Bitmap tvosCard(AppEntry e) {
         int w = 360, h = 216;
         Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
@@ -1398,39 +620,9 @@ public class MainActivity extends Activity {
         c.drawCircle(cx, cy, r * 0.62f, p);
     }
 
-    boolean hasDock() {
-        return !folderMode;
-    }
-
-    int dockGapBelow() {
-        return dp(20);
-    }
-
     /** Frosted glass dock (tvOS): lush rounded corner radius, translucent fill, sheen and rim. */
-    Drawable dockBackground() {
-        float dockRad = Math.max(dp(24), radius * 1.65f);
-        LiquidGlass g = new LiquidGlass(dockRad, 0x14FFFFFF, glassSource, screenW, screenH, unit);
-        g.lens = dp(12);
-        g.rimStrength = 0.28f;
-        return g;
-    }
-
-    Bitmap grainBitmap;
 
     /** Fine monochrome noise, tiled over glass to give it a frosted texture. */
-    Bitmap grain() {
-        if (grainBitmap != null) return grainBitmap;
-        int n = 96;
-        int[] px = new int[n * n];
-        java.util.Random rnd = new java.util.Random(7);
-        for (int i = 0; i < px.length; i++) {
-            int a = rnd.nextInt(14);
-            px[i] = rnd.nextBoolean() ? Color.argb(a, 255, 255, 255) : Color.argb(a, 0, 0, 0);
-        }
-        grainBitmap = Bitmap.createBitmap(px, n, n, Bitmap.Config.ARGB_8888);
-        return grainBitmap;
-    }
-
     /**
      * Liquid Glass (iOS/tvOS 26), drawn from what is actually behind the surface: a blurred,
      * colour-boosted copy of the backdrop aligned to the surface's screen position; a band along
@@ -1624,90 +816,7 @@ public class MainActivity extends Activity {
      * at the top, gentle shade at the bottom, and a rim that catches light on the top edge and
      * fades down the sides (no uniform outline).
      */
-    static class FrostedGlass extends Drawable {
-        final float r, density;
-        final int tint;
-        final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
-        final Paint grainPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        final Paint glow = new Paint(Paint.ANTI_ALIAS_FLAG);
-        final Paint shade = new Paint(Paint.ANTI_ALIAS_FLAG);
-        final Paint rim = new Paint(Paint.ANTI_ALIAS_FLAG);
-        final android.graphics.RectF box = new android.graphics.RectF();
-        final android.graphics.Path clip = new android.graphics.Path();
-        /** 1 = full light-catching rim (dock); lower for small controls like the capsule. */
-        float rimStrength = 1f;
-
-        FrostedGlass(float r, int tint, Bitmap grain, float density) {
-            this.r = r;
-            this.tint = tint;
-            this.density = density;
-            fill.setColor(tint);
-            grainPaint.setShader(new android.graphics.BitmapShader(grain, Shader.TileMode.REPEAT, Shader.TileMode.REPEAT));
-            rim.setStyle(Paint.Style.STROKE);
-            rim.setStrokeWidth(1.2f * density);
-        }
-
-        @Override protected void onBoundsChange(Rect b) {
-            box.set(b);
-            clip.reset();
-            clip.addRoundRect(box, r, r, android.graphics.Path.Direction.CW);
-            float h = box.height();
-            glow.setShader(new LinearGradient(0, box.top, 0, box.top + h * 0.45f,
-                    0x24FFFFFF, 0x00FFFFFF, Shader.TileMode.CLAMP));
-            shade.setShader(new LinearGradient(0, box.bottom - h * 0.4f, 0, box.bottom,
-                    0x00000000, 0x1F000000, Shader.TileMode.CLAMP));
-            rim.setShader(new LinearGradient(0, box.top, 0, box.bottom,
-                    new int[]{rimA(0x8C), rimA(0x26), rimA(0x0D), rimA(0x1F)},
-                    new float[]{0f, 0.25f, 0.75f, 1f}, Shader.TileMode.CLAMP));
-        }
-
-        int rimA(int a) {
-            return (Math.round(a * rimStrength) << 24) | 0xFFFFFF;
-        }
-
-        @Override public void draw(Canvas c) {
-            c.save();
-            c.clipPath(clip);
-            c.drawRect(box, fill);
-            c.drawRect(box, grainPaint);
-            c.drawRect(box, glow);
-            c.drawRect(box, shade);
-            c.restore();
-            float inset = rim.getStrokeWidth() / 2f;
-            c.drawRoundRect(box.left + inset, box.top + inset, box.right - inset, box.bottom - inset,
-                    r - inset, r - inset, rim);
-        }
-
-        /** Focused: brighter glass (tvOS lifts and lightens focused glass controls). */
-        void setLit(boolean lit) {
-            fill.setColor(lit ? 0x59FFFFFF : tint);
-            invalidateSelf();
-        }
-
-        @Override public void setAlpha(int a) { }
-        @Override public void setColorFilter(android.graphics.ColorFilter cf) { }
-        @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
-
-        @Override public boolean getPadding(Rect padding) {
-            padding.set(0, 0, 0, 0);
-            return false;
-        }
-    }
-
     /** Liquid-glass surface: translucent fill, top sheen and a bright hairline rim. */
-    LayerDrawable glassBackground(GradientDrawable fill) {
-        fill.setCornerRadius(radius);
-        fill.setColor(0x26FFFFFF);
-        GradientDrawable sheen = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{0x38FFFFFF, 0x08FFFFFF, 0x00FFFFFF});
-        sheen.setCornerRadius(radius);
-        GradientDrawable rim = new GradientDrawable();
-        rim.setCornerRadius(radius);
-        rim.setColor(Color.TRANSPARENT);
-        rim.setStroke(Math.max(1, dp(1)), 0x66FFFFFF);
-        return new LayerDrawable(new Drawable[]{fill, sheen, rim});
-    }
-
     /** Outline whose corner radius can be changed while animating (radius[0]). */
     ViewOutlineProvider roundedOutline(float[] r) {
         return new ViewOutlineProvider() {
@@ -1717,877 +826,24 @@ public class MainActivity extends Activity {
         };
     }
 
-    // ---------------------------------------------------------------- suggestions carousel
-
-    ImageView heroLayer() {
-        ImageView v = new ImageView(this);
-        v.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        v.setAlpha(0f);
-        return v;
-    }
-
-    /** Title logo (or title), meta line, overview, "Open in \u2026" capsule and page dots, bottom-left of the shelf. */
-    void buildHeroInfo(FrameLayout shelf) {
-        heroInfo = new LinearLayout(this);
-        heroInfo.setOrientation(LinearLayout.VERTICAL);
-        heroInfo.setClipChildren(false);
-        heroInfo.setClipToPadding(false);
-        heroInfo.setAlpha(0f);
-        heroProvider = new ImageView(this);
-        heroProvider.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        heroProvider.setOutlineProvider(roundedOutline(new float[]{dp(7)}));
-        heroProvider.setClipToOutline(true);
-        heroProvider.setElevation(dp(2));
-        LinearLayout.LayoutParams pvlp = new LinearLayout.LayoutParams(dp(30), dp(30));
-        pvlp.bottomMargin = dp(12);
-        heroInfo.addView(heroProvider, pvlp);
-        heroLogo = new ImageView(this);
-        heroLogo.setAdjustViewBounds(true);
-        heroLogo.setScaleType(ImageView.ScaleType.FIT_START);
-        heroLogo.setMaxWidth(dp(260));
-        heroLogo.setMaxHeight(dp(90));
-        heroInfo.addView(heroLogo, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        heroTitle = text(36, Ui.font(this, "display"), 1f);
-        heroTitle.setLetterSpacing(-0.02f);
-        heroTitle.setIncludeFontPadding(false);
-        heroTitle.setMaxLines(2);
-        heroTitle.setEllipsize(TextUtils.TruncateAt.END);
-        heroInfo.addView(heroTitle, new LinearLayout.LayoutParams(dp(420), ViewGroup.LayoutParams.WRAP_CONTENT));
-        heroMeta = text(12.5f, Ui.font(this, "medium"), 0.8f);
-        LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        mlp.topMargin = dp(10);
-        heroInfo.addView(heroMeta, mlp);
-        heroOverview = text(12.5f, Ui.font(this, "regular"), 0.8f);
-        heroOverview.setMaxLines(2);
-        heroOverview.setEllipsize(TextUtils.TruncateAt.END);
-        heroOverview.setLineSpacing(0, 1.15f);
-        LinearLayout.LayoutParams olp = new LinearLayout.LayoutParams(dp(380), ViewGroup.LayoutParams.WRAP_CONTENT);
-        olp.topMargin = dp(6);
-        heroInfo.addView(heroOverview, olp);
-        heroButton = new LinearLayout(this);
-        heroButton.setOrientation(LinearLayout.HORIZONTAL);
-        heroButton.setGravity(Gravity.CENTER_VERTICAL);
-        heroButton.setPadding(dp(18), 0, dp(20), 0);
-        heroBtnBg = new GradientDrawable();
-        heroBtnBg.setCornerRadius(dp(16));
-        heroBtnBg.setColor(0x47FFFFFF);
-        heroButton.setBackground(heroBtnBg);
-        heroBtnText = text(13, Ui.font(this, "semibold"), 1f);
-        heroBtnText.setShadowLayer(0, 0, 0, 0);
-        heroButton.addView(heroBtnText);
-        heroBtnIcon = new ImageView(this);
-        heroBtnIcon.setScaleType(ImageView.ScaleType.CENTER_CROP);
-        heroBtnIcon.setOutlineProvider(roundedOutline(new float[]{dp(5)}));
-        heroBtnIcon.setClipToOutline(true);
-        LinearLayout.LayoutParams iclp = new LinearLayout.LayoutParams(dp(22), dp(22));
-        iclp.leftMargin = dp(9);
-        heroButton.addView(heroBtnIcon, iclp);
-        // Resume / Open capsule, plus a Remove capsule on Continue Watching items (Right reaches it).
-        LinearLayout btnRow = new LinearLayout(this);
-        btnRow.setOrientation(LinearLayout.HORIZONTAL);
-        btnRow.setClipChildren(false);
-        btnRow.addView(heroButton, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(32)));
-        heroRemove = text(13, Ui.font(this, "semibold"), 1f);
-        heroRemove.setShadowLayer(0, 0, 0, 0);
-        heroRemove.setText(I18n.s(this, "✕  Remove", "✕  Удалить"));
-        heroRemove.setGravity(Gravity.CENTER);
-        heroRemove.setPadding(dp(16), 0, dp(18), 0);
-        heroRemoveBg = new GradientDrawable();
-        heroRemoveBg.setCornerRadius(dp(16));
-        heroRemoveBg.setColor(0x47FFFFFF);
-        heroRemove.setBackground(heroRemoveBg);
-        heroRemove.setVisibility(View.GONE);
-        LinearLayout.LayoutParams rlp2 = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(32));
-        rlp2.leftMargin = dp(10);
-        btnRow.addView(heroRemove, rlp2);
-        LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(32));
-        blp.topMargin = dp(14);
-        heroInfo.addView(btnRow, blp);
-        // Overview and button only show while the carousel itself is focused (tvOS).
-        heroOverview.setAlpha(0f);
-        heroButton.setAlpha(0f);
-        heroOverview.setVisibility(View.GONE);
-        heroButton.setVisibility(View.GONE);
-        FrameLayout.LayoutParams ilp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.START);
-        int room = dp(12);
-        heroInfo.setPadding(room, room, room, room);
-        ilp.leftMargin = side - room;
-        ilp.bottomMargin = dp(40) - room;
-        root.addView(heroInfo, ilp);
-        heroInfo.setTranslationY(heroInfoRestY());
-
-        heroDots = new LinearLayout(this);
-        heroDots.setOrientation(LinearLayout.HORIZONTAL);
-        heroDots.setAlpha(0f);
-        FrameLayout.LayoutParams dlp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL);
-        dlp.bottomMargin = dp(22);
-        root.addView(heroDots, dlp);
-        heroDots.setTranslationY(heroDotsRestY());
-
-        // Up Next strip (Continue Watching): thumbnails with progress, shown while the shelf is focused.
-        heroStrip = new LinearLayout(this);
-        heroStrip.setOrientation(LinearLayout.HORIZONTAL);
-        heroStrip.setClipChildren(false);
-        heroStrip.setClipToPadding(false);
-        heroStrip.setVisibility(View.GONE);
-        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, dp(64));
-        slp.topMargin = dp(16);
-        heroInfo.addView(heroStrip, slp);
-
-        // Empty state for Continue Watching.
-        shelfEmpty = text(15, Ui.font(this, "medium"), 0f);
-        shelfEmpty.setGravity(Gravity.CENTER);
-        FrameLayout.LayoutParams elp = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER);
-        shelf.addView(shelfEmpty, elp);
-
-        buildSwitcher();
-
-        // The shelf itself is the carousel's focus target (UP from the dock).
-        shelf.setFocusable(false);
-        shelf.setOnFocusChangeListener((v, has) -> heroFocused(has));
-    }
-
-    /**
-     * Darkening for legibility (left side for the text, bottom for the dock), painted into the
-     * artwork once when it loads, so the GPU draws one full-screen image instead of three layers.
-     */
-    Bitmap bakeScrims(Bitmap src) {
-        if (src == null) return null;
-        Bitmap b = src.isMutable() ? src : src.copy(Bitmap.Config.ARGB_8888, true);
-        if (b != src) src.recycle();
-        int w = b.getWidth(), h = b.getHeight();
-        Canvas c = new Canvas(b);
-        Paint p = new Paint(Paint.DITHER_FLAG);
-        p.setShader(new LinearGradient(0, 0, w * 0.75f, 0, new int[]{0xCC000000, 0x66000000, 0x00000000},
-                null, Shader.TileMode.CLAMP));
-        c.drawRect(0, 0, w * 0.75f, h, p);
-        p.setShader(new LinearGradient(0, 0, 0, h, new int[]{0x14000000, 0x40000000, 0xB3000000},
-                null, Shader.TileMode.CLAMP));
-        c.drawRect(0, 0, w, h, p);
-        topShade(c, w, h);
-        return b;
-    }
-
-    /** A soft shade along the top so the time and status icons stay legible over bright artwork. */
-    static void topShade(Canvas c, int w, int h) {
-        Paint p = new Paint(Paint.DITHER_FLAG);
-        p.setShader(new LinearGradient(0, 0, 0, h * 0.2f, 0x66000000, 0x00000000, Shader.TileMode.CLAMP));
-        c.drawRect(0, 0, w, h * 0.2f, p);
-    }
-
-
-
-    /** Info block sits just above the dock while a dock app is focused... */
-    float heroInfoRestY() {
-        return -(screenH - shelfH) + dp(40) - dp(36);
-    }
-
-    /** ...and the page dots sit centred between the info and the dock. */
-    float heroDotsRestY() {
-        return -(screenH - shelfH) + dp(22) - dp(12);
-    }
-
-    /** tvOS-style top tab bar: a glass capsule, top centre, with two text tabs. */
-    void buildSwitcher() {
-        shelfMode = Profiles.homePrefs(this).getString("shelf_mode", "suggest");
-        switcher = new LinearLayout(this);
-        switcher.setOrientation(LinearLayout.HORIZONTAL);
-        switcher.setGravity(Gravity.CENTER_VERTICAL);
-        int h = dp(30);
-        switcher.setPadding(dp(3), 0, dp(3), 0);
-        LiquidGlass g = new LiquidGlass(h / 2f, 0x1F000000, glassSource, screenW, screenH, unit).adaptive();
-        g.rimStrength = 0.6f;
-        g.lens = dp(5);
-        switcher.setBackground(g);
-        switcher.setFocusable(true);
-        tabSuggestBg = new GradientDrawable();
-        tabContinueBg = new GradientDrawable();
-        tabSuggest = tab("Suggestions", tabSuggestBg);
-        tabContinue = tab("Continue Watching", tabContinueBg);
-        switcher.addView(tabSuggest, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, h - dp(6)));
-        switcher.addView(tabContinue, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, h - dp(6)));
-        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, h,
-                Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-        lp.topMargin = dp(26);
-        root.addView(switcher, lp);
-        switcher.setOnFocusChangeListener((v, has) -> {
-            styleTabs();
-            v.animate().scaleX(has ? 1.08f : 1f).scaleY(has ? 1.08f : 1f).setDuration(200).setInterpolator(LIFT).start();
-            if (has) setHeroShown(!heroItems.isEmpty());
-        });
-        styleTabs();
-    }
-
-    TextView tab(String label, GradientDrawable bg) {
-        TextView t = text(12.5f, Ui.font(this, "medium"), 1f);
-        t.setText(label);
-        t.setShadowLayer(0, 0, 0, 0);
-        t.setGravity(Gravity.CENTER);
-        t.setPadding(dp(14), 0, dp(14), 0);
-        bg.setCornerRadius(dp(12));
-        t.setBackground(bg);
-        return t;
-    }
-
-    /** Selected tab: soft glass pill; white with dark text while the tab bar has focus (tvOS). */
-    void styleTabs() {
-        boolean focused = switcher.isFocused();
-        boolean sug = !"continue".equals(shelfMode);
-        TextView on = sug ? tabSuggest : tabContinue, off = sug ? tabContinue : tabSuggest;
-        GradientDrawable onBg = sug ? tabSuggestBg : tabContinueBg, offBg = sug ? tabContinueBg : tabSuggestBg;
-        onBg.setColor(focused ? 0xFFFFFFFF : 0x33FFFFFF);
-        on.setTextColor(focused ? 0xFF111114 : Color.WHITE);
-        offBg.setColor(Color.TRANSPARENT);
-        off.setTextColor(0xB3FFFFFF);
-    }
-
-    void setShelfMode(String mode) {
-        if (mode.equals(shelfMode)) return;
-        shelfMode = mode;
-        Profiles.homePrefs(this).edit().putString("shelf_mode", mode).apply();
-        styleTabs();
-        heroItems = new ArrayList<>();
-        heroIndex = 0;
-        heroVersion = -1;
-        heroFront.setImageDrawable(null);
-        heroBack.setImageDrawable(null);
-        setHeroShown(false);
-        loadHero();
-    }
-
-    /** Continue Watching is intentionally disabled in this device-specific build. */
-    boolean cwEnabled() {
-        return false;
-    }
-
-    /** The tab bar only appears when there are two things to switch between. */
-    boolean tabsShown() {
-        return false;  // one carousel mixes everything; no Suggestions / Continue Watching tabs
-    }
-
-    /** Applies the profile's choices: hides the tab bar and picks the one remaining mode. */
-    void applyTabs() {
-        if (switcher == null) return;
-        if (!"suggest".equals(shelfMode)) setShelfMode("suggest");
-        boolean show = tabsShown();
-        if (!show && switcher.isFocused()) ccButton.requestFocus();
-        switcher.setVisibility(show ? View.VISIBLE : View.GONE);
-    }
-
-    /** Down from the status row: the tab bar, or (when it's hidden) the carousel or the dock. */
-    void focusBelowStatus() {
-        if (switcher != null && switcher.getVisibility() == View.VISIBLE) {
-            switcher.requestFocus();
-        } else if (shelfView.isFocusable() && !folderMode) {
-            heroRequested = true;
-            shelfView.requestFocus();
-        } else {
-            focusIndex(Math.min(focusedIndex, COLS - 1));
-        }
-    }
-
-    /** Up from the shelf/dock: the tab bar, or the status row when the tab bar is hidden. */
-    void focusTop() {
-        (switcher != null && switcher.getVisibility() == View.VISIBLE ? switcher : ccButton).requestFocus();
-    }
-
-    boolean continueMode() {
-        return "continue".equals(shelfMode);
-    }
-
-    /** Legacy hero content is disabled in this build. */
-    String lastCwSig = "";
-
-    /** Obsolete carousel mixing logic retained temporarily for source compatibility. */
-    void loadHero() {
-        // Recommendations, news and streaming-service continue-watching were removed.
-        // Keep the legacy artwork container hidden so existing home-screen layouts remain stable.
-        heroItems.clear();
-        heroIndex = 0;
-        if (shelfView != null) shelfView.setFocusable(false);
-        if (heroFront != null) heroFront.setImageDrawable(null);
-        if (heroBack != null) heroBack.setImageDrawable(null);
-        if (shelfView != null) setHeroShown(false);
-    }
-
-    /** Resume first: up to six recent Continue Watching titles, then news and recommendations. */
-
-
-    void updateEmpty() {
-        boolean show = continueMode() && heroItems.isEmpty() && !folderMode;
-        if (show) {
-            shelfEmpty.setText(I18n.s(this,
-                    "System playback history is not available in this build.",
-                    "История воспроизведения Android недоступна в этой сборке."));
-        }
-        shelfEmpty.animate().alpha(show ? 0.75f : 0f).setDuration(250).start();
-    }
-
-    void setHeroItems(List<Suggestions.Item> items) {
-        // Keep the carousel where it was when the list is refreshed (same title -> same position).
-        String curTitle = heroItems.isEmpty() ? null : heroItems.get(Math.min(heroIndex, heroItems.size() - 1)).title;
-        boolean same = curTitle != null && heroFront.getDrawable() != null;
-        if (items.size() > 24) items = new ArrayList<>(items.subList(0, 24));
-        heroItems = items;
-        int keep = 0;
-        for (int i = 0; curTitle != null && i < items.size(); i++) if (items.get(i).title.equals(curTitle)) keep = i;
-        heroIndex = keep;
-        shelfView.setFocusable(!items.isEmpty());
-        heroDots.removeAllViews();
-        for (int i = 0; i < items.size() && items.size() > 1 && !continueMode(); i++) {
-            View d = new View(this);
-            GradientDrawable g = new GradientDrawable();
-            g.setShape(GradientDrawable.OVAL);
-            g.setColor(Color.WHITE);
-            d.setBackground(g);
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(5), dp(5));
-            lp.rightMargin = dp(5);
-            heroDots.addView(d, lp);
-        }
-        buildStrip(items);
-        if (items.isEmpty()) {
-            setHeroShown(false);
-            return;
-        }
-        View f = getCurrentFocus();
-        int i = tiles.indexOf(f);
-        boolean dock = f == shelfView || (hasDock() && i >= 0 && i < COLS);
-        setHeroShown(dock);
-        if (!(same && items.get(keep).title.equals(curTitle))) showHero(keep, 0);
-        else for (int j = 0; j < heroDots.getChildCount(); j++) heroDots.getChildAt(j).setAlpha(j == keep ? 1f : 0.35f);
-        List<Suggestions.Item> pre = items;
-        io.execute(() -> {
-            for (Suggestions.Item it : pre) {
-                Suggestions.image(this, it.backdrop, "w1280", 64);  // downloads to disk; tiny decode
-                Suggestions.logoFor(this, it);
-            }
-        });
-    }
-
-    /** Carousel vs launcher background: crossfade between them. */
-    void setHeroShown(boolean show) {
-        show = show && !heroItems.isEmpty() && !folderMode;
-        if (show == heroShown) return;
-        heroShown = show;
-        glassBg = show && heroBlur != null ? heroBlur : wallBlur;
-        invalidateGlass();
-        float a = show ? 1f : 0f;
-        if (show) {
-            heroFront.setVisibility(View.VISIBLE);
-        } else {
-            wallView.setVisibility(View.VISIBLE);
-        }
-        int dur = show ? 360 : 220;
-        heroFront.animate().alpha(a).setDuration(dur).withEndAction(() -> {
-            if (heroShown && heroFront.getAlpha() >= 1f) {
-                wallView.setVisibility(View.INVISIBLE);
-            } else if (!heroShown && heroFront.getAlpha() <= 0f) {
-                heroFront.setVisibility(View.GONE);
-                heroBack.setVisibility(View.GONE);
-            }
-        }).start();
-        heroScrim.setVisibility(View.GONE);
-
-        heroInfo.animate().alpha(a).setDuration(dur).start();
-        heroDots.animate().alpha(a).setDuration(dur).start();
-        chevron.animate().alpha(1f - a).setDuration(dur).start();
-        heroBack.animate().alpha(0f).setDuration(dur).start();
-        handler.removeCallbacks(heroAdvance);
-        if (show) scheduleAdvance();
-    }
-
-    void scheduleAdvance() {
-        handler.removeCallbacks(heroAdvance);
-    }
-
-    void heroStep(int dir, boolean user) {
-        if (heroItems.size() < 2) return;
-        showHero((heroIndex + dir + heroItems.size()) % heroItems.size(), dir);
-        if (!user || !shelfView.hasFocus()) scheduleAdvance();
-    }
-
-    /** dir: +1 next, -1 previous, 0 first show (no slide). */
-    void showHero(int index, int dir) {
-        heroIndex = index;
-        Suggestions.Item it = heroItems.get(index);
-        for (int i = 0; i < heroDots.getChildCount(); i++) {
-            heroDots.getChildAt(i).animate().alpha(i == index ? 1f : 0.35f).setDuration(250).start();
-        }
-        int want = index;
-        io.execute(() -> {
-            Bitmap raw = Suggestions.image(this, it.backdrop, "w1280", Math.min(1280, screenW));
-            Bitmap bd = bakeScrims(raw);
-            Bitmap bdBlur = Ui.glassBackdrop(bd, 160, 90);
-            String logoPath = Suggestions.logoFor(this, it);
-            Bitmap logo = logoPath.isEmpty() ? null : Suggestions.image(this, logoPath, "w500", 500);
-            handler.post(() -> {
-                if (heroIndex != want || heroItems.isEmpty()) {
-                    if (bd != null && !bd.isRecycled()) bd.recycle();
-                    if (bdBlur != null && bdBlur != bd && !bdBlur.isRecycled()) bdBlur.recycle();
-                    if (logo != null && !logo.isRecycled()) logo.recycle();
-                    return;
-                }
-                applyHeroInfo(it, logo, dir);
-                if (bd != null) crossfadeHero(bd, dir);
-                if (bdBlur != null) {
-                    Bitmap previousBlur = heroBlur;
-                    heroBlur = bdBlur;
-                    if (heroShown) {
-                        glassBg = heroBlur;
-                        invalidateGlass();
-                    }
-                    if (previousBlur != null && previousBlur != bdBlur && previousBlur != wallBlur
-                            && !previousBlur.isRecycled()) previousBlur.recycle();
-                }
-            });
-        });
-    }
-
-    /** Title/meta/overview for an item, applied in the same frame as its artwork. */
-    void applyHeroInfo(Suggestions.Item it, Bitmap logo, int dir) {
-        if (removeSelected) selectRemove(false);
-        heroRemove.setVisibility(!it.pkg.isEmpty() && shelfView.isFocused() ? View.VISIBLE : View.GONE);
-        if (shelfView.isFocused()) heroButton.setVisibility(View.VISIBLE);
-        heroButton.setAlpha(1f);
-        Ui.textSize(heroTitle, 36);
-        heroTitle.setMaxLines(2);
-        heroOverview.setMaxLines(2);
-        Ui.textSize(heroOverview, 12.5f);
-        if (!shelfView.isFocused()) {
-            heroOverview.animate().cancel();
-            heroOverview.setAlpha(0f);
-            heroOverview.setVisibility(View.GONE);
-        }
-        heroTitle.setText(it.title);
-        heroTitle.setVisibility(View.VISIBLE);
-        heroLogo.setImageDrawable(null);
-        heroLogo.setVisibility(View.GONE);
-        selectStrip(heroIndex);
-        if (!it.pkg.isEmpty()) {
-            List<String> meta = new ArrayList<>();
-            meta.add(appLabel(it.pkg));
-            if (it.remainingMin > 0) meta.add(it.remainingMin >= 60
-                    ? (it.remainingMin / 60) + " h " + (it.remainingMin % 60) + " min left"
-                    : it.remainingMin + " min left");
-            heroMeta.setText(String.join("  \u00B7  ", meta));
-            heroOverview.setText(it.overview);
-            heroBtnText.setText("▶  Продолжить");
-            try {
-                heroProvider.setImageDrawable(getPackageManager().getApplicationIcon(it.pkg));
-                heroProvider.setVisibility(View.VISIBLE);
-            } catch (PackageManager.NameNotFoundException e) {
-                heroProvider.setVisibility(View.GONE);
-            }
-        } else {
-            List<String> meta = new ArrayList<>();
-            if (!it.year.isEmpty()) meta.add(it.year);
-            if (!it.type.isEmpty()) meta.add(it.type.equals("tv") ? "Сериал" : "Фильм");
-            if (!it.genres.isEmpty()) meta.add(it.genres);
-            if (it.rating > 0) meta.add(String.format(java.util.Locale.US, "\u2605 %.1f", it.rating));
-            heroMeta.setText(String.join("  \u00B7  ", meta));
-            heroOverview.setText(it.overview);
-            heroBtnText.setText("▶  Открыть");
-            heroProvider.setVisibility(View.GONE);
-        }
-        heroBtnIcon.setVisibility(View.GONE);
-        if (logo != null) {
-            heroLogo.setImageBitmap(logo);
-            heroLogo.setVisibility(View.VISIBLE);
-            heroTitle.setVisibility(View.GONE);
-        }
-        if (heroShown && dir != 0) {
-            heroInfo.animate().cancel();
-            heroInfo.setAlpha(0f);
-            heroInfo.setTranslationX(dp(28) * dir);
-            heroInfo.animate().withLayer().alpha(1f).translationX(0).setDuration(520).setInterpolator(EASE).start();
-        }
-    }
-
-    /**
-     * Artwork transition (tvOS carousel): the new image slides in from the side you pressed and
-     * fades up over the old one, which drifts the other way and fades out.
-     */
-    void crossfadeHero(Bitmap bd, int dir) {
-        ImageView next = heroBack;
-        heroBack = heroFront;
-        heroFront = next;
-        ImageView old = heroBack;
-        next.animate().cancel();
-        next.setImageBitmap(bd);
-        float target = heroShown ? 1f : 0f;
-        if (dir == 0 || !heroShown) {
-            next.setTranslationX(0);
-            next.setAlpha(target);
-            old.setAlpha(0f);
-            return;
-        }
-        next.setTranslationX(screenW * 0.12f * dir);
-        next.setAlpha(0f);
-        next.animate().translationX(0).alpha(1f).setDuration(650).setInterpolator(EASE).start();
-        old.animate().cancel();
-        old.animate().translationX(-screenW * 0.06f * dir).alpha(0f).setDuration(650)
-                .setInterpolator(EASE).withEndAction(() -> old.setTranslationX(0)).start();
-    }
-
-    /** Carousel focused: the dock slides away and the artwork takes the whole screen (tvOS Top Shelf). */
-    boolean heroRequested;
-
-    ImageView avatarView, ccButton, refreshButton, searchButton, netIcon;
-    View timeChipView;
-    TextClock statusClock;
-
-    void updateStatusClockFormat() {
-        if (statusClock == null) return;
-        String fmt = Scenes.isClock24h(this) ? "H:mm" : "h:mm a";
-        statusClock.setFormat12Hour(fmt);
-        statusClock.setFormat24Hour(fmt);
-    }
-    /** The search screen while it is open (its layer is also pickerLayer, so Home and idle treat it as an overlay). */
+    /** Search screen while open; its layer is also the active picker overlay. */
     SearchPanel search;
-    android.net.ConnectivityManager.NetworkCallback netCallback;
-    WeatherView weatherCard;
-    LiquidGlass weatherGlass;
-    int avatarSize;
+
     FrameLayout pickerLayer;
     BroadcastReceiver wakeReceiver;
 
-    /** Top shelf content: "suggest" (carousel) or "continue" (Continue Watching). */
-    String shelfMode;
-    LinearLayout switcher;
-    TextView tabSuggest, tabContinue;
-    GradientDrawable tabSuggestBg, tabContinueBg;
-    LinearLayout heroStrip;
-    TextView shelfEmpty;
-
-    void heroFocused(boolean has) {
-        if (has && !heroRequested) {
-            // Android parked focus here on its own (startup/rebuild): hand it back to the dock.
-            handler.post(() -> focusIndex(Math.min(focusedIndex, Math.max(0, tiles.size() - 1))));
-            return;
-        }
-        if (!has) heroRequested = false;
-        if (has) {
-            setHeroShown(true);
-            heroButton.animate().scaleX(1.08f).scaleY(1.08f).setDuration(220).setInterpolator(LIFT).start();
-            heroButton.setElevation(dp(10));
-            heroBtnBg.setColor(0xFFFFFFFF);
-            heroBtnText.setTextColor(0xFF111114);
-            scroll.smoothScrollTo(0, 0);
-            scroll.animate().translationY(screenH - shelfH + dp(30)).setDuration(380).setInterpolator(EASE)
-                    .setUpdateListener(null).withEndAction(this::invalidateGlass).start();
-            heroInfo.animate().translationY(0).setDuration(380).setInterpolator(EASE).start();
-            heroDots.animate().translationY(0).setDuration(380).setInterpolator(EASE).start();
-            heroOverview.setVisibility(View.VISIBLE);
-            heroButton.setVisibility(View.VISIBLE);
-            heroRemove.setVisibility(heroIsContinue() ? View.VISIBLE : View.GONE);
-            heroRemove.setAlpha(1f);
-            if (continueMode() && heroStrip.getChildCount() > 0) heroStrip.setVisibility(View.VISIBLE);
-            heroOverview.animate().alpha(0.85f).setDuration(320).setStartDelay(80).start();
-            heroButton.animate().alpha(1f).setDuration(320).setStartDelay(80).start();
-            handler.removeCallbacks(heroAdvance);
-        } else {
-            heroButton.animate().scaleX(1f).scaleY(1f).setDuration(180).start();
-            heroButton.setElevation(0);
-            heroBtnBg.setColor(0x47FFFFFF);
-            heroBtnText.setTextColor(Color.WHITE);
-            scroll.animate().translationY(0).setDuration(340).setInterpolator(EASE)
-                    .setUpdateListener(null).withEndAction(this::invalidateGlass).start();
-            heroInfo.animate().translationY(heroInfoRestY()).setDuration(340).setInterpolator(EASE).start();
-            heroDots.animate().translationY(heroDotsRestY()).setDuration(340).setInterpolator(EASE).start();
-            heroOverview.animate().alpha(0f).setDuration(160).setStartDelay(0)
-                    .withEndAction(() -> heroOverview.setVisibility(View.GONE)).start();
-            heroButton.animate().alpha(0f).setDuration(160).setStartDelay(0)
-                    .withEndAction(() -> heroButton.setVisibility(View.GONE)).start();
-            if (removeSelected) selectRemove(false);
-            heroRemove.setVisibility(View.GONE);
-            heroStrip.setVisibility(View.GONE);
-            scheduleAdvance();
-        }
-    }
-
-    boolean heroIsContinue() {
-        return heroIndex >= 0 && heroIndex < heroItems.size() && !heroItems.get(heroIndex).pkg.isEmpty();
-    }
-
-    /** Moves the highlight between Resume and Remove (the carousel keeps focus). */
-    void selectRemove(boolean on) {
-        removeSelected = on;
-        heroBtnBg.setColor(on ? 0x47FFFFFF : 0xFFFFFFFF);
-        heroBtnText.setTextColor(on ? Color.WHITE : 0xFF111114);
-        heroRemoveBg.setColor(on ? 0xFFFFFFFF : 0x47FFFFFF);
-        heroRemove.setTextColor(on ? 0xFF111114 : Color.WHITE);
-        heroButton.animate().scaleX(on ? 1f : 1.08f).scaleY(on ? 1f : 1.08f).setDuration(180).start();
-        heroRemove.animate().scaleX(on ? 1.08f : 1f).scaleY(on ? 1.08f : 1f).setDuration(180).start();
-    }
-
-    void removeHeroItem(Suggestions.Item it) {
-        selectRemove(false);
-        lastCwSig = "";
-        heroVersion = -1;
-        toast("Removed " + it.title);
-        loadHero();
-    }
-
-
-
-    /** Carousel and capsule navigation: LEFT/RIGHT browse, OK opens, UP/DOWN move between capsule, carousel and dock. */
-    boolean heroKeys(KeyEvent ev) {
-        if (moveIndex >= 0) return false;
-        int k = ev.getKeyCode();
-        boolean down = ev.getAction() == KeyEvent.ACTION_DOWN;
-        View f = getCurrentFocus();
-        boolean heroActive = shelfView.isFocusable() && !folderMode;
-        if (f == shelfView) {
-            switch (k) {
-                case KeyEvent.KEYCODE_DPAD_LEFT:
-                    if (down) {
-                        if (removeSelected) selectRemove(false);
-                        else heroStep(-1, true);
-                    }
-                    return true;
-                case KeyEvent.KEYCODE_DPAD_RIGHT:
-                    if (down) {
-                        if (!removeSelected && heroIsContinue()) selectRemove(true);
-                        else heroStep(1, true);
-                    }
-                    return true;
-                case KeyEvent.KEYCODE_DPAD_CENTER:
-                case KeyEvent.KEYCODE_ENTER:
-                    if (!down && !heroItems.isEmpty()) {
-                        if (removeSelected) removeHeroItem(heroItems.get(heroIndex));
-                        else openHeroItem(heroItems.get(heroIndex));
-                    }
-                    return true;
-                case KeyEvent.KEYCODE_MENU:
-                    if (!down && !heroItems.isEmpty() && !heroItems.get(heroIndex).pkg.isEmpty()) {
-                        Suggestions.Item it = heroItems.get(heroIndex);
-                        List<String> l = new ArrayList<>();
-                        List<Runnable> act = new ArrayList<>();
-                        l.add("Resume");
-                        act.add(() -> openHeroItem(it));
-                        l.add("Remove from Continue Watching");
-                        act.add(() -> {
-                                                heroItems = new ArrayList<>();
-                            loadHero();
-                        });
-                        showMenu(heroButton, it.title, l, act, 1);
-                    }
-                    return true;
-                case KeyEvent.KEYCODE_DPAD_UP: if (down) focusTop(); return true;
-                case KeyEvent.KEYCODE_DPAD_DOWN:
-                case KeyEvent.KEYCODE_BACK:
-                    if (down) focusIndex(Math.min(focusedIndex, Math.max(1, currentDockCols) - 1));
-                    return true;
-                default: return false;
-            }
-        }
-        if (f == switcher) {
-            switch (k) {
-                case KeyEvent.KEYCODE_DPAD_LEFT:
-                    if (down) {
-                        if (continueMode()) setShelfMode("suggest");
-                        else if (weatherShown()) weatherCard.requestFocus();
-                    }
-                    return true;
-                case KeyEvent.KEYCODE_DPAD_RIGHT:
-                    // Past the last tab, Right continues to the status row (Control Center).
-                    if (down) {
-                        if (continueMode()) ccButton.requestFocus();
-                        else setShelfMode("continue");
-                    }
-                    return true;
-                case KeyEvent.KEYCODE_DPAD_CENTER:
-                case KeyEvent.KEYCODE_ENTER:
-                    if (!down) setShelfMode(continueMode() ? "suggest" : "continue");
-                    return true;
-                case KeyEvent.KEYCODE_DPAD_UP: if (down) ccButton.requestFocus(); return true;
-                case KeyEvent.KEYCODE_DPAD_DOWN:
-                case KeyEvent.KEYCODE_BACK:
-                    if (down) {
-                        if (heroActive) {
-                            heroRequested = true;
-                            shelfView.requestFocus();
-                        } else {
-                            focusIndex(Math.min(focusedIndex, Math.max(1, currentDockCols) - 1));
-                        }
-                    }
-                    return true;
-                default: return false;
-            }
-        }
-        if (f == refreshButton || f == searchButton || f == ccButton || f == avatarView) {
-            // Status row, left to right: Refresh, Search, Control Center, profile.
-            if (k == KeyEvent.KEYCODE_DPAD_LEFT) {
-                if (down) {
-                    if (f == avatarView) ccButton.requestFocus();
-                    else if (f == ccButton) searchButton.requestFocus();
-                    else if (f == searchButton) refreshButton.requestFocus();
-                    else if (switcher.getVisibility() == View.VISIBLE) switcher.requestFocus();
-                    else if (weatherShown()) weatherCard.requestFocus();
-                }
-                return true;
-            }
-            if (k == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                if (down) {
-                    if (f == refreshButton) searchButton.requestFocus();
-                    else if (f == searchButton) ccButton.requestFocus();
-                    else if (f == ccButton && avatarView != null && avatarView.getVisibility() == View.VISIBLE) avatarView.requestFocus();
-                }
-                return true;
-            }
-            if (k == KeyEvent.KEYCODE_DPAD_DOWN || k == KeyEvent.KEYCODE_BACK) {
-                if (down) focusBelowStatus();
-                return true;
-            }
-            return k == KeyEvent.KEYCODE_DPAD_UP;
-        }
-        if (f == weatherCard) {
-            switch (k) {
-                case KeyEvent.KEYCODE_DPAD_RIGHT: if (down) focusTop(); return true;
-                case KeyEvent.KEYCODE_DPAD_DOWN:
-                case KeyEvent.KEYCODE_BACK:
-                    if (down) {
-                        if (heroActive) {
-                            heroRequested = true;
-                            shelfView.requestFocus();
-                        } else {
-                            focusIndex(Math.min(focusedIndex, Math.max(1, currentDockCols) - 1));
-                        }
-                    }
-                    return true;
-                case KeyEvent.KEYCODE_DPAD_UP:
-                case KeyEvent.KEYCODE_DPAD_LEFT:
-                    return true;
-                default: return false;
-            }
-        }
-        int i = tiles.indexOf(f);
-        if (i >= 0) {
-            int cols = Math.max(1, currentDockCols);
-            if (k == KeyEvent.KEYCODE_DPAD_LEFT) {
-                if (down && i > 0) focusIndex(i - 1);
-                return true;
-            }
-            if (k == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                if (down && i + 1 < tiles.size()) focusIndex(i + 1);
-                return true;
-            }
-            if (k == KeyEvent.KEYCODE_DPAD_UP) {
-                if (down) {
-                    if (i < cols) {
-                        if (heroActive) {
-                            heroRequested = true;
-                            shelfView.requestFocus();
-                        } else {
-                            focusTop();
-                        }
-                    } else {
-                        focusIndex(i - cols);
-                    }
-                }
-                return true;
-            }
-            if (k == KeyEvent.KEYCODE_DPAD_DOWN) {
-                if (down) {
-                    int curGridRow = i / cols;
-                    int totalGridRows = (tiles.size() + cols - 1) / cols;
-                    if (curGridRow + 1 < totalGridRows) {
-                        focusIndex(Math.min(i + cols, tiles.size() - 1));
-                    }
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-
-    void openHeroItem(Suggestions.Item it) {
-        if (it.pkg.isEmpty()) {
-            Suggestions.open(this, it);
-            return;
-        }
-        for (AppEntry e : all.values()) {
-            if (it.pkg.equals(e.pkg) && e.launch != null) {
-                launchAnimated(heroButton, e);
-                return;
-            }
-        }
-        Intent i = getPackageManager().getLeanbackLaunchIntentForPackage(it.pkg);
-        if (i == null) i = getPackageManager().getLaunchIntentForPackage(it.pkg);
-        if (i != null) {
-            prepareForAppLaunch();
-            Suggestions.start(this, i);
-            overridePendingTransition(R.anim.app_open_enter, R.anim.app_open_exit);
-            final String pkg = it.pkg;
-            io.execute(() -> noteLaunched(pkg));
-        }
-    }
-
-    // ---------------------------------------------------------------- focus sway
-
-    ValueAnimator sway;
-    View swayView;
-
-    /** Slow elliptical tilt of the focused card with the highlight drifting against it. */
-    void startSway(View v, View glare) {
-        if (moveIndex >= 0 || !v.hasFocus() && !v.isFocused()) return;
-        stopSway(swayView);
-        swayView = v;
-        sway = ValueAnimator.ofFloat(0f, (float) (2 * Math.PI));
-        sway.setDuration(5200);
-        sway.setRepeatCount(ValueAnimator.INFINITE);
-        sway.setInterpolator(new android.view.animation.LinearInterpolator());
-        sway.addUpdateListener(an -> {
-            float t = (float) an.getAnimatedValue();
-            float sin = (float) Math.sin(t), cos = (float) Math.cos(t);
-            v.setRotationY(2.2f * sin);
-            v.setRotationX(-1.4f * cos);
-        });
-        sway.start();
-    }
-
-    void stopSway(View v) {
-        if (sway != null && (v == null || v == swayView)) {
-            sway.cancel();
-            sway = null;
-            if (swayView != null) {
-                swayView.animate().rotationX(0).rotationY(0).setDuration(160).start();
-            }
-            swayView = null;
-        }
-    }
 
     // ---------------------------------------------------------------- launch
 
-    View launchDimView;
 
     /**
      * Immediately halts all launcher animations and timers before starting an external app
      * (cleanyourtv style) so 100% of CPU/GPU goes to the opening app and WindowManager transition.
      */
     void prepareForAppLaunch() {
-        stopSway(null);
-        if (!folderMode && prefs != null) {
-            prefs.edit().putInt("last_classic_idx", focusedIndex).apply();
-        }
         if (sceneHome != null) sceneHome.sceneView.stop();
-        if (scroll != null) scroll.animate().cancel();
-        if (heroFront != null) heroFront.animate().cancel();
-        if (heroBack != null) heroBack.animate().cancel();
-        if (heroInfo != null) heroInfo.animate().cancel();
-        if (heroDots != null) heroDots.animate().cancel();
-        if (chevron != null) chevron.animate().cancel();
-        handler.removeCallbacks(shelfUpdate);
-        handler.removeCallbacks(heroAdvance);
         handler.removeCallbacks(weatherTick);
-        handler.removeCallbacks(idleRunnable);
-    }
-
-    void showLaunchDim() {
-        prepareForAppLaunch();
+        handler.removeCallbacks(lockIdleRunnable);
     }
 
     void clearLaunchDim() {
@@ -2595,11 +851,6 @@ public class MainActivity extends Activity {
             root.animate().cancel();
             root.setScaleX(1f);
             root.setScaleY(1f);
-        }
-        if (launchDimView != null) {
-            launchDimView.animate().cancel();
-            launchDimView.setAlpha(0f);
-            launchDimView.setVisibility(View.GONE);
         }
     }
 
@@ -2624,70 +875,10 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** Coming back to Home after a launch: the card fades away and the grid zooms back in. */
-    void finishLaunchReturn() {
-        View ov = launchOverlay;
-        View tile = launchTile;
-        launchOverlay = null;
-        launchTile = null;
-        if (ov == null) return;
-        handler.removeCallbacksAndMessages(null);
-
-        scroll.setScaleX(1.06f);
-        scroll.setScaleY(1.06f);
-        scroll.animate().withLayer().scaleX(1f).scaleY(1f).alpha(1f).setDuration(420).setInterpolator(EASE)
-                .setUpdateListener(null).withEndAction(this::invalidateGlass).start();
-        clockBox.animate().alpha(clockAlpha()).setDuration(420).start();
-        switcher.animate().alpha(folderMode ? 0f : clockAlpha()).setDuration(420).start();
-        weatherCard.animate().alpha(weatherAlpha()).setDuration(420).start();
-        if (tile != null) tile.animate().alpha(1f).setDuration(300).start();
-        ov.animate().withLayer().alpha(0f).scaleX(0.96f).scaleY(0.96f).setDuration(300)
-                .setListener(new AnimatorListenerAdapter() {
-                    @Override public void onAnimationEnd(Animator animation) {
-                        root.removeView(ov);
-                    }
-                }).start();
-        if (tile != null) tile.requestFocus();
-    }
-
     /**
      * The colour the app paints first: its Android 12 splash background, else its window
      * background. Ending the zoom on this colour makes the handoff to the app seamless.
      */
-    int launchBackground(AppEntry a, int fallback) {
-        ComponentName cn = a.launch.getComponent();
-        if (cn == null) return fallback;
-        try {
-            ActivityInfo ai = getPackageManager().getActivityInfo(cn, 0);
-            Context pc = createPackageContext(cn.getPackageName(), 0);
-            Resources.Theme theme = pc.getResources().newTheme();
-            theme.applyStyle(ai.getThemeResource(), true);
-            int[] attrs = Build.VERSION.SDK_INT >= 31
-                    ? new int[]{android.R.attr.windowSplashScreenBackground, android.R.attr.windowBackground}
-                    : new int[]{android.R.attr.windowBackground};
-            TypedArray ta = theme.obtainStyledAttributes(attrs);
-            try {
-                for (int i = 0; i < attrs.length; i++) {
-                    TypedValue v = ta.peekValue(i);
-                    if (v == null) continue;
-                    int color = 0;
-                    if (v.type >= TypedValue.TYPE_FIRST_COLOR_INT && v.type <= TypedValue.TYPE_LAST_COLOR_INT) {
-                        color = v.data;
-                    } else {
-                        Drawable d = ta.getDrawable(i);
-                        if (d instanceof ColorDrawable) color = ((ColorDrawable) d).getColor();
-                    }
-                    if (Color.alpha(color) > 200) return color | 0xFF000000;
-                }
-            } finally {
-                ta.recycle();
-            }
-        } catch (Exception e) {
-            // Theme unreadable: keep the banner colour.
-        }
-        return fallback;
-    }
-
     static int colorDistance(int x, int y) {
         return Math.abs(Color.red(x) - Color.red(y)) + Math.abs(Color.green(x) - Color.green(y))
                 + Math.abs(Color.blue(x) - Color.blue(y));
@@ -2696,13 +887,6 @@ public class MainActivity extends Activity {
     static int blendArgb(int x, int y, float t) {
         return Color.argb(
                 (int) (Color.alpha(x) + (Color.alpha(y) - Color.alpha(x)) * t),
-                (int) (Color.red(x) + (Color.red(y) - Color.red(x)) * t),
-                (int) (Color.green(x) + (Color.green(y) - Color.green(x)) * t),
-                (int) (Color.blue(x) + (Color.blue(y) - Color.blue(x)) * t));
-    }
-
-    static int blend(int x, int y, float t) {
-        return Color.rgb(
                 (int) (Color.red(x) + (Color.red(y) - Color.red(x)) * t),
                 (int) (Color.green(x) + (Color.green(y) - Color.green(x)) * t),
                 (int) (Color.blue(x) + (Color.blue(y) - Color.blue(x)) * t));
@@ -2724,332 +908,24 @@ public class MainActivity extends Activity {
         return Color.rgb(r / px.length, g / px.length, bl / px.length);
     }
 
-    String appLabel(String pkg) {
-        AppEntry e = null;
-        for (AppEntry a : all.values()) if (pkg.equals(a.pkg)) e = a;
-        if (e != null) return e.label;
-        try {
-            return getPackageManager().getApplicationLabel(getPackageManager().getApplicationInfo(pkg, 0)).toString();
-        } catch (PackageManager.NameNotFoundException ex) {
-            return pkg;
-        }
-    }
-
     /** Up Next strip: one thumbnail per entry with a progress bar; the current one is lifted. */
-    void buildStrip(List<Suggestions.Item> items) {
-        heroStrip.removeAllViews();
-        if (!continueMode()) return;
-        for (int i = 0; i < items.size() && i < 8; i++) {
-            Suggestions.Item it = items.get(i);
-            FrameLayout th = new FrameLayout(this);
-            GradientDrawable tbg = new GradientDrawable();
-            tbg.setCornerRadius(dp(6));
-            tbg.setColor(0x33FFFFFF);
-            th.setBackground(tbg);
-            th.setOutlineProvider(roundedOutline(new float[]{dp(6)}));
-            th.setClipToOutline(true);
-            ImageView iv = new ImageView(this);
-            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            th.addView(iv, match());
-            if (it.progress >= 0) {
-                View track = new View(this);
-                track.setBackgroundColor(0x4DFFFFFF);
-                FrameLayout.LayoutParams tlp = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(3),
-                        Gravity.BOTTOM);
-                tlp.setMargins(dp(6), 0, dp(6), dp(5));
-                th.addView(track, tlp);
-                View bar = new View(this);
-                bar.setBackgroundColor(Color.WHITE);
-                FrameLayout.LayoutParams blp = new FrameLayout.LayoutParams(
-                        Math.max(dp(3), Math.round((dp(100) - dp(12)) * it.progress)), dp(3), Gravity.BOTTOM | Gravity.START);
-                blp.setMargins(dp(6), 0, 0, dp(5));
-                th.addView(bar, blp);
-            }
-            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(dp(100), dp(56));
-            lp.rightMargin = dp(10);
-            heroStrip.addView(th, lp);
-            io.execute(() -> {
-                Bitmap b = Suggestions.image(this, it.backdrop, "w300", 240);
-                if (b != null) handler.post(() -> iv.setImageBitmap(b));
-            });
-        }
-    }
-
-    void selectStrip(int index) {
-        for (int i = 0; i < heroStrip.getChildCount(); i++) {
-            View v = heroStrip.getChildAt(i);
-            boolean on = i == index;
-            v.animate().scaleX(on ? 1.12f : 1f).scaleY(on ? 1.12f : 1f).alpha(on ? 1f : 0.6f).setDuration(220)
-                    .setInterpolator(LIFT).start();
-        }
-    }
-
     /** Banner rendered sharp, minus a hairline border so anti-aliased edges don't get extended. */
-    Bitmap bannerArt(AppEntry a) {
-        int w = 640, h = 360, in = 3;
-        Bitmap full = backdropSharp(a, w, h);
-        Bitmap art = Bitmap.createBitmap(full, in, in, w - 2 * in, h - 2 * in);
-        if (art != full) full.recycle();
-        return art;
-    }
-
     /**
      * The launch card, drawn in one pass so nothing distorts: a rounded rect that grows from the
      * card's on-screen rect to full screen while its corners flatten. Banner apps draw the banner
      * centre-cropped exactly like the card, with its edge pixels clamped outward, so the whole
      * screen continues the card's own background; the logo settles at ~42% of the screen.
      */
-    static class LaunchCard extends Drawable {
-        final RectF card;
-        final float r0;
-        final Bitmap art;
-        final Drawable icon;
-        final int color0, color1;
-        final Paint artPaint = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.FILTER_BITMAP_FLAG);
-        final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
-        final android.graphics.Matrix m = new android.graphics.Matrix();
-        final android.graphics.Path clip = new android.graphics.Path();
-        final RectF o = new RectF(), br = new RectF();
-        float f;
-
-        LaunchCard(RectF card, float r0, Bitmap art, Drawable icon, int color0, int color1) {
-            this.card = card;
-            this.r0 = r0;
-            this.art = art;
-            this.icon = icon;
-            this.color0 = color0;
-            this.color1 = color1;
-            if (art != null) {
-                artPaint.setShader(new android.graphics.BitmapShader(art, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP));
-            }
-        }
-
-        void setProgress(float f) {
-            this.f = f;
-            invalidateSelf();
-        }
-
-        static float lerp(float a, float b, float t) {
-            return a + (b - a) * t;
-        }
-
-        @Override public void draw(Canvas c) {
-            Rect b = getBounds();
-            float W = b.width(), H = b.height();
-            o.set(lerp(card.left, 0, f), lerp(card.top, 0, f), lerp(card.right, W, f), lerp(card.bottom, H, f));
-            float rad = r0 * (1f - f);
-            if (art != null) {
-                // Banner rect: starts as the card itself, ends centred at 42% of the screen.
-                float bw = lerp(card.width(), W * 0.42f, f), bh = lerp(card.height(), H * 0.42f, f);
-                br.set(o.centerX() - bw / 2, o.centerY() - bh / 2, o.centerX() + bw / 2, o.centerY() + bh / 2);
-                float scale = Math.max(br.width() / art.getWidth(), br.height() / art.getHeight());
-                m.setScale(scale, scale);
-                m.postTranslate(br.centerX() - art.getWidth() * scale / 2, br.centerY() - art.getHeight() * scale / 2);
-                artPaint.getShader().setLocalMatrix(m);
-                c.drawRoundRect(o, rad, rad, artPaint);
-            } else {
-                float t = Math.max(0f, Math.min(1f, (f - 0.55f) / 0.45f));
-                fill.setColor(blend(color0, color1, t));
-                c.drawRoundRect(o, rad, rad, fill);
-                if (icon != null) {
-                    float s = lerp(card.height() * 0.55f, H * 0.27f, f);
-                    Rect old = icon.copyBounds();
-                    icon.setBounds((int) (o.centerX() - s / 2), (int) (o.centerY() - s / 2),
-                            (int) (o.centerX() + s / 2), (int) (o.centerY() + s / 2));
-                    icon.draw(c);
-                    icon.setBounds(old);
-                }
-            }
-        }
-
-        @Override public void setAlpha(int a) { }
-        @Override public void setColorFilter(android.graphics.ColorFilter cf) { }
-        @Override public int getOpacity() { return android.graphics.PixelFormat.TRANSLUCENT; }
-    }
-
-    Drawable copyOf(Drawable d) {
-        Drawable.ConstantState cs = d.getConstantState();
-        return cs != null ? cs.newDrawable(getResources()).mutate() : d;
-    }
-
-    float clockAlpha() {
-        return Math.max(0f, 1f - scroll.getScrollY() / (shelfH * 0.4f));
-    }
-
-    // ---------------------------------------------------------------- focus & shelf
-
-    ObjectAnimator scrollAnim;
-
-    void onTileFocused(int index) {
-        focusedIndex = index;
-        int cols = Math.max(1, currentDockCols);
-        boolean dock = hasDock() && index < cols;
-        setHeroShown(dock && !heroItems.isEmpty());
-        int row = index / cols;
-        scrollToRow(row);
-        handler.removeCallbacks(shelfUpdate);
-        handler.postDelayed(shelfUpdate, 90);
-    }
-
-    /**
-     * Row tops come from the fixed grid geometry rather than getTop(), so this also works right
-     * after buildGrid() (e.g. while moving a card), before the new rows have been laid out.
-     * Uses an explicit ObjectAnimator on scrollY instead of ScrollView.smoothScrollTo because
-     * Android's ScrollView aborts smooth scroll and jumps immediately if called twice within 250ms.
-     */
-    void scrollToRow(int row) {
-        int focusGrowY = Math.round(tileH * (FOCUS_SCALE - 1f) / 2f);
-        int dockPadVScaled = focusGrowY + dp(11);
-        int rowH = tileH + labelH + gap / 2;
-        int rowTop = !hasDock() ? shelfH + row * rowH
-                : row == 0 ? shelfH
-                : shelfH + tileH + 2 * dockPadVScaled + dockGapBelow() + (row - 1) * rowH;
-        int target = Math.max(0, row == 0 ? 0 : rowTop - (int) (screenH * 0.30f));
-        int cur = scroll.getScrollY();
-        if (scrollAnim != null) {
-            scrollAnim.cancel();
-            scrollAnim = null;
-        }
-        if (Math.abs(cur - target) <= 2) {
-            scroll.scrollTo(0, target);
-            return;
-        }
-        scrollAnim = ObjectAnimator.ofInt(scroll, "scrollY", cur, target);
-        scrollAnim.setDuration(380);
-        scrollAnim.setInterpolator(EASE);
-        scrollAnim.start();
-    }
-
-    void updateShelf(AppEntry a) {
-        shelfEntry = a;
-    }
-
-    void focusIndex(int i) {
-        if (tiles.isEmpty()) return;
-        i = Math.max(0, Math.min(i, tiles.size() - 1));
-        tiles.get(i).requestFocus();
-        focusedIndex = i;
-        updateShelf(shown.get(i));
-        int cols = Math.max(1, currentDockCols);
-        int row = i / cols;
-        if (content.isLayoutRequested()) {
-            scroll.post(() -> scrollToRow(row));
-        }
-    }
+    // ---------------------------------------------------------------- home focus routing
 
     void goTop() {
-        if (Scenes.isScenesLook(this) && sceneHome != null) {
+        if (sceneHome != null) {
             if (sceneHome.isSheetOpen()) sceneHome.closeSheet();
             sceneHome.focusDock(sceneHome.focusedDockIdx);
-            return;
         }
-        focusIndex(focusedIndex);
-    }
-
-    String currentKey() {
-        return focusedIndex >= 0 && focusedIndex < shown.size() ? shown.get(focusedIndex).key : null;
-    }
-
-    int indexOfKey(String key) {
-        for (int j = 0; j < shown.size(); j++) if (shown.get(j).key.equals(key)) return j;
-        return -1;
-    }
-
-    // ---------------------------------------------------------------- folder of hidden apps
-
-    AppEntry folderEntry() {
-        AppEntry f = new AppEntry();
-        f.key = FOLDER_KEY;
-        f.label = I18n.s(this, "Other Apps", "Diğer Uygulamalar");
-        f.color = 0xFF3A3A3C;
-        f.banner = new BitmapDrawable(getResources(), folderArt());
-        f.icon = f.banner;
-        return f;
-    }
-
-    /** Folder card: dark glass gradient, 3x3 app-grid glyph, title and hidden-app count. */
-    Bitmap folderArt() {
-        int w = 360, h = 216;
-        Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(b);
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
-        // tvOS system-icon style: a vivid vertical gradient, white glyph, no words.
-        p.setShader(new LinearGradient(0, 0, 0, h, 0xFF6E7BF2, 0xFF3A3FC8, Shader.TileMode.CLAMP));
-        c.drawRect(0, 0, w, h, p);
-        p.setShader(null);
-
-        int cell = 28, gapPx = 11, grid = cell * 3 + gapPx * 2;
-        float gx = (w - grid) / 2f, gy = (h - grid) / 2f;
-        Paint sh = new Paint(Paint.ANTI_ALIAS_FLAG);
-        sh.setColor(0x33000000);
-        sh.setMaskFilter(new android.graphics.BlurMaskFilter(6, android.graphics.BlurMaskFilter.Blur.NORMAL));
-        p.setColor(Color.WHITE);
-        for (int i = 0; i < 9; i++) {
-            float x = gx + (i % 3) * (cell + gapPx), y = gy + (i / 3) * (cell + gapPx);
-            c.drawRoundRect(x, y + 3, x + cell, y + cell + 3, 8, 8, sh);
-            c.drawRoundRect(x, y, x + cell, y + cell, 8, 8, p);
-        }
-        return b;
-    }
-
-    Bitmap backdropSharp(AppEntry e, int w, int h) {
-        Bitmap b = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(b);
-        c.drawColor(e.banner != null ? 0xFF1C1C1E : e.color);
-        Drawable d = e.banner != null ? e.banner : e.icon;
-        if (d != null) {
-            Rect old = d.copyBounds();
-            if (e.banner != null) {
-                d.setBounds(0, 0, w, h);
-            } else {
-                int s = h * 6 / 10;
-                d.setBounds((w - s) / 2, (h - s) / 2, (w + s) / 2, (h + s) / 2);
-            }
-            d.draw(c);
-            d.setBounds(old);
-        }
-        return b;
-    }
-
-    void enterFolder() {
-        if (effectiveOtherApps.isEmpty()) return;
-        animateGridSwap(() -> {
-            folderMode = true;
-            setHeroShown(false);
-            switcher.setAlpha(0f);
-            weatherCard.setAlpha(0f);
-            shelfEmpty.setAlpha(0f);
-            buildGrid();
-            shelfEntry = null;
-            scroll.scrollTo(0, 0);
-            focusIndex(0);
-        });
-    }
-
-    void exitFolder() {
-        animateGridSwap(() -> {
-            folderMode = false;
-            switcher.animate().alpha(1f).setDuration(250).start();
-            weatherCard.animate().alpha(weatherAlpha()).setDuration(250).start();
-            buildGrid();
-            shelfEntry = null;
-            int i = indexOfKey(FOLDER_KEY);
-            focusIndex(i >= 0 ? i : 0);
-        });
     }
 
     /** Quick zoom-through between home and folder, so it reads as "opening" the folder. */
-    void animateGridSwap(Runnable swap) {
-        scroll.animate().alpha(0f).scaleX(0.94f).scaleY(0.94f).setDuration(140).setInterpolator(EASE)
-                .withEndAction(() -> {
-                    swap.run();
-                    scroll.setScaleX(1.04f);
-                    scroll.setScaleY(1.04f);
-                    scroll.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(260).setInterpolator(EASE)
-                            .withEndAction(null).start();
-                }).start();
-    }
-
     // ---------------------------------------------------------------- keys
 
     @Override
@@ -3059,114 +935,58 @@ public class MainActivity extends Activity {
             int action = ev.getAction();
             int code = ev.getKeyCode();
             if (action == KeyEvent.ACTION_DOWN) {
-                if (android.os.SystemClock.uptimeMillis() - ambientEnterTime > 600L
-                        && ev.getRepeatCount() == 0) {
+                if (android.os.SystemClock.uptimeMillis() - ambientEnterTime > 600L && ev.getRepeatCount() == 0) {
                     ambientDownKeys.add(code);
                 }
                 return true;
             }
             if (action == KeyEvent.ACTION_UP) {
-                if (ambientDownKeys.remove(code)) {
-                    exitAmbientShowcase();
-                }
+                if (ambientDownKeys.remove(code)) exitAmbientShowcase();
                 return true;
             }
             return true;
         }
-        if (PowerService.instance == null && ButtonMapper.handleKeyEvent(this, ev)) {
-            return true;
-        }
+        if (PowerService.instance == null && ButtonMapper.handleKeyEvent(this, ev)) return true;
         if (launchOverlay != null) return true;
-        // Idle full-screen carousel: the first press only brings the Home Screen back.
-        if (idle) {
-            if (ev.getAction() == KeyEvent.ACTION_DOWN) {
-                exitIdle();
-                swallowUp = true;
-            }
-            return true;
-        }
         if (swallowUp && ev.getAction() == KeyEvent.ACTION_UP) {
             swallowUp = false;
             return true;
         }
         resetIdle();
-        if (!replayingBack) navSound(this, ev);  // a replayed Back already clicked
+        if (!replayingBack) navSound(this, ev);
         if (search != null && pickerLayer == search.layer && menuLayer == null) {
             return search.dispatch(ev) || super.dispatchKeyEvent(ev);
         }
-        if (pickerLayer == null && menuLayer == null && moveIndex < 0 && keyboardSearch(ev)) return true;
-        if (pickerLayer == null && menuLayer == null && moveIndex < 0 && holdBackSearch(ev)) return true;
-        if (ev.getKeyCode() == KeyEvent.KEYCODE_SEARCH && pickerLayer == null && menuLayer == null && moveIndex < 0) {
-            // The remote's search/mic button: open Search and start listening, like tvOS's Siri button.
-            if (ev.getAction() == KeyEvent.ACTION_UP) {
-                showSearch(null);
-                if (search.mic != null) search.mic.requestFocus();
-                search.listen();
-            }
+        boolean dockMoving = sceneHome != null && sceneHome.isDockMoveActive();
+        if (pickerLayer == null && menuLayer == null && !dockMoving && keyboardSearch(ev)) return true;
+        if (pickerLayer == null && menuLayer == null && !dockMoving && holdBackSearch(ev)) return true;
+        if (ev.getKeyCode() == KeyEvent.KEYCODE_SEARCH && pickerLayer == null && menuLayer == null && !dockMoving) {
+            if (ev.getAction() == KeyEvent.ACTION_UP) showSearch(null);
             return true;
         }
         if (pickerLayer != null && menuLayer == null) {
-            int pk = ev.getKeyCode();
-            boolean pd = ev.getAction() == KeyEvent.ACTION_DOWN;
-            if (pk == KeyEvent.KEYCODE_BACK) {
-                if (!pd) closeProfilePicker();
+            int key = ev.getKeyCode();
+            boolean down = ev.getAction() == KeyEvent.ACTION_DOWN;
+            if (key == KeyEvent.KEYCODE_BACK) {
+                if (!down) closePicker();
                 return true;
             }
-            if (pk == KeyEvent.KEYCODE_MENU) {
-                if (!pd) profileMenu(getCurrentFocus());
-                return true;
-            }
-            if (pk == KeyEvent.KEYCODE_DPAD_UP || pk == KeyEvent.KEYCODE_DPAD_DOWN
-                    || pk == KeyEvent.KEYCODE_DPAD_LEFT || pk == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                if (pd) pickerMove(pk);
+            if (key == KeyEvent.KEYCODE_DPAD_UP || key == KeyEvent.KEYCODE_DPAD_DOWN
+                    || key == KeyEvent.KEYCODE_DPAD_LEFT || key == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                if (down) pickerMove(key);
                 return true;
             }
             return super.dispatchKeyEvent(ev);
         }
         if (menuLayer != null) {
-            int mk = ev.getKeyCode();
-            if (mk == KeyEvent.KEYCODE_BACK || mk == KeyEvent.KEYCODE_MENU || mk == KeyEvent.KEYCODE_ESCAPE) {
+            int key = ev.getKeyCode();
+            if (key == KeyEvent.KEYCODE_BACK || key == KeyEvent.KEYCODE_MENU || key == KeyEvent.KEYCODE_ESCAPE) {
                 if (ev.getAction() == KeyEvent.ACTION_UP) closeMenu();
                 return true;
             }
             return super.dispatchKeyEvent(ev);
         }
-        if (Scenes.isScenesLook(this) && sceneHome != null) {
-            if (sceneHome.dispatchKey(ev)) return true;
-            return super.dispatchKeyEvent(ev);
-        }
-        if (heroKeys(ev)) return true;
-        int k = ev.getKeyCode();
-        boolean down = ev.getAction() == KeyEvent.ACTION_DOWN;
-
-        if (moveIndex >= 0) {
-            int cols = Math.max(1, currentDockCols);
-            switch (k) {
-                case KeyEvent.KEYCODE_DPAD_LEFT:   if (down) moveTo(moveIndex - 1); return true;
-                case KeyEvent.KEYCODE_DPAD_RIGHT:  if (down) moveTo(moveIndex + 1); return true;
-                case KeyEvent.KEYCODE_DPAD_UP:     if (down) moveTo(moveIndex - cols); return true;
-                case KeyEvent.KEYCODE_DPAD_DOWN:   if (down) moveTo(moveIndex + cols); return true;
-                case KeyEvent.KEYCODE_DPAD_CENTER:
-                case KeyEvent.KEYCODE_ENTER:
-                case KeyEvent.KEYCODE_BACK:
-                case KeyEvent.KEYCODE_ESCAPE:      if (down) endMove(); return true;
-                default: return super.dispatchKeyEvent(ev);
-            }
-        }
-        if (k == KeyEvent.KEYCODE_MENU) {
-            if (!down) {
-                int i = tiles.indexOf(getCurrentFocus());
-                if (i >= 0 && !FOLDER_KEY.equals(shown.get(i).key)) showOptions(i);
-            }
-            return true;
-        }
-        if (k == KeyEvent.KEYCODE_BACK) {
-            if (!down) {
-                if (folderMode) exitFolder();
-                else goTop();
-            }
-            return true;
-        }
+        if (sceneHome != null && sceneHome.dispatchKey(ev)) return true;
         return super.dispatchKeyEvent(ev);
     }
 
@@ -3176,7 +996,6 @@ public class MainActivity extends Activity {
         all.clear();
         apps.clear();
         otherApps.clear();
-        hiddenApps.clear();
         PackageManager pm = getPackageManager();
         Set<String> pkgs = new HashSet<>();
         addResolved(pm, Intent.CATEGORY_LEANBACK_LAUNCHER, pkgs, true);
@@ -3191,7 +1010,7 @@ public class MainActivity extends Activity {
                 Bitmap cIcon = CustomMedia.getCustomAppIcon(this, e.key, e.pkg);
                 if (cIcon != null && !cIcon.isRecycled()) {
                     e.icon = new BitmapDrawable(getResources(), cIcon);
-                    e.banner = new BitmapDrawable(getResources(), CustomMedia.buildClassicBannerFromCustomIcon(cIcon, e.color));
+                    e.banner = new BitmapDrawable(getResources(), CustomMedia.buildAppBannerFromCustomIcon(cIcon, e.color));
                     continue;
                 }
             }
@@ -3204,15 +1023,10 @@ public class MainActivity extends Activity {
         Set<String> other = prefs.getStringSet(PREF_OTHER, Collections.emptySet());
         Map<String, AppEntry> pool = new LinkedHashMap<>();
         for (AppEntry e : all.values()) {
-            if (hidden.contains(e.key) || (e.pkg != null && hidden.contains(e.pkg))) {
-                hiddenApps.add(e);
-            } else if (other.contains(e.key) || (e.pkg != null && other.contains(e.pkg))) {
-                otherApps.add(e);
-            } else {
-                pool.put(e.key, e);
-            }
+            if (hidden.contains(e.key) || (e.pkg != null && hidden.contains(e.pkg))) continue;
+            if (other.contains(e.key) || (e.pkg != null && other.contains(e.pkg))) otherApps.add(e);
+            else pool.put(e.key, e);
         }
-        Collections.sort(hiddenApps, (x, y) -> x.label.compareToIgnoreCase(y.label));
         Collections.sort(otherApps, (x, y) -> x.label.compareToIgnoreCase(y.label));
 
         for (String key : prefs.getString(PREF_ORDER, "").split(",")) {
@@ -3345,17 +1159,11 @@ public class MainActivity extends Activity {
         return Color.HSVToColor(hsv);
     }
 
-    void reload(String focusKey) {
+    void reload() {
         loadApps();
-        if (folderMode && otherApps.isEmpty()) folderMode = false;
-        buildGrid();
-        if (sceneHome != null) sceneHome.rebuildDock();
-        shelfEntry = null;
-        if (Scenes.isScenesLook(this) && sceneHome != null) {
+        if (sceneHome != null) {
+            sceneHome.rebuildDock();
             sceneHome.focusDock(Math.min(sceneHome.focusedDockIdx, Math.max(0, sceneHome.dockTiles.size() - 1)));
-        } else {
-            int i = focusKey == null ? -1 : indexOfKey(focusKey);
-            focusIndex(i >= 0 ? i : Math.min(focusedIndex, Math.max(0, shown.size() - 1)));
         }
     }
 
@@ -3383,17 +1191,11 @@ public class MainActivity extends Activity {
             if (a.pkg != null) hidden.remove(a.pkg);
         }
         prefs.edit().putStringSet(PREF_OTHER, other).putStringSet(PREF_HIDDEN, hidden).apply();
-        int i = focusedIndex;
         loadApps();
-        if (!toOther) {
-            // Ensure restored app sits in the first dock row (top 10 non-settings apps)
-            ensureInFirstDockRow(a.key);
-        }
-        if (folderMode && otherApps.isEmpty()) folderMode = false;
-        buildGrid();
-        shelfEntry = null;
-        if (!Scenes.isScenesLook(this)) {
-            focusIndex(Math.min(i, Math.max(0, shown.size() - 1)));
+        if (!toOther) ensureInFirstDockRow(a.key);
+        if (sceneHome != null) {
+            sceneHome.rebuildDock();
+            sceneHome.focusDock(Math.min(sceneHome.focusedDockIdx, Math.max(0, sceneHome.dockTiles.size() - 1)));
         }
         toast(toOther
                 ? I18n.s(this, a.label + " moved to Other Apps", a.label + " Diğer Uygulamalar'a taşındı")
@@ -3437,13 +1239,10 @@ public class MainActivity extends Activity {
             if (a.pkg != null) other.remove(a.pkg);
         }
         prefs.edit().putStringSet(PREF_HIDDEN, hidden).putStringSet(PREF_OTHER, other).apply();
-        int i = focusedIndex;
         loadApps();
-        if (folderMode && otherApps.isEmpty()) folderMode = false;
-        buildGrid();
-        shelfEntry = null;
-        if (!Scenes.isScenesLook(this)) {
-            focusIndex(Math.min(i, Math.max(0, shown.size() - 1)));
+        if (sceneHome != null) {
+            sceneHome.rebuildDock();
+            sceneHome.focusDock(Math.min(sceneHome.focusedDockIdx, Math.max(0, sceneHome.dockTiles.size() - 1)));
         }
         toast(hide
                 ? I18n.s(this, a.label + " hidden (Settings > Apps > Hidden apps)",
@@ -3577,62 +1376,12 @@ public class MainActivity extends Activity {
                         }));
     }
 
-    void showOptions(int index) {
-        AppEntry a = shown.get(index);
-        View tile = tiles.get(index);
-        List<String> labels = new ArrayList<>();
-        List<Runnable> actions = new ArrayList<>();
-        labels.add(I18n.s(this, "Open", "Aç"));
-        actions.add(() -> launchAnimated(tile, a));
-        if (!FOLDER_KEY.equals(a.key)) {
-            labels.add(I18n.s(this, "Rename", "Yeniden Adlandır"));
-            actions.add(() -> promptRenameApp(a, () -> reload(a.key)));
-            labels.add(I18n.s(this, "Change app icon", "Uygulama simgesini değiştir"));
-            actions.add(() -> promptChangeAppIcon(a, () -> reload(a.key)));
-        }
-        if (folderMode) {
-            labels.add(I18n.s(this, "Show on Home Screen", "Ana Ekranda Göster"));
-            actions.add(() -> setOtherApp(a, false));
-            if (!isSettings(a)) {
-                labels.add(I18n.s(this, "Hide", "Gizle"));
-                actions.add(() -> setHidden(a, true));
-            }
-        } else {
-            labels.add(I18n.s(this, "Move", "Taşı"));
-            actions.add(() -> startMove(index));
-            if (!isSettings(a)) {
-                labels.add(I18n.s(this, "Move to Other Apps", "Diğer Uygulamalara Taşı"));
-                actions.add(() -> setOtherApp(a, true));
-                labels.add(I18n.s(this, "Hide", "Gizle"));
-                actions.add(() -> setHidden(a, true));
-            }
-        }
-        String uninstLabel = I18n.s(this, "Uninstall", "Kaldır");
-        if (!isSettings(a) && !INPUTS_KEY.equals(a.key)) {
-            labels.add(I18n.s(this, "App Info", "Uygulama Bilgileri"));
-            actions.add(() -> startSafe(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                    Uri.parse("package:" + a.pkg))));
-            if (!a.system) {
-                labels.add(uninstLabel);
-                actions.add(() -> startSafe(new Intent(Intent.ACTION_DELETE, Uri.parse("package:" + a.pkg))));
-            }
-        }
-        if (!folderMode) {
-            labels.add(I18n.s(this, "Reset Layout", "Düzeni Sıfırla"));
-            actions.add(() -> {
-                prefs.edit().remove(PREF_ORDER).apply();
-                reload(a.key);
-            });
-        }
-        showMenu(tile, a.label, labels, actions, labels.indexOf(uninstLabel));
-    }
-
     /** Small chooser that keeps launcher settings separate from the TV's own settings. */
     void showSettingsChooser() {
         dropPicker();
         pickerLayer = null;
         popoverReturn = null;
-        weatherOpen = false;
+
         String[] choices = {
                 I18n.s(this, "testOS Settings", "Настройки testOS"),
                 I18n.s(this, "TV Settings", "Настройки телевизора")
@@ -3641,7 +1390,7 @@ public class MainActivity extends Activity {
                 .setTitle(I18n.s(this, "Settings", "Настройки"))
                 .setItems(choices, (dialog, which) -> {
                     returningFromSettings = true;
-                    weatherOpen = false;
+
                     if (which == 0) {
                         startActivity(new Intent(this, SettingsActivity.class));
                     } else {
@@ -3664,8 +1413,7 @@ public class MainActivity extends Activity {
     void showControlCenter() {
         ControlPanelOverlay.dismiss();
         dropPicker();
-        stopSway(null);
-        popoverReturn = Scenes.isScenesLook(this) && sceneHome != null ? sceneHome.moonBtn : ccButton;
+        popoverReturn = sceneHome != null ? sceneHome.moonBtn : null;
         FrameLayout layer = new FrameLayout(this);
         layer.setClickable(true);
         layer.setClipChildren(false);
@@ -3900,7 +1648,7 @@ public class MainActivity extends Activity {
                     apps.size() + " uygulama kapatıldı" + (freed > 0 ? " \u00b7 " + freed + " MB boşaltıldı" : "")));
         };
         if (PowerService.instance != null) {
-            closeProfilePicker();
+            closePicker();
             PowerService.forceStop(this, apps, () -> handler.postDelayed(done, 600));
         } else {
             handler.postDelayed(done, 800);
@@ -3971,7 +1719,7 @@ public class MainActivity extends Activity {
 
     // ---------------------------------------------------------------- inputs
 
-    /** Input picker under the status row: Control Center capsules, two columns. */
+    /** Input picker overlay opened from Control Center. */
     void showInputs(View from) {
         List<Inputs.Input> list = Inputs.list(this);
         if (list.isEmpty()) {
@@ -3979,7 +1727,6 @@ public class MainActivity extends Activity {
             return;
         }
         dropPicker();
-        stopSway(null);
         popoverReturn = from;
         FrameLayout layer = new FrameLayout(this);
         layer.setClickable(true);
@@ -4002,7 +1749,7 @@ public class MainActivity extends Activity {
             int x = (i % 2) * (col + gap), y = top + (i / 2) * (cap + gap);
             cells.add(ccTile(panel, x, y, col, cap, Inputs.glyph(in), in.label,
                     in.disconnected ? () -> I18n.s(this, "Not connected", "Bağlı değil") : null, false, v -> {
-                        closeProfilePicker();
+                        closePicker();
                         if (!Inputs.open(this, in)) toast(I18n.s(this, "Can't switch to " + in.label, in.label + " girişine geçilemiyor"));
                     }));
         }
@@ -4023,151 +1770,32 @@ public class MainActivity extends Activity {
         cells.get(0).requestFocus();
     }
 
-    // ---------------------------------------------------------------- internet status
+    // ---------------------------------------------------------------- connectivity recovery
 
-    /** Follows the default network; Android marks it "validated" once the internet is reachable. */
-    void watchNetwork() {
-        updateNet();
-        if (netCallback != null) return;
-        netCallback = new android.net.ConnectivityManager.NetworkCallback() {
-            @Override public void onAvailable(android.net.Network n) { handler.post(MainActivity.this::updateNet); }
-            @Override public void onLost(android.net.Network n) { handler.post(MainActivity.this::updateNet); }
-            @Override public void onCapabilitiesChanged(android.net.Network n, android.net.NetworkCapabilities nc) {
-                handler.post(MainActivity.this::updateNet);
-            }
-        };
-        try {
-            getSystemService(android.net.ConnectivityManager.class).registerDefaultNetworkCallback(netCallback);
-        } catch (Exception e) {
-            netCallback = null;
-        }
-    }
+    int netState = -1;
 
-    int netState = -1, netBars = -1;
-    boolean netEthernet;
-
+    /** Detect connectivity recovery for services; no status-row UI remains. */
     void updateNet() {
         if (sceneHome != null) sceneHome.refreshVpnIndicator();
-        if (netIcon == null) return;
         android.net.ConnectivityManager cm = getSystemService(android.net.ConnectivityManager.class);
-        android.net.NetworkCapabilities nc = cm.getNetworkCapabilities(cm.getActiveNetwork());
+        android.net.Network active = cm != null ? cm.getActiveNetwork() : null;
+        android.net.NetworkCapabilities nc = cm != null && active != null ? cm.getNetworkCapabilities(active) : null;
         int state = nc == null ? 0
                 : nc.hasCapability(android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED) ? 2 : 1;
-        boolean eth = nc != null && nc.hasTransport(android.net.NetworkCapabilities.TRANSPORT_ETHERNET);
-        int bars = 3;
-        if (nc != null && !eth) {
-            try {
-                android.net.wifi.WifiManager wm = getApplicationContext().getSystemService(android.net.wifi.WifiManager.class);
-                int level = android.net.wifi.WifiManager.calculateSignalLevel(wm.getConnectionInfo().getRssi(), 4);
-                bars = level <= 1 ? 1 : level == 2 ? 2 : 3;
-            } catch (Exception ignored) {
-                // keep full bars
-            }
-        }
         boolean back = netState == 0 || netState == 1;
-        if (state == netState && eth == netEthernet && bars == netBars) return;
+        if (state == netState) return;
         netState = state;
-        netEthernet = eth;
-        netBars = bars;
-        netIcon.setImageBitmap(netGlyph(state, eth, bars, dp(20)));
-        netIcon.setContentDescription(state == 2 ? "Online" : state == 1 ? "No internet" : "Offline");
-        // Back online: refresh what needs the internet.
         if (state == 2) AirPlayGuard.check(this, back);
-        if (state == 2 && back) {
-            Weather.refresh(this, true, this::updateWeather);
-            loadHero();
-        }
+        if (state == 2 && back) Weather.refresh(this, true, this::updateWeather);
     }
+
+    /** Follows the default network; Android marks it "validated" once the internet is reachable. */
 
     /**
      * Apple-style network symbol, white only: Wi-Fi as a dot-wedge and two bands lit by signal
      * strength (unlit at 30%), or Ethernet; "!" beside it without internet (wifi.exclamationmark)
      * and a slash through dimmed bands with no network (wifi.slash).
      */
-    Bitmap netGlyph(int state, boolean eth, int bars, int s) {
-        int w = Math.round(s * 1.2f);
-        Bitmap b = Bitmap.createBitmap(w, s, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(b);
-        int on = Color.WHITE, off = 0x4DFFFFFF;
-        if (eth && state != 0) drawEthernet(c, s, state == 2 ? on : off);
-        else drawWifi(c, s, state == 2 ? bars : 0, on, off);
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setColor(on);
-        p.setStrokeCap(Paint.Cap.ROUND);
-        if (state == 1) {  // exclamation mark to the right
-            p.setStrokeWidth(s * 0.13f);
-            float x = s * 1.08f;
-            c.drawLine(x, s * 0.2f, x, s * 0.6f, p);
-            c.drawCircle(x, s * 0.82f, s * 0.075f, p);
-        } else if (state == 0) {  // slash with a clear gap around it
-            Paint cut = new Paint(Paint.ANTI_ALIAS_FLAG);
-            cut.setXfermode(new android.graphics.PorterDuffXfermode(android.graphics.PorterDuff.Mode.CLEAR));
-            cut.setStrokeCap(Paint.Cap.ROUND);
-            cut.setStrokeWidth(s * 0.24f);
-            c.drawLine(s * 0.12f, s * 0.1f, s * 0.9f, s * 0.92f, cut);
-            p.setStrokeWidth(s * 0.1f);
-            c.drawLine(s * 0.12f, s * 0.1f, s * 0.9f, s * 0.92f, p);
-        }
-        // Soft shadow behind everything, like the time's.
-        Bitmap out = Bitmap.createBitmap(w, s, Bitmap.Config.ARGB_8888);
-        Canvas oc = new Canvas(out);
-        Paint sh = new Paint(Paint.ANTI_ALIAS_FLAG);
-        sh.setColorFilter(new android.graphics.PorterDuffColorFilter(0x40000000, android.graphics.PorterDuff.Mode.SRC_IN));
-        oc.drawBitmap(b, 0, s * 0.05f, sh);
-        oc.drawBitmap(b, 0, 0, null);
-        return out;
-    }
-
-    /** SF-style Wi-Fi: a wedge and two equal bands fanning 90 degrees from a point near the bottom. */
-    void drawWifi(Canvas c, float s, int lit, int on, int off) {
-        float cx = s * 0.5f, cy = s * 0.88f, rw = s * 0.24f, t = s * 0.15f, gap = s * 0.075f;
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setStrokeJoin(Paint.Join.ROUND);
-        p.setStrokeWidth(s * 0.05f);
-        p.setStyle(Paint.Style.FILL_AND_STROKE);
-        RectF r = new RectF();
-        for (int i = 0; i < 3; i++) {
-            android.graphics.Path path = new android.graphics.Path();
-            if (i == 0) {
-                path.moveTo(cx, cy);
-                r.set(cx - rw, cy - rw, cx + rw, cy + rw);
-                path.arcTo(r, -135, 90);
-            } else {
-                float inner = rw + gap + (i - 1) * (t + gap), outer = inner + t;
-                r.set(cx - outer, cy - outer, cx + outer, cy + outer);
-                path.arcTo(r, -135, 90, true);
-                r.set(cx - inner, cy - inner, cx + inner, cy + inner);
-                path.arcTo(r, -45, -90);
-            }
-            path.close();
-            // Unlit bands: drawn opaque on a faded layer so fill and rounded edge don't overlap.
-            boolean dim = i >= lit;
-            if (dim) c.saveLayerAlpha(0, 0, c.getWidth(), c.getHeight(), Color.alpha(off));
-            p.setColor(dim ? (off | 0xFF000000) : on);
-            c.drawPath(path, p);
-            if (dim) c.restore();
-        }
-    }
-
-    /** Ethernet: three solid nodes joined by lines, drawn bolder to match the Wi-Fi weight. */
-    void drawEthernet(Canvas c, float s, int col) {
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setColor(col);
-        p.setStrokeWidth(s * 0.09f);
-        p.setStrokeCap(Paint.Cap.ROUND);
-        float m = s * 0.5f;
-        c.drawLine(m, s * 0.36f, m, s * 0.52f, p);
-        c.drawLine(s * 0.24f, s * 0.52f, s * 0.76f, s * 0.52f, p);
-        c.drawLine(s * 0.24f, s * 0.52f, s * 0.24f, s * 0.64f, p);
-        c.drawLine(s * 0.76f, s * 0.52f, s * 0.76f, s * 0.64f, p);
-        RectF r = new RectF(m - s * 0.15f, s * 0.08f, m + s * 0.15f, s * 0.36f);
-        c.drawRoundRect(r, s * 0.06f, s * 0.06f, p);
-        r.set(s * 0.09f, s * 0.62f, s * 0.39f, s * 0.9f);
-        c.drawRoundRect(r, s * 0.06f, s * 0.06f, p);
-        r.set(s * 0.61f, s * 0.62f, s * 0.91f, s * 0.9f);
-        c.drawRoundRect(r, s * 0.06f, s * 0.06f, p);
-    }
-
     /** Android TV's system click on D-pad moves, select and Back (Settings -> Home -> Navigation sounds). */
     static void navSound(Context c, KeyEvent ev) {
         if (ev.getAction() != KeyEvent.ACTION_DOWN) return;
@@ -4191,24 +1819,13 @@ public class MainActivity extends Activity {
     }
 
     /** Refresh button: update weather data. */
-    void refreshAll() {
-        refreshButton.animate().cancel();
-        refreshButton.setRotation(0);
-        refreshButton.animate().rotation(360).setDuration(700).setInterpolator(EASE).start();
-        Weather.refresh(this, true, this::updateWeather);
-        toast("Погода обновлена");
-    }
-
-    // ---------------------------------------------------------------- built-in ambient mode & idle carousel
+    // ---------------------------------------------------------------- built-in ambient mode and lock screen
 
     boolean ambientShowcase;
     boolean lockScreenActive;
     boolean lockScreenFromExternal;
     long ambientEnterTime;
     final Set<Integer> ambientDownKeys = new HashSet<>();
-    boolean idle, swallowUp;
-    float idleScrollY, idleInfoY, idleDotsY;
-    boolean idleOverviewShown;
 
     public static void triggerBuiltInAmbient(Context c) {
         if (activeInstance != null && activeInstance.resumed) {
@@ -4261,17 +1878,16 @@ public class MainActivity extends Activity {
      */
     void enterAmbientShowcase() {
         ControlPanelOverlay.dismiss();
-        closeProfilePicker();
+        dropPicker();
+        pickerLayer = null;
+        popoverReturn = null;
         closeMenu();
         if (sceneHome != null && sceneHome.isSheetOpen()) sceneHome.closeSheet();
-        if (idle) exitIdle();
-        handler.removeCallbacks(idleRunnable);
         handler.removeCallbacks(lockIdleRunnable);
         ambientShowcase = true;
         ambientEnterTime = android.os.SystemClock.uptimeMillis();
         ambientDownKeys.clear();
         if (root != null) root.setKeepScreenOn(true);
-
         if (sceneHome != null) {
             sceneHome.sceneView.setVisibility(View.VISIBLE);
             sceneHome.sceneView.syncSettings();
@@ -4280,20 +1896,8 @@ public class MainActivity extends Activity {
             sceneHome.overlay.animate().cancel();
             sceneHome.overlay.animate().alpha(0f).setDuration(320).setInterpolator(EASE)
                     .withEndAction(() -> {
-                        if (ambientShowcase && sceneHome != null) {
-                            sceneHome.overlay.setVisibility(View.INVISIBLE);
-                        }
+                        if (ambientShowcase && sceneHome != null) sceneHome.overlay.setVisibility(View.INVISIBLE);
                     }).start();
-        }
-        if (!Scenes.isScenesLook(this)) {
-            scroll.setVisibility(View.GONE);
-            clockBox.setVisibility(View.GONE);
-            if (weatherCard != null) weatherCard.setVisibility(View.GONE);
-            if (switcher != null) switcher.setVisibility(View.GONE);
-            heroInfo.setVisibility(View.GONE);
-            heroDots.setVisibility(View.GONE);
-            heroFront.setVisibility(View.GONE);
-            heroBack.setVisibility(View.GONE);
         }
     }
 
@@ -4304,40 +1908,21 @@ public class MainActivity extends Activity {
         boolean wasExternal = lockScreenFromExternal;
         lockScreenActive = false;
         lockScreenFromExternal = false;
-        if (sceneHome != null && wasLock) {
-            sceneHome.sceneView.setLockScreenMode(false);
-        }
+        if (sceneHome != null && wasLock) sceneHome.sceneView.setLockScreenMode(false);
         if (root != null) root.setKeepScreenOn(false);
-        if (Scenes.isScenesLook(this)) {
-            if (sceneHome != null) {
-                sceneHome.overlay.animate().cancel();
-                sceneHome.overlay.setVisibility(View.VISIBLE);
-                sceneHome.overlay.setAlpha(0f);
-                sceneHome.overlay.animate().alpha(1f).setDuration(260).setInterpolator(EASE).start();
-                sceneHome.focusDock(sceneHome.focusedDockIdx);
-            }
-        } else {
-            if (sceneHome != null) {
-                sceneHome.overlay.animate().cancel();
-                sceneHome.overlay.setAlpha(1f);
-            }
-            applyLookMode();
+        if (sceneHome != null) {
+            sceneHome.overlay.animate().cancel();
+            sceneHome.overlay.setVisibility(View.VISIBLE);
+            sceneHome.overlay.setAlpha(0f);
+            sceneHome.overlay.animate().alpha(1f).setDuration(260).setInterpolator(EASE).start();
+            sceneHome.focusDock(sceneHome.focusedDockIdx);
         }
         resetIdle();
-        if (wasLock && wasExternal) {
-            moveTaskToBack(true);
-        }
+        if (wasLock && wasExternal) moveTaskToBack(true);
     }
 
-    /** Seconds without input before the dock slides away (Settings -> Home); 0 = never. */
-    int idleSeconds() {
-        int sec = Profiles.homePrefs(this).getInt("idle_sec", 20);
-        // testOS carousel chosen as the screensaver: it always takes over when idle.
-        if (sec == 0 && !getSharedPreferences("screensaver", MODE_PRIVATE).getBoolean("allow", true)) sec = 20;
-        return sec;
-    }
+    /** Runs the configured lock-screen timeout when Home remains idle. */
 
-    final Runnable idleRunnable = this::enterIdle;
     final Runnable lockIdleRunnable = () -> {
         if (resumed && !ambientShowcase) {
             enterLockScreen(false);
@@ -4345,120 +1930,44 @@ public class MainActivity extends Activity {
     };
 
     void resetIdle() {
-        handler.removeCallbacks(idleRunnable);
         handler.removeCallbacks(lockIdleRunnable);
-        int sec = idleSeconds();
-        if (sec > 0 && resumed) handler.postDelayed(idleRunnable, sec * 1000L);
         int lockMin = Scenes.getLockIdleMinutes(this);
         if (lockMin > 0 && resumed && !ambientShowcase) {
             handler.postDelayed(lockIdleRunnable, lockMin * 60_000L);
         }
     }
 
-    /**
-     * No input for a while: the dock and grid slide down off screen, the weather card and tab bar
-     * fade, and the carousel keeps playing full screen with its title and summary at the bottom.
-     */
-    void enterIdle() {
-        if (idle || !resumed || !heroShown || heroItems.isEmpty() || continueMode() || folderMode
-                || launchOverlay != null || pickerLayer != null || menuLayer != null || moveIndex >= 0) {
-            resetIdle();
-            return;
-        }
-        idle = true;
-        idleScrollY = scroll.getTranslationY();
-        idleInfoY = heroInfo.getTranslationY();
-        idleDotsY = heroDots.getTranslationY();
-        idleOverviewShown = heroOverview.getVisibility() == View.VISIBLE;
-        scroll.animate().cancel();
-        scroll.animate().withLayer().translationY(screenH).alpha(0f).setDuration(900).setInterpolator(EASE)
-                .setUpdateListener(null).start();
-        heroInfo.animate().withLayer().translationY(0).setDuration(900).setInterpolator(EASE).start();
-        heroDots.animate().withLayer().translationY(dp(4)).setDuration(900).setInterpolator(EASE).start();
-        weatherCard.animate().alpha(0f).setDuration(500).start();
-        switcher.animate().alpha(0f).setDuration(500).start();
-        heroButton.animate().alpha(0f).setDuration(300).start();
-        heroOverview.animate().cancel();
-        heroOverview.setVisibility(heroOverview.getText().length() > 0 ? View.VISIBLE : View.GONE);
-        heroOverview.animate().alpha(0.85f).setDuration(600).start();
-        handler.removeCallbacks(heroAdvance);
-        scheduleAdvance();
-    }
-
-    void exitIdle() {
-        if (!idle) return;
-        idle = false;
-        scroll.animate().cancel();
-        scroll.animate().withLayer().translationY(idleScrollY).alpha(1f).setDuration(450).setInterpolator(EASE)
-                .setUpdateListener(null).withEndAction(this::invalidateGlass).start();
-        heroInfo.animate().withLayer().translationY(idleInfoY).setDuration(450).setInterpolator(EASE).start();
-        heroDots.animate().withLayer().translationY(idleDotsY).setDuration(450).setInterpolator(EASE).start();
-        weatherCard.animate().alpha(weatherAlpha()).setDuration(350).start();
-        switcher.animate().alpha(folderMode ? 0f : clockAlpha()).setDuration(350).start();
-        if (shelfView.isFocused()) {
-            heroButton.animate().alpha(1f).setDuration(300).start();
-            handler.removeCallbacks(heroAdvance);  // browsing by hand: no auto-advance
-        }
-        if (!idleOverviewShown) {
-            heroOverview.animate().alpha(0f).setDuration(200)
-                    .withEndAction(() -> heroOverview.setVisibility(View.GONE)).start();
-        }
-        resetIdle();
-    }
-
     // ---------------------------------------------------------------- weather
 
-    /**
-     * Once a minute: fetch when the forecast is due (every 15 minutes by default), move "Now" on,
-     * and pick up Wi-Fi signal changes.
-     */
-    int tickCount;
     final Runnable weatherTick = new Runnable() {
         @Override public void run() {
             Weather.refresh(MainActivity.this, false, MainActivity.this::updateWeather);
             updateWeather();
-            // Carousel content rotates even if Home stays open for hours (fetches only when stale).
-            if (++tickCount % 5 == 0 && !shelfView.hasFocus()) loadHero();
-            if (!Scenes.isScenesLook(MainActivity.this) && FOLDER_SHUFFLE_WALL_KEY.equals(wallStyle)) {
-                setWallpaper(wallStyle);
-            }
-            if (tickCount % 15 == 0) AirPlayGuard.check(MainActivity.this, false);
+            if (++tickCount % 15 == 0) AirPlayGuard.check(MainActivity.this, false);
             LocalAdb.checkAndRepairPermissionsIfNeeded(MainActivity.this, false);
             updateNet();
             handler.postDelayed(this, 60 * 1000L);
         }
     };
 
-    boolean weatherShown() {
-        return weatherCard != null && weatherCard.getVisibility() == View.VISIBLE && weatherAlpha() > 0.5f;
-    }
-
-    boolean weatherOpen;
-
-    float weatherAlpha() {
-        return folderMode || weatherOpen ? 0f : clockAlpha();
-    }
-
+    /**
+     * Once a minute: fetch when the forecast is due (every 15 minutes by default), move "Now" on,
+     * and pick up Wi-Fi signal changes.
+     */
+    int tickCount;
     /** Shows the cached forecast (hidden when weather is off or nothing has loaded yet). */
     void updateWeather() {
-        if (weatherCard == null) return;
-        Weather.Data d = Weather.enabled(this) ? Weather.cached(this) : null;
-        if (sceneHome != null) {
-            sceneHome.refreshWeatherBtn();
-            if (d != null) {
-                sceneHome.sceneView.setWeather(d.temp + "\u00b0", Weather.describe(this, d.code, d.day), d.code);
-            } else {
-                sceneHome.sceneView.setWeather(null, null, -1);
-            }
+        if (sceneHome == null) return;
+        Weather.Data data = Weather.enabled(this) ? Weather.cached(this) : null;
+        sceneHome.refreshWeatherBtn();
+        if (data != null) {
+            sceneHome.sceneView.setWeather(data.temp + "\u00b0", Weather.describe(this, data.code, data.day), data.code);
+        } else {
+            sceneHome.sceneView.setWeather(null, null, -1);
         }
-        boolean show = d != null && !Scenes.isScenesLook(this);
-        if (!show && weatherCard.isFocused()) focusTop();
-        weatherCard.setVisibility(show ? View.VISIBLE : View.GONE);
-        weatherCard.setData(d);
-        if (show && !weatherCard.isFocused() && launchOverlay == null) weatherCard.setAlpha(weatherAlpha());
     }
 
-    /** The full forecast: a glass panel opening from the weather card in the top-left corner (or top-right weather shortcut in Night Scenes). */
+    /** Opens the full forecast from the Night Scenes weather shortcut. */
     void showWeather() {
         Weather.Data d = Weather.cached(this);
         if (d == null) {
@@ -4473,13 +1982,8 @@ public class MainActivity extends Activity {
             return;
         }
         dropPicker();
-        stopSway(null);
-        if (Scenes.isScenesLook(this) && sceneHome != null && sceneHome.weatherBtn != null
-                && sceneHome.weatherBtn.getVisibility() == View.VISIBLE) {
-            popoverReturn = sceneHome.weatherBtn;
-        } else {
-            popoverReturn = weatherCard;
-        }
+        popoverReturn = sceneHome != null && sceneHome.weatherBtn != null
+                && sceneHome.weatherBtn.getVisibility() == View.VISIBLE ? sceneHome.weatherBtn : null;
         FrameLayout layer = new FrameLayout(this);
         layer.setClickable(true);
         layer.setClipChildren(false);
@@ -4504,8 +2008,7 @@ public class MainActivity extends Activity {
         pickerLayer = layer;
         pickerCells = new ArrayList<>();
         pickerCells.add(panel);
-        weatherOpen = true;
-        weatherCard.animate().alpha(0f).setDuration(150).start();
+
         layer.setAlpha(0f);
         panel.setTranslationY(-dp(10));
         layer.animate().alpha(1f).setDuration(200).start();
@@ -4518,21 +2021,9 @@ public class MainActivity extends Activity {
         });
     }
 
-    // ---------------------------------------------------------------- profiles
-
     List<View> pickerCells = new ArrayList<>();
 
-    /**
-     * tvOS 26 profile switcher (per Apple's UI): a popover under the top-right status area with a
-     * two-column grid of round avatars, names in soft grey, a green check on the current profile,
-     * and a glass "+" Add User. Content stays visible behind it.
-     */
-    int profileAvatarSize;
 
-    /**
-     * The whole Home Screen (artwork, dock, cards, status row) blurred and dimmed behind an overlay:
-     * a quarter-size snapshot taken once when the overlay opens, then blurred off the GPU path.
-     */
     void addBlurredBackdrop(FrameLayout layer, int dim) {
         ImageView iv = new ImageView(this);
         iv.setScaleType(ImageView.ScaleType.FIT_XY);
@@ -4562,107 +2053,14 @@ public class MainActivity extends Activity {
         }
     }
 
-    /**
-     * Full-screen profile switcher (Apple TV "Who's Watching?"): the Home Screen blurred and dimmed
-     * behind, a centred title and a centred row of large avatars with a green check on the current
-     * one, plus Add User.
-     */
-    void showProfilePicker(boolean onWake) {
-        dropPicker();
-        popoverReturn = onWake ? null : (Scenes.isScenesLook(this) && sceneHome != null ? sceneHome.whoBar : avatarView);
-        stopSway(null);
-        FrameLayout layer = new FrameLayout(this);
-        layer.setClickable(true);
-        layer.setClipChildren(false);
-        addBlurredBackdrop(layer, 0xB3000000);
-
-        LinearLayout col = new LinearLayout(this);
-        col.setOrientation(LinearLayout.VERTICAL);
-        col.setGravity(Gravity.CENTER_HORIZONTAL);
-        col.setClipChildren(false);
-        col.setClipToPadding(false);
-        TextView title = text(30, Ui.font(this, "display"), 1f);
-        title.setText(onWake
-                ? I18n.s(this, "Who\u2019s Watching?", "Kim İzliyor?")
-                : I18n.s(this, "Switch Profile", "Profil Değiştir"));
-        title.setLetterSpacing(-0.02f);
-        LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        tlp.bottomMargin = dp(34);
-        col.addView(title, tlp);
-
-        LinearLayout row = new LinearLayout(this);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        row.setGravity(Gravity.CENTER);
-        row.setClipChildren(false);
-        row.setClipToPadding(false);
-        profileAvatarSize = dp(120);
-        List<Profiles.Profile> ps = Profiles.list(this);
-        String cur = Profiles.current(this).id;
-        List<View> cells = new ArrayList<>();
-        for (Profiles.Profile p : ps) {
-            View cell = profileCell(Profiles.avatar(this, p, profileAvatarSize), I18n.profileName(this, p.name), false, p.id.equals(cur));
-            cell.setTag(p.id);
-            cell.setOnClickListener(v -> {
-                switchProfile(p.id);
-                popoverReturn = null;
-                closeProfilePicker();
-            });
-            // Long-press OK (like the Menu key): Change Emoji, Rename, Change Colour, Delete.
-            cell.setOnLongClickListener(v -> {
-                profileMenu(v);
-                return true;
-            });
-            cells.add(cell);
-        }
-        if (Profiles.canAdd(this)) {
-            View add = profileCell(null, I18n.s(this, "Add User", "Kullanıcı Ekle"), true, false);
-            add.setOnClickListener(v -> askName(I18n.s(this, "New Profile", "Yeni Profil"), "", name -> {
-                if (Profiles.add(this, name) != null) {
-                    refreshAvatar();
-                    showProfilePicker(false);
-                }
-            }));
-            cells.add(add);
-        }
-        // Each cell is as wide as its circle grown on focus plus room for the name, so they never overlap.
-        for (View c : cells) {
-            LinearLayout.LayoutParams clp = new LinearLayout.LayoutParams(profileAvatarSize + dp(44), ViewGroup.LayoutParams.WRAP_CONTENT);
-            clp.leftMargin = clp.rightMargin = dp(10);
-            row.addView(c, clp);
-        }
-        profileAvatarSize = 0;
-        col.addView(row);
-        pickerCells = cells;
-        layer.addView(col, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.CENTER));
-
-        root.addView(layer, match());
-        pickerLayer = layer;
-        layer.setAlpha(0f);
-        col.setScaleX(0.96f);
-        col.setScaleY(0.96f);
-        layer.animate().alpha(1f).setDuration(onWake ? 380 : 260).withEndAction(() -> hideUnderOverlay(layer)).start();
-        col.animate().scaleX(1f).scaleY(1f).setDuration(onWake ? 420 : 300).setInterpolator(EASE).start();
-        View focus = cells.isEmpty() ? null : cells.get(0);
-        for (View c : cells) if (cur.equals(c.getTag())) focus = c;
-        if (focus != null) {
-            focus.requestFocus();
-            // Rebuilt from a dialog (Add User / Rename): take focus once the dialog has gone.
-            View f = focus;
-            handler.postDelayed(() -> {
-                if (pickerLayer == layer && !pickerCells.contains(getCurrentFocus())) f.requestFocus();
-            }, 350);
-        }
-    }
-
     // ---------------------------------------------------------------- Search
 
     /** Opens search over the blurred Home Screen; q (adb hook, voice) starts with that text. */
     void showSearch(String q) {
         dropPicker();
         closeMenu();
-        stopSway(null);
-        popoverReturn = searchButton;
+        popoverReturn = getCurrentFocus();
+        if (popoverReturn == null && sceneHome != null) popoverReturn = sceneHome.moonBtn;
         search = new SearchPanel(this);
         pickerLayer = search.layer;
         pickerCells = new ArrayList<>();
@@ -4804,18 +2202,7 @@ public class MainActivity extends Activity {
         super.onRequestPermissionsResult(req, perms, results);
         if (req == SearchPanel.REQ_MIC && search != null) {
             search.onMicPermission(results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED);
-        } else if (req == 901) {
-            if (sceneHome != null && Scenes.isScenesLook(this)) {
-                sceneHome.refreshKeepWatching();
-            } else {
-                loadHero();
-            }
         }
-    }
-
-    boolean statusFocused() {
-        View f = getCurrentFocus();
-        return f != null && (f == ccButton || f == avatarView || f == refreshButton || f == searchButton);
     }
 
     /** Directional focus inside a popover: nearest cell whose centre lies in that direction. */
@@ -4857,243 +2244,22 @@ public class MainActivity extends Activity {
         return true;
     }
 
-    /** Avatar (or glass +) with the name below; the current profile gets a green check. */
-    View profileCell(Bitmap avatar, String name, boolean isAdd, boolean current) {
-        int big = profileAvatarSize;
-        LinearLayout cell = new LinearLayout(this);
-        cell.setOrientation(LinearLayout.VERTICAL);
-        cell.setGravity(Gravity.CENTER_HORIZONTAL);
-        cell.setFocusable(true);
-        cell.setClickable(true);
-        cell.setClipChildren(false);
-        int size = big > 0 ? big : dp(80);
-        FrameLayout picBox = new FrameLayout(this);
-        picBox.setClipChildren(false);
-        View pic;
-        if (isAdd) {
-            TextView plus = text(34, Ui.font(this, "regular"), 0.9f);
-            plus.setText("+");
-            plus.setGravity(Gravity.CENTER);
-            plus.setShadowLayer(0, 0, 0, 0);
-            LiquidGlass g = new LiquidGlass(size / 2f, 0x1AFFFFFF, glassSource, screenW, screenH, unit).adaptive();
-            g.lens = dp(7);
-            plus.setBackground(g);
-            pic = plus;
-        } else {
-            ImageView iv = new ImageView(this);
-            iv.setImageBitmap(avatar);
-            pic = iv;
-            pic.setOutlineProvider(new ViewOutlineProvider() {
-                @Override public void getOutline(View v, Outline o) {
-                    o.setOval(0, 0, v.getWidth(), v.getHeight());
-                }
-            });
-            pic.setElevation(dp(3));
-        }
-        picBox.addView(pic, new FrameLayout.LayoutParams(size, size));
-        if (current) {
-            int cs = dp(22);
-            ImageView check = new ImageView(this);
-            check.setImageBitmap(checkBadge(cs));
-            check.setElevation(dp(5));
-            FrameLayout.LayoutParams clp = new FrameLayout.LayoutParams(cs, cs, Gravity.TOP | Gravity.END);
-            clp.topMargin = -dp(2);
-            clp.rightMargin = -dp(2);
-            picBox.addView(check, clp);
-        }
-        cell.addView(picBox, new LinearLayout.LayoutParams(size, size));
-        TextView label = text(big > 0 ? 15 : 12.5f, Ui.font(this, big > 0 ? "medium" : "regular"), 0.7f);
-        label.setText(name);
-        label.setGravity(Gravity.CENTER);
-        label.setSingleLine(true);
-        label.setEllipsize(TextUtils.TruncateAt.END);
-        LinearLayout.LayoutParams llp = new LinearLayout.LayoutParams(size + dp(16), ViewGroup.LayoutParams.WRAP_CONTENT);
-        llp.topMargin = dp(8);
-        cell.addView(label, llp);
-        cell.setOnFocusChangeListener((v, has) -> {
-            picBox.animate().scaleX(has ? 1.12f : 1f).scaleY(has ? 1.12f : 1f).translationZ(has ? dp(12) : 0)
-                    .setDuration(220).setInterpolator(LIFT).start();
-            label.animate().alpha(has ? 1f : 0.7f).translationY(has ? dp(5) : 0).setDuration(200).start();
-        });
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        lp.leftMargin = dp(8);
-        lp.rightMargin = dp(8);
-        cell.setLayoutParams(lp);
-        return cell;
-    }
-
-    /** Green circle with a white check (current profile). */
-    Bitmap checkBadge(int s) {
-        Bitmap b = Bitmap.createBitmap(s, s, Bitmap.Config.ARGB_8888);
-        Canvas c = new Canvas(b);
-        Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
-        p.setColor(0xFF34C759);
-        c.drawCircle(s / 2f, s / 2f, s / 2f, p);
-        p.setColor(Color.WHITE);
-        p.setStyle(Paint.Style.STROKE);
-        p.setStrokeWidth(s * 0.11f);
-        p.setStrokeCap(Paint.Cap.ROUND);
-        p.setStrokeJoin(Paint.Join.ROUND);
-        android.graphics.Path path = new android.graphics.Path();
-        path.moveTo(s * 0.28f, s * 0.52f);
-        path.lineTo(s * 0.44f, s * 0.67f);
-        path.lineTo(s * 0.73f, s * 0.35f);
-        c.drawPath(path, p);
-        return b;
-    }
-
+    /** View to restore focus to after closing a popover. */
     View popoverReturn;
 
-    void closeProfilePicker() {
+    void closePicker() {
         restoreUnderOverlay();
         if (pickerLayer == null) return;
-        FrameLayout l = pickerLayer;
+        FrameLayout layer = pickerLayer;
         pickerLayer = null;
-        l.animate().alpha(0f).setDuration(220).withEndAction(() -> root.removeView(l)).start();
-        weatherOpen = false;
-        weatherCard.animate().alpha(weatherAlpha()).setDuration(220).start();
+        layer.animate().alpha(0f).setDuration(220).withEndAction(() -> root.removeView(layer)).start();
+
         if (popoverReturn != null && popoverReturn.isAttachedToWindow()) popoverReturn.requestFocus();
         else goTop();
         popoverReturn = null;
     }
 
-    /** Menu on a profile: Rename, Change Colour, Delete. */
-    void profileMenu(View cell) {
-        if (cell == null || !(cell.getTag() instanceof String)) return;
-        String id = (String) cell.getTag();
-        Profiles.Profile p = null;
-        for (Profiles.Profile x : Profiles.list(this)) if (x.id.equals(id)) p = x;
-        if (p == null) return;
-        Profiles.Profile prof = p;
-        List<String> l = new ArrayList<>();
-        List<Runnable> act = new ArrayList<>();
-        l.add(I18n.s(this, "Rename", "Yeniden Adlandır"));
-        act.add(() -> askName(I18n.s(this, "Rename Profile", "Profili Yeniden Adlandır"), prof.name, name -> {
-            prof.name = name;
-            Profiles.update(this, prof);
-            refreshAvatar();
-            showProfilePicker(false);
-        }));
-        l.add(I18n.s(this, "Change Emoji", "Emojiyi Değiştir"));
-        act.add(() -> {
-            List<String> free = Profiles.freeEmojis(this, prof.id);
-            String[] items = new String[free.size()];
-            int cur = -1;
-            for (int i = 0; i < free.size(); i++) {
-                items[i] = free.get(i) + "   " + Profiles.emojiName(free.get(i));
-                if (free.get(i).equals(prof.emoji)) cur = i;
-            }
-            new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle(I18n.s(this, "Emoji", "Эмодзи"))
-                    .setSingleChoiceItems(items, cur, (d, w) -> {
-                        prof.emoji = free.get(w);
-                        Profiles.update(this, prof);
-                        refreshAvatar();
-                        d.dismiss();
-                        showProfilePicker(false);
-                    }).show();
-        });
-        l.add(I18n.s(this, "Change Colour", "Rengi Değiştir"));
-        act.add(() -> new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(I18n.s(this, "Colour", "Renk"))
-                .setSingleChoiceItems(Profiles.COLOR_NAMES, prof.color, (d, w) -> {
-                    prof.color = w;
-                    Profiles.update(this, prof);
-                    refreshAvatar();
-                    d.dismiss();
-                    showProfilePicker(false);
-                }).show());
-        int del = -1;
-        if (Profiles.list(this).size() > 1) {
-            del = l.size();
-            l.add(I18n.s(this, "Delete", "Sil"));
-            act.add(() -> new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                    .setTitle(I18n.s(this, "Delete profile", "Удалить профиль") + " «" + prof.name + "»?")
-                    .setMessage(I18n.s(this, "Its layout and Continue Watching list will be removed.", "Düzeni ve İzlemeye Devam Et listesi kaldırılacak."))
-                    .setPositiveButton(I18n.s(this, "Delete", "Sil"), (d, w) -> {
-                        boolean wasCurrent = Profiles.current(this).id.equals(prof.id);
-                        Profiles.delete(this, prof.id);
-                        if (wasCurrent) switchProfile(Profiles.current(this).id);
-                        else refreshAvatar();
-                        showProfilePicker(false);
-                    })
-                    .setNegativeButton(I18n.s(this, "Cancel", "İptal"), null).show());
-        }
-        showMenu(cell, I18n.profileName(this, prof.name), l, act, del);
-    }
-
-    interface NameResult {
-        void ok(String name);
-    }
-
-    void askName(String title, String current, NameResult r) {
-        android.widget.EditText in = new android.widget.EditText(this);
-        in.setSingleLine(true);
-        in.setText(current);
-        in.setSelection(in.getText().length());
-        FrameLayout box = new FrameLayout(this);
-        int pad = dp(14);
-        box.setPadding(pad, pad / 2, pad, 0);
-        box.addView(in);
-        AlertDialog dlg = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(title)
-                .setView(box)
-                .setPositiveButton(I18n.s(this, "Save", "Kaydet"), (d, w) -> {
-                    String n = in.getText().toString().trim();
-                    if (!n.isEmpty()) r.ok(n.length() > 20 ? n.substring(0, 20) : n);
-                })
-                .setNegativeButton(I18n.s(this, "Cancel", "İptal"), null)
-                .show();
-        Ui.setupDialogEditText(in, dlg);
-        in.requestFocus();
-    }
-
-    void refreshAvatar() {
-        boolean multi = Profiles.list(this).size() > 1;
-        if (avatarView != null) {
-            avatarView.setImageBitmap(Profiles.avatar(this, Profiles.current(this), avatarSize));
-            avatarView.setVisibility(View.GONE);
-        }
-        if (sceneHome != null) sceneHome.refreshWhoBar();
-    }
-
-    /** Legacy profile-switch callback; single-user builds keep the active profile unchanged. */
-    void switchProfile(String id) {
-        if (id.equals(Profiles.current(this).id) && prefs != null) {
-            refreshAvatar();
-            return;
-        }
-        Profiles.setCurrent(this, id);
-        prefs = Profiles.homePrefs(this);
-        refreshAvatar();
-        wallStyle = prefs.getString("wallpaper", "aurora");
-        setWallpaper(wallStyle);
-        folderMode = false;
-        moveIndex = -1;
-        String mode = prefs.getString("shelf_mode", "suggest");
-        shelfMode = mode;
-        styleTabs();
-        heroItems = new ArrayList<>();
-        heroIndex = 0;
-        heroVersion = -1;
-        heroFront.setImageDrawable(null);
-        heroBack.setImageDrawable(null);
-        setHeroShown(false);
-        loadApps();
-        buildGrid();
-        shelfEntry = null;
-        if (Scenes.isScenesLook(this) && sceneHome != null) {
-            sceneHome.refreshWhoBar();
-            sceneHome.refreshKeepWatching();
-            sceneHome.rebuildDock();
-            sceneHome.focusDock(0);
-        } else {
-            focusIndex(0);
-            loadHero();
-        }
-    }
-
-    // ---------------------------------------------------------------- tvOS context menu
+    // ---------------------------------------------------------------- context menu
 
     FrameLayout menuLayer;
     View menuReturnFocus;
@@ -5105,7 +2271,6 @@ public class MainActivity extends Activity {
     void showMenu(View anchor, String title, List<String> labels, List<Runnable> actions, int destructive) {
         closeMenu();
         menuReturnFocus = anchor;
-        stopSway(null);
         menuLayer = new FrameLayout(this);
         menuLayer.setBackgroundColor(0x00000000);
         menuLayer.setClickable(true);
@@ -5216,101 +2381,6 @@ public class MainActivity extends Activity {
             startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         } catch (ActivityNotFoundException e) {
             toast("Not available on this TV");
-        }
-    }
-
-    // ---------------------------------------------------------------- move mode
-
-    void startMove(int index) {
-        stopSway(null);
-        moveIndex = index;
-        focusIndex(index);
-        startWiggle(tiles.get(index));
-        toast("Use arrows to move \u00b7 OK when done");
-    }
-
-    void moveTo(int to) {
-        int cols = Math.max(1, currentDockCols);
-        int last = apps.size() - 1;  // the folder tile always stays at the end
-        if (to > last && moveIndex / cols < last / cols) to = last;
-        if (to < 0 || to > last || to == moveIndex) return;
-        Map<String, int[]> before = tilePositions();
-        AppEntry e = apps.remove(moveIndex);
-        apps.add(to, e);
-        moveIndex = to;
-        saveOrder();
-        buildGrid();
-        focusIndex(to);
-        startWiggle(tiles.get(to));
-        slideFrom(before);
-    }
-
-    /** Window position of every visible card, keyed by app, for the move animation. */
-    Map<String, int[]> tilePositions() {
-        Map<String, int[]> m = new LinkedHashMap<>();
-        for (int i = 0; i < tiles.size(); i++) {
-            int[] loc = new int[2];
-            tiles.get(i).getLocationInWindow(loc);
-            m.put(shown.get(i).key, loc);
-        }
-        return m;
-    }
-
-    /**
-     * tvOS-style reflow: after the grid is rebuilt in its new order, every card starts at its old
-     * on-screen position and glides to its new slot, so neighbours visibly make room.
-     */
-    void slideFrom(Map<String, int[]> before) {
-        content.getViewTreeObserver().addOnPreDrawListener(new android.view.ViewTreeObserver.OnPreDrawListener() {
-            @Override public boolean onPreDraw() {
-                content.getViewTreeObserver().removeOnPreDrawListener(this);
-                for (int i = 0; i < tiles.size(); i++) {
-                    int[] old = before.get(shown.get(i).key);
-                    if (old == null) continue;
-                    View t = tiles.get(i);
-                    int[] now = new int[2];
-                    t.getLocationInWindow(now);
-                    float dx = old[0] - now[0], dy = old[1] - now[1];
-                    if (dx == 0 && dy == 0) continue;
-                    if (Math.abs(dy) > tileH / 2f && Math.abs(dx) > tileW * 1.5f) {
-                        // Wrapped to another row (end of a row): a slide would streak across the
-                        // whole screen, so settle into the new slot instead, as tvOS does.
-                        View cell = (View) t.getParent();
-                        cell.setAlpha(0f);
-                        cell.setScaleX(0.86f);
-                        cell.setScaleY(0.86f);
-                        cell.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(240).setInterpolator(EASE).start();
-                        continue;
-                    }
-                    t.setTranslationX(dx);
-                    t.setTranslationY(dy);
-                    t.animate().translationX(0).translationY(0).setDuration(260).setInterpolator(EASE).start();
-                }
-                return true;
-            }
-        });
-    }
-
-    void endMove() {
-        stopWiggle();
-        moveIndex = -1;
-    }
-
-    void startWiggle(View v) {
-        stopWiggle();
-        wiggle = ObjectAnimator.ofFloat(v, View.ROTATION, -1.5f, 1.5f);
-        wiggle.setDuration(130);
-        wiggle.setRepeatCount(ValueAnimator.INFINITE);
-        wiggle.setRepeatMode(ValueAnimator.REVERSE);
-        wiggle.start();
-    }
-
-    void stopWiggle() {
-        if (wiggle != null) {
-            wiggle.cancel();
-            Object t = wiggle.getTarget();
-            if (t instanceof View) ((View) t).setRotation(0);
-            wiggle = null;
         }
     }
 

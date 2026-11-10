@@ -49,6 +49,17 @@ jobs:
           echo "$ANDROID_HOME/platform-tools" >> "$GITHUB_PATH"
           echo "$ANDROID_HOME/build-tools/34.0.0" >> "$GITHUB_PATH"
 
+      - name: Load shared build version defaults
+        shell: bash
+        run: |
+          set -euo pipefail
+          source ./version.properties
+          echo "VERSION_CODE=${VERSION_CODE:-$DEFAULT_VERSION_CODE}" >> "$GITHUB_ENV"
+          echo "VERSION_NAME=${VERSION_NAME:-$DEFAULT_VERSION_NAME}" >> "$GITHUB_ENV"
+
+      - name: Test single-user migration CI contract
+        run: python3 tests/test_single_user_migration_contract.py
+
       - name: Test CleanYourTV core package protection
         run: python3 tests/test_clean_your_tv_protection.py
       - name: Test artwork memory and Settings cleanup
@@ -64,6 +75,14 @@ jobs:
 
       - name: Test grouped Settings navigation
         run: python3 tests/test_settings_navigation.py
+
+      - name: Test single-user migration data
+        run: |
+          set -euo pipefail
+          test_dir="$RUNNER_TEMP/tvos-single-user-migration"
+          mkdir -p "$test_dir"
+          javac --release 11 -d "$test_dir" src/com/techgenius/tvoslauncher/SingleUserMigration.java tests/SingleUserMigrationTest.java
+          java -cp "$test_dir" com.techgenius.tvoslauncher.SingleUserMigrationTest
 
       - name: Test OTA version comparison
         run: |
@@ -86,21 +105,113 @@ jobs:
           javac --release 11 -cp "$ANDROID_HOME/platforms/android-34/android.jar" -d /tmp/tvos-i18n-tests src/com/techgenius/tvoslauncher/I18n.java tests/i18n_stubs/com/techgenius/tvoslauncher/Scenes.java tests/I18nDynamicTranslationTest.java
           java -cp "/tmp/tvos-i18n-tests:$ANDROID_HOME/platforms/android-34/android.jar" com.techgenius.tvoslauncher.I18nDynamicTranslationTest
 
+      - name: Test PowerShell build version contract
+        shell: pwsh
+        run: ./tests/test_build_contract.ps1
+
       - name: Test cross-platform build contract
         run: python3 tests/test_build_contract.py
 
       - name: Build and sign development APK
         run: bash build.sh
 
-      - name: Verify APK
+      - name: Verify APK package and version
         run: |
+          set -euo pipefail
           "$ANDROID_HOME/build-tools/34.0.0/apksigner" verify --verbose build/tvos-home.apk
-          "$ANDROID_HOME/build-tools/34.0.0/aapt" dump badging build/tvos-home.apk | head -n 5
+          "$ANDROID_HOME/build-tools/34.0.0/aapt" dump badging build/tvos-home.apk | tee /tmp/tvos-badging.txt
+          grep -F "package: name='com.gonscharovd.tvoslauncher' versionCode='$VERSION_CODE' versionName='$VERSION_NAME'" /tmp/tvos-badging.txt
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: testOS-ci-debug
+          path: build/tvos-home.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  build-windows:
+    runs-on: windows-latest
+    env:
+      ASSET_OPTIMIZE: "1"
+      ASSET_PROFILE: "sber"
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install asset optimization dependencies
+        run: python -m pip install --disable-pip-version-check Pillow fonttools
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
+
+      - name: Install Android SDK packages
+        shell: pwsh
+        run: |
+          $sdkManager = (Get-Command sdkmanager.bat -ErrorAction Stop).Source
+          & $sdkManager "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Test single-user migration data
+        shell: pwsh
+        run: |
+          $testDir = Join-Path $env:RUNNER_TEMP "tvos-single-user-migration"
+          New-Item -ItemType Directory -Force -Path $testDir | Out-Null
+          & javac --release 11 -d $testDir src/com/techgenius/tvoslauncher/SingleUserMigration.java tests/SingleUserMigrationTest.java
+          if ($LASTEXITCODE -ne 0) { throw "Single-user migration test compilation failed" }
+          & java -cp $testDir com.techgenius.tvoslauncher.SingleUserMigrationTest
+          if ($LASTEXITCODE -ne 0) { throw "Single-user migration data test failed" }
+
+      - name: Test single-user migration CI contract
+        shell: pwsh
+        run: python tests/test_single_user_migration_contract.py
+
+      - name: Test legacy data retention and profile rollback backup
+        shell: pwsh
+        run: python tests/test_settings_backup_safety.py
+
+      - name: Test PowerShell build version contract
+        shell: pwsh
+        run: ./tests/test_build_contract.ps1
+
+      - name: Load shared build version defaults
+        shell: pwsh
+        run: |
+          . ./tools/version.ps1
+          $version = Get-TestOSBuildVersion -ConfigPath ./version.properties
+          "VERSION_CODE=$($version.VersionCode)" >> $env:GITHUB_ENV
+          "VERSION_NAME=$($version.VersionName)" >> $env:GITHUB_ENV
+
+      - name: Build Windows APK
+        shell: pwsh
+        run: ./build.ps1
+
+      - name: Verify Windows APK package and version
+        shell: pwsh
+        run: |
+          & "$env:ANDROID_HOME\build-tools\34.0.0\apksigner.bat" verify --verbose build\tvos-home.apk
+          $badging = & "$env:ANDROID_HOME\build-tools\34.0.0\aapt.exe" dump badging build\tvos-home.apk
+          $expected = "package: name='com.gonscharovd.tvoslauncher' versionCode='$env:VERSION_CODE' versionName='$env:VERSION_NAME'"
+          if (-not ($badging | Select-String -SimpleMatch $expected)) {
+              throw "APK package/version does not match shared version contract: $expected"
+          }
+
+      - name: Upload Windows APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: testOS-ci-debug-windows
           path: build/tvos-home.apk
           if-no-files-found: error
           retention-days: 14

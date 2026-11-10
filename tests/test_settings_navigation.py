@@ -82,15 +82,19 @@ missing = sorted(literal_settings_strings - dictionary)
 assert not missing, "Settings strings missing Russian translations: " + repr(missing)
 
 
-# Single-user and Russian-only build: obsolete pages and cloud catalogue code are absent.
-profiles = (ROOT / "Profiles.java").read_text(encoding="utf-8")
+# Single-user and Russian-only build: obsolete profile UI and media catalogue code are absent.
 setup = (ROOT / "SetupActivity.java").read_text(encoding="utf-8")
+main = (ROOT / "MainActivity.java").read_text(encoding="utf-8")
+scenes = (ROOT / "Scenes.java").read_text(encoding="utf-8")
 suggestions = (ROOT / "Suggestions.java").read_text(encoding="utf-8")
 search = (ROOT / "Search.java").read_text(encoding="utf-8")
 search_panel = (ROOT / "SearchPanel.java").read_text(encoding="utf-8")
-assert "static final int MAX = 1;" in profiles
-assert "static boolean canAdd(Context c) { return false; }" in profiles
-assert "static boolean askOnWake(Context c) { return false; }" in profiles
+assert not (ROOT / "Profiles.java").exists(), "Obsolete multi-profile model remains"
+assert "Profiles." not in main and "Profiles." not in scenes and "Profiles." not in settings
+assert "showProfilePicker" not in main and "profileMenu(" not in main
+assert "promptAddPerson" not in settings
+assert "SingleUserPrefs.userName(c)" in scenes
+assert "SingleUserPrefs.homePrefs(this)" in main
 assert "steps.add(this::profile)" not in setup
 assert "void profile()" not in setup and "void homeContent()" not in setup
 assert 'by.setText("by gonscharovd")' in setup
@@ -103,6 +107,17 @@ for removed in ("Cinemeta", "stremio", "nuvio"):
 assert "TURKISH" not in search_panel and "HINDI" not in search_panel
 assert "RUSSIAN" in search_panel and "РУС" in search_panel and "ENG" in search_panel
 assert not (Path("res/values-tr") / "strings.xml").exists()
+
+# Classic-only wallpaper assets migrate into Night Scenes without overwriting existing user assets.
+scenes = (ROOT / "Scenes.java").read_text(encoding="utf-8")
+settings = (ROOT / "SettingsActivity.java").read_text(encoding="utf-8")
+assert "migrateClassicCustomAssets(c)" in scenes
+assert "night_gallery_classic_custom_wallpaper_v1" in scenes
+assert "night_gallery_classic_folder_shuffle_v1" in scenes
+assert "hasCustomSceneWallpaper(c, slot)" in scenes
+assert "setCustomSceneWallpaper(c, freeSlot, legacy)" in scenes
+assert "setWallpaperShuffleFolder(c, CustomMedia.SCOPE_SCENE, legacyFolder)" in scenes
+assert "subMenuAmbientThemes" not in settings and "customClassicPhotoRow" not in settings
 
 print("Simplified settings navigation, Russian-only keyboard, single-user mode and removed media integrations passed.")
 
@@ -131,3 +146,11 @@ setup = (ROOT / "SetupActivity.java").read_text(encoding="utf-8")
 assert "LOOK_CLASSIC" not in setup
 assert 'option(l, tr("Classic"' not in setup
 assert "Classic Backgrounds" not in setup
+assert "lookSubStep" not in setup
+assert "classicPhotoRow" not in settings
+assert "FOLDER_KEY" not in search_panel
+assert "buildAppBannerFromCustomIcon" in main
+assert "buildClassicBannerFromCustomIcon" not in main
+assert 'section(tr("PHOTOS & GRADIENTS", "ФОТО И ГРАДИЕНТЫ"));' in settings
+assert "MainActivity.FOLDER_KEY" not in search_panel
+assert "buildAppBannerFromCustomIcon" in main and "buildClassicBannerFromCustomIcon" not in main

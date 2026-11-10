@@ -23,6 +23,7 @@ public final class I18n {
         add("Top shelf, 6-column app grid and custom wallpapers", "Верхняя полка, сетка приложений на 6 столбцов и собственные обои");
         add("Included in rotation", "Включено в ротацию");
         add("Classic photo", "Классическая фотография");
+        add("PHOTOS & GRADIENTS", "ФОТО И ГРАДИЕНТЫ");
         add("Classic look", "Классический вид");
         add("Your Home Screen", "Ваш главный экран");
         add("What appears at the top of Home, behind your apps. Choose any, all or none.", "То, что отображается в верхней части главного экрана за приложениями. Выберите любой вариант, все или ни одного.");
@@ -726,6 +727,7 @@ public final class I18n {
         add("Home settings", "Настройки главного экрана");
         add("Home Settings", "Настройки главного экрана");
         add("Language, weather, scenes, apps and people", "Язык, погода, сцены, приложения и профили");
+        add("Language, weather, scenes, apps and home-screen options", "Язык, погода, сцены, приложения и настройки главного экрана");
         add("TV settings", "Настройки ТВ");
         add("TV Settings", "Настройки ТВ");
         add("Wi-Fi, picture, sound and the rest of the TV", "Wi-Fi, изображение, звук и другие настройки ТВ");
@@ -2225,12 +2227,4 @@ public final class I18n {
         return new SimpleDateFormat("EEEE d MMMM", Locale.forLanguageTag("ru-RU")).format(date);
     }
 
-    public static String profileName(Context c, String name) {
-        if (name == null) return "";
-        if (name.equals("Default")) return "По умолчанию";
-        if (name.startsWith("Person ")) return "Профиль " + name.substring("Person ".length());
-        if (name.startsWith("Profile ")) return "Профиль " + name.substring("Profile ".length());
-        if (name.equals("Kids")) return "Детский профиль";
-        return name;
-    }
 }

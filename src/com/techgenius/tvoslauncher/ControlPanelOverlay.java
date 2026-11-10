@@ -71,7 +71,7 @@ public final class ControlPanelOverlay {
         if (MainActivity.activeInstance != null
                 && MainActivity.activeInstance.resumed
                 && MainActivity.activeInstance.pickerLayer != null) {
-            MainActivity.activeInstance.closeProfilePicker();
+            MainActivity.activeInstance.closePicker();
             return;
         }
         show(c);
@@ -119,7 +119,7 @@ public final class ControlPanelOverlay {
     private static void dismissAll(Context c) {
         dismiss();
         if (c instanceof MainActivity) {
-            ((MainActivity) c).closeProfilePicker();
+            ((MainActivity) c).closePicker();
         }
     }
 
