@@ -71,14 +71,13 @@ final class HomeAppDetector {
             if (currentHomeKnown && currentHomePackage.equals(pkg)) {
                 return PackageProtection.PROTECTED_CURRENT_HOME;
             }
-            // If candidate discovery failed or returned no corroborating candidates, do not
-            // infer that an arbitrary package is not HOME-capable.
+            // Never disable another HOME candidate automatically. Even when the selected HOME
+            // is known, alternate HOME apps remain recovery paths and require a separate policy.
             if (!candidatesKnown || candidates.isEmpty()) return PackageProtection.UNKNOWN;
-            if (currentHomeKnown) return PackageProtection.SAFE;
             for (Candidate candidate : candidates) {
                 if (candidate.packageName.equals(pkg)) return PackageProtection.UNKNOWN;
             }
-            return PackageProtection.SAFE;
+            return currentHomeKnown ? PackageProtection.SAFE : PackageProtection.UNKNOWN;
         }
 
         /**
