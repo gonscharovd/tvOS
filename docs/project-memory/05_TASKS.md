@@ -11,10 +11,10 @@
 | TOS-003 | Синхронизировать README/features/architecture/install с поведением PR #14 | P1 | REVIEW | TOS-001; изменения внесены в PR #15, ожидают review |
 | TOS-004 | Удалить hard-coded путь JDK пользователя из build.ps1 и проверить Windows build | P2 | REVIEW | Реализовано; CI #317 Linux/Windows success; ожидает review PR #14 |
 | TOS-005 | Проверить HOME Activity component command по итоговому APK manifest и обновить install docs | P2 | BLOCKED | APK manifest подтверждён и docs обновлены; остаётся проверка PackageManager на ТВ |
-| TOS-006 | Выполнить runtime regression на Sber SDX-50U4123B для PR #14 | P1 | BLOCKED | TOS-009 first-launch cleanup; read-only device inventory; verified release signing compatibility |
+| TOS-006 | Выполнить runtime regression на Sber SDX-50U4123B для PR #14 | P1 | BLOCKED | TOS-009 CI/review; read-only device inventory; verified release signing compatibility |
 | TOS-007 | Подтвердить сертификат установленного APK и OTA in-place update после PR #14 | P1 | BLOCKED | TOS-006, release signing |
 | TOS-008 | Подключить SingleUserMigrationTest.java к CI workflow | P2 | REVIEW | TOS-001; Linux/Windows CI #322 success |
-| TOS-009 | Сделать first-launch cleanup безопасным для legacy data до runtime migration | P1 | READY | TOS-006; аудит cleanupRemovedFeatureData и backup/rollback strategy |
+| TOS-009 | Сделать first-launch cleanup безопасным для legacy data до runtime migration | P1 | IN PROGRESS | Реализация в PR #14; полный CI и review ещё ожидаются |
 
 ## Детализация
 
@@ -61,18 +61,22 @@
 - **Подпись:** release workflow проверяет SHA-256 fingerprint `5dbf8846d9bb76a764928da8c8a833a837b44ba00f4a7c0b60dc77490319b10a`. CI preview APK использует runner debug key и запрещён для in-place install. Fingerprint installed APK пока неизвестен.
 - **Release:** latest stable GitHub Release `v2.1.73` / code 88; PR development target `2.1.74` / code 89. Не запускать latest OTA во время runtime test; PR #14 не опубликован.
 - **Migration:** `SingleUserPrefs.migrateIfNeeded()` выбирает текущий профиль, переносит его в `home`, сохраняет прежние registry values в legacy keys и при переносе non-p1 сохраняет непустой старый `home` в `home_legacy_p1`. Старые `home_<profile>` файлы не удаляются.
-- **Блокер данных:** до вызова `SingleUserPrefs.homePrefs()` `MainActivity.cleanupRemovedFeatureData()` запускается при первом старте и удаляет старые prefs `suggestions`, `nuvio_cloud`, `stremio_cloud`, `watch_cloud`, ключи shelf из `home`, `cache/tmdb` и `files/continue.json`. Settings JSON backup не включает `profiles` или CleanYourTV backup. Это отдельная first-launch очистка, не покрытая migration JVM test; runtime test нельзя считать non-destructive до решения TOS-009.
-- **Rollback caveat:** migration меняет `profiles.list/current` на single-user `p1`, сохраняя старые значения в новых `legacy_*` keys. Предыдущая версия приложения может не читать эти новые keys; при downgrade прежний selected profile может не восстановиться автоматически. Это статический риск, требует отдельного проверяемого rollback path до runtime test.
+- **TOS-009 implementation:** вызов и методы `cleanupRemovedFeatureData()` / `deleteLegacyFeatureFiles()` удалены из `MainActivity`. Первый запуск больше не очищает prefs `suggestions`, `nuvio_cloud`, `stremio_cloud`, `watch_cloud`; shelf keys `shelf_mode`, `cw_enabled`, `shelf`, `top_shelf_tab`; каталог `cache/tmdb` и файл `files/continue.json`.
+- **Profile rollback:** `SingleUserMigration.java` не менялся. `SingleUserPrefs` сохраняет исходные `profiles.list/current` и `ask_on_wake`, добавляя только новые migration metadata keys; старый APK сможет читать прежний выбор. Settings JSON backup включает `profiles` и для уже мигрированных установок экспортирует legacy values как `list/current`; импорт выполняется в новой версии до downgrade.
 - **Rollback gate:** не удалять приложение; сохранить stock `ru.sberdevices.starlauncher` включённым; не менять Device Owner; до установки подтвердить package/version/cert и наличие release-signed rollback APK. Возврат HOME на stock должен опираться на фактически разрешённый системный HOME component, не на догадку.
 - **Статус:** BLOCKED — план готов, device/runtime действий не выполнялось.
 - **Связанные файлы:** `MainActivity.java`, `SingleUserPrefs.java`, `SingleUserMigration.java`, `AppUpdater.java`, `CustomMedia.java`, `CleanYourTv.java`, `AndroidManifest.xml`, `release.yml`.
 
 ### TOS-009 — First-launch legacy cleanup safety
 
-- **Описание:** аудитировать `MainActivity.cleanupRemovedFeatureData()` и отделить удаление retired-feature caches/preferences от single-user migration; сохранить legacy data либо обеспечить проверяемый экспорт/rollback до необратимой очистки.
-- **Подтверждённое поведение:** очистка запускается до основной инициализации `homePrefs`, имеет one-time marker `recommendations_news_cloud_removed_v1`, очищает четыре prefs-файла, удаляет четыре shelf keys и два filesystem paths.
-- **Критерии:** решение PO зафиксировано; данные, не входящие в migration target, не теряются без подтверждённого backup; regression contract покрывает cleanup; migration helper behavior не меняется без отдельного согласования.
-- **Статус:** READY; требуется выполнить до TOS-006 runtime update.
+- **Описание:** не допускать destructive cleanup retired-feature данных при первом запуске PR #14 и обеспечить обратимость single-user profile registry.
+- **Изменения в PR #14:** удалены вызов и методы cleanup; legacy prefs, shelf keys и files/cache больше не затрагиваются кодом первого запуска. `SingleUserMigration.java` оставлен без изменений. `SingleUserPrefs` сохраняет исходные `profiles.list/current` и `ask_on_wake`; добавляет только legacy snapshot и single-user metadata.
+- **Rollback export:** `CustomMedia` включает `profiles` в settings backup; если legacy snapshot существует, экспортируемые `list/current` берутся из него. Импорт выполняется merge-based, без очистки prefs. Для rollback: сохранить backup после обновления; при необходимости открыть Settings → Restore и импортировать его в PR #14 до downgrade; затем устанавливать старый APK только при совпадающем сертификате и допустимом downgrade. Кодовый путь ещё не проверен физически.
+- **Ограничения backup:** CleanYourTV state, ADB/security state и custom media files остаются вне общего JSON backup, но TOS-009 их не удаляет. Android OS может очищать cache независимо от приложения.
+- **Regression:** обновлены `tests/test_settings_backup_safety.py` и `tests/test_single_user_migration_contract.py`; backup safety test подключён к Windows job, Linux уже запускал его.
+- **Критерии:** полный CI для текущего head зелёный; code review; никакого удаления legacy data; helper `SingleUserMigration` без изменений.
+- **Статус:** IN PROGRESS — изменения закоммичены в PR #14, CI/review ожидаются.
+
 ### TOS-008 — Single-user migration CI coverage
 - **Аудит:** `SingleUserMigration.migrate` — чистая Java-функция без Android-зависимостей; `SingleUserMigrationTest.java` — standalone `main` test, поэтому не требуются Android SDK stubs, Robolectric или instrumentation.
 - **Изменения:** `.github/workflows/build-apk.yml` запускает compile/run `SingleUserMigration.java` + `SingleUserMigrationTest.java` через `javac --release 11` и `java` отдельно в Ubuntu и Windows jobs. Добавлен `tests/test_single_user_migration_contract.py`, проверяющий оба CI wiring и сохранность проверок legacy prefs/source immutability.
