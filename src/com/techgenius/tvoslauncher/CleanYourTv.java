@@ -462,8 +462,17 @@ public final class CleanYourTv {
      * and recovery.py (never disables core system packages, TV input hardware services, or tvOS Launcher).
      */
     public static boolean isSafeToDisable(Context c, String pkg) {
-        if (pkg == null || pkg.isEmpty()) return false;
+        if (c == null || pkg == null || pkg.isEmpty()) return false;
         if ("android".equals(pkg)) return false;
+
+        // Never disable the selected HOME. If HOME selection or package visibility is unknown,
+        // fail closed for candidate/unknown packages rather than guessing from OEM package names.
+        HomeAppDetector.PackageProtection homeProtection =
+                AndroidHomeAppDetector.detect(c).protectionFor(pkg);
+        if (homeProtection != HomeAppDetector.PackageProtection.SAFE) {
+            return false;
+        }
+
         Boolean cached = SAFE_DISABLE_CACHE.get(pkg);
         if (cached != null) return cached;
         if (NEVER_DISABLE_EXACT.contains(pkg) || isCriticalProtectedService(pkg, null)) {
@@ -1649,11 +1658,15 @@ public final class CleanYourTv {
         PackageManager pm = c.getPackageManager();
         Set<String> savedDisabled = new HashSet<>(getSavedDisabledPackages(c));
         Map<String, DebloatItem> found = new LinkedHashMap<>();
+        HomeAppDetector.Result homeDetection = AndroidHomeAppDetector.detect(c);
 
         for (String[] row : KNOWN_SYSTEM_LAUNCHERS) {
             String pkg = row[0];
             String fallbackTitle = row[1];
             String desc = row[2];
+            // The selected HOME is not offered as a disable action. Ambiguous candidates are hidden
+            // until Android can tell us which HOME is active.
+            if (homeDetection.protectionFor(pkg) != HomeAppDetector.PackageProtection.SAFE) continue;
             boolean isInstalled = (installedPkgs != null && installedPkgs.contains(pkg)) || savedDisabled.contains(pkg);
             Boolean pmEnabled = null;
             try {
@@ -1695,6 +1708,7 @@ public final class CleanYourTv {
                     String actName = ri.activityInfo.name;
                     if (pkg.equals(c.getPackageName())) continue;
                     if (found.containsKey(pkg)) continue;
+                    if (homeDetection.protectionFor(pkg) != HomeAppDetector.PackageProtection.SAFE) continue;
                     if (isExcludedFromLauncherList(pkg, actName)) continue;
                     if (!isSafeToDisable(c, pkg)) continue;
                     ApplicationInfo ai = ri.activityInfo.applicationInfo;
