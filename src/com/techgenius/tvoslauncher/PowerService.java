@@ -18,7 +18,9 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import com.techgenius.tvoslauncher.present.BootReceiver;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * AccessibilityService for:
@@ -55,6 +57,7 @@ public class PowerService extends AccessibilityService {
     private volatile boolean audioDumpWatchActive = false;
     private Thread audioDumpWatchThread;
     private volatile long serviceConnectedElapsedMs = 0L;
+    private final Set<String> systemHomePackages = new HashSet<>();
     private static final long VOL_REPEAT_INITIAL_MS = 280L;
     private static final long VOL_REPEAT_INTERVAL_MS = 85L;
 
@@ -197,6 +200,16 @@ public class PowerService extends AccessibilityService {
     protected void onServiceConnected() {
         instance = this;
         serviceConnectedElapsedMs = SystemClock.elapsedRealtime();
+        systemHomePackages.clear();
+        HomeAppDetector.Result homeDetection = AndroidHomeAppDetector.detect(this);
+        if (homeDetection.candidatesKnown) {
+            for (HomeAppDetector.Candidate candidate : homeDetection.candidates) {
+                if (Boolean.TRUE.equals(candidate.systemApp) && !candidate.packageName.equals(getPackageName())
+                        && !Boolean.FALSE.equals(candidate.enabled)) {
+                    systemHomePackages.add(candidate.packageName);
+                }
+            }
+        }
         audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         try {
             AccessibilityServiceInfo info = getServiceInfo();
@@ -843,11 +856,8 @@ public class PowerService extends AccessibilityService {
             if (SystemClock.elapsedRealtime() < 160_000L
                     && (SystemClock.elapsedRealtime() - serviceConnectedElapsedMs) < 40_000L
                     && BootReceiver.isLaunchOnBootEnabled(this)) {
-                for (String stockLauncher : Perms.getStockTvHomePackages()) {
-                    if (stockLauncher.equals(fgPkg)) {
-                        BootReceiver.launchHomeImmediately(this);
-                        break;
-                    }
+                if (systemHomePackages.contains(fgPkg)) {
+                    BootReceiver.launchHomeImmediately(this);
                 }
             }
         }
