@@ -12,7 +12,7 @@
 | DEBT-006 | Runtime validation PR #14 на целевом ТВ отсутствует | CI не покрывает D-pad/lifecycle/permissions/OTA на реальном Android 9 | Последняя проверка #317 — CI build/tests на Linux и Windows, не device run | P1 | OPEN |
 | DEBT-007 | CI preview APK подписан debug key runner | Нельзя считать preview artifact заменой установленного release APK | build-apk.yml вызывает build.sh без release keystore; runner создаёт свой debug keystore | P2 | EXPECTED LIMITATION |
 | DEBT-008 | SingleUserMigrationTest не был подключён к CI workflow | Migration helper не проверялся автоматическим запуском unit test | TOS-008 добавила javac/java compile/run и regression contract в Linux и Windows jobs; CI #322 success | P2 | RESOLVED IN PR |
-| DEBT-009 | First-launch cleanup и downgrade profile registry | Риск потери legacy data / прежнего выбранного профиля при rollback | Cleanup удалён в PR #14; profile registry теперь сохраняется; settings backup включает rollback projection. Ожидается CI/review | P1 | IN REVIEW |
+| DEBT-009 | First-launch cleanup и downgrade profile registry | Риск потери legacy data / прежнего выбранного профиля при rollback | Cleanup удалён в PR #14; profile registry теперь сохраняется; settings backup включает rollback projection. CI #330 success; ожидает review | P1 | IN REVIEW |
 
 ## Подробности
 
@@ -43,7 +43,7 @@ Debug artifact годится для CI проверки/скачивания, �
 
 ### DEBT-009 — First-launch legacy cleanup / profile rollback
 
-Статус после TOS-009 implementation: **IN REVIEW**, ожидает полный CI и review. В PR #14 удалены `cleanupRemovedFeatureData()` и `deleteLegacyFeatureFiles()` вместе с вызовом из `MainActivity.onCreate()`. Код больше не очищает `suggestions`, `nuvio_cloud`, `stremio_cloud`, `watch_cloud`, shelf keys, `cache/tmdb` или `files/continue.json`. Это не часть `SingleUserMigration`; сам pure-Java helper не менялся.
+Статус после TOS-009 implementation: **IN REVIEW**, полный CI #330 прошёл на Linux и Windows; ожидает code review. В PR #14 удалены `cleanupRemovedFeatureData()` и `deleteLegacyFeatureFiles()` вместе с вызовом из `MainActivity.onCreate()`. Код больше не очищает `suggestions`, `nuvio_cloud`, `stremio_cloud`, `watch_cloud`, shelf keys, `cache/tmdb` или `files/continue.json`. Это не часть `SingleUserMigration`; сам pure-Java helper не менялся.
 
 `SingleUserPrefs` сохраняет исходные `profiles.list/current` и `ask_on_wake`, а также migration snapshot keys; предыдущая версия APK сможет прочитать прежний профиль без ручного восстановления registry. `CustomMedia` добавляет `profiles` в allowlist JSON backup и проецирует `legacy_list_before_single_user` / `legacy_current_before_single_user` обратно в экспортируемые `list/current` для установок, где более ранняя миграция уже переписала registry. Import remains merge-based and does not clear preferences. Backup остаётся частичным: CleanYourTV state, ADB/security data и custom media files не включены; TOS-009 их не удаляет. Android может независимо очистить cache.
 
