@@ -78,6 +78,9 @@ public final class PackageSafetyPolicyTest {
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.CRITICAL_SYSTEM_ROLE,
                 facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false,
                         true, false, true, true, true, false, true, true), "TV Input Framework");
+        expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.CRITICAL_SYSTEM_ROLE,
+                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false,
+                        true, false, true, true, true, false, true, true), "system boot receiver");
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.SELECTED_HOME,
                 facts(PackageSafetyPolicy.HomeState.SELECTED_HOME, true, false, false,
                         true, false, true, false, true, false, true, true), "selected system HOME");
