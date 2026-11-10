@@ -30,6 +30,13 @@ final class AndroidPackageSafetyInspector {
     private static final String[] CRITICAL_PERMISSIONS = {
             "android.permission.STATUS_BAR_SERVICE",
             "android.permission.EXPAND_STATUS_BAR",
+            "android.permission.GRANT_RUNTIME_PERMISSIONS",
+            "android.permission.REVOKE_RUNTIME_PERMISSIONS",
+            "android.permission.ADJUST_RUNTIME_PERMISSIONS_POLICY",
+            "android.permission.GET_RUNTIME_PERMISSIONS",
+            "android.permission.MANAGE_PERMISSION_APPS",
+            "android.permission.MANAGE_APP_OPS_MODES",
+            "android.permission.MANAGE_ROLE_HOLDERS",
             "android.permission.REBOOT",
             "android.permission.DEVICE_POWER",
             "android.permission.SHUTDOWN",
@@ -160,14 +167,23 @@ final class AndroidPackageSafetyInspector {
 
             List<Intent> activities = new ArrayList<>();
             activities.add(new Intent(Settings.ACTION_SETTINGS));
-            activities.add(new Intent(Settings.ACTION_MANAGE_APP_PERMISSIONS));
+            // The permission-controller actions are hidden from the public SDK; resolving them
+            // by their stable intent strings avoids hidden API calls while still discovering handlers.
+            activities.add(new Intent("android.intent.action.MANAGE_APP_PERMISSIONS"));
+            activities.add(new Intent("android.intent.action.MANAGE_PERMISSIONS"));
             activities.add(new Intent(Intent.ACTION_INSTALL_PACKAGE)
                     .setDataAndType(Uri.parse("content://testos.invalid/package.apk"), APK_MIME));
             activities.add(new Intent(Intent.ACTION_VIEW)
                     .setDataAndType(Uri.parse("content://testos.invalid/package.apk"), APK_MIME));
+            boolean permissionControllerActionFound = false;
             for (Intent intent : activities) {
                 List<ResolveInfo> resolved = pm.queryIntentActivities(intent, flags);
                 if (resolved == null) return false;
+                if (("android.intent.action.MANAGE_APP_PERMISSIONS".equals(intent.getAction())
+                        || "android.intent.action.MANAGE_PERMISSIONS".equals(intent.getAction()))
+                        && !resolved.isEmpty()) {
+                    permissionControllerActionFound = true;
+                }
                 for (ResolveInfo info : resolved) {
                     if (info != null && info.activityInfo != null
                             && info.activityInfo.packageName != null) {
@@ -175,7 +191,7 @@ final class AndroidPackageSafetyInspector {
                     }
                 }
             }
-            return true;
+            return Build.VERSION.SDK_INT < 29 || permissionControllerActionFound;
         } catch (RuntimeException | LinkageError ignored) {
             return false;
         }
