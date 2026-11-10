@@ -22,7 +22,7 @@ Install JDK 17 and Android command-line tools, then install:
 sdkmanager "platform-tools" "build-tools;34.0.0" "platforms;android-34"
 ```
 
-Set `ANDROID_HOME` (or `ANDROID_SDK_ROOT`) and ensure `javac` is available on PATH.
+Set `ANDROID_HOME` (or `ANDROID_SDK_ROOT`). For Java, set `JAVA_HOME` to a JDK 17+ installation or add `javac`, `java` and `keytool` to `PATH`. `build.ps1` prefers a valid `JAVA_HOME`; if it is empty, it resolves the JDK tools from `PATH`.
 
 ## 3. Build
 
@@ -30,18 +30,15 @@ Linux/macOS:
 
 ```sh
 ./build.sh
-VERSION_CODE=87 VERSION_NAME=2.1.72 ./build.sh
 ```
 
 Windows PowerShell:
 
 ```powershell
-$env:VERSION_CODE = "85"
-$env:VERSION_NAME = "2.1.72"
 .\build.ps1
 ```
 
-Both scripts create `build/tvos-home.apk`. They use the same version defaults and support debug or release keystore environment variables. Do not install an APK with an unverified signing certificate over the existing launcher.
+Both scripts create `build/tvos-home.apk` and read the shared defaults from `version.properties` (`2.1.74` / versionCode `89`). Environment variables `VERSION_CODE` and `VERSION_NAME` override those defaults. Release numbering remains `15 + PATCH`; the development defaults are not a published release. Local builds normally use a debug key; configure a release keystore only when the matching signing materials are available. Do not install an APK with an unverified signing certificate over the existing launcher.
 
 ## 4. Install on a TV
 
@@ -51,7 +48,7 @@ Both scripts create `build/tvos-home.apk`. They use the same version defaults an
 ```sh
 adb connect <tv-ip>:5555
 adb install -r build/tvos-home.apk
-adb shell pm set-home-activity com.gonscharovd.tvoslauncher/.MainActivity
+adb shell pm set-home-activity com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.MainActivity
 ```
 
 3. Finish the on-screen setup and select testOS as the Home app.
@@ -63,25 +60,25 @@ See [install.md](install.md) for signing, permissions, backup and rollback detai
 
 ```sh
 # Open the launcher
-adb shell am start -n com.gonscharovd.tvoslauncher/.MainActivity
+adb shell am start -n com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.MainActivity
 
 # Open the Control Panel overlay
-adb shell am start -n com.gonscharovd.tvoslauncher/.MainActivity --es panel cc
+adb shell am start -n com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.MainActivity --es panel cc
 
 # Open Search with a query
-adb shell am start -n com.gonscharovd.tvoslauncher/.MainActivity --es panel search --es q youtube
+adb shell am start -n com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.MainActivity --es panel search --es q youtube
 
 # Open a Settings group
-adb shell am start -n com.gonscharovd.tvoslauncher/.SettingsActivity --es page advanced
+adb shell am start -n com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.SettingsActivity --es page advanced
 
 # Open a setup step directly
-adb shell am start -n com.gonscharovd.tvoslauncher/.SetupActivity --ei step 3
+adb shell am start -n com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.SetupActivity --ei step 3
 
 # Mark setup as complete
-adb shell am start -n com.gonscharovd.tvoslauncher/.SetupActivity --ez skip true
+adb shell am start -n com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.SetupActivity --ez skip true
 
-# Performance probe (weather/status/hero/dockglass/shadows; reset restores)
-adb shell am start -n com.gonscharovd.tvoslauncher/.MainActivity --es perf weather
+# Performance probe (weather/status/dockglass/shadows; reset restores)
+adb shell am start -n com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.MainActivity --es perf weather
 
 # Frame-time report
 adb shell dumpsys gfxinfo com.gonscharovd.tvoslauncher

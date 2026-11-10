@@ -8,41 +8,44 @@
 
 ## Build
 
-Install JDK 17, Android SDK platform 34 and build-tools 34.0.0.
+Install JDK 17+, Android SDK platform 34 and build-tools 34.0.0.
 
 Linux/macOS:
 
 ```sh
 ./build.sh
-VERSION_CODE=87 VERSION_NAME=2.1.72 ./build.sh
 ```
 
 Windows PowerShell:
 
 ```powershell
-$env:VERSION_CODE = "85"
-$env:VERSION_NAME = "2.1.72"
 .\build.ps1
 ```
 
-Both scripts produce `build/tvos-home.apk`.
+Both scripts produce `build/tvos-home.apk` and accept `VERSION_CODE` / `VERSION_NAME` overrides. Current defaults differ: build.sh uses `15 / 2.1.2-testOS1`; build.ps1 uses `13 / 2.1.2-custom1`. This is an open build-contract issue, so specify the version explicitly when reproducibility matters. Do not assume either default is the latest stable release (v2.1.73 / versionCode 88).
 
 ## Signing and updates
 
-Android allows an in-place update only when the APK certificate matches the installed app. Development builds use the selected debug keystore; preview and official release builds use the persistent release key configured in GitHub Actions. CI verifies the certificate fingerprint and package/version metadata.
+Android allows an in-place update only when the APK certificate matches the installed app.
 
-The PR workflow uploads a signed preview artifact but does not publish a release. Official OTA releases are built from `release/2.1.PATCH` branches; versionCode is `15 + PATCH`. The current preview is testOS 2.1.72 / versionCode 87.
+- Local development builds use the selected debug keystore unless `RELEASE_KEYSTORE` is configured.
+- Pull-request CI preview builds use a runner-generated debug key. They are not signed with the persistent release key and must not be installed over the release-signed app unless the certificate has been compared.
+- Official release builds use the persistent release key configured in GitHub Actions Secrets. The release workflow verifies the expected certificate fingerprint and package/version metadata.
 
-Do not uninstall the current launcher to work around a signature mismatch. Do not install an artifact whose certificate has not been verified against the release certificate.
+The PR workflow uploads a preview artifact but does not publish a release. Official OTA releases are built from `release/2.1.PATCH` branches; versionCode is `15 + PATCH`. The latest stable release is testOS v2.1.73 / versionCode 88. PR #14 remains Draft and is not yet an OTA release.
+
+Do not uninstall the current launcher to work around a signature mismatch. Do not install an artifact whose certificate has not been verified against the installed app.
 
 ## Install and select HOME
+
+The source manifest package is `com.techgenius.tvoslauncher`; the build renames the APK application package to `com.gonscharovd.tvoslauncher`. The compiled PR #14 CI APK was inspected and confirms the HOME activity class remains fully qualified as `com.techgenius.tvoslauncher.MainActivity`.
 
 Connect to the TV and install:
 
 ```sh
 adb connect TV_IP:5555
 adb install -r build/tvos-home.apk
-adb shell pm set-home-activity com.gonscharovd.tvoslauncher/.MainActivity
+adb shell pm set-home-activity com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.MainActivity
 ```
 
 If Android asks which Home app to use, select testOS. Keep the stock Sber launcher installed and enabled as a fallback; do not disable system launcher packages as part of normal setup.

@@ -1,17 +1,17 @@
 # Features
 
-This document describes the current device-specific testOS build. It does not describe removed upstream features.
+This document describes the Night Scenes-only, Russian-language testOS implementation in PR #14. The PR remains Draft and is not yet included in `main` or the stable OTA release.
 
 ## Home screen
 
-- **Night Scenes** — rotating photo and gradient backgrounds, custom scenes, large clock, weather and frosted app dock. Former Classic wallpapers are included in the scene gallery.
-- App tiles support launch, reorder, folders, custom names, hide/show and uninstall shortcuts where Android permits.
+- **Night Scenes** — rotating photo and gradient backgrounds, custom scenes, large clock, weather and frosted app dock. Legacy Classic background assets/preferences are retained as migration sources and surfaced through the Night Scenes gallery; the Classic home interface itself is removed.
+- App tiles support launch, dock reordering, moving apps between the Home dock and More Apps, custom names/icons, hide/show and uninstall shortcuts where Android permits. There is no user-created app-folder model.
 - D-pad focus, long-press actions and return-to-home behavior are designed for a TV remote.
 - The Control Panel overlay and Recent Apps switcher can be opened without leaving the current app.
 
-## Continue Watching
+## Ambient and lock screen
 
-Night Scenes can display a compact row of content that installed TV apps publish through Android TV's TV Provider. It does not sign in to streaming services and does not use the former notification-listener media-session service. The old news/recommendation carousel and Nuvio/Stremio cloud history are removed.
+Night Scenes can run as a full-screen ambient showcase with a large clock, date, weather and greeting. Lock-screen mode uses the scene renderer and can be configured separately. A key press restores the normal Home interface.
 
 ## Search
 
@@ -22,11 +22,11 @@ Night Scenes can display a compact row of content that installed TV apps publish
 
 ## Weather
 
-Weather can be enabled or hidden from the home screen. Supported sources are Open-Meteo, MET Norway and wttr.in, with units, location and refresh interval configured in Settings.
+Weather can be enabled or hidden from the home screen. Supported sources are Open-Meteo, MET Norway and wttr.in, with units, location and refresh interval configured in Settings. The Night Scenes weather shortcut opens the five-day forecast overlay.
 
 ## Control Panel
 
-The universal overlay remains available above the launcher and supported apps. It provides quick access to the supported system controls, including network, Bluetooth, sound, DND, inputs and ambient/sleep actions where the TV firmware exposes them. The separate page for assigning apps/actions to Control Panel tiles has been removed; the overlay itself is unchanged.
+The universal overlay remains available above the launcher and supported apps. It provides quick access to the supported system controls, including network, Bluetooth, sound, DND, inputs and ambient/sleep actions where the TV firmware exposes them. The separate page for assigning apps/actions to Control Panel tiles has been removed; the overlay itself remains.
 
 ## Remote and system controls
 
@@ -38,10 +38,12 @@ The universal overlay remains available above the launcher and supported apps. I
 
 ## Settings
 
-1. **Appearance** — appearance and clock, app sizing, wallpapers, scenes, dock and weather.
-2. **Basic settings** — navigation sounds, hidden apps, setup restart, reset and Android TV settings.
-3. **Information** — testOS version, OTA updates, backup and restore.
-4. **Advanced settings** — HOME selection, Button Mapper, ADB, permissions, Keep Alive, CleanYourTV and AdGuard DNS.
+The sidebar has four labelled groups: Appearance, Basic settings, Information and Advanced settings. Weather is a separate settings entry under Appearance.
+
+- **Appearance** — scene gallery, clock, dock sizing and visual options.
+- **Basic settings** — navigation sounds, hidden apps, setup restart, reset and Android TV settings.
+- **Information** — testOS version, OTA updates, backup and restore.
+- **Advanced settings** — HOME selection, Button Mapper, ADB, permissions, Keep Alive, CleanYourTV and AdGuard DNS.
 
 The UI is Russian-only. There is no language selector or multi-user profile switcher.
 
@@ -53,7 +55,7 @@ CleanYourTV's disabled-package backup is separate from the general launcher sett
 
 ## OTA updates
 
-The updater checks the latest GitHub Release, compares versions, downloads the APK and shows progress. Installation uses Android's PackageInstaller confirmation flow or the configured local ADB route. The APK must have the same signing certificate as the installed package.
+The updater checks the latest GitHub Release, compares versions, downloads the APK and shows progress. Installation uses Android's PackageInstaller confirmation flow or the configured local ADB route. The APK must have the same signing certificate as the installed package. The latest stable release is v2.1.73 / versionCode 88; PR #14 is not yet released.
 
 ## Settings backup and restore
 
@@ -63,6 +65,8 @@ The backup does not contain the APK, installed apps, wallpaper files or other ex
 
 ## Removed from this build
 
+- Classic home UI, including its app grid and wallpaper-selection interface.
+- Hero / Continue Watching shelf and its TV Provider / media-session paths.
 - Non-Russian UI language packs and language selection.
 - Multi-user profiles and profile switching.
 - News feeds and recommendation/catalogue carousel engines.

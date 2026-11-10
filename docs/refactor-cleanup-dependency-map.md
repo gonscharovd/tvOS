@@ -4,7 +4,7 @@
 **Repository:** `gonscharovd/tvOS`  
 **Audited base:** `main` / `a765318b577e66fae66a8ffe28439dcd6233f38f`  
 **Working branch:** `refactor/testos-core-cleanup-2026-11`  
-**Status:** Classic home UI removal implemented in PR #14; CI validation pending. No OTA release or TV installation.
+**Status (2026-11-09):** Classic home UI removal implemented in PR #14; latest CI on head `c08bc91` passed (run #293). Documentation sync completed on the PR #15 branch; see TOS-003. No OTA release or TV installation.
 
 ## Confirmed baseline
 
@@ -14,117 +14,88 @@
 - Target compatibility remains Android 9 / API 28 / ARMv7.
 - No open PRs existed when the branch was created. No OTA release is being published.
 
-## 1. “Continue watching” shelf
+## 1. Retired Continue Watching / Hero shelf
 
-| File | Confirmed dependency | Planned change |
-|---|---|---|
-| `SceneHome.java` | Constructor creates the shelf. Fields / methods include shelf container, cards, `WatchCardData`, package and thumbnail caches, async loading, focus callbacks, animations and DPAD navigation. `loadWatchCardsForPackage()` always returns an empty list. | Remove shelf-only UI, caches, background work, card actions and navigation. Keep dock and shared logo cache. |
-| `MainActivity.java` | `cwEnabled()` is hard false. Old hero carousel still uses `Suggestions.Item`, `loadHero()`, `setHeroItems()`, `heroKeys()`, `openHeroItem()` and timers. | Remove dead hero / continue-watching code. Preserve app launch, recent-app tracking, Search and Night Scenes ambient mode. |
-| `Suggestions.java` | `Item`, `open()`, `logoFor()` belong to old hero/shelf. `image()` is still used by SearchPanel; launch / installed-app / stream helpers have other callers. | Remove only obsolete item / hero helpers. Keep shared helpers still used elsewhere. |
-| `AndroidManifest.xml` | Declares `READ_TV_LISTINGS` and `READ_EPG_DATA`. | Remove both after source references are removed. |
-| `MainActivity.java` | `ensureTvListingsPermission()` requests `READ_TV_LISTINGS`; request code 901 is handled in `onRequestPermissionsResult()`. | Remove request and result branch. |
-| `LocalAdb.java` | TV listings permission is included in ADB grant command lists. | Remove only TV listings grants. Preserve `DUMP`, `WRITE_SECURE_SETTINGS`, `SET_VOLUME_KEY_LONG_PRESS_LISTENER`; invoke volume-key repair independently of the removed TV permission check. |
-| `tests/test_memory_settings_cleanup.py` | Contains assumptions about old hero / shelf state. | Assert shelf symbols and TV permission references are absent; shared image caches remain. |
+The old shelf and recommendation carousel are removed from the PR #14 implementation.
 
-No image asset was confirmed as shelf-exclusive. Do not delete app logos, Search artwork or general image-loading code.
+- `SceneHome.java` no longer builds a Continue Watching row or owns watch-card caches, package polling, thumbnails, shelf focus or shelf navigation.
+- `MainActivity.java` no longer owns Hero carousel state, item models, timers, transitions or TV Provider permission-result handling.
+- `Suggestions.java` retains shared helpers for safe activity launch, URL intents, image loading and stream reading; it no longer contains the Hero recommendation model/API.
+- `AndroidManifest.xml` contains no `READ_TV_LISTINGS` or `READ_EPG_DATA` permission.
+- Search artwork loading and app launch helpers remain in use and must not be removed with the retired feed UI.
 
-## 2. Classic home UI — implementation status
+No app-published TV Provider row is part of the current Night Scenes home screen.
 
-**Implemented in working branch; CI validation pending.**
+## 2. Classic home UI — completed implementation
 
-The current MainActivity.buildChrome() creates SceneHome and its SceneView as the only home experience. The old Classic interface is no longer constructed or toggled.
+**Implemented in PR #14 head `c08bc91e06b7fa66f6bd185e3ab5633033884c33`; latest CI run #293 passed.**
+
+The current `MainActivity.buildChrome()` creates `SceneHome` and its `SceneView` as the only home experience. The old Classic interface is no longer constructed or toggled.
 
 ### Removed from MainActivity.java
 
-- applyLookMode() and the old Classic look-mode switching path.
-- Classic app grid: buildGrid(), makeCell(), old grid focus / scrolling / move state, and the synthetic FOLDER_KEY pseudo-folder.
-- Classic wallpaper rendering: setWallpaper(), makeWallpaper(), wallpaper drift, prefetch, wallpaper blur and wallpaper selection state.
+- `applyLookMode()` and the old Classic look-mode switching path.
+- Classic app grid: `buildGrid()`, `makeCell()`, old grid focus / scrolling / move state, and the synthetic `FOLDER_KEY` pseudo-folder.
+- Classic wallpaper rendering: `setWallpaper()`, `makeWallpaper()`, wallpaper drift, prefetch, wallpaper blur and wallpaper selection state.
 - Hero / Continue Watching carousel, its models, View tree, navigation, animations, timers and permission result handling.
 - Old Classic status chrome: clock/tabs, network glyphs, refresh/search/Control Center buttons and the old weather card.
 - Old carousel idle / full-screen transition logic and obsolete focus-sway / tile-grid handlers.
 
-The completed cleanup removed 2,084 lines from MainActivity.java (4,522 → 2,438 lines). The unused LaunchCard / launchBackground tile-to-full-screen animation and its helpers were removed because no active caller remained; current app launch still uses launchAnimated() and the Android activity transition, while SceneHome keeps its own dock focus and move animations.
+The cleanup reduced `MainActivity.java` from 4,522 to 2,438 lines (2,084 lines removed). The unused `LaunchCard` / `launchBackground` tile-to-full-screen animation and its helpers were removed because no active caller remained. Current app launch still uses `launchAnimated()` and the Android activity transition; SceneHome retains its own dock focus and move animations.
 
 ### Preserved Night Scenes and shared functionality
 
-- SceneHome.java remains the owner of the dock, MORE_KEY / moreExpanded, DPAD focus and navigation, app menus, dock reordering and Other Apps.
-- MainActivity.java keeps AppEntry, loadApps(), order / hidden / Other Apps persistence, package receiver, app launch, Search / Weather / Control Center / Recent Apps overlays, LiquidGlass, glassBg / glassSource, the generic backdropSharp() / tvosCard() app-artwork renderer, and the root container.
-- dispatchKeyEvent() continues to delegate home navigation to SceneHome.dispatchKey(). Search and overlay key handling remain in MainActivity.
-- weatherTick still refreshes Weather, performs the 15-minute AirPlayGuard check, repairs Local ADB permissions and checks connectivity recovery. The removed network glyph was UI-only.
-- MainActivity.makeWallpaperBase() remains because Setup and Settings use it for scene / gradient previews.
-- CustomMedia.buildAppBannerFromCustomIcon() is the neutral name for the shared app-banner generator used by Search and Recent Apps.
-- Suggestions.image() and Suggestions.start() remain. The obsolete Suggestions.Item, open() and logoFor() Hero-only API has been removed. The unused profile avatar helper and stale Classic / Hero comments were also removed from MainActivity.
-- Scenes.CLASSIC_PHOTOS, CLASSIC_GRADIENTS, the underlying assets, and Scenes.migrateClassicBackgroundsToNightGallery() / migrateClassicCustomAssets() remain. They are legacy data and image sources, not a Classic home UI.
-- CustomMedia legacy Classic wallpaper / folder readers remain for idempotent migration; old files and keys are not deleted.
-- Lock-screen photo and gradient choices remain available in Settings; their category is now PHOTOS & GRADIENTS. The unused classicPhotoRow() helper is removed.
-- SetupActivity.lookSubStep and its obsolete Classic appearance back-navigation branch are removed.
+- `SceneHome.java` owns the dock, `MORE_KEY` / `moreExpanded`, D-pad focus/navigation, app menus, dock reordering and Other Apps.
+- `MainActivity.java` retains `AppEntry`, `loadApps()`, order/hidden/Other Apps persistence, package receiver, app launch, Search / Weather / Control Center / Recent Apps overlays, LiquidGlass, `glassBg` / `glassSource`, generic app-artwork rendering and root container.
+- `dispatchKeyEvent()` delegates Home navigation to `SceneHome.dispatchKey()`. Search and overlay key handling remain in MainActivity.
+- Weather refresh, AirPlayGuard checks, Local ADB permission repair and connectivity recovery remain active.
+- `MainActivity.makeWallpaperBase()` remains because Setup and Settings use it for scene/gradient previews.
+- `CustomMedia.buildAppBannerFromCustomIcon()` is the neutral shared app-banner generator used by Search and Recent Apps.
+- `Suggestions.image()` and `Suggestions.start()` remain. The obsolete Hero-only `Suggestions.Item`, `open()` and `logoFor()` API was removed.
+- `Scenes.CLASSIC_PHOTOS`, `CLASSIC_GRADIENTS`, underlying assets and migration methods remain as legacy data/image sources, not as a Classic home UI.
+- CustomMedia legacy Classic wallpaper/folder readers remain for idempotent migration; old files and keys are not deleted.
+- Lock-screen photo/gradient choices remain available; their category is now PHOTOS & GRADIENTS.
+- `SetupActivity.lookSubStep` and its obsolete Classic appearance back-navigation branch are removed.
 
 ### “Folders” clarification
 
-There is no user-created folder model in this flow. FOLDER_KEY represented only the old Classic-grid “Other Apps” tile. Active Night Scenes continues to use MORE_KEY / moreExpanded, backed by PREF_OTHER. App order (PREF_ORDER), hidden state (PREF_HIDDEN) and app menus are preserved. SearchPanel no longer filters the removed synthetic key.
+There is no user-created app-folder model in the current Night Scenes flow. `FOLDER_KEY` represented only the old Classic-grid Other Apps tile. Active Night Scenes uses `MORE_KEY` / `moreExpanded`, backed by `PREF_OTHER`. App order (`PREF_ORDER`), hidden state (`PREF_HIDDEN`) and app menus are preserved. Wallpaper folder-shuffle preferences are a separate feature and remain supported.
 
-### Migration and rollback safety
+## 3. Single-user migration — implemented
 
-The existing migration remains unchanged and idempotent:
-1. Copy a legacy Classic custom wallpaper into the Night Scenes custom-scene slot only if that slot is absent; preserve timestamp.
-2. Copy the legacy Classic folder path into Scene folder-shuffle scope only if the Scene scope is empty.
-3. Add migrated scenes to the enabled set. Apply an old preferred wallpaper only when no newer preference exists.
-4. Leave old files and keys untouched for rollback.
+The multi-profile UI/model has been removed from the active flow. The PR #14 implementation uses `SingleUserPrefs` and `SingleUserMigration`.
 
-### Verification status
+- User-facing preferences resolve through the canonical `home` preference file.
+- Migration reads legacy profile metadata and copies the selected profile's values into the canonical preference namespace.
+- Existing legacy preference files and metadata are preserved for rollback; migration is designed to be idempotent.
+- Scene migration separately preserves Classic wallpaper and wallpaper-folder shuffle data when the Night Scenes destination is empty.
+- Do not reintroduce the old destructive `Profiles.list()` cleanup path or delete legacy user files during this refactor.
+- Historical limitation: if v2.1.73 already ran old profile cleanup on a device with multiple profiles, files deleted by that older version cannot be reconstructed.
 
-- Static scan of the edited MainActivity.java: no remaining references to removed grid, Hero, Classic wallpaper or old status-row symbols.
-- AndroidManifest.xml at the current PR base has no READ_TV_LISTINGS / READ_EPG_DATA declarations; no manifest change was needed for this stage.
-- Regression tests updated: tests/test_memory_settings_cleanup.py and tests/test_settings_navigation.py. I18n.java now contains the Russian translation for the neutral lock-screen gallery label.
-- **CI passed:** run 42516960707 on commit 2f2b693c81e74dc9ed71d33b3dc121f10b383cbe. All Python / Java regression steps passed; build.sh compiled the APK; apksigner verified APK Signature Scheme v2 and v3; artifact upload succeeded.
-- Artifact: testOS-ci-debug, ID 13631916994, 6,039,282 bytes. APK package com.gonscharovd.tvoslauncher, versionCode 15, versionName 2.1.2-testOS1, minSdk 24, targetSdk 34.
-- The CI runner generated a temporary debug keystore (CN=testOS debug). Its certificate has not been compared with the installed TV launcher. Do not install this artifact over the TV app.
-- One earlier CI attempt failed on a Java forward reference for glassBg and a missing shared backdropSharp() helper. Both were corrected in commit 7767f32fa12b4f3efda4f73fe8ffb6ecb2d18065; the later full CI run passed.
-- No runtime test on the TV has been performed. PR #14 remains Open / Draft. No merge, OTA release or APK installation is authorized by this task.
+`tests/SingleUserMigrationTest.java` exists, but it is not currently compiled/run by `.github/workflows/build-apk.yml` (DEBT-008).
 
----
-## 3. Profiles → one user
+## 4. Build, versions and documentation status
 
-### Current behavior
-
-- `Profiles.MAX = 1`; add / switch / delete are stubs.
-- `Profiles.homePrefs()` maps `p1` to `home`, other IDs to `home_<id>`.
-- `Profiles.list()` truncates the profile list and clears preferences / continue files for extra profiles. The new implementation must not call this destructive path.
-- Remaining UI references: MainActivity profile picker / menu, SceneHome `whoBar`, unused SettingsActivity add-person helper and Scenes greeting.
-
-### Safe migration plan
-
-- Replace the multi-profile model with a small `SingleUserPrefs` adapter that always exposes canonical `home`.
-- Read the selected profile ID using the existing `profiles` JSON format before rewriting metadata.
-- If selected ID is not `p1`, copy `home_<id>` into `home`; first preserve non-empty existing `home` as `home_legacy_p1`.
-- Preserve original profile list / current ID in legacy metadata keys; rewrite active list to one `p1` record with the selected user's name and set current ID to `p1`.
-- Do not delete `home_<id>`, `home_legacy_p1`, continue files or legacy metadata. Keep selected display name for the Night Scenes greeting.
-- Existing backup allowlist includes `home` and excludes profile registry. After migration, active user data is in `home`; old backups still restore to the same canonical preference file.
-- Add a pure-Java migration helper and regression cases for p1 / non-p1, typed preference values, preservation of legacy p1 data and idempotence.
-
-Historical limitation: if v2.1.73 already ran `Profiles.list()` on a device with multiple profiles, that older code may already have deleted inactive profile files. New code can preserve data still present, not reconstruct deleted files.
-
-## 4. Build, versions and docs
-
-| File | Current issue | Planned correction |
+| File | Confirmed current state | Follow-up |
 |---|---|---|
-| `build.sh` | Defaults 15 / `2.1.2-testOS1`; includes a macOS-specific JDK fallback. | Read shared version file; keep environment overrides. |
-| `build.ps1` | Defaults 13 / `2.1.2-custom1`; hard-coded JDK path for another developer's Windows account. | Remove user-specific path; use `JAVA_HOME` or JDK on `PATH`; read same version file. |
-| `.github/workflows/build-apk.yml` | PR builds inherit stale build.sh defaults. | Use shared version defaults and run source / APK checks. |
-| `.github/workflows/release.yml` | `versionCode = 15 + PATCH`; correct for current scheme (`v2.1.73` → 88). | Keep formula and signing fingerprint; validate release branch version against shared version file. |
-| `README.md`, `docs/architecture.md`, `docs/install.md` | Refer to 2.1.72 and inconsistent example codes. | Document stable `v2.1.73 / 88`, next build target `2.1.74 / 89`, and one version source. |
-| `tests/test_build_contract.py` | Does not enforce a single source of truth. | Validate both scripts, shared version file, release formula and absence of developer-specific paths. |
+| `build.sh` | Defaults 15 / `2.1.2-testOS1`; contains a macOS-specific JDK fallback. | TOS-002: move to a shared version source; keep environment overrides. |
+| `build.ps1` | Defaults 13 / `2.1.2-custom1`; contains a hard-coded JDK path for another developer's Windows account. | TOS-002/TOS-004: unify version source and prefer `JAVA_HOME` / PATH. |
+| `.github/workflows/build-apk.yml` | PR builds inherit build.sh defaults and use runner debug signing. | Add SingleUserMigrationTest to CI; preserve preview/release signing separation. |
+| `.github/workflows/release.yml` | `versionCode = 15 + PATCH`; v2.1.73 maps to 88 and release certificate fingerprint is checked. | Keep formula and signing fingerprint; validate release branch version. |
+| `README.md`, `docs/features.md`, `docs/architecture.md`, `docs/install.md`, `docs/getting-started.md`, `docs/README.md` | Updated in docs PR branch to remove Classic/Hero/Continue Watching claims, describe current stable release and signing model, and correct ADB component strings. | Review the docs PR diff; no further rewrite is pending for TOS-003. |
+| `tests/test_build_contract.py` | Does not enforce a single source of truth for version defaults. | Extend after TOS-002. |
 
-Keep package name, APK output path, release key / alias, certificate fingerprint verification, OTA comparator and PackageInstaller flow unchanged. 2.1.74 is a development build target, not an OTA release.
+Stable release remains v2.1.73 / versionCode 88. The planned next development target 2.1.74 / 89 is not a published release. Keep package name, APK output path, release key/alias, certificate fingerprint verification, OTA comparator and PackageInstaller flow unchanged.
 
 ## 5. Manifest, resources and verification
 
-- Remove only `READ_TV_LISTINGS` and `READ_EPG_DATA`; preserve all permissions used by CleanYourTV, OTA, ADB / volume-key repair, accessibility and services.
-- No Classic-specific XML layout was identified; old UI is built programmatically.
-- Preserve `assets/backgrounds`, `assets/fonts`, `assets/app-logos`, CleanYourTV examples, presentation assets, app banner / launcher drawables, generic animations, device-admin XML and power-service XML unless a full reference scan proves an individual resource unused.
-- Add source checks for removed shelf / Classic / profile symbols and APK checks for removed permissions / DEX strings.
-- Run existing tests plus migration tests; verify package, version, manifest, DEX and signature.
-- Manual Sber TV tests remain necessary: Night Scenes, DPAD, dock / More Apps, app move / hide / reorder, Search, Control Panel, Weather, gallery, custom wallpaper / folder shuffle, lock screen, backup / restore and OTA update from v2.1.73.
+- The current source manifest has no `READ_TV_LISTINGS` or `READ_EPG_DATA` declarations; no permission removal is pending for the retired shelf.
+- The compiled PR #14 CI APK was inspected. Its manifest package is `com.gonscharovd.tvoslauncher`; the HOME activity class remains `com.techgenius.tvoslauncher.MainActivity`. The correct flattened component is therefore `com.gonscharovd.tvoslauncher/com.techgenius.tvoslauncher.MainActivity`, not `com.gonscharovd.tvoslauncher/.MainActivity`.
+- No Classic-specific XML layout was identified; the old UI was built programmatically.
+- Preserve `assets/backgrounds`, `assets/fonts`, `assets/app-logos`, CleanYourTV examples, presentation assets, app banner/launcher drawables, generic animations, device-admin XML and power-service XML unless a full reference scan proves an individual resource unused.
+- Regression tests cover removed shelf/Classic/profile symbols and Night Scenes dependencies. CI run #293 passed on PR #14 head.
+- Manual Sber TV tests remain necessary: Night Scenes, D-pad, dock/More Apps, app move/hide/reorder, Search, Control Panel, Weather, gallery, custom wallpaper/folder shuffle, lock screen, backup/restore and OTA from v2.1.73.
+- Runtime testing on the physical TV has not been completed for this PR. Do not install the debug CI artifact over the release-signed launcher.
 
 ## 6. Explicit non-goals
 
