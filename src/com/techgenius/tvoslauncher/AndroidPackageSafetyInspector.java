@@ -294,7 +294,7 @@ final class AndroidPackageSafetyInspector {
     }
 
     private PackageSafetyPolicy.Facts facts(String pkg, boolean packageInfoKnown,
-            boolean systemApp, boolean privileged, boolean persistent, boolean systemUid,
+            boolean systemApp, boolean persistent, boolean systemUid,
             boolean ownerKnown, boolean owner, boolean rolesKnown, boolean criticalRole,
             boolean permissionsKnown, boolean criticalPermission, boolean knownOem,
             boolean inProfile, PackageSafetyPolicy.HomeState homeState, String appLabel) {
