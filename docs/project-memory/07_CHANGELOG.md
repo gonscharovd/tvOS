@@ -104,3 +104,11 @@
 - CleanYourTV protects the selected HOME and fails closed when selection/candidate role is unknown; no changes to the 341 model profiles.
 - Added Android HOME manifest package visibility, pure-Java policy tests and Linux/Windows wiring contract.
 - Current branch `feat/dynamic-home-detection-2026-11`; run #357 on head `877b74597e46a7b355485458274ac93492902e8e` pending at time of entry. No PR merged, no OTA, no APK install, no TV changes.
+
+
+## 2026-11-10 — TOS-012 завершена по коду и CI
+
+- Draft PR #18: https://github.com/gonscharovd/tvOS/pull/18, base PR #17 branch, head `fc6d18cf6eb18805d2b42c6e4f88f8f678305324`.
+- CI run #363 (`42838478394`) — success на Linux и Windows, включая HOME policy tests, Android wiring contract, localization, APK builds и package/version checks.
+- Реализовано динамическое обнаружение HOME и fail-safe защита выбранного/альтернативных HOME-кандидатов от автоматического отключения.
+- Runtime на физических Android TV не проверялся; PR ожидает review. Не слит, OTA не выпущена, main не менялся.
