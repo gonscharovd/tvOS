@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.app.role.RoleManager;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Build;
 
 import java.util.ArrayList;
@@ -39,9 +40,10 @@ final class AndroidHomeAppDetector {
         }
 
         List<ResolveInfo> resolvedHomes = new ArrayList<>();
-        ComponentName resolvedHome = null;
         boolean candidatesQuerySucceeded = false;
         boolean selectionQuerySucceeded = false;
+        List<IntentFilter> preferredFilters = new ArrayList<>();
+        List<ComponentName> preferredActivities = new ArrayList<>();
         Intent homeIntent = new Intent(Intent.ACTION_MAIN)
                 .addCategory(Intent.CATEGORY_HOME)
                 .addCategory(Intent.CATEGORY_DEFAULT);
@@ -52,10 +54,12 @@ final class AndroidHomeAppDetector {
             // A restricted or broken PackageManager must not be replaced with a guessed package name.
         }
         try {
-            resolvedHome = pm.resolveActivity(homeIntent, PackageManager.MATCH_DEFAULT_ONLY);
+            // Preferred activities represent an explicit system choice. resolveActivity() can return
+            // a high-priority candidate (including testOS) even when the user has not selected it.
+            pm.getPreferredActivities(preferredFilters, preferredActivities, null);
             selectionQuerySucceeded = true;
         } catch (RuntimeException | LinkageError ignored) {
-            // A resolver activity is not treated as the selected HOME below.
+            // Without an explicit preferred HOME, do not infer the selected app from candidate order.
         }
 
         List<HomeAppDetector.Candidate> candidates = new ArrayList<>();
@@ -107,20 +111,25 @@ final class AndroidHomeAppDetector {
 
         String preferredPackage = null;
         String preferredActivity = null;
-        if (selectionQuerySucceeded && resolvedHome != null) {
-            // resolveActivity may return ResolverActivity when the user has not selected a default.
-            // Only accept it when it is one of the actual HOME candidates discovered above.
-            for (HomeAppDetector.Candidate candidate : candidates) {
-                String resolvedClass = resolvedHome.getClassName() == null
-                        ? "" : resolvedHome.getClassName().toLowerCase(java.util.Locale.US);
-                boolean resolverComponent = resolvedClass.contains("resolveractivity")
-                        || resolvedClass.contains("fallbackhome")
-                        || resolvedClass.contains("chooseractivity");
-                if (!resolverComponent && candidate.packageName.equals(resolvedHome.getPackageName())) {
-                    preferredPackage = resolvedHome.getPackageName();
-                    preferredActivity = resolvedHome.getClassName();
-                    break;
-                }
+        if (selectionQuerySucceeded) {
+            List<ComponentName> selectedHomes = new ArrayList<>();
+            int count = Math.min(preferredFilters.size(), preferredActivities.size());
+            for (int i = 0; i < count; i++) {
+                IntentFilter filter = preferredFilters.get(i);
+                ComponentName component = preferredActivities.get(i);
+                if (filter == null || component == null
+                        || !filter.hasAction(Intent.ACTION_MAIN)
+                        || !filter.hasCategory(Intent.CATEGORY_HOME)) continue;
+                String className = component.getClassName() == null
+                        ? "" : component.getClassName().toLowerCase(java.util.Locale.US);
+                if (className.contains("resolveractivity") || className.contains("fallbackhome")
+                        || className.contains("chooseractivity")) continue;
+                if (!selectedHomes.contains(component)) selectedHomes.add(component);
+            }
+            // Multiple distinct preferred HOME components are ambiguous. Do not choose the first.
+            if (selectedHomes.size() == 1) {
+                preferredPackage = selectedHomes.get(0).getPackageName();
+                preferredActivity = selectedHomes.get(0).getClassName();
             }
         }
 
