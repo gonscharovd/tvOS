@@ -11,6 +11,10 @@ PERMS = (ROOT / "src/com/techgenius/tvoslauncher/Perms.java").read_text(encoding
 LOCAL_ADB = (ROOT / "src/com/techgenius/tvoslauncher/LocalAdb.java").read_text(encoding="utf-8")
 SCENE_HOME = (ROOT / "src/com/techgenius/tvoslauncher/SceneHome.java").read_text(encoding="utf-8")
 MANIFEST = (ROOT / "AndroidManifest.xml").read_text(encoding="utf-8")
+PROFILE = (ROOT / "src/com/techgenius/tvoslauncher/DeviceProfile.java").read_text(encoding="utf-8")
+RESOLVER = (ROOT / "src/com/techgenius/tvoslauncher/DeviceProfileResolver.java").read_text(encoding="utf-8")
+HOME_ADAPTER = (ROOT / "src/com/techgenius/tvoslauncher/AndroidHomeAppDetector.java").read_text(encoding="utf-8")
+GUARD = (ROOT / "src/com/techgenius/tvoslauncher/PackageMutationCommandGuard.java").read_text(encoding="utf-8")
 
 
 def require(condition: bool, message: str) -> None:
@@ -44,6 +48,21 @@ def main() -> None:
         "DeviceProfileResolver.fromSystem",
     ):
         require(token in INSPECTOR, f"Android safety inspector missing {token}")
+    for token in ("queryBroadcastReceivers", "Intent.ACTION_BOOT_COMPLETED",
+                  "Intent.ACTION_LOCKED_BOOT_COMPLETED", "systemBootReceiverPackages.contains(pkg)",
+                  "android.permission.BLUETOOTH_STACK"):
+        require(token in INSPECTOR, f"Android safety inspector missing {token}")
+    require("PackageManager.MATCH_DISABLED_COMPONENTS" in HOME_ADAPTER,
+            "HOME detection must include disabled recovery candidates")
+    require("packageInventoryKnown" in PROFILE
+            and "conflicting-build-and-package-oem-evidence" in PROFILE,
+            "device profile must expose incomplete and conflicting OEM evidence")
+    require("installed != null && !installed.isEmpty()" in RESOLVER,
+            "empty PackageManager inventory must not be considered complete")
+    require("deviceProfile.packageInventoryKnown" in INSPECTOR
+            and 'deviceProfile.evidence.contains("build-properties")' in INSPECTOR,
+            "package-only or incomplete OEM identity must not authorize system debloating")
+
 
     require("UNKNOWN" in POLICY and "HOME_CANDIDATE" in POLICY
             and "UNKNOWN_OEM_SYSTEM_APPLICATION" in POLICY,
@@ -86,6 +105,10 @@ def main() -> None:
             "CleanYourTV must not directly delete packages")
     require("pm enable --user 0 " in CLEAN,
             "restore path must remain an enable-only recovery operation")
+    require("PackageSafetyPolicy.isValidPackageName(pkg)" in CLEAN,
+            "restore data must be validated before it is interpolated into shell commands")
+    require("Type.ENABLE" in GUARD and "ENABLE_COMMAND" in GUARD,
+            "shell boundary must parse exact restore commands and reject compound enable commands")
     require("pm disable-user --user 0 " in CLEAN,
             "the sole package-disable command must remain behind CleanYourTV's shared gate")
 
