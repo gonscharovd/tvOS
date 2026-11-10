@@ -9,7 +9,6 @@ INSPECTOR = (ROOT / "src/com/techgenius/tvoslauncher/AndroidPackageSafetyInspect
 POLICY = (ROOT / "src/com/techgenius/tvoslauncher/PackageSafetyPolicy.java").read_text(encoding="utf-8")
 PERMS = (ROOT / "src/com/techgenius/tvoslauncher/Perms.java").read_text(encoding="utf-8")
 LOCAL_ADB = (ROOT / "src/com/techgenius/tvoslauncher/LocalAdb.java").read_text(encoding="utf-8")
-POWER = (ROOT / "src/com/techgenius/tvoslauncher/PowerService.java").read_text(encoding="utf-8")
 
 
 def require(condition: bool, message: str) -> None:
@@ -47,14 +46,22 @@ def main() -> None:
     require("UNKNOWN" in POLICY and "HOME_CANDIDATE" in POLICY
             and "UNKNOWN_OEM_SYSTEM_APPLICATION" in POLICY,
             "policy must model uncertainty and HOME/OEM states explicitly")
-    require("pm disable-user" not in PERMS,
-            "Perms must not display a manual shell command that bypasses package safety")
     require("PACKAGE_MUTATION_TOKEN" in LOCAL_ADB
             and "packageMutationBlockReason(c, shellCmd, packageSafetySnapshot)" in LOCAL_ADB
             and "safety.evaluate(pkg).isSafeToDisable()" in LOCAL_ADB,
             "ADB transport must re-check every package mutation with the shared policy")
     require("pm disable-user" not in PERMS,
             "Perms must not display a manual shell command that bypasses package safety")
+    for path in (
+        "src/com/techgenius/tvoslauncher/MainActivity.java",
+        "src/com/techgenius/tvoslauncher/SettingsActivity.java",
+        "src/com/techgenius/tvoslauncher/SetupActivity.java",
+        "src/com/techgenius/tvoslauncher/PowerService.java",
+    ):
+        source = (ROOT / path).read_text(encoding="utf-8")
+        require("pm disable-user" not in source and "pm uninstall" not in source
+                and "deletePackage(" not in source,
+                f"{path} must not add an alternate package mutation path")
     require("deletePackage(" not in CLEAN and "pm uninstall" not in CLEAN,
             "CleanYourTV must not delete packages")
     require("pm enable --user 0 " in CLEAN,
