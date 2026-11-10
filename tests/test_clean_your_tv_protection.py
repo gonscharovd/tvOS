@@ -37,6 +37,7 @@ def main() -> None:
         "com.android.server",
         "com.android.server.wm",
         "com.android.server.pm",
+        "com.android.providers.tv",
         "com.android.defcontainer",
         "com.android.vending",
         "com.android.systemui",
@@ -48,7 +49,6 @@ def main() -> None:
         assert blocked_by_core_regex(package), f"Core package escaped protection: {package}"
 
     allowed_exceptions = (
-        "com.android.providers.tv",
         "com.android.providers.calendar",
         "com.android.providers.contacts",
         "com.android.providers.userdictionary",
