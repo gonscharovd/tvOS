@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - refactor/testos-core-cleanup-2026-11
+      - feat/portable-android-tv-platform-2026-11
   push:
     branches:
       - feature/ram-cleaner-happ-vpn
@@ -16,6 +17,7 @@ on:
       - feature/control-panel-navigation-clock-fonts
       - perf/sber-edition-asset-optimization
       - feat/portable-android-tv-platform-2026-11
+      - feat/device-profile-foundation-2026-11
 
 permissions:
   contents: read
@@ -77,6 +79,14 @@ jobs:
 
       - name: Test grouped Settings navigation
         run: python3 tests/test_settings_navigation.py
+
+      - name: Test device profile identity
+        run: |
+          set -euo pipefail
+          test_dir="$RUNNER_TEMP/tvos-device-profile"
+          mkdir -p "$test_dir"
+          javac --release 11 -d "$test_dir" src/com/techgenius/tvoslauncher/DeviceProfile.java tests/DeviceProfileTest.java
+          java -cp "$test_dir" com.techgenius.tvoslauncher.DeviceProfileTest
 
       - name: Test single-user migration data
         run: |
@@ -165,6 +175,16 @@ jobs:
         run: |
           $sdkManager = (Get-Command sdkmanager.bat -ErrorAction Stop).Source
           & $sdkManager "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Test device profile identity
+        shell: pwsh
+        run: |
+          $testDir = Join-Path $env:RUNNER_TEMP "tvos-device-profile"
+          New-Item -ItemType Directory -Force -Path $testDir | Out-Null
+          & javac --release 11 -d $testDir src/com/techgenius/tvoslauncher/DeviceProfile.java tests/DeviceProfileTest.java
+          if ($LASTEXITCODE -ne 0) { throw "Device profile test compilation failed" }
+          & java -cp $testDir com.techgenius.tvoslauncher.DeviceProfileTest
+          if ($LASTEXITCODE -ne 0) { throw "Device profile identity test failed" }
 
       - name: Test single-user migration data
         shell: pwsh
