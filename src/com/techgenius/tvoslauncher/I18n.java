@@ -61,6 +61,7 @@ public final class I18n {
         add("Step 2: Disable System Launchers (Google TV / Android TV / OEM)", "Шаг 2. Отключить системные лаунчеры (Google TV / Android TV / производителя)");
         add("Review Other System HOME Apps", "Проверить другие системные приложения HOME");
         add("Current system HOME is protected", "Текущее системное приложение HOME защищено");
+        add("This app is protected", "Приложение защищено");
         add("HOME detected; other launcher roles are unknown and protected", "HOME обнаружен; роли других лаунчеров неизвестны, они защищены");
         add("HOME selection unknown — launcher actions are protected", "Выбор HOME неизвестен — действия с лаунчерами заблокированы");
         add("No other system HOME apps found", "Другие системные приложения HOME не найдены");
