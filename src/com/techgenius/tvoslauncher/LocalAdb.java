@@ -1334,8 +1334,8 @@ final class LocalAdb {
             "(?i)^\\s*(?:pm\\s+(?:disable-user|disable)|cmd\\s+package\\s+(?:disable-user|disable))"
                     + "\\s+--user\\s+0\\s+([A-Za-z0-9_]+(?:\\.[A-Za-z0-9_]+)+)\\s*$");
     private static final Pattern PACKAGE_MUTATION_TOKEN = Pattern.compile(
-            "(?i)\\b(?:pm\\s+(?:disable(?:-user)?|uninstall(?:-user)?|uninstall-system-updates)"
-                    + "|cmd\\s+package\\s+(?:disable(?:-user)?|uninstall))\\b");
+            "(?i)\\b(?:pm\\s+(?:disable(?:-user|-until-used)?|uninstall(?:-user)?|uninstall-system-updates|suspend(?:-user)?|hide|set-enabled-setting)"
+                    + "|cmd\\s+package\\s+(?:disable(?:-user|-until-used)?|uninstall|suspend|hide|set-enabled-setting))\\b");
     private static final Pattern PACKAGE_DELETE_TOKEN = Pattern.compile(
             "(?i)\\b(?:pm\\s+(?:uninstall(?:-user)?|uninstall-system-updates)"
                     + "|cmd\\s+package\\s+uninstall)\\b");
