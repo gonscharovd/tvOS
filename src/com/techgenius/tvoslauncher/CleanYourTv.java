@@ -75,7 +75,7 @@ public final class CleanYourTv {
     );
 
     private static final Pattern CORE_OK = Pattern.compile(
-            "^com\\.android\\.(providers\\.tv|providers\\.calendar|providers\\.contacts|providers\\.userdictionary|dreams\\..*|printspooler|bips|stk|cellbroadcastreceiver|calllogbackup|managedprovisioning|StatementService)$"
+            "^com\\.android\\.(providers\\.calendar|providers\\.contacts|providers\\.userdictionary|dreams\\..*|printspooler|bips|stk|cellbroadcastreceiver|calllogbackup|managedprovisioning|StatementService)$"
     );
 
     /**
@@ -455,8 +455,7 @@ public final class CleanYourTv {
     }
 
     /**
-     * Checks whether a package is safe to disable according to cleanyourtv/tools/disable.sh
-     * and recovery.py (never disables core system packages, TV input hardware services, or tvOS Launcher).
+     * Checks whether a package is safe to disable through the shared Android-backed package policy.
      */
     public static boolean isSafeToDisable(Context c, String pkg) {
         return isSafeToDisable(c, pkg, AndroidPackageSafetyInspector.create(c, AndroidHomeAppDetector.detect(c)));
