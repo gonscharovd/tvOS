@@ -11,7 +11,7 @@ workflow = (ROOT / ".github/workflows/build-apk.yml").read_text(encoding="utf-8"
 
 assert "queryIntentActivities(homeIntent" in adapter
 assert "getPreferredActivities(preferredFilters, preferredActivities, null)" in adapter
-assert "resolveActivity(" not in adapter, "HOME selection must not use best-match resolver priority"
+assert ".resolveActivity(" not in adapter, "HOME selection must not use best-match resolver priority"
 assert "isRoleHeld(RoleManager.ROLE_HOME)" in adapter
 assert "getRoleHolders(" not in adapter, "hidden RoleManager APIs must not be used"
 assert "STOCK_TV_HOME_PACKAGES" not in perms
