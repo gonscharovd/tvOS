@@ -173,7 +173,8 @@ final class AndroidPackageSafetyInspector {
 
             List<Intent> activities = new ArrayList<>();
             activities.add(new Intent(Settings.ACTION_SETTINGS));
-            activities.add(new Intent(Intent.ACTION_INSTALL_PACKAGE));
+            activities.add(new Intent(Intent.ACTION_INSTALL_PACKAGE)
+                    .setDataAndType(Uri.parse("content://testos.invalid/package.apk"), APK_MIME));
             activities.add(new Intent(Intent.ACTION_VIEW)
                     .setDataAndType(Uri.parse("content://testos.invalid/package.apk"), APK_MIME));
             for (Intent intent : activities) {
@@ -269,7 +270,7 @@ final class AndroidPackageSafetyInspector {
     private PackageSafetyPolicy.HomeState homeState(String pkg) {
         if (home == null) return PackageSafetyPolicy.HomeState.UNKNOWN;
         if (home.isCurrentHome(pkg)) return PackageSafetyPolicy.HomeState.SELECTED_HOME;
-        if (home.candidatesKnown) {
+        if (home.candidatesKnown && !home.candidates.isEmpty()) {
             for (HomeAppDetector.Candidate candidate : home.candidates) {
                 if (candidate != null && pkg.equals(candidate.packageName)) {
                     return PackageSafetyPolicy.HomeState.HOME_CANDIDATE;
