@@ -2565,15 +2565,22 @@ public final class CleanYourTv {
         new Thread(() -> {
             Set<String> installed = fetchInstalledPackages(activity, null, null);
             List<String> commands = new ArrayList<>();
+            final List<String> enabledPkgs = new ArrayList<>();
+            final List<String> failedPkgs = new ArrayList<>();
             for (String pkg : packagesToEnable) {
+                // Saved restore data is not trusted shell input. Reject malformed names before
+                // constructing even a recovery-only pm enable command.
+                if (!PackageSafetyPolicy.isValidPackageName(pkg)) {
+                    failedPkgs.add(pkg == null ? "(null)" : pkg);
+                    continue;
+                }
                 if (installed.isEmpty() || installed.contains(pkg)) {
                     commands.add("pm enable --user 0 " + pkg);
+                } else {
+                    failedPkgs.add(pkg);
                 }
             }
             commands.add("sync");
-
-            final List<String> enabledPkgs = new ArrayList<>();
-            final List<String> failedPkgs = new ArrayList<>();
             boolean connected = LocalAdb.execShellSequential(activity, commands, (idx, total, cmd, output) -> {
                 if (cmd.startsWith("pm enable --user 0 ")) {
                     String pkg = cmd.substring("pm enable --user 0 ".length()).trim();
