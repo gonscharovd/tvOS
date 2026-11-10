@@ -71,3 +71,11 @@
 - CleanYourTV current-HOME protection and fail-safe handling of ambiguous/unknown candidate roles are wired. LocalAdb and PowerService no longer rely on the static stock HOME package list.
 - Pure-Java policy tests and static integration contract are connected to Linux/Windows CI. Latest run #357 was pending when this note was written; TOS-012 remains IN PROGRESS until final CI result and Draft PR review.
 - Next after TOS-012 review: TOS-013 full CleanYourTV safety audit; do not rewrite the 341-profile database without evidence.
+
+
+## TOS-012 — результат (2026-11-10)
+
+- Реализация внесена в Draft PR #18, основанный на PR #17. Head `fc6d18cf6eb18805d2b42c6e4f88f8f678305324`.
+- GitHub Actions run #363: Linux и Windows jobs завершились success, включая policy tests, Android wiring, локализацию, APK build и package/version verification.
+- Статус: REVIEW — реализация и CI готовы; PR не вливался. Runtime validation на телевизорах не выполнена.
+- Следующий этап после review/merge в dependency order — TOS-013 CleanYourTV Safety; аудит 341 профиля, не переписывать их без подтверждённых причин.
