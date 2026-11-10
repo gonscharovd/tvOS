@@ -34,7 +34,7 @@ public final class PackageSafetyPolicy {
         CRITICAL_PERMISSION_QUERY_UNKNOWN,
         CRITICAL_PERMISSION,
         SYSTEM_UID,
-        PERSISTENT_SYSTEM_APPLICATION,
+        PERSISTENT_APPLICATION,
         UNKNOWN_OEM_SYSTEM_APPLICATION,
         SYSTEM_PACKAGE_NOT_IN_SELECTED_PROFILE,
         REVIEWED_PROFILE_SYSTEM_APPLICATION,
@@ -136,6 +136,7 @@ public final class PackageSafetyPolicy {
         if (!f.criticalPermissionQueryKnown) return unknown(Reason.CRITICAL_PERMISSION_QUERY_UNKNOWN);
         if (f.criticalPermission) return protectedResult(Reason.CRITICAL_PERMISSION);
         if (f.systemUid) return protectedResult(Reason.SYSTEM_UID);
+        if (f.persistentApplication) return protectedResult(Reason.PERSISTENT_APPLICATION);
         if (f.systemApplication) return protectedResult(Reason.SYSTEM_PACKAGE_DELETE_NOT_ALLOWED);
         return new Decision(State.SAFE_TO_DELETE, Reason.SAFE_USER_APP_DELETE);
     }
@@ -162,8 +163,8 @@ public final class PackageSafetyPolicy {
         if (f.criticalPermission) return protectedResult(Reason.CRITICAL_PERMISSION);
 
         if (f.systemUid) return protectedResult(Reason.SYSTEM_UID);
+        if (f.persistentApplication) return protectedResult(Reason.PERSISTENT_APPLICATION);
         if (!f.systemApplication) return safe(Reason.NON_SYSTEM_APPLICATION);
-        if (f.persistentApplication) return protectedResult(Reason.PERSISTENT_SYSTEM_APPLICATION);
         if (!f.knownOem) return unknown(Reason.UNKNOWN_OEM_SYSTEM_APPLICATION);
         if (!f.inSelectedModelProfile) return unknown(Reason.SYSTEM_PACKAGE_NOT_IN_SELECTED_PROFILE);
 
