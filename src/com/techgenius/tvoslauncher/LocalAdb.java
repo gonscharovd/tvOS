@@ -25,6 +25,8 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.crypto.Cipher;
 
@@ -1328,6 +1330,37 @@ final class LocalAdb {
         return res.isEmpty() ? "" : res.get(0);
     }
 
+    private static final Pattern PACKAGE_DISABLE_COMMAND = Pattern.compile(
+            "(?i)^\\s*(?:pm\\s+(?:disable-user|disable)|cmd\\s+package\\s+(?:disable-user|disable))"
+                    + "\\s+--user\\s+0\\s+([A-Za-z0-9_]+(?:\\.[A-Za-z0-9_]+)+)\\s*$");
+    private static final Pattern PACKAGE_MUTATION_TOKEN = Pattern.compile(
+            "(?i)\\b(?:pm\\s+(?:disable(?:-user)?|uninstall(?:-user)?|uninstall-system-updates)"
+                    + "|cmd\\s+package\\s+(?:disable(?:-user)?|uninstall))\\b");
+    private static final Pattern PACKAGE_DELETE_TOKEN = Pattern.compile(
+            "(?i)\\b(?:pm\\s+(?:uninstall(?:-user)?|uninstall-system-updates)"
+                    + "|cmd\\s+package\\s+uninstall)\\b");
+
+    /**
+     * Last-line guard at the ADB transport boundary. Package disable commands are accepted only
+     * in the single-package form and only after a fresh shared-policy decision. Package deletion
+     * is unsupported and always rejected. Compound shell commands containing package mutations
+     * are rejected rather than parsed optimistically.
+     */
+    private static String packageMutationBlockReason(Context context, String command) {
+        if (command == null || !PACKAGE_MUTATION_TOKEN.matcher(command).find()) return null;
+        if (PACKAGE_DELETE_TOKEN.matcher(command).find()) {
+            return "BLOCKED: package deletion is not supported";
+        }
+        Matcher matcher = PACKAGE_DISABLE_COMMAND.matcher(command);
+        if (!matcher.matches()) return "BLOCKED: unsupported or compound package-disable command";
+        String pkg = matcher.group(1);
+        if (!PackageSafetyPolicy.isValidPackageName(pkg)
+                || !CleanYourTv.isSafeToDisable(context, pkg)) {
+            return "BLOCKED_BY_PACKAGE_SAFETY_POLICY";
+        }
+        return null;
+    }
+
     private static List<String> runShellCommandsOnHost(
             Context c, String host, int port, List<String> commands, BatchProgressListener progress) throws Exception {
         KeyPair kp = getOrCreateKeyPair(c);
@@ -1370,6 +1403,12 @@ final class LocalAdb {
             for (int i = 0; i < total; i++) {
                 String shellCmd = commands.get(i);
                 int localId = i + 1;
+                String blockedMutation = packageMutationBlockReason(c, shellCmd);
+                if (blockedMutation != null) {
+                    outputs.add(blockedMutation);
+                    if (progress != null) progress.onStep(i + 1, total, shellCmd, blockedMutation);
+                    continue;
+                }
                 byte[] openData = ("shell:" + shellCmd + "\0").getBytes(StandardCharsets.UTF_8);
                 sendPacket(out, A_OPEN, localId, 0, openData);
 
