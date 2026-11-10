@@ -42,8 +42,8 @@ public final class HomeAppDetectorTest {
         HomeAppDetector.Result multiple = evaluate(28, false, false, null,
                 "com.google.android.tvlauncher", "GoogleHome", true, Arrays.asList(stock, google));
         check(multiple.isCurrentHome("com.google.android.tvlauncher"), "PM-selected HOME");
-        check(multiple.protectionFor("vendor.tv.home") == HomeAppDetector.PackageProtection.SAFE,
-                "non-selected candidate is not misidentified as current HOME");
+        check(multiple.protectionFor("vendor.tv.home") == HomeAppDetector.PackageProtection.UNKNOWN,
+                "alternate HOME candidates must remain protected from automatic debloat");
 
         // System HOME plus user-installed HOME.
         HomeAppDetector.Result mixed = evaluate(28, false, false, null,
@@ -55,8 +55,8 @@ public final class HomeAppDetectorTest {
         HomeAppDetector.Result testOsCandidate = evaluate(28, false, false, null,
                 "vendor.tv.home", "vendor.tv.HomeActivity", true, Arrays.asList(stock, testOs));
         check(!testOsCandidate.testOsIsCurrentHome, "testOS candidate must not be mistaken for current HOME");
-        check(testOsCandidate.protectionFor(TEST_OS) == HomeAppDetector.PackageProtection.SAFE,
-                "testOS candidate is distinct from selected HOME");
+        check(testOsCandidate.protectionFor(TEST_OS) == HomeAppDetector.PackageProtection.UNKNOWN,
+                "testOS candidate is distinct from selected HOME and remains protected");
 
         // testOS may be selected, but remains explicitly identifiable as testOS.
         HomeAppDetector.Result testOsSelected = evaluate(28, false, false, null,
