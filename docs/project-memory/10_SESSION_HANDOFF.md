@@ -1,20 +1,20 @@
 # Session handoff — testOS
 
-**Последнее обновление:** 2026-11-09
+**Последнее обновление:** 2026-11-10
 **Проект:** gonscharovd/tvOS
-**Кодовая точка:** PR #14, refactor/testos-core-cleanup-2026-11, commit d1523ade55d66f32139cfa6fc31bc60dac7f50b2
+**Кодовая точка:** PR #14, refactor/testos-core-cleanup-2026-11, commit 6d3fc12a271ad8d5cb3681cc614e8182041fddcf
 **Документационная точка:** PR #15, docs/project-memory-2026-11 (проверять актуальный branch HEAD в GitHub)
 
 ## Контекст
 
-TOS-008 завершена: migration JVM test подключён к Linux/Windows CI (#322 success). TOS-006 — runtime regression preflight изучен и план подготовлен, но физический тест заблокирован до закрытия TOS-009 и проверки signing compatibility. PR #14 и #15 остаются Open / Draft; main не менялся.
+TOS-008 завершена: migration JVM test подключён к Linux/Windows CI (#322 success). TOS-009 implementation внесена в PR #14: destructive first-launch cleanup удалён, profile registry сохранён, backup rollback projection добавлена. Финальный CI run #330 для текущего head выполняется. TOS-006 остаётся BLOCKED до зелёного CI/review, read-only device inventory и signing compatibility. PR #14 и #15 остаются Open / Draft; main не менялся.
 
 ## Проверенное состояние GitHub
 
 - main = a765318b577e66fae66a8ffe28439dcd6233f38f.
-- PR #14 Open / Draft, base main, head d1523ade55d66f32139cfa6fc31bc60dac7f50b2.
+- PR #14 Open / Draft, base main, head 6d3fc12a271ad8d5cb3681cc614e8182041fddcf.
 - PR #15 Open / Draft, base ref — PR #14 branch; GitHub API по-прежнему возвращает base SHA fa91b183..., устаревший относительно текущего code head. Перед merge проверить синхронизацию.
-- CI run #322 (https://github.com/gonscharovd/tvOS/actions/runs/42607667504) — completed/success на Linux и Windows, SHA совпадает с PR #14 head.
+- Последний подтверждённый CI до TOS-009 — run #322 success на предыдущем head d1523ade... Новые прогоны #328/#329 завершились failure из-за временно удалённых JSON imports в SingleUserPrefs; imports восстановлены. Текущий полный CI run #330 (https://github.com/gonscharovd/tvOS/actions/runs/42791143018) выполняется на финальном head 6d3fc12a271ad8d5cb3681cc614e8182041fddcf.
 - Последний GitHub Release — v2.1.73, versionCode 88, asset tvos-home.apk. PR #14 development target — 2.1.74 / code 89; release не опубликован.
 
 ## TOS-006 — аудит runtime regression
@@ -33,10 +33,11 @@ TOS-008 завершена: migration JVM test подключён к Linux/Windo
 ### Migration / legacy data
 
 - SingleUserPrefs.migrateIfNeeded() выполняется при первом вызове homePrefs() / userName(). Выбранный non-p1 profile копируется в canonical home; непустой старый home копируется в home_legacy_p1, если backup file пустой. Старые home_<profile> files остаются. Старые profiles.list/current сохраняются в legacy_list_before_single_user / legacy_current_before_single_user.
-- Важно: MainActivity.onCreate() вызывает cleanupRemovedFeatureData() до prefs = SingleUserPrefs.homePrefs(this). One-time cleanup удаляет prefs files suggestions, nuvio_cloud, stremio_cloud, watch_cloud; keys shelf_mode, cw_enabled, shelf, top_shelf_tab из home; cache tmdb и file continue.json. Это отдельная очистка retired features, не migration helper, не покрыта TOS-008 и не имеет rollback.
-- Settings JSON backup allowlist включает home и ряд пользовательских prefs, но исключает profiles, CleanYourTV prefs/disabled-package backup, updater/ADB state; custom media files не включены. Manifest allowBackup=false; обычный Android backup не является fallback.
-- **Rollback caveat:** migration переписывает `profiles.list/current` в single-user `p1`, сохраняя прежние значения в новых `legacy_list_before_single_user` / `legacy_current_before_single_user`. Старый APK может не знать эти ключи; возврат на прежнюю версию не гарантирует автоматическое восстановление прежнего выбранного профиля. Нужен проверенный rollback/metadata restore plan.
-- Поэтому runtime update сейчас не безопасно начинать: сначала TOS-009 должна обеспечить сохранение/export или иное согласованное обращение с legacy feature data. Не удалять приложение и не пытаться обойти signing mismatch.
+- TOS-009 удалил вызов и методы cleanupRemovedFeatureData() / deleteLegacyFeatureFiles() из MainActivity. Первый запуск больше не очищает prefs suggestions, nuvio_cloud, stremio_cloud, watch_cloud; shelf keys shelf_mode, cw_enabled, shelf, top_shelf_tab; cache/tmdb и files/continue.json. Код app startup не удаляет эти legacy data.
+- SingleUserMigration.java не менялся. SingleUserPrefs сохраняет исходные profiles.list/current и ask_on_wake, добавляя migration metadata; предыдущий APK сможет прочитать прежний selected profile.
+- Settings JSON backup включает profiles; для уже мигрированных установок export использует legacy_list_before_single_user / legacy_current_before_single_user как list/current. Restore merge-based и не очищает prefs. CleanYourTV state, ADB/security state и custom media files остаются вне JSON backup, но TOS-009 их не удаляет. Android OS может независимо очищать cache.
+- Regression contracts обновлены; test_settings_backup_safety.py подключён к Linux и Windows jobs. На run #329 все Python/Java regression steps прошли, но APK compilation failed из-за временно удалённых JSON imports; imports restored in final head. Run #330 is pending.
+- Не запускать runtime update до зелёного CI/review, свежего read-only device inventory и certificate gate. Не удалять приложение и не обходить signing mismatch.
 
 ### План после снятия блокеров
 
@@ -61,4 +62,4 @@ TOS-008 завершена: migration JVM test подключён к Linux/Windo
 
 ## NEXT ACTION
 
-**TOS-009 — аудитировать и обезопасить MainActivity.cleanupRemovedFeatureData() до первого запуска PR #14 на телевизоре. Сохранить legacy prefs/cache data либо согласовать проверяемый backup/export/rollback; добавить regression contract. Не менять поведение SingleUserMigration, не удалять legacy data, не устанавливать APK и не запускать OTA.**
+**TOS-009 — дождаться результата полного CI run #330 на PR #14 head 6d3fc12a271ad8d5cb3681cc614e8182041fddcf; при success перепроверить regression contracts, обновить статусы TOS-009/DEBT-009 и синхронизировать Library. Не выполнять ADB, install, OTA, merge или изменения main.**
