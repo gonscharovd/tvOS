@@ -1,6 +1,6 @@
 # Список задач testOS
 
-**Срез:** 2026-11-09. Задачи относятся к текущему состоянию репозитория и PR #14. Не создавай дубли — обновляй существующий ID.
+**Срез:** 2026-11-10. Задачи отражают PR #14–#17 и новую цель универсального Android TV. Не создавай дубли — обновляй существующий ID.
 
 Статусы: BACKLOG, READY, IN PROGRESS, BLOCKED, REVIEW, DONE.
 
@@ -84,3 +84,13 @@
 - **CI:** [run #322](https://github.com/gonscharovd/tvOS/actions/runs/42607667504) — success на обоих runners, включая тест и сборку APK.
 - **Статус:** REVIEW — implementation и CI validation завершены, ожидает review PR #14.
 - **Связанные файлы:** `.github/workflows/build-apk.yml`, `tests/SingleUserMigrationTest.java`, `tests/test_single_user_migration_contract.py`, `src/com/techgenius/tvoslauncher/SingleUserMigration.java`.
+
+
+
+| TOS-010 | Remove OEM/Sber coupling from build-time asset optimization; profile describes language, not TV brand | P1 | REVIEW | PR #16; run #338 Linux/Windows success; asset-build scope only |
+| TOS-011 | Add Device Profile Architecture: immutable device identity, Android Build/PackageManager resolver, fail-closed unknown/conflicting evidence | P1 | IN PROGRESS | PR #17; runs #339/#340 pending at last check; no runtime integrations yet |
+| TOS-012 | Move HOME detection to dynamic PackageManager resolution and OEM capability adapters | P1 | READY | TOS-011; `Perms.java` currently has Philips/TCL branch and static stock HOME package list |
+| TOS-013 | Universalize CleanYourTV safety: current/system HOME, Android/TV core, unknown OEM safe behavior | P1 | READY | TOS-011, TOS-012; audit 341 profiles, do not rewrite without evidence |
+| TOS-014 | Separate VPN provider abstraction from Happ; make Happ optional adapter | P2 | READY | Common provider contract; test missing apps and VPN API availability |
+| TOS-015 | Build compatibility matrix API 24+ × OEM × features with evidence confidence | P2 | READY | TOS-011–014 |
+| TOS-016 | Add regression scenarios for unknown OEM, stock/OEM HOME, missing integrations and restricted APIs | P1 | READY | TOS-011–015; Linux/Windows CI; runtime proof tracked separately |
