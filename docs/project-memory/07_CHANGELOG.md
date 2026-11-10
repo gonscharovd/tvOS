@@ -1,3 +1,11 @@
+## 2026-11-10 — TOS-009: сохранение legacy data и profile rollback
+
+- Удалены first-launch вызов и реализация destructive cleanup из MainActivity; legacy preference files, shelf keys, cache/tmdb и files/continue.json больше не удаляются приложением.
+- SingleUserMigration helper не изменён. SingleUserPrefs сохраняет исходные profiles.list/current и ask_on_wake, добавляя только migration metadata; это сохраняет чтение выбранного профиля предыдущей версией.
+- Settings backup включает profiles и проецирует сохранённые legacy list/current в экспортируемый registry для уже мигрированных установок; импорт merge-based.
+- Обновлены backup safety и migration regression contracts; backup safety test подключён к Windows job (уже был в Linux job).
+- Полный CI для конечного TOS-009 HEAD ожидается. На ТВ не запускались ADB, backup/restore, APK install или OTA; main не менялся, PR не сливались.
+
 ## 2026-11-09 — TOS-006 runtime regression preflight
 
 - Проверены текущие GitHub branches, PR #14/#15, main, release metadata и Actions. PR #14 head `d1523ade55d66f32139cfa6fc31bc60dac7f50b2`; CI #322 success; main unchanged.
