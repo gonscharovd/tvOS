@@ -75,3 +75,15 @@ TOS-008 завершена: migration JVM test подключён к Linux/Windo
 - No PR merged, main unchanged, no OTA, no APK install or TV state changes.
 
 **NEXT ACTION:** TOS-011 CI is green (#339/#340, Linux and Windows). Next start TOS-012 Dynamic HOME Detection using PackageManager resolution. Do not change TV state, OTA, signing or main; do not merge automatically.
+
+
+## TOS-012 handoff — 2026-11-10
+
+- Branch: `feat/dynamic-home-detection-2026-11`, base PR #17 branch; head at last code update `877b74597e46a7b355485458274ac93492902e8e`.
+- Implemented HomeAppDetector pure-Java policy, Android PackageManager/RoleManager adapter, Perms integration, CleanYourTV current/unknown HOME protection, dynamic LocalAdb/PowerService stock HOME handling, HOME package visibility declaration, and Linux/Windows tests.
+- Key safety design: do not infer selected HOME from candidate order or `resolveActivity` priority. Use explicit preferred HOME record; if absent/ambiguous, return UNKNOWN and protect candidates. API29+ public RoleManager confirms when testOS holds ROLE_HOME.
+- Earlier runs failed during development: #341/#342 due unavailable APIs and stale references; #343–#345 corrected those; #353–#356 failed the static wiring contract because its assertion matched a comment, not an API call. Contract was corrected in commit `877b74597e46a7b355485458274ac93492902e8e`.
+- Latest CI run #357 (push) was in progress at the last check. Wait for Linux and Windows completion; inspect failures and fix before creating PR #18.
+- No PR #18 yet, no merge, no APK installation, no OTA, no TV state changes; main unchanged.
+
+**NEXT ACTION:** Verify GitHub Actions run #357 on head `877b74597e46a7b355485458274ac93492902e8e`. If both jobs pass, create Draft PR #18 with base `feat/device-profile-foundation-2026-11` (PR #17 head). If they fail, fix the actual failing step and rerun. Then update project memory and proceed to TOS-013 only after review.
