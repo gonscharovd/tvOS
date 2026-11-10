@@ -96,3 +96,17 @@ PR #14 остаётся Draft и не merged. Код не опубликован
 - Confirmed code issues: `CleanYourTv.java` retains Sber Device Owner/StarLauncher hard-protection entries; `Perms.java` has Philips/TCL-specific HOME handling and a static stock HOME package list; `VpnController.java` toggles Happ only. 341 CleanYourTV profiles have not been rewritten.
 - PR #16 only removes OEM coupling from asset optimization. PR #17 adds isolated device identity metadata; neither proves universal runtime behavior.
 - `main` unchanged; no PR merged; no APK installed on TV; no OTA published; no runtime device validation.
+
+
+## TOS-012 — Dynamic HOME Detection (2026-11-10, CI pending)
+
+- Work branch: `feat/dynamic-home-detection-2026-11`, based on PR #17 head `a7fa0057b22c3125c087f9a78d60f7d7837def1c`. Current code head at documentation update: `877b74597e46a7b355485458274ac93492902e8e`.
+- Added pure-Java `HomeAppDetector` policy model, Android adapter `AndroidHomeAppDetector`, and `HomeAppDetectorTest`.
+- Current HOME is identified from explicit `PackageManager.getPreferredActivities` evidence; API 29+ also checks public `RoleManager.isRoleHeld(ROLE_HOME)` for testOS. Candidate discovery uses `queryIntentActivities(ACTION_MAIN + CATEGORY_HOME)`. No candidate order/first-match heuristic is used; `resolveActivity` is intentionally not used for HOME selection.
+- `Perms.isDefaultHome` and `hasEnabledStockLauncher` use dynamic detection. Static OEM package list and Philips/TCL lock heuristic were removed from `Perms.java`.
+- CleanYourTV protects the selected HOME, and candidate/unknown states fail closed. `getInstalledSystemLaunchers` does not offer the current or ambiguous HOME for disabling. Existing 341 TV profiles were not rewritten.
+- `LocalAdb` role-holder removal and `PowerService` boot guard now use dynamically detected system HOME candidates instead of static stock launcher names.
+- Android manifest declares HOME package visibility. Setup copy no longer hard-codes Philips/TCL/Google TV claims.
+- Added policy tests for single/multiple/system/user/testOS/unknown/empty/ambiguous HOME, PackageManager failure, API 24/28, RoleManager API 29+, and limited visibility; added a static wiring contract for Linux/Windows CI.
+- CI runs #341–#356 include intermediate failures while the adapter and wiring were being corrected. Latest run #357 for head `877b74597e46a7b355485458274ac93492902e8e` was still running at this documentation snapshot. Do not mark TOS-012 complete until the latest Linux and Windows runs pass.
+- No PR #18 created yet at this snapshot; no merge, APK install, OTA or TV state change. `main` remains `a765318b577e66fae66a8ffe28439dcd6233f38f`.
