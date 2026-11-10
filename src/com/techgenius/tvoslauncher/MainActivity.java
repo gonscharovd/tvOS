@@ -186,36 +186,10 @@ public class MainActivity extends Activity {
 
     final Runnable reloadRun = this::reload;
 
-    private void cleanupRemovedFeatureData() {
-        android.content.SharedPreferences marker = getSharedPreferences("feature_cleanup", MODE_PRIVATE);
-        if (marker.getBoolean("recommendations_news_cloud_removed_v1", false)) return;
-        for (String name : new String[]{"suggestions", "nuvio_cloud", "stremio_cloud", "watch_cloud"}) {
-            getSharedPreferences(name, MODE_PRIVATE).edit().clear().apply();
-        }
-        try {
-            SingleUserPrefs.homePrefs(this).edit()
-                    .remove("shelf_mode").remove("cw_enabled").remove("shelf")
-                    .remove("top_shelf_tab").apply();
-        } catch (Throwable ignored) { }
-        deleteLegacyFeatureFiles(new java.io.File(getCacheDir(), "tmdb"));
-        deleteLegacyFeatureFiles(new java.io.File(getFilesDir(), "continue.json"));
-        marker.edit().putBoolean("recommendations_news_cloud_removed_v1", true).apply();
-    }
-
-    private void deleteLegacyFeatureFiles(java.io.File file) {
-        if (file == null || !file.exists()) return;
-        if (file.isDirectory()) {
-            java.io.File[] children = file.listFiles();
-            if (children != null) for (java.io.File child : children) deleteLegacyFeatureFiles(child);
-        }
-        try { file.delete(); } catch (Throwable ignored) { }
-    }
-
     @Override
     protected void onCreate(Bundle b) {
         super.onCreate(b);
         activeInstance = this;
-        cleanupRemovedFeatureData();
         getWindow().setBackgroundDrawable(null);
         prefs = SingleUserPrefs.homePrefs(this);
         String initLang = getIntent() != null ? getIntent().getStringExtra("lang") : null;
