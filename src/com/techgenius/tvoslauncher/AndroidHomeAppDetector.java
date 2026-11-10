@@ -7,6 +7,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
 import android.app.role.RoleManager;
+import android.content.Intent;
 import android.os.Build;
 
 import java.util.ArrayList;
@@ -38,13 +39,23 @@ final class AndroidHomeAppDetector {
         }
 
         List<ResolveInfo> resolvedHomes = new ArrayList<>();
-        ComponentName preferredHome = null;
+        ComponentName resolvedHome = null;
         boolean candidatesQuerySucceeded = false;
+        boolean selectionQuerySucceeded = false;
+        Intent homeIntent = new Intent(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_HOME)
+                .addCategory(Intent.CATEGORY_DEFAULT);
         try {
-            preferredHome = pm.getHomeActivities(resolvedHomes);
+            resolvedHomes.addAll(pm.queryIntentActivities(homeIntent, PackageManager.MATCH_DEFAULT_ONLY));
             candidatesQuerySucceeded = true;
         } catch (RuntimeException | LinkageError ignored) {
             // A restricted or broken PackageManager must not be replaced with a guessed package name.
+        }
+        try {
+            resolvedHome = pm.resolveActivity(homeIntent, PackageManager.MATCH_DEFAULT_ONLY);
+            selectionQuerySucceeded = true;
+        } catch (RuntimeException | LinkageError ignored) {
+            // A resolver activity is not treated as the selected HOME below.
         }
 
         List<HomeAppDetector.Candidate> candidates = new ArrayList<>();
@@ -81,18 +92,35 @@ final class AndroidHomeAppDetector {
                 RoleManager roleManager = context.getSystemService(RoleManager.class);
                 if (roleManager != null && roleManager.isRoleAvailable(RoleManager.ROLE_HOME)) {
                     roleAvailable = true;
-                    roleHolders = roleManager.getRoleHolders(RoleManager.ROLE_HOME);
-                    roleQuerySucceeded = roleHolders != null;
+                    roleQuerySucceeded = true;
+                    // Public RoleManager API only tells this app whether it holds ROLE_HOME.
+                    if (roleManager.isRoleHeld(RoleManager.ROLE_HOME)) {
+                        roleHolders = Collections.singletonList(context.getPackageName());
+                    } else {
+                        roleHolders = Collections.emptyList();
+                    }
                 }
             } catch (RuntimeException | LinkageError ignored) {
                 // PackageManager's preferred HOME remains a fallback if RoleManager is unavailable.
             }
         }
 
+        String preferredPackage = null;
+        String preferredActivity = null;
+        if (selectionQuerySucceeded && resolvedHome != null) {
+            // resolveActivity may return ResolverActivity when the user has not selected a default.
+            // Only accept it when it is one of the actual HOME candidates discovered above.
+            for (HomeAppDetector.Candidate candidate : candidates) {
+                if (candidate.packageName.equals(resolvedHome.getPackageName())) {
+                    preferredPackage = resolvedHome.getPackageName();
+                    preferredActivity = resolvedHome.getClassName();
+                    break;
+                }
+            }
+        }
+
         return HomeAppDetector.evaluate(Build.VERSION.SDK_INT, roleAvailable, roleQuerySucceeded,
-                roleHolders,
-                preferredHome == null ? null : preferredHome.getPackageName(),
-                preferredHome == null ? null : preferredHome.getClassName(),
+                roleHolders, preferredPackage, preferredActivity,
                 candidatesQuerySucceeded, candidates, context.getPackageName());
     }
 }
