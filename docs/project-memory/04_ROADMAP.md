@@ -63,3 +63,11 @@
 5. **TOS-014 — VPN Provider Architecture:** common provider contract, Happ optional adapter; no VPN client must not break launcher.
 6. **TOS-015 — Compatibility Matrix:** API 24+ × OEM × feature availability, with verified/code-reviewed/unknown confidence.
 7. **TOS-016 — Regression Testing:** unknown OEM, stock Android TV, OEM shell, missing Happ/VPN/services, nonstandard HOME and restricted APIs. Build success alone is not proof.
+
+
+## TOS-012 execution status — 2026-11-10
+
+- Implementation is in `feat/dynamic-home-detection-2026-11`, based on PR #17. The approach uses explicit PackageManager preferred-activity evidence and public RoleManager self-role check, not `resolveActivity` best-match priority.
+- CleanYourTV current-HOME protection and fail-safe handling of ambiguous/unknown candidate roles are wired. LocalAdb and PowerService no longer rely on the static stock HOME package list.
+- Pure-Java policy tests and static integration contract are connected to Linux/Windows CI. Latest run #357 was pending when this note was written; TOS-012 remains IN PROGRESS until final CI result and Draft PR review.
+- Next after TOS-012 review: TOS-013 full CleanYourTV safety audit; do not rewrite the 341-profile database without evidence.
