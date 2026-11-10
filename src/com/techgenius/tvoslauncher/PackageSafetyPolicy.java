@@ -33,7 +33,6 @@ public final class PackageSafetyPolicy {
         CRITICAL_PERMISSION_QUERY_UNKNOWN,
         CRITICAL_PERMISSION,
         SYSTEM_UID,
-        PRIVILEGED_SYSTEM_APPLICATION,
         PERSISTENT_SYSTEM_APPLICATION,
         UNKNOWN_OEM_SYSTEM_APPLICATION,
         SYSTEM_PACKAGE_NOT_IN_SELECTED_PROFILE,
@@ -50,7 +49,6 @@ public final class PackageSafetyPolicy {
         public final HomeState homeState;
         public final boolean packageInfoKnown;
         public final boolean systemApplication;
-        public final boolean privilegedApplication;
         public final boolean persistentApplication;
         public final boolean systemUid;
         public final boolean deviceOwnerQueryKnown;
@@ -64,8 +62,7 @@ public final class PackageSafetyPolicy {
 
         public Facts(String packageName, boolean packageNameValid, boolean ownApplication,
                      boolean legacyHardProtected, boolean coreAndroidProtected, HomeState homeState,
-                     boolean packageInfoKnown, boolean systemApplication, boolean privilegedApplication,
-                     boolean persistentApplication, boolean systemUid, boolean deviceOwnerQueryKnown,
+                     boolean packageInfoKnown, boolean systemApplication, boolean persistentApplication, boolean systemUid, boolean deviceOwnerQueryKnown,
                      boolean deviceOwnerOrActiveAdmin, boolean criticalRoleQueryKnown,
                      boolean criticalSystemRole, boolean criticalPermissionQueryKnown,
                      boolean criticalPermission, boolean knownOem, boolean inSelectedModelProfile) {
@@ -77,7 +74,6 @@ public final class PackageSafetyPolicy {
             this.homeState = homeState == null ? HomeState.UNKNOWN : homeState;
             this.packageInfoKnown = packageInfoKnown;
             this.systemApplication = systemApplication;
-            this.privilegedApplication = privilegedApplication;
             this.persistentApplication = persistentApplication;
             this.systemUid = systemUid;
             this.deviceOwnerQueryKnown = deviceOwnerQueryKnown;
@@ -143,7 +139,6 @@ public final class PackageSafetyPolicy {
 
         if (f.systemUid) return protectedResult(Reason.SYSTEM_UID);
         if (!f.systemApplication) return safe(Reason.NON_SYSTEM_APPLICATION);
-        if (f.privilegedApplication) return protectedResult(Reason.PRIVILEGED_SYSTEM_APPLICATION);
         if (f.persistentApplication) return protectedResult(Reason.PERSISTENT_SYSTEM_APPLICATION);
         if (!f.knownOem) return unknown(Reason.UNKNOWN_OEM_SYSTEM_APPLICATION);
         if (!f.inSelectedModelProfile) return unknown(Reason.SYSTEM_PACKAGE_NOT_IN_SELECTED_PROFILE);
