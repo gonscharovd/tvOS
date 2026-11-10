@@ -1739,7 +1739,17 @@ public final class CleanYourTv {
     public static String getSystemLaunchersSummary(Context c) {
         List<DebloatItem> items = getInstalledSystemLaunchers(c, null, null);
         if (items.isEmpty()) {
-            return tr(c, "None found", "Bulunamadı");
+            HomeAppDetector.Result home = AndroidHomeAppDetector.detect(c);
+            if (!home.currentHomeKnown) {
+                return tr(c, "HOME selection unknown — launcher actions are protected",
+                        "HOME seçimi bilinmiyor — başlatıcı işlemleri korumaya alındı");
+            }
+            if (Boolean.TRUE.equals(home.isCurrentHomeSystemApp())) {
+                return tr(c, "Current system HOME is protected",
+                        "Mevcut sistem HOME uygulaması korumalı");
+            }
+            return tr(c, "No other system HOME apps found",
+                    "Başka sistem HOME uygulaması bulunamadı");
         }
         int active = 0;
         for (DebloatItem it : items) {
