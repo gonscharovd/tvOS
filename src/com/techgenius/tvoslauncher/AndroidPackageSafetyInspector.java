@@ -53,6 +53,7 @@ final class AndroidPackageSafetyInspector {
             "android.permission.NETWORK_SETTINGS",
             "android.permission.MANAGE_NETWORK_POLICY",
             "android.permission.BLUETOOTH_PRIVILEGED",
+            "android.permission.BLUETOOTH_STACK",
             "android.permission.TV_INPUT_HARDWARE",
             "android.permission.BIND_TV_INPUT",
             "android.permission.BIND_INPUT_METHOD",
@@ -70,7 +71,6 @@ final class AndroidPackageSafetyInspector {
             "android.media.tv.TvInputService",
             "android.view.InputMethod",
             "android.accessibilityservice.AccessibilityService",
-            "android.app.action.DEVICE_ADMIN_ENABLED",
             "android.net.VpnService",
             "android.service.notification.NotificationListenerService",
             "android.service.quicksettings.action.QS_TILE",
@@ -80,6 +80,12 @@ final class AndroidPackageSafetyInspector {
             "android.service.textservice.SpellCheckerService"
     };
 
+    private static final String[] CRITICAL_RECEIVER_ACTIONS = {
+            Intent.ACTION_BOOT_COMPLETED,
+            Intent.ACTION_LOCKED_BOOT_COMPLETED,
+            "android.app.action.DEVICE_ADMIN_ENABLED"
+    };
+
     private final Context context;
     private final PackageManager packageManager;
     private final DevicePolicyManager devicePolicyManager;
@@ -87,12 +93,13 @@ final class AndroidPackageSafetyInspector {
     private final DeviceProfile deviceProfile;
     private final Set<String> activeAdminPackages;
     private final Set<String> criticalRolePackages;
+    private final Set<String> systemBootReceiverPackages;
     private final boolean devicePolicyQueryKnown;
     private final boolean criticalRoleQueryKnown;
     private AndroidPackageSafetyInspector(Context context, PackageManager pm,
             DevicePolicyManager dpm, HomeAppDetector.Result home, DeviceProfile profile,
-            Set<String> activeAdmins, Set<String> criticalRoles, boolean dpmKnown,
-            boolean roleKnown) {
+            Set<String> activeAdmins, Set<String> criticalRoles, Set<String> bootReceivers,
+            boolean dpmKnown, boolean roleKnown) {
         this.context = context;
         this.packageManager = pm;
         this.devicePolicyManager = dpm;
@@ -100,6 +107,7 @@ final class AndroidPackageSafetyInspector {
         this.deviceProfile = profile;
         this.activeAdminPackages = activeAdmins;
         this.criticalRolePackages = criticalRoles;
+        this.systemBootReceiverPackages = bootReceivers;
         this.devicePolicyQueryKnown = dpmKnown;
         this.criticalRoleQueryKnown = roleKnown;
     }
@@ -135,7 +143,8 @@ final class AndroidPackageSafetyInspector {
         }
 
         Set<String> criticalRoles = new HashSet<>();
-        boolean roleKnown = collectCriticalRoles(pm, criticalRoles);
+        Set<String> bootReceivers = new HashSet<>();
+        boolean roleKnown = collectCriticalRoles(pm, criticalRoles, bootReceivers);
         DeviceProfile profile = null;
         try {
             profile = DeviceProfileResolver.fromSystem(context);
@@ -144,16 +153,17 @@ final class AndroidPackageSafetyInspector {
         }
 
         return new AndroidPackageSafetyInspector(context, pm, dpm, home, profile,
-                admins, criticalRoles, dpmKnown, roleKnown);
+                admins, criticalRoles, bootReceivers, dpmKnown, roleKnown);
     }
 
     private static AndroidPackageSafetyInspector unknownSession() {
         return new AndroidPackageSafetyInspector(null, null, null, null, null,
                 Collections.<String>emptySet(), Collections.<String>emptySet(),
-                false, false);
+                Collections.<String>emptySet(), false, false);
     }
 
-    private static boolean collectCriticalRoles(PackageManager pm, Set<String> out) {
+    private static boolean collectCriticalRoles(PackageManager pm, Set<String> out,
+                                                Set<String> bootReceivers) {
         try {
             int flags = PackageManager.MATCH_DISABLED_COMPONENTS;
             for (String action : CRITICAL_SERVICE_ACTIONS) {
@@ -187,6 +197,22 @@ final class AndroidPackageSafetyInspector {
                 for (ResolveInfo info : resolved) {
                     if (info != null && info.activityInfo != null
                             && info.activityInfo.packageName != null) {
+                        out.add(info.activityInfo.packageName);
+                    }
+                }
+            }
+            // Boot receivers are a broad signal, so only system applications carrying one
+            // are protected by this evidence in evaluateInternal(). User apps remain user-controlled.
+            for (String action : CRITICAL_RECEIVER_ACTIONS) {
+                List<ResolveInfo> receivers = pm.queryBroadcastReceivers(new Intent(action), flags);
+                if (receivers == null) return false;
+                for (ResolveInfo info : receivers) {
+                    if (info == null || info.activityInfo == null
+                            || info.activityInfo.packageName == null) continue;
+                    if (Intent.ACTION_BOOT_COMPLETED.equals(action)
+                            || Intent.ACTION_LOCKED_BOOT_COMPLETED.equals(action)) {
+                        bootReceivers.add(info.activityInfo.packageName);
+                    } else {
                         out.add(info.activityInfo.packageName);
                     }
                 }
@@ -257,7 +283,8 @@ final class AndroidPackageSafetyInspector {
             permissionKnown = false;
         }
 
-        boolean criticalRole = criticalRolePackages.contains(pkg);
+        boolean criticalRole = criticalRolePackages.contains(pkg)
+                || (systemApp && systemBootReceiverPackages.contains(pkg));
         boolean roleKnown = criticalRoleQueryKnown;
 
         // OEM identity is advisory unless Build identity and a complete package inventory
