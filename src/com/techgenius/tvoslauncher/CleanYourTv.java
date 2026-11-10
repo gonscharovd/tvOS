@@ -464,6 +464,13 @@ public final class CleanYourTv {
         return isSafeToDisable(c, pkg, AndroidPackageSafetyInspector.create(c, AndroidHomeAppDetector.detect(c)));
     }
 
+    public static boolean isSafeToDelete(Context c, String pkg) {
+        if (c == null || pkg == null || pkg.isEmpty()) return false;
+        AndroidPackageSafetyInspector safety =
+                AndroidPackageSafetyInspector.create(c, AndroidHomeAppDetector.detect(c));
+        return safety.evaluateDelete(pkg).isSafeToDelete();
+    }
+
     private static boolean isSafeToDisable(Context c, String pkg, AndroidPackageSafetyInspector safety) {
         if (c == null || pkg == null || pkg.isEmpty() || safety == null) return false;
         return safety.evaluate(pkg).isSafeToDisable();
