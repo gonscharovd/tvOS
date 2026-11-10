@@ -15,20 +15,25 @@ final class DeviceProfileResolver {
 
     static DeviceProfile fromSystem(Context context) {
         Set<String> packages = new HashSet<>();
+        boolean inventoryKnown = false;
         if (context != null) {
             try {
                 PackageManager pm = context.getPackageManager();
-                List<ApplicationInfo> installed = pm.getInstalledApplications(0);
-                if (installed != null) {
-                    for (ApplicationInfo app : installed) {
-                        if (app != null && app.packageName != null) packages.add(app.packageName);
+                if (pm != null) {
+                    List<ApplicationInfo> installed = pm.getInstalledApplications(0);
+                    if (installed != null && !installed.isEmpty()) {
+                        for (ApplicationInfo app : installed) {
+                            if (app != null && app.packageName != null) packages.add(app.packageName);
+                        }
+                        inventoryKnown = !packages.isEmpty();
                     }
                 }
-            } catch (RuntimeException ignored) {
-                // Package visibility or OEM PackageManager restrictions must not block startup.
+            } catch (RuntimeException | LinkageError ignored) {
+                // An incomplete package inventory must not authorize system-package debloating.
+                inventoryKnown = false;
             }
         }
         return DeviceProfile.resolve(Build.MANUFACTURER, Build.BRAND, Build.MODEL,
-                Build.DEVICE, Build.PRODUCT, packages);
+                Build.DEVICE, Build.PRODUCT, packages, inventoryKnown);
     }
 }
