@@ -46,6 +46,9 @@
 | [RecentAppsOverlay.java](../../src/com/techgenius/tvoslauncher/RecentAppsOverlay.java) | Переключатель недавних приложений |
 | [ButtonMapper.java](../../src/com/techgenius/tvoslauncher/ButtonMapper.java), [PowerService.java](../../src/com/techgenius/tvoslauncher/PowerService.java) | Переназначение кнопок пульта и AccessibilityService |
 | [CleanYourTv.java](../../src/com/techgenius/tvoslauncher/CleanYourTv.java) | Определение модели ТВ, защита пакетов, disable/restore и backup состояния |
+| [PackageSafetyPolicy.java](../../src/com/techgenius/tvoslauncher/PackageSafetyPolicy.java) | Чистая Java policy: SAFE_TO_DISABLE / SAFE_TO_DELETE / PROTECTED / UNKNOWN, причины и confidence |
+| [AndroidPackageSafetyInspector.java](../../src/com/techgenius/tvoslauncher/AndroidPackageSafetyInspector.java) | Read-only Android evidence: HOME, PackageManager, DevicePolicyManager, critical permissions/roles, system UID, persistent apps and boot receivers |
+| [PackageMutationCommandGuard.java](../../src/com/techgenius/tvoslauncher/PackageMutationCommandGuard.java) | Классификация package disable/enable/delete команд; fail-closed блокировка compound/unsupported shell mutations |
 | [LocalAdb.java](../../src/com/techgenius/tvoslauncher/LocalAdb.java) | Локальная ADB-связь и выдача/ремонт нужных разрешений |
 | [Perms.java](../../src/com/techgenius/tvoslauncher/Perms.java) | Android permissions, DND, выбор HOME и системные fallback-переходы |
 | [AppUpdater.java](../../src/com/techgenius/tvoslauncher/AppUpdater.java), [VersionComparator.java](../../src/com/techgenius/tvoslauncher/VersionComparator.java) | GitHub Releases OTA, сравнение версий, загрузка и PackageInstaller |
@@ -70,7 +73,7 @@ Android запускает `MainActivity`; она создаёт `SceneHome`, з
 Настройки хранятся локально в SharedPreferences. `SingleUserPrefs` выполняет одноразовую миграцию выбранного profile-scoped home в canonical `home`; чистый Java helper `SingleUserMigration` не менялся в TOS-009. `SingleUserPrefs` сохраняет исходные `profiles.list/current` и `ask_on_wake`, а также legacy snapshot keys, чтобы предыдущий APK мог прочитать прежний выбор. Standalone `SingleUserMigrationTest.java` запускается в Linux и Windows CI; regression contract защищает также registry retention. Общий settings backup экспортирует allowlist, включая `profiles`, в `Download/tvos-launcher-settings.json`; для уже мигрированных установок экспортируемые `list/current` проецируются из legacy snapshot. Restore merge-based, без очистки файла; запись backup использует AtomicFile. Backup CleanYourTV — отдельный файл `cleanyourtv_disabled_backup.txt`, он не входит в общий backup.
 
 ### CleanYourTV
-UI в `CleanYourTv.java` определяет модель/профиль из `assets/cleanyourtv/`, проверяет hard-protected package policy, выполняет disable/restore через Local ADB и подтверждает результат чтением состояния PackageManager. Нельзя считать установление ADB-сессии подтверждением успешного disable.
+UI в `CleanYourTv.java` использует единую `PackageSafetyPolicy`. `AndroidPackageSafetyInspector` собирает read-only evidence через PackageManager/DevicePolicyManager; `UNKNOWN` всегда блокирует disable/delete. System app может стать `SAFE_TO_DISABLE` только при подтверждённой Build OEM identity, полном package inventory, совпадении OEM family и наличии package в выбранном model profile, плюс при успешных независимых HOME/DPM/role/permission/UID/persistent checks. Profile membership само по себе не разрешает действие. Все shell mutation проходят через `LocalAdb.runShellCommandsOnHost()` и `PackageMutationCommandGuard`; shell uninstall запрещён. Restore принимает только валидное имя пакета и точную `pm enable` команду. `SceneHome` проверяет пользовательский uninstall до показа действия и повторно перед `Intent.ACTION_DELETE`. Нельзя считать установление ADB-сессии подтверждением успешного disable.
 
 ### OTA
 `AppUpdater` получает информацию о последнем GitHub Release, сравнивает версии через `VersionComparator`, загружает APK и передаёт установку Android PackageInstaller либо настроенному local ADB пути. Для обновления установленного приложения сертификат APK должен совпадать с установленным.
@@ -114,7 +117,7 @@ TOS-009 removes `cleanupRemovedFeatureData()` and `deleteLegacyFeatureFiles()` f
 - **OEM Device Profiles:** advisory manufacturer/family/device metadata and capability adapters. Unknown OEM is a supported mode; identity must never authorize package removal.
 - **Optional Integrations:** CleanYourTV, VPN providers (Happ optional), weather and system tools. Missing integrations must not impair core launcher startup.
 
-TOS-011 adds a first isolated `DeviceProfile` model and `DeviceProfileResolver`; it is not yet wired into HOME, CleanYourTV or VPN decisions. Existing 341-entry CleanYourTV model database remains intact.
+TOS-011 adds the `DeviceProfile` model/resolver. TOS-012 wires dynamic HOME detection; TOS-013 uses corroborated OEM identity only as one evidence gate for system-package candidates. Package-name-only OEM inference and incomplete/conflicting package inventory never authorize system debloat. Existing 341-entry CleanYourTV model database remains intact.
 
 
 ## Dynamic HOME detection (TOS-012, implementation under CI review — 2026-11-10)
@@ -128,3 +131,14 @@ TOS-011 adds a first isolated `DeviceProfile` model and `DeviceProfileResolver`;
 - OEM package names remain in CleanYourTV's separate profile/catalog and friendly-label tables; they are not used to identify the selected HOME.
 
 Runtime behavior of OEM firmware that intercepts the physical HOME key outside Android's standard HOME preference/role APIs remains device-specific and unverified. Unknown states are reported conservatively rather than guessed.
+
+
+## CleanYourTV safety architecture (TOS-013, PR #19)
+
+- `PackageSafetyPolicy` is pure Java and returns explicit state/reason/confidence. `UNKNOWN` is not equivalent to safe.
+- `AndroidPackageSafetyInspector` checks selected and alternate HOME (including disabled candidates), active admins / Device Owner / Profile Owner, critical permissions, system service roles, Settings/Package Installer/Permission Controller handlers, system UID, persistent flag and system boot receivers.
+- A complete package inventory and Build-property OEM identity are required before a model profile can be considered; conflicting Build/package OEM signals produce `UNKNOWN`. A package-only OEM inference is advisory, not authorization.
+- `PackageMutationCommandGuard` is the last ADB boundary. Only exact single-package user-0 disable and recovery-enable commands are accepted; delete and compound/unsupported mutations are rejected.
+- `SceneHome` user-app uninstall is gated by `evaluateDelete`; OEM/system and persistent packages cannot be deleted.
+- Full audit and exact deny-rule review: [cleanyourtv-safety-audit.md](https://github.com/gonscharovd/tvOS/blob/feat/package-safety-policy-2026-11/docs/cleanyourtv-safety-audit.md). CI #456 passed Linux/Windows on code commit `22d46a96a5dba243ae95c1a516b6890c6e72015d`; subsequent PR #19 head change is documentation-only.
+- No physical Android runtime validation yet; OEM firmware HOME interception and real device PackageManager/permission metadata remain unknown.
