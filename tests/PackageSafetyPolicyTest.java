@@ -98,9 +98,18 @@ public final class PackageSafetyPolicyTest {
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.SYSTEM_UID,
                 facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, true,
                         true, false, true, false, true, false, true, true), "system UID");
-        expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.PERSISTENT_SYSTEM_APPLICATION,
+        expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.PERSISTENT_APPLICATION,
                 facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, true, false,
                         true, false, true, false, true, false, true, true), "persistent system app");
+        expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.PERSISTENT_APPLICATION,
+                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, true, false,
+                        true, false, true, false, true, false, false, false), "persistent app without system flag");
+        PackageSafetyPolicy.Facts persistentUser = facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME,
+                false, true, false, true, false, true, false, true, false, false, false);
+        check(PackageSafetyPolicy.evaluateDelete(persistentUser).state == PackageSafetyPolicy.State.PROTECTED
+                        && PackageSafetyPolicy.evaluateDelete(persistentUser).reason
+                        == PackageSafetyPolicy.Reason.PERSISTENT_APPLICATION,
+                "persistent apps must not be uninstallable even if the system flag is absent");
         expect(PackageSafetyPolicy.State.UNKNOWN, PackageSafetyPolicy.Reason.UNKNOWN_OEM_SYSTEM_APPLICATION,
                 facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false,
                         true, false, true, false, true, false, false, true), "unknown OEM system app");
