@@ -52,8 +52,8 @@ public final class PackageSafetyPolicyTest {
 
         expect(PackageSafetyPolicy.State.UNKNOWN, PackageSafetyPolicy.Reason.PACKAGE_INFO_UNKNOWN,
                 new PackageSafetyPolicy.Facts(PKG, true, false, false, false,
-                        PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false, false, false,
-                        true, false, true, false, true, false, false, false), "PackageManager unavailable");
+                        PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false, false, false, false,
+                        true, false, true, false, false, false), "PackageManager unavailable");
         expect(PackageSafetyPolicy.State.UNKNOWN, PackageSafetyPolicy.Reason.DEVICE_OWNER_QUERY_UNKNOWN,
                 facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false,
                         false, false, true, false, true, false, false, false), "DevicePolicyManager failure");
