@@ -1,6 +1,6 @@
 # Архитектура testOS
 
-**Срез кода:** ветка `refactor/testos-core-cleanup-2026-11`, commit `fa91b18305e57bae536d6664af88cb6230a4ec7e`  
+**Срез кода:** ветка `refactor/testos-core-cleanup-2026-11`, commit `7aa77d1cb3654f090cafdedfabf3274a7098d87b`  
 **Основная ветка:** `main`, commit `a765318b577e66fae66a8ffe28439dcd6233f38f`  
 **Важно:** описание отражает код рабочей ветки PR #14; изменения PR ещё не влиты в main.
 
@@ -67,7 +67,7 @@ Android запускает `MainActivity`; она создаёт `SceneHome`, з
 `PowerService` — AccessibilityService. Он получает разрешённые события пульта, выполняет ButtonMapper actions, поддерживает Keep Alive/repair и открывает системные overlays. Control Panel и Recent Apps могут отображаться через Accessibility overlay поверх других приложений; на HOME используется соответствующий Activity UI.
 
 ### Settings / local data
-Настройки хранятся локально в SharedPreferences. `SingleUserPrefs` выполняет одноразовую миграцию старых profile-scoped preferences в canonical `home`; `SingleUserMigration` содержит чистую Java-логику миграции; standalone `SingleUserMigrationTest.java` запускается в Linux и Windows CI через JDK 11 language target. Regression contract проверяет CI wiring и наличие тестов сохранения legacy/source data. Legacy значения/файлы сохраняются для rollback. Общий settings backup экспортирует только allowlist в `Download/tvos-launcher-settings.json`; запись использует AtomicFile. Backup CleanYourTV — отдельный файл `cleanyourtv_disabled_backup.txt`, он не входит в общий backup.
+Настройки хранятся локально в SharedPreferences. `SingleUserPrefs` выполняет одноразовую миграцию выбранного profile-scoped home в canonical `home`; чистый Java helper `SingleUserMigration` не менялся в TOS-009. `SingleUserPrefs` сохраняет исходные `profiles.list/current` и `ask_on_wake`, а также legacy snapshot keys, чтобы предыдущий APK мог прочитать прежний выбор. Standalone `SingleUserMigrationTest.java` запускается в Linux и Windows CI; regression contract защищает также registry retention. Общий settings backup экспортирует allowlist, включая `profiles`, в `Download/tvos-launcher-settings.json`; для уже мигрированных установок экспортируемые `list/current` проецируются из legacy snapshot. Restore merge-based, без очистки файла; запись backup использует AtomicFile. Backup CleanYourTV — отдельный файл `cleanyourtv_disabled_backup.txt`, он не входит в общий backup.
 
 ### CleanYourTV
 UI в `CleanYourTv.java` определяет модель/профиль из `assets/cleanyourtv/`, проверяет hard-protected package policy, выполняет disable/restore через Local ADB и подтверждает результат чтением состояния PackageManager. Нельзя считать установление ADB-сессии подтверждением успешного disable.
@@ -101,6 +101,6 @@ Python regression tests находятся в [tests/](../../tests/). В workflo
 
 CI подтверждает только реально запущенные шаги и не заменяет тестирование реального D-pad, lifecycle, разрешений, OTA install и производительности на Sber TV.
 
-### First-launch cleanup vs single-user migration
+### First-launch legacy data retention
 
-`SingleUserPrefs.migrateIfNeeded()` is the profile/settings migration path and preserves the old profile files and registry values. Separately, `MainActivity.cleanupRemovedFeatureData()` runs before the canonical `homePrefs()` initialization on first launch and performs one-time deletion of retired-feature preference/cache data (see DEBT-009). Do not treat the pure-Java migration test as coverage for this cleanup. Runtime validation is blocked until its data-retention/rollback policy is resolved.
+TOS-009 removes `cleanupRemovedFeatureData()` and `deleteLegacyFeatureFiles()` from `MainActivity`; no first-launch code clears retired-feature preferences, shelf keys, `cache/tmdb` or `files/continue.json`. This is intentionally non-destructive even though the corresponding UI/features were removed. `tests/test_settings_backup_safety.py` protects this contract and is wired into Linux and Windows jobs. Android may still evict cache files under storage pressure; the app no longer explicitly deletes them. Runtime behavior on Sber TV remains unverified.
