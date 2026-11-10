@@ -98,6 +98,7 @@ final class HomeAppDetector {
             String own = clean(ownPackage);
             for (Candidate candidate : candidates) {
                 if (candidate.packageName.equals(own)) continue;
+                if (currentHomeKnown && candidate.packageName.equals(currentHomePackage)) continue;
                 if (!Boolean.FALSE.equals(candidate.enabled)
                         && !Boolean.FALSE.equals(candidate.systemApp)) return true;
             }
