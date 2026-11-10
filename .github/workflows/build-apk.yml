@@ -6,6 +6,7 @@ on:
     branches:
       - main
       - refactor/testos-core-cleanup-2026-11
+      - feat/portable-android-tv-platform-2026-11
   push:
     branches:
       - feature/ram-cleaner-happ-vpn
@@ -16,6 +17,7 @@ on:
       - feature/control-panel-navigation-clock-fonts
       - perf/sber-edition-asset-optimization
       - feat/portable-android-tv-platform-2026-11
+      - feat/device-profile-foundation-2026-11
 
 permissions:
   contents: read
