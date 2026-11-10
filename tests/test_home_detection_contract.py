@@ -10,6 +10,7 @@ manifest = (ROOT / "AndroidManifest.xml").read_text(encoding="utf-8")
 workflow = (ROOT / ".github/workflows/build-apk.yml").read_text(encoding="utf-8")
 
 assert "queryIntentActivities(homeIntent" in adapter
+assert "PackageManager.MATCH_DISABLED_COMPONENTS" in adapter
 assert "getPreferredActivities(preferredFilters, preferredActivities, null)" in adapter
 assert ".resolveActivity(" not in adapter, "HOME selection must not use best-match resolver priority"
 assert "isRoleHeld(RoleManager.ROLE_HOME)" in adapter
