@@ -90,3 +90,9 @@
 - **Защита:** отдельный Python contract контролирует wiring обоих jobs и наличие сценариев p1 selection, missing-profile fallback, повторного запуска, legacy preservation и source immutability.
 - **Последствия:** изменения в pure-Java migration helper должны проходить тест в обоих CI jobs; это не заменяет runtime проверку Android SharedPreferences adapter на телевизоре.
 - **Статус:** реализовано в PR #14; CI #322 success; ожидает review.
+## DEC-011 — Не удалять legacy data при удалении функций
+- **Дата:** 2026-11-10, TOS-009
+- **Решение:** удаление retired UI/feature code не должно автоматически очищать связанные SharedPreferences, cache или files при первом запуске. Legacy data сохраняются до отдельного согласованного cleanup с проверенным экспортом и rollback.
+- **Причина:** пользовательские данные могут оставаться полезными для отката на предыдущую версию, даже если соответствующий UI удалён.
+- **Последствия:** MainActivity не вызывает first-launch destructive cleanup; SingleUserPrefs не переписывает profiles.list/current и ask_on_wake; SingleUserMigration helper остаётся без изменений. Settings backup включает профильный registry для ручного rollback.
+- **Статус:** принято в PR #14; CI/review ожидаются.
