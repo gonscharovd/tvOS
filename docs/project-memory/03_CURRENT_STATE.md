@@ -110,3 +110,12 @@ PR #14 остаётся Draft и не merged. Код не опубликован
 - Added policy tests for single/multiple/system/user/testOS/unknown/empty/ambiguous HOME, PackageManager failure, API 24/28, RoleManager API 29+, and limited visibility; added a static wiring contract for Linux/Windows CI.
 - CI runs #341–#356 include intermediate failures while the adapter and wiring were being corrected. Latest run #357 for head `877b74597e46a7b355485458274ac93492902e8e` was still running at this documentation snapshot. Do not mark TOS-012 complete until the latest Linux and Windows runs pass.
 - No PR #18 created yet at this snapshot; no merge, APK install, OTA or TV state change. `main` remains `a765318b577e66fae66a8ffe28439dcd6233f38f`.
+
+
+## TOS-012 — финальный статус после CI и PR (2026-11-10)
+
+- Draft PR #18 создан: https://github.com/gonscharovd/tvOS/pull/18.
+- Base: `feat/device-profile-foundation-2026-11` / PR #17 head `a7fa0057b22c3125c087f9a78d60f7d7837def1c`. Head PR #18: `fc6d18cf6eb18805d2b42c6e4f88f8f678305324`.
+- GitHub Actions run #363 (`42838478394`) на этом head завершился `success` для Linux и Windows. Включая HOME policy tests, Android wiring contract, localization tests, APK builds, package/version verification и artifact uploads.
+- TOS-012 implementation и CI завершены; PR #18 ожидает review. Это не подтверждает runtime поведение на реальных Android TV устройствах.
+- PR #14–#18 не слиты; `main` остаётся `a765318b577e66fae66a8ffe28439dcd6233f38f`; OTA не публиковалась; APK не устанавливался; телевизор и пользовательские данные не менялись.
