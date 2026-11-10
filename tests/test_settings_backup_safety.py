@@ -23,7 +23,7 @@ for pref in (
     assert pref in media.split("private static final String[] KNOWN_PREF_NAMES", 1)[1].split("};", 1)[0]
 
 for unsafe in (
-    '"profiles"', '"suggestions"', '"media_watch"', '"local_adb"',
+    '"suggestions"', '"media_watch"', '"local_adb"',
     '"adb_state"', '"app_updater"', '"cleanyourtv"', '"cleanyourtv_prefs"',
     '"present"', '"search"', '"setup"',
 ):
@@ -50,5 +50,24 @@ assert "atomic.startWrite()" in writer
 assert "atomic.finishWrite(fos)" in writer
 assert "atomic.failWrite(fos)" in writer
 assert "file.length() > 2L * 1024L * 1024L" in media
+
+# Retired feature data is retained on first launch; cleanup is not part of migration.
+main = (root / "MainActivity.java").read_text(encoding="utf-8")
+assert "cleanupRemovedFeatureData" not in main
+assert "deleteLegacyFeatureFiles" not in main
+for legacy in ("suggestions", "nuvio_cloud", "stremio_cloud", "watch_cloud",
+               "shelf_mode", "cw_enabled", "top_shelf_tab", "cache/tmdb", "continue.json"):
+    assert legacy not in main, f"MainActivity must not delete legacy data: {legacy}"
+
+# Exported profiles.list/current are projected from preserved pre-migration metadata.
+assert '"profiles"' in media.split("private static final String[] KNOWN_PREF_NAMES", 1)[1].split("};", 1)[0]
+assert 'if ("profiles".equals(pName))' in backup
+assert 'legacy_list_before_single_user' in backup
+assert 'legacy_current_before_single_user' in backup
+assert 'rollbackRegistry.put("list", legacyList)' in backup
+assert 'rollbackRegistry.put("current", legacyCurrent)' in backup
+assert "all = rollbackRegistry" in backup
+assert "isBackupPrefName(prefName)" in restore
+assert 'c.getSharedPreferences(pref.getKey(), Context.MODE_PRIVATE).edit()' in restore
 
 print("Settings backup safety: allowlist, schema validation, size guard and atomic writes passed.")
