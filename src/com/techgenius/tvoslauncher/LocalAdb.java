@@ -25,8 +25,6 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.crypto.Cipher;
 
@@ -1330,35 +1328,23 @@ final class LocalAdb {
         return res.isEmpty() ? "" : res.get(0);
     }
 
-    private static final Pattern PACKAGE_DISABLE_COMMAND = Pattern.compile(
-            "(?i)^\\s*(?:pm\\s+(?:disable-user|disable)|cmd\\s+package\\s+(?:disable-user|disable))"
-                    + "\\s+--user\\s+0\\s+([A-Za-z0-9_]+(?:\\.[A-Za-z0-9_]+)+)\\s*$");
-    private static final Pattern PACKAGE_MUTATION_TOKEN = Pattern.compile(
-            "(?i)\\b(?:pm\\s+(?:disable(?:-user|-until-used)?|uninstall(?:-user)?|uninstall-system-updates|suspend(?:-user)?|hide|set-enabled-setting)"
-                    + "|cmd\\s+package\\s+(?:disable(?:-user|-until-used)?|uninstall|suspend|hide|set-enabled-setting))\\b");
-    private static final Pattern PACKAGE_DELETE_TOKEN = Pattern.compile(
-            "(?i)\\b(?:pm\\s+(?:uninstall(?:-user)?|uninstall-system-updates)"
-                    + "|cmd\\s+package\\s+uninstall)\\b");
-
     /**
-     * Last-line guard at the ADB transport boundary. Package disable commands are accepted only
-     * in the single-package form and only after a fresh shared-policy decision. Package deletion
-     * is unsupported and always rejected. Compound shell commands containing package mutations
-     * are rejected rather than parsed optimistically.
+     * Last-line guard at the ADB transport boundary. Package deletion is always rejected;
+     * a single package-disable command is re-evaluated using fresh Android safety evidence.
      */
     private static String packageMutationBlockReason(Context context, String command,
             AndroidPackageSafetyInspector safetySnapshot) {
-        if (command == null || !PACKAGE_MUTATION_TOKEN.matcher(command).find()) return null;
-        if (PACKAGE_DELETE_TOKEN.matcher(command).find()) {
+        PackageMutationCommandGuard.Result mutation = PackageMutationCommandGuard.inspect(command);
+        if (mutation.type == PackageMutationCommandGuard.Type.NONE) return null;
+        if (mutation.type == PackageMutationCommandGuard.Type.DELETE) {
             return "BLOCKED: package deletion is not supported";
         }
-        Matcher matcher = PACKAGE_DISABLE_COMMAND.matcher(command);
-        if (!matcher.matches()) return "BLOCKED: unsupported or compound package-disable command";
-        String pkg = matcher.group(1);
+        if (mutation.type == PackageMutationCommandGuard.Type.UNSUPPORTED_MUTATION) {
+            return "BLOCKED: unsupported or compound package mutation command";
+        }
         AndroidPackageSafetyInspector safety = safetySnapshot != null ? safetySnapshot
                 : AndroidPackageSafetyInspector.create(context, AndroidHomeAppDetector.detect(context));
-        if (!PackageSafetyPolicy.isValidPackageName(pkg)
-                || !safety.evaluate(pkg).isSafeToDisable()) {
+        if (!safety.evaluate(mutation.packageName).isSafeToDisable()) {
             return "BLOCKED_BY_PACKAGE_SAFETY_POLICY";
         }
         return null;
@@ -1404,7 +1390,8 @@ final class LocalAdb {
             List<String> outputs = new java.util.ArrayList<>(commands.size());
             AndroidPackageSafetyInspector packageSafetySnapshot = null;
             for (String command : commands) {
-                if (command != null && PACKAGE_DISABLE_COMMAND.matcher(command).matches()) {
+                if (PackageMutationCommandGuard.inspect(command).type
+                        == PackageMutationCommandGuard.Type.DISABLE) {
                     packageSafetySnapshot = AndroidPackageSafetyInspector.create(c, AndroidHomeAppDetector.detect(c));
                     break;
                 }
