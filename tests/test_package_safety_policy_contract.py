@@ -36,7 +36,7 @@ def main() -> None:
     for token in (
         "DevicePolicyManager", "getActiveAdmins()", "isDeviceOwnerApp(pkg)",
         "isProfileOwnerApp(pkg)", "FLAG_SYSTEM", "FLAG_UPDATED_SYSTEM_APP",
-        "FLAG_PRIVILEGED", "FLAG_PERSISTENT", "FIRST_APPLICATION_UID",
+        "FLAG_PERSISTENT", "FIRST_APPLICATION_UID",
         "queryIntentServices", "queryIntentActivities", "checkPermission",
         "android.intent.action.MANAGE_APP_PERMISSIONS", "HomeAppDetector.Result",
         "DeviceProfileResolver.fromSystem",
