@@ -67,6 +67,10 @@ def main() -> None:
             "device profile must expose incomplete and conflicting OEM evidence")
     require("installed != null && !installed.isEmpty()" in RESOLVER,
             "empty PackageManager inventory must not be considered complete")
+    require("catch (RuntimeException | LinkageError ignored)" in RESOLVER,
+            "PackageManager inventory errors must remain fail-closed")
+    require("catch (PackageManager.NameNotFoundException | RuntimeException | LinkageError ignored)" in HOME_ADAPTER,
+            "HOME package lookup errors must not escape the adapter")
     require("deviceProfile.packageInventoryKnown" in INSPECTOR
             and 'deviceProfile.evidence.contains("build-properties")' in INSPECTOR,
             "package-only or incomplete OEM identity must not authorize system debloating")
@@ -83,6 +87,12 @@ def main() -> None:
             "ADB transport must reject compound mutations and all package deletion")
     require("pm disable-user" not in PERMS,
             "Perms must not display a manual shell command that bypasses package safety")
+    for path in ("src/com/techgenius/tvoslauncher/MainActivity.java",
+                 "src/com/techgenius/tvoslauncher/SetupActivity.java",
+                 "src/com/techgenius/tvoslauncher/PowerService.java"):
+        source = (ROOT / path).read_text(encoding="utf-8")
+        require("CleanYourTv.startDebloatFlow" not in source,
+                f"{path} must not trigger first-run or background debloating")
     for path in (
         "src/com/techgenius/tvoslauncher/MainActivity.java",
         "src/com/techgenius/tvoslauncher/SettingsActivity.java",
@@ -95,9 +105,9 @@ def main() -> None:
                 f"{path} must not add an alternate package mutation path")
     require("REQUEST_DELETE_PACKAGES" in MANIFEST,
             "user-app uninstall via Android confirmation requires the declared request permission")
-    require("CleanYourTv.isSafeToDelete(host, a.pkg)" in SCENE_HOME
+    require(SCENE_HOME.count("CleanYourTv.isSafeToDelete(host, a.pkg)") >= 2
             and "Intent.ACTION_DELETE" in SCENE_HOME,
-            "SceneHome user-app uninstall must be gated by the shared deletion policy")
+            "SceneHome uninstall must check safety both before showing and before launching Android confirmation")
     forbidden_delete_api = ("deletePackage(", "ACTION_UNINSTALL_PACKAGE",
                             "setApplicationEnabledSetting(", "setPackagesSuspended(",
                             "setApplicationHidden(")
