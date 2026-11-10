@@ -260,7 +260,12 @@ final class AndroidPackageSafetyInspector {
         boolean criticalRole = criticalRolePackages.contains(pkg);
         boolean roleKnown = criticalRoleQueryKnown;
 
-        boolean knownOem = deviceProfile != null && deviceProfile.isKnownOem();
+        // OEM identity is advisory unless Build identity and a complete package inventory
+        // independently agree. Package-name-only inference never authorizes system debloating.
+        boolean knownOem = deviceProfile != null && deviceProfile.isKnownOem()
+                && deviceProfile.packageInventoryKnown
+                && deviceProfile.evidence.contains("build-properties")
+                && !deviceProfile.evidence.contains("conflicting-build-and-package-oem-evidence");
         boolean inSelectedProfile = knownOem
                 && CleanYourTv.isSelectedModelProfileCandidate(context, pkg, deviceProfile);
 
