@@ -17,6 +17,16 @@ public final class PackageMutationCommandGuardTest {
                 "pm disable --user 0 com.example.app");
         expect(PackageMutationCommandGuard.Type.DISABLE, "com.example.app",
                 "cmd package disable-user --user 0 com.example.app");
+        expect(PackageMutationCommandGuard.Type.ENABLE, "com.example.app",
+                "pm enable --user 0 com.example.app");
+        expect(PackageMutationCommandGuard.Type.ENABLE, "com.example.app",
+                "cmd package enable --user 0 com.example.app");
+        expect(PackageMutationCommandGuard.Type.UNSUPPORTED_MUTATION, null,
+                "pm enable --user 0 com.example.app; echo done");
+        expect(PackageMutationCommandGuard.Type.UNSUPPORTED_MUTATION, null,
+                "pm enable --user 0 com.example.app; settings put global adb_enabled 0");
+        expect(PackageMutationCommandGuard.Type.UNSUPPORTED_MUTATION, null,
+                "pm enable --user 0 com.example.app; pm disable-user --user 0 com.other.app");
         expect(PackageMutationCommandGuard.Type.DELETE, null,
                 "pm uninstall --user 0 com.example.app");
         expect(PackageMutationCommandGuard.Type.DELETE, null,
