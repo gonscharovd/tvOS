@@ -95,4 +95,4 @@
 - **Решение:** удаление retired UI/feature code не должно автоматически очищать связанные SharedPreferences, cache или files при первом запуске. Legacy data сохраняются до отдельного согласованного cleanup с проверенным экспортом и rollback.
 - **Причина:** пользовательские данные могут оставаться полезными для отката на предыдущую версию, даже если соответствующий UI удалён.
 - **Последствия:** MainActivity не вызывает first-launch destructive cleanup; SingleUserPrefs не переписывает profiles.list/current и ask_on_wake; SingleUserMigration helper остаётся без изменений. Settings backup включает профильный registry для ручного rollback.
-- **Статус:** принято в PR #14; CI/review ожидаются.
+- **Статус:** принято в PR #14; CI #330 success, review ожидается.
