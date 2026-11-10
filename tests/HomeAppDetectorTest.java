@@ -35,6 +35,8 @@ public final class HomeAppDetectorTest {
         check(one.currentHomeKnown && one.isCurrentHome("vendor.tv.home"), "single system HOME");
         check(one.protectionFor("vendor.tv.home") == HomeAppDetector.PackageProtection.PROTECTED_CURRENT_HOME,
                 "selected system HOME must be protected");
+        check(!one.hasEnabledSystemHomeCandidate(TEST_OS),
+                "selected system HOME must not be counted as another launcher");
 
         // Multiple system HOME candidates: never assume the first candidate is selected.
         HomeAppDetector.Result multiple = evaluate(28, false, false, null,
