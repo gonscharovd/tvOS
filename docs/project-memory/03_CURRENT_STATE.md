@@ -119,3 +119,19 @@ PR #14 остаётся Draft и не merged. Код не опубликован
 - GitHub Actions run #363 (`42838478394`) на этом head завершился `success` для Linux и Windows. Включая HOME policy tests, Android wiring contract, localization tests, APK builds, package/version verification и artifact uploads.
 - TOS-012 implementation и CI завершены; PR #18 ожидает review. Это не подтверждает runtime поведение на реальных Android TV устройствах.
 - PR #14–#18 не слиты; `main` остаётся `a765318b577e66fae66a8ffe28439dcd6233f38f`; OTA не публиковалась; APK не устанавливался; телевизор и пользовательские данные не менялись.
+
+
+## TOS-013 — Universal CleanYourTV Safety Audit (2026-11-10)
+
+- Draft PR #19: https://github.com/gonscharovd/tvOS/pull/19. Branch `feat/package-safety-policy-2026-11`, based on TOS-012 / PR #18 branch `feat/dynamic-home-detection-2026-11` at base SHA `fc6d18cf6eb18805d2b42c6e4f88f8f678305324`.
+- PR #19 latest head at this documentation update: `19337cbc3eaa7fb4f3e232fb121fedef214d989e`. The preceding code commit `22d46a96a5dba243ae95c1a516b6890c6e72015d` passed GitHub Actions run #456 on Linux and Windows, including policy/guard tests, static contracts, APK builds and artifact uploads. Latest PR head adds only the audit Markdown report.
+- Added `PackageSafetyPolicy`, `AndroidPackageSafetyInspector`, `PackageMutationCommandGuard`; routed CleanYourTV single/batch disable, LocalAdb transport, restore, and SceneHome user-app uninstall through shared checks.
+- Confirmed fixes: disabled HOME candidates are included; Build/package OEM conflicts and incomplete package inventory fail closed; persistent apps protected regardless of system flag; system boot receivers protected; restore package names validated and `pm enable` is accepted only as an exact single-package command; compound shell commands rejected.
+- Added hard protection for Google TV `com.google.android.tungsten.setupwraith` because existing code identifies its Wi-Fi ownership risk; the old forget/re-add warning was replaced by an informational protection notice so Manual Debloat cannot bypass it.
+- `assets/cleanyourtv/index.txt` still contains 341 profiles; no mass rewrite. Two Sber profiles reviewed; their updater/service package runtime metadata remains unverified. Exact profile match for Sber SDX-50U4123B is not confirmed.
+- No PR #14–#19 merged; `main` unchanged at `a765318b577e66fae66a8ffe28439dcd6233f38f`; no OTA, APK install, TV shell command, HOME change or package-state change.
+- Android adapter behavior has not been tested on physical API 24/API 28/modern OEM devices. JVM tests simulate policy states; they do not emulate Android PackageManager/RoleManager/DevicePolicyManager.
+
+## Актуальная цепочка PR
+
+`main` → PR #14 → PR #16 → PR #17 → PR #18 → PR #19. PR #15 — отдельный documentation PR. Не retarget PR #19 на `main`, пока TOS-012 dependency не будет слита владельцем проекта.
