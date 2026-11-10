@@ -78,6 +78,10 @@ def main() -> None:
         source = source_path.read_text(encoding="utf-8")
         for token in forbidden_delete_api:
             require(token not in source, f"{source_path} must not introduce {token}")
+        if "Intent.ACTION_DELETE" in source:
+            require(source_path.name == "SceneHome.java"
+                    and "CleanYourTv.isSafeToDelete(host, a.pkg)" in source,
+                    f"{source_path} must gate ACTION_DELETE through the shared policy")
     require("deletePackage(" not in CLEAN and "pm uninstall" not in CLEAN,
             "CleanYourTV must not directly delete packages")
     require("pm enable --user 0 " in CLEAN,
