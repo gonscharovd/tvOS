@@ -200,14 +200,14 @@ final class AndroidPackageSafetyInspector {
     PackageSafetyPolicy.Decision evaluate(String pkg) {
         if (context == null || packageManager == null || pkg == null) {
             return PackageSafetyPolicy.evaluate(facts(pkg, false, false, false, false,
-                    false, false, false, false, false, false, false, false, false,
+                    false, false, false, false, false, false, false, false,
                     PackageSafetyPolicy.HomeState.UNKNOWN, null));
         }
 
         boolean valid = PackageSafetyPolicy.isValidPackageName(pkg);
         if (!valid) {
             return PackageSafetyPolicy.evaluate(facts(pkg, false, false, false, false,
-                    false, false, false, false, false, false, false, false, false,
+                    false, false, false, false, false, false, false, false,
                     PackageSafetyPolicy.HomeState.SAFE_NON_HOME, null));
         }
 
@@ -217,12 +217,11 @@ final class AndroidPackageSafetyInspector {
             app = packageManager.getApplicationInfo(pkg, PackageManager.MATCH_DISABLED_COMPONENTS);
         } catch (PackageManager.NameNotFoundException | RuntimeException | LinkageError e) {
             return PackageSafetyPolicy.evaluate(facts(pkg, false, false, false, false,
-                    false, false, false, false, false, false, false, false, false, homeState));
+                    false, false, false, false, false, false, false, false, homeState));
         }
 
         boolean systemApp = (app.flags & (ApplicationInfo.FLAG_SYSTEM
                 | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0;
-        boolean privileged = (app.flags & ApplicationInfo.FLAG_PRIVILEGED) != 0;
         boolean persistent = (app.flags & ApplicationInfo.FLAG_PERSISTENT) != 0;
         boolean systemUid = app.uid < Process.FIRST_APPLICATION_UID;
 
@@ -264,7 +263,7 @@ final class AndroidPackageSafetyInspector {
         } catch (RuntimeException ignored) {
             // Package label is cosmetic; package name and platform facts remain authoritative.
         }
-        PackageSafetyPolicy.Facts facts = facts(pkg, true, systemApp, privileged, persistent,
+        PackageSafetyPolicy.Facts facts = facts(pkg, true, systemApp, persistent,
                 systemUid, ownerKnown, owner, roleKnown, criticalRole, permissionKnown,
                 criticalPermission, knownOem, inSelectedProfile, homeState, label);
         return PackageSafetyPolicy.evaluate(facts);
@@ -285,11 +284,11 @@ final class AndroidPackageSafetyInspector {
     }
 
     private PackageSafetyPolicy.Facts facts(String pkg, boolean packageInfoKnown,
-            boolean systemApp, boolean privileged, boolean persistent, boolean systemUid,
+            boolean systemApp, boolean persistent, boolean systemUid,
             boolean ownerKnown, boolean owner, boolean rolesKnown, boolean criticalRole,
             boolean permissionsKnown, boolean criticalPermission, boolean knownOem,
             boolean inProfile, PackageSafetyPolicy.HomeState homeState) {
-        return facts(pkg, packageInfoKnown, systemApp, privileged, persistent, systemUid,
+        return facts(pkg, packageInfoKnown, systemApp, persistent, systemUid,
                 ownerKnown, owner, rolesKnown, criticalRole, permissionsKnown,
                 criticalPermission, knownOem, inProfile, homeState, null);
     }
@@ -305,7 +304,7 @@ final class AndroidPackageSafetyInspector {
                 || CleanYourTv.isCriticalProtectedService(pkg, appLabel);
         boolean coreProtected = CleanYourTv.isCoreAndroidProtectedPackage(pkg);
         return new PackageSafetyPolicy.Facts(pkg, valid, own, legacyProtected, coreProtected,
-                homeState, packageInfoKnown, systemApp, privileged, persistent, systemUid,
+                homeState, packageInfoKnown, systemApp, persistent, systemUid,
                 ownerKnown, owner, rolesKnown, criticalRole, permissionsKnown,
                 criticalPermission, knownOem, inProfile);
     }
