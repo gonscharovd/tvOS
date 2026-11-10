@@ -17,7 +17,6 @@ public final class PackageSafetyPolicy {
 
     public enum Reason {
         NONE,
-        PACKAGE_DELETE_NOT_SUPPORTED,
         SYSTEM_PACKAGE_DELETE_NOT_ALLOWED,
         SAFE_USER_APP_DELETE,
         INVALID_PACKAGE_NAME,
