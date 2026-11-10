@@ -788,7 +788,7 @@ final class SceneHome {
                 labels.add(I18n.s(host, "Uninstall", "Kaldır"));
                 actions.add(() -> {
                     if (!CleanYourTv.isSafeToDelete(host, a.pkg)) {
-                        Toast.makeText(host, I18n.s(host, "This app is protected", "Bu uygulama korunuyor"),
+                        Toast.makeText(host, I18n.s(host, "This app is protected", "Приложение защищено"),
                                 Toast.LENGTH_SHORT).show();
                         return;
                     }
