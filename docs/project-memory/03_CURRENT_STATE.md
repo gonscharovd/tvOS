@@ -10,7 +10,7 @@
 |---|---|
 | main | `a765318b577e66fae66a8ffe28439dcd6233f38f` |
 | Кодовая рабочая ветка | `refactor/testos-core-cleanup-2026-11` |
-| Последний commit кода | `7aa77d1cb3654f090cafdedfabf3274a7098d87b` |
+| Последний commit кода | `6d3fc12a271ad8d5cb3681cc614e8182041fddcf` |
 | PR #14 | Open / Draft, base `main`, head `d1523ad...` |
 | PR #14 diff | актуальный diff проверять в GitHub; TOS-008 добавила workflow/test files |
 | Документационная ветка | `docs/project-memory-2026-11` |
@@ -42,7 +42,7 @@ PR #14 остаётся Draft и не merged. Код не опубликован
 
 ## CI и сборка
 
-- Последний подтверждённый CI до TOS-009 — run #322 success на предыдущем head `d1523ade...`. Прогоны #328/#329 на промежуточных коммитах завершились failure из-за временно удалённых JSON imports в `SingleUserPrefs`; imports восстановлены. Полный CI run #330 для текущего head `6d3fc12a271ad8d5cb3681cc614e8182041fddcf` выполняется: https://github.com/gonscharovd/tvOS/actions/runs/42791143018.
+- Полный CI run #330 на финальном head `6d3fc12a271ad8d5cb3681cc614e8182041fddcf` завершился `success` на Linux и Windows: https://github.com/gonscharovd/tvOS/actions/runs/42791143018. Промежуточные #328/#329 падали из-за временно удалённых JSON imports; imports восстановлены до #330.
 - Run #322 завершился успешно в обоих jobs: Ubuntu/Linux и Windows. `SingleUserMigration.java` с `SingleUserMigrationTest.java` скомпилированы `javac --release 11` и выполнены на обоих runners; regression contract проверил wiring обоих jobs и защитные assertions legacy preservation. Все предыдущие Python/PowerShell contracts, Linux/Windows APK builds, signature и package/version assertions, artifacts — success.
 - Artifacts run #317: `testOS-ci-debug` (ID `13666833681`) и `testOS-ci-debug-windows` (ID `13667867069`), runner-generated debug-signed previews.
 - В run #293 прошли настроенные Python regression tests и Java comparator/I18n tests; `build.sh` собрал APK; apksigner проверил подпись; artifact upload прошёл.
@@ -70,7 +70,7 @@ PR #14 остаётся Draft и не merged. Код не опубликован
 - `build.sh` / `build.ps1` version defaults унифицированы в `version.properties`; DEBT-001 устранён в PR #14.
 - Machine-specific JDK fallback удалён из `build.ps1`; `JAVA_HOME` и `PATH` resolution подтверждены run #317.
 - **Profile rollback:** `SingleUserPrefs` больше не переписывает `profiles.list/current` и `ask_on_wake`; старый APK сможет прочитать прежний выбранный профиль. Значения также сохраняются в `legacy_list_before_single_user` / `legacy_current_before_single_user`. Settings JSON backup теперь включает `profiles` и проецирует эти legacy values обратно в экспортируемые `list/current`, чтобы поддержать ручное восстановление для уже мигрированных установок. Import/rollback на физическом ТВ ещё не проверен.
-- Runtime regression PR #14 на Sber SDX-50U4123B не выполнена. TOS-009 implementation внесена и ожидает CI/review; TOS-006 остаётся заблокирована read-only device inventory и проверкой signing compatibility.
+- Runtime regression PR #14 на Sber SDX-50U4123B не выполнена. TOS-009 implementation и полный CI #330 завершены, ожидают review; TOS-006 остаётся заблокирована read-only device inventory и проверкой signing compatibility.
 - Сертификат установленного на ТВ APK не сверялся с release certificate в этой сессии. Release workflow проверяет ожидаемый SHA-256 certificate fingerprint `5dbf8846d9bb76a764928da8c8a833a837b44ba00f4a7c0b60dc77490319b10a`; совпадение с устройством не доказано.
 - Последний GitHub Release — `v2.1.73`, versionCode 88; PR #14 development target — `2.1.74`, versionCode 89. Официальный release asset не является PR preview.
 - На старте PR #14 runtime test latest installed TV version/package fingerprint не были получены заново. Ранее в истории упоминалась установка 2.1.61, но это не считать текущим фактом без read-only проверки.
@@ -82,6 +82,6 @@ PR #14 остаётся Draft и не merged. Код не опубликован
 
 1. Review PR #15 и документационных изменений.
 2. TOS-008: подключена к CI и прошла Linux/Windows в run #322; ожидает review.
-3. TOS-009: implementation внесена в PR #14; ожидается полный CI и review regression contracts.
+3. TOS-009: implementation и полный CI #330 успешны; ожидает review PR #14.
 4. TOS-006: выполнить read-only preflight, подтвердить installed APK fingerprint и только затем согласовать release-signed in-place candidate.
 5. TOS-007: отдельная OTA validation после TOS-006; не запускать GitHub latest release updater во время TOS-006.
