@@ -63,6 +63,9 @@ jobs:
           echo "VERSION_CODE=${VERSION_CODE:-$DEFAULT_VERSION_CODE}" >> "$GITHUB_ENV"
           echo "VERSION_NAME=${VERSION_NAME:-$DEFAULT_VERSION_NAME}" >> "$GITHUB_ENV"
 
+      - name: Test HOME detection Android wiring
+        run: python3 tests/test_home_detection_contract.py
+
       - name: Test single-user migration CI contract
         run: python3 tests/test_single_user_migration_contract.py
 
@@ -215,6 +218,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Single-user migration test compilation failed" }
           & java -cp $testDir com.techgenius.tvoslauncher.SingleUserMigrationTest
           if ($LASTEXITCODE -ne 0) { throw "Single-user migration data test failed" }
+
+      - name: Test HOME detection Android wiring
+        shell: pwsh
+        run: python tests/test_home_detection_contract.py
 
       - name: Test single-user migration CI contract
         shell: pwsh
