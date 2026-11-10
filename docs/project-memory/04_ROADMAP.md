@@ -11,7 +11,7 @@
 1. Провести review изменений core cleanup и документационного PR.
 2. Синхронизировать пользовательскую документацию с фактическим кодом PR — **выполнено в Draft PR #15, ожидает review**.
 3. Устранить расхождения build version defaults и тестов контракта сборки (TOS-002) — реализация и Linux/Windows CI validation завершены в PR #14; ожидается review.
-4. TOS-009: удалён destructive first-launch cleanup; профильный registry сохраняется, backup rollback projection добавлена; дождаться полного CI/review.
+4. TOS-009: удалён destructive first-launch cleanup; профильный registry сохраняется, backup rollback projection добавлена; полный CI #330 success, ожидает review.
 5. Выполнить runtime regression на Sber TV (TOS-006) только после read-only inventory и certificate gate.
 5. После review и одобрения Product Owner решить вопрос о merge. Не выполнять merge автоматически.
 
@@ -19,7 +19,7 @@
 
 - Удаление hard-coded локального пути JDK из build.ps1 (TOS-004) — реализовано и проверено Linux/Windows CI #317; ожидает review PR #14.
 - Подключение pure-Java SingleUserMigrationTest к Linux/Windows CI (TOS-008) — реализовано, полный CI #322 success; ожидает review PR #14.
-- TOS-009 — implementation внесена в PR #14; полный CI/review ожидаются. TOS-006 остаётся заблокированной до зелёного CI, read-only inventory и certificate gate.
+- TOS-009 — implementation внесена в PR #14; полный CI #330 success, ожидает review. TOS-006 остаётся заблокированной до зелёного CI, read-only inventory и certificate gate.
 - Проверка install/launcher component command по итоговому APK manifest.
 - Проверка package ID, version metadata и release certificate перед OTA.
 - Обновление README, docs/features, docs/architecture, docs/install и dependency map.
