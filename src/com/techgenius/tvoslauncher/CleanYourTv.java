@@ -178,9 +178,6 @@ public final class CleanYourTv {
     private static List<ModelEntry> cachedModels;
     private static final java.util.concurrent.ConcurrentHashMap<String, String> APP_LABEL_CACHE =
             new java.util.concurrent.ConcurrentHashMap<>();
-    private static final java.util.concurrent.ConcurrentHashMap<String, Boolean> SAFE_DISABLE_CACHE =
-            new java.util.concurrent.ConcurrentHashMap<>();
-
     private CleanYourTv() {}
 
     private static String tr(Context c, String en, String tr) {
@@ -462,43 +459,29 @@ public final class CleanYourTv {
      * and recovery.py (never disables core system packages, TV input hardware services, or tvOS Launcher).
      */
     public static boolean isSafeToDisable(Context c, String pkg) {
-        return isSafeToDisable(c, pkg, AndroidHomeAppDetector.detect(c));
+        return isSafeToDisable(c, pkg, AndroidPackageSafetyInspector.create(c, AndroidHomeAppDetector.detect(c)));
     }
 
-    private static boolean isSafeToDisable(Context c, String pkg, HomeAppDetector.Result homeDetection) {
-        if (c == null || pkg == null || pkg.isEmpty()) return false;
-        if ("android".equals(pkg)) return false;
+    private static boolean isSafeToDisable(Context c, String pkg, AndroidPackageSafetyInspector safety) {
+        if (c == null || pkg == null || pkg.isEmpty() || safety == null) return false;
+        return safety.evaluate(pkg).isSafeToDisable();
+    }
 
-        // Never disable the selected HOME. If HOME selection or package visibility is unknown,
-        // fail closed for candidate/unknown packages rather than guessing from OEM package names.
-        HomeAppDetector.PackageProtection homeProtection = homeDetection == null
-                ? HomeAppDetector.PackageProtection.UNKNOWN : homeDetection.protectionFor(pkg);
-        if (homeProtection != HomeAppDetector.PackageProtection.SAFE) {
-            return false;
-        }
+    static boolean isLegacyHardProtectedPackage(String pkg) {
+        if (NEVER_DISABLE_EXACT.contains(pkg) || isCriticalProtectedService(pkg, null)) return true;
+        return false;
+    }
 
-        Boolean cached = SAFE_DISABLE_CACHE.get(pkg);
-        if (cached != null) return cached;
-        if (NEVER_DISABLE_EXACT.contains(pkg) || isCriticalProtectedService(pkg, null)) {
-            SAFE_DISABLE_CACHE.put(pkg, false);
-            return false;
-        }
-        if (CORE_RE.matcher(pkg).matches() && !CORE_OK.matcher(pkg).matches()) {
-            SAFE_DISABLE_CACHE.put(pkg, false);
-            return false;
-        }
-        // Protect TV input hardware services (HDMI / tuner inputs)
-        try {
-            PackageManager pm = c.getPackageManager();
-            if (pm.checkPermission("android.permission.TV_INPUT_HARDWARE", pkg)
-                    == PackageManager.PERMISSION_GRANTED) {
-                SAFE_DISABLE_CACHE.put(pkg, false);
-                return false;
-            }
-        } catch (Throwable ignored) {
-        }
-        SAFE_DISABLE_CACHE.put(pkg, true);
-        return true;
+    static boolean isCoreAndroidProtectedPackage(String pkg) {
+        return pkg != null && CORE_RE.matcher(pkg).matches() && !CORE_OK.matcher(pkg).matches();
+    }
+
+    static boolean isSelectedModelProfileCandidate(Context c, String pkg, DeviceProfile profile) {
+        if (c == null || pkg == null || pkg.isEmpty() || profile == null || !profile.isKnownOem()) return false;
+        ModelEntry selected = findModelBySlug(c, getSelectedModelSlug(c));
+        if (selected == null || !selected.packages.contains(pkg)) return false;
+        Set<String> modelFamilies = detectOemFamiliesForModel(selected);
+        return modelFamilies.contains(profile.family.name().toLowerCase(Locale.US));
     }
 
     /**
@@ -601,6 +584,7 @@ public final class CleanYourTv {
     private static Set<String> detectOemFamiliesForModel(ModelEntry entry) {
         Set<String> families = new HashSet<>();
         String text = (entry.slug + " " + entry.title + " " + entry.headerMeta).toLowerCase(Locale.US);
+        if (text.contains("sber") || text.contains("salute")) families.add("sber");
         if (text.contains("tcl") || text.contains("ffalcon") || text.contains("thomson") || text.contains("ifalcon")) families.add("tcl");
         if (text.contains("philips") || text.contains("tpvision") || text.contains("droidtv") || text.contains("pus") || text.contains("pml") || text.contains("oled")) {
             if (text.contains("philips") || text.contains("tpvision") || text.contains("droidtv")) families.add("philips");
@@ -1477,6 +1461,7 @@ public final class CleanYourTv {
 
         PackageManager pm = c.getPackageManager();
         HomeAppDetector.Result homeDetection = AndroidHomeAppDetector.detect(c);
+        AndroidPackageSafetyInspector safety = AndroidPackageSafetyInspector.create(c, homeDetection);
         List<DebloatItem> primaryItems = new ArrayList<>();
         List<DebloatItem> optionalItems = new ArrayList<>();
 
@@ -1485,7 +1470,7 @@ public final class CleanYourTv {
         for (Map.Entry<String, String> e : activePkgComments.entrySet()) {
             String pkg = e.getKey();
             if (!installedPkgs.contains(pkg)) continue;
-            if (!isSafeToDisable(c, pkg, homeDetection)) continue;
+            if (!isSafeToDisable(c, pkg, safety)) continue;
 
             boolean isSetupOrLauncher = "com.google.android.tungsten.setupwraith".equals(pkg)
                     || "com.google.android.apps.tv.launcherx".equals(pkg)
@@ -1664,6 +1649,7 @@ public final class CleanYourTv {
         Set<String> savedDisabled = new HashSet<>(getSavedDisabledPackages(c));
         Map<String, DebloatItem> found = new LinkedHashMap<>();
         HomeAppDetector.Result homeDetection = AndroidHomeAppDetector.detect(c);
+        AndroidPackageSafetyInspector safety = AndroidPackageSafetyInspector.create(c, homeDetection);
 
         for (String[] row : KNOWN_SYSTEM_LAUNCHERS) {
             String pkg = row[0];
@@ -1778,6 +1764,7 @@ public final class CleanYourTv {
         Set<String> savedDisabled = new HashSet<>(getSavedDisabledPackages(c));
         Map<String, DebloatItem> map = new LinkedHashMap<>();
         HomeAppDetector.Result homeDetection = AndroidHomeAppDetector.detect(c);
+        AndroidPackageSafetyInspector safety = AndroidPackageSafetyInspector.create(c, homeDetection);
 
         try {
             int flags = PackageManager.MATCH_UNINSTALLED_PACKAGES | PackageManager.MATCH_DISABLED_COMPONENTS;
@@ -2338,8 +2325,9 @@ public final class CleanYourTv {
                                             List<String> packagesToDisable, Runnable onChanged) {
         List<String> safePkgs = new ArrayList<>();
         HomeAppDetector.Result homeDetection = AndroidHomeAppDetector.detect(activity);
+        AndroidPackageSafetyInspector safety = AndroidPackageSafetyInspector.create(activity, homeDetection);
         for (String pkg : packagesToDisable) {
-            if (isSafeToDisable(activity, pkg, homeDetection)) {
+            if (isSafeToDisable(activity, pkg, safety)) {
                 safePkgs.add(pkg);
             }
         }
