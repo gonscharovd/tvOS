@@ -5,6 +5,7 @@ on:
   pull_request:
     branches:
       - main
+      - refactor/testos-core-cleanup-2026-11
   push:
     branches:
       - feature/ram-cleaner-happ-vpn
