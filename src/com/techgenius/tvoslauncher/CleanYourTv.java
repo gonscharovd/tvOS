@@ -64,8 +64,8 @@ public final class CleanYourTv {
     private static final String BACKUP_FILENAME = "cleanyourtv_disabled_backup.txt";
 
     /**
-     * Exact safety regexes ported from cleanyourtv/tools/disable.sh (CORE_RE and CORE_OK).
-     * Any package matching CORE_RE and NOT matching CORE_OK is blocked from being disabled.
+     * Legacy package-name safety rules retained as defense in depth.
+     * PackageSafetyPolicy adds live HOME, DevicePolicyManager, PackageManager and OEM evidence.
      */
     private static final Pattern CORE_RE = Pattern.compile(
             "^(android"
@@ -79,11 +79,12 @@ public final class CleanYourTv {
     );
 
     /**
-     * Extra hardware/TV input packages from cleanyourtv/tools/recovery.py and CLAUDE.md
-     * that must never be disabled because they break HDMI/tuner inputs or our own launcher.
+     * Legacy exact deny rules retained until equivalent platform-role detection is proven
+     * across API 24+ and real OEM firmware. These names never authorize any other package.
      */
     private static final Set<String> NEVER_DISABLE_EXACT = new HashSet<>();
     static {
+        // testOS itself and legacy platform/TV-input services with no reliable cross-OEM identifier.
         NEVER_DISABLE_EXACT.add("com.techgenius.tvoslauncher");
         NEVER_DISABLE_EXACT.add("com.cltv.mal");
         NEVER_DISABLE_EXACT.add("com.mediatek.tis");
@@ -96,11 +97,13 @@ public final class CleanYourTv {
         NEVER_DISABLE_EXACT.add("com.google.android.gms");
         NEVER_DISABLE_EXACT.add("com.google.android.gsf");
         NEVER_DISABLE_EXACT.add("com.google.android.webview");
+        // Philips/DroidTV live-TV and tuner recovery components.
         NEVER_DISABLE_EXACT.add("org.droidtv.playtv");
         NEVER_DISABLE_EXACT.add("org.droidtv.tunerservice");
         NEVER_DISABLE_EXACT.add("org.droidtv.channels");
         NEVER_DISABLE_EXACT.add("com.android.tv");
         NEVER_DISABLE_EXACT.add("com.google.android.tv");
+        // Xiaomi Bluetooth services: retain until role/permission evidence covers older OEM builds.
         NEVER_DISABLE_EXACT.add("com.xiaomi.bluetooth");
         NEVER_DISABLE_EXACT.add("com.mi.bluetooth");
         NEVER_DISABLE_EXACT.add("com.xiaomi.mitv.bluetooth");
