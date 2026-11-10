@@ -4,9 +4,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.util.Log;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import java.io.File;
 import java.util.Map;
 import java.util.Set;
@@ -71,9 +68,6 @@ final class SingleUserPrefs {
                     return;
                 }
 
-                JSONArray single = new JSONArray();
-                single.put(new JSONObject().put("id", "p1").put("name", selected.name)
-                        .put("color", selected.color).put("emoji", selected.emoji));
                 SharedPreferences.Editor editor = registry.edit();
                 if (!registry.contains("legacy_list_before_single_user")) {
                     editor.putString("legacy_list_before_single_user", rawList);
@@ -81,10 +75,10 @@ final class SingleUserPrefs {
                 if (!registry.contains("legacy_current_before_single_user")) {
                     editor.putString("legacy_current_before_single_user", rawCurrent);
                 }
-                editor.putString("list", single.toString())
-                        .putString("current", "p1")
-                        .putString("single_user_name", selected.name)
-                        .putBoolean("ask_on_wake", false)
+                // Keep list/current and ask_on_wake untouched. The single-user UI no longer
+                // consumes the profile registry, while an older APK can still read the exact
+                // pre-migration selection if the user rolls back this update.
+                editor.putString("single_user_name", selected.name)
                         .putBoolean(MIGRATED, true);
                 if (!editor.commit()) Log.w(TAG, "Could not commit single-user profile metadata");
             } catch (Exception e) {
