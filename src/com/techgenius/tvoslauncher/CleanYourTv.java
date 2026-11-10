@@ -2320,8 +2320,8 @@ public final class CleanYourTv {
     }
 
     /**
-     * Executes `pm disable-user --user 0 <pkg>` one package per shell call (matching tools/disable.sh),
-     * saves the disabled package backup list, runs `sync`, and reports results.
+     * Executes only packages approved by PackageSafetyPolicy. LocalAdb re-checks each package
+     * mutation at the shell transport boundary before sending it, then records verified results.
      */
     private static void executeDebloatBatch(Activity activity, ModelEntry model,
                                             List<String> packagesToDisable, Runnable onChanged) {
