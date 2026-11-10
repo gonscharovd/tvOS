@@ -9,7 +9,7 @@ import java.util.regex.Pattern;
  * sufficient by itself to authorize disabling a system package.
  */
 public final class PackageSafetyPolicy {
-    public enum State { SAFE_TO_DISABLE, PROTECTED, UNKNOWN }
+    public enum State { SAFE_TO_DISABLE, SAFE_TO_DELETE, PROTECTED, UNKNOWN }
 
     public enum Confidence { CONFIRMED, INCOMPLETE }
 
@@ -18,6 +18,8 @@ public final class PackageSafetyPolicy {
     public enum Reason {
         NONE,
         PACKAGE_DELETE_NOT_SUPPORTED,
+        SYSTEM_PACKAGE_DELETE_NOT_ALLOWED,
+        SAFE_USER_APP_DELETE,
         INVALID_PACKAGE_NAME,
         OWN_APPLICATION,
         LEGACY_HARD_PROTECTION,
@@ -101,6 +103,10 @@ public final class PackageSafetyPolicy {
         public boolean isSafeToDisable() {
             return state == State.SAFE_TO_DISABLE;
         }
+
+        public boolean isSafeToDelete() {
+            return state == State.SAFE_TO_DELETE;
+        }
     }
 
     private static final Pattern PACKAGE_NAME =
@@ -113,7 +119,26 @@ public final class PackageSafetyPolicy {
     }
 
     public static Decision evaluateDelete(Facts f) {
-        return protectedResult(Reason.PACKAGE_DELETE_NOT_SUPPORTED);
+        if (f == null) return unknown(Reason.PACKAGE_INFO_UNKNOWN);
+        if (!f.packageNameValid || !isValidPackageName(f.packageName)) {
+            return protectedResult(Reason.INVALID_PACKAGE_NAME);
+        }
+        if (f.ownApplication) return protectedResult(Reason.OWN_APPLICATION);
+        if (f.legacyHardProtected) return protectedResult(Reason.LEGACY_HARD_PROTECTION);
+        if (f.coreAndroidProtected) return protectedResult(Reason.CORE_ANDROID_PROTECTION);
+        if (f.homeState == HomeState.SELECTED_HOME) return protectedResult(Reason.SELECTED_HOME);
+        if (f.homeState == HomeState.HOME_CANDIDATE) return protectedResult(Reason.HOME_CANDIDATE);
+        if (f.homeState != HomeState.SAFE_NON_HOME) return unknown(Reason.HOME_STATE_UNKNOWN);
+        if (!f.packageInfoKnown) return unknown(Reason.PACKAGE_INFO_UNKNOWN);
+        if (!f.deviceOwnerQueryKnown) return unknown(Reason.DEVICE_OWNER_QUERY_UNKNOWN);
+        if (f.deviceOwnerOrActiveAdmin) return protectedResult(Reason.DEVICE_OWNER_OR_ACTIVE_ADMIN);
+        if (!f.criticalRoleQueryKnown) return unknown(Reason.CRITICAL_ROLE_QUERY_UNKNOWN);
+        if (f.criticalSystemRole) return protectedResult(Reason.CRITICAL_SYSTEM_ROLE);
+        if (!f.criticalPermissionQueryKnown) return unknown(Reason.CRITICAL_PERMISSION_QUERY_UNKNOWN);
+        if (f.criticalPermission) return protectedResult(Reason.CRITICAL_PERMISSION);
+        if (f.systemUid) return protectedResult(Reason.SYSTEM_UID);
+        if (f.systemApplication) return protectedResult(Reason.SYSTEM_PACKAGE_DELETE_NOT_ALLOWED);
+        return new Decision(State.SAFE_TO_DELETE, Reason.SAFE_USER_APP_DELETE);
     }
 
     public static Decision evaluate(Facts f) {
