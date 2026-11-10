@@ -4,8 +4,7 @@ public final class PackageSafetyPolicyTest {
     private static final String PKG = "vendor.example.app";
 
     private static PackageSafetyPolicy.Facts facts(
-            PackageSafetyPolicy.HomeState home, boolean system, boolean privileged,
-            boolean persistent, boolean systemUid, boolean ownerKnown, boolean owner,
+            PackageSafetyPolicy.HomeState home, boolean system, boolean persistent, boolean systemUid, boolean ownerKnown, boolean owner,
             boolean rolesKnown, boolean criticalRole, boolean permissionsKnown,
             boolean criticalPermission, boolean knownOem, boolean inProfile) {
         return new PackageSafetyPolicy.Facts(PKG, true, false, false, false, home,
@@ -25,19 +24,18 @@ public final class PackageSafetyPolicyTest {
     }
 
     public static void main(String[] args) {
-        PackageSafetyPolicy.Facts safeUser = facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME,
-                false, false, false, false, true, false, true, false, true, false, false, false);
+        PackageSafetyPolicy.Facts safeUser = facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false, true, false, true, false, true, false, false, false);
         expect(PackageSafetyPolicy.State.SAFE_TO_DISABLE, PackageSafetyPolicy.Reason.NON_SYSTEM_APPLICATION,
                 safeUser, "ordinary user app");
 
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.SELECTED_HOME,
-                facts(PackageSafetyPolicy.HomeState.SELECTED_HOME, false, false, false, false,
+                facts(PackageSafetyPolicy.HomeState.SELECTED_HOME, false, false, false,
                         true, false, true, false, true, false, false, false), "selected HOME");
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.HOME_CANDIDATE,
-                facts(PackageSafetyPolicy.HomeState.HOME_CANDIDATE, true, false, false, false,
+                facts(PackageSafetyPolicy.HomeState.HOME_CANDIDATE, true, false, false,
                         true, false, true, false, true, false, true, true), "alternate HOME");
         expect(PackageSafetyPolicy.State.UNKNOWN, PackageSafetyPolicy.Reason.HOME_STATE_UNKNOWN,
-                facts(PackageSafetyPolicy.HomeState.UNKNOWN, false, false, false, false,
+                facts(PackageSafetyPolicy.HomeState.UNKNOWN, false, false, false,
                         true, false, true, false, true, false, false, false), "unknown HOME");
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.OWN_APPLICATION,
                 new PackageSafetyPolicy.Facts(PKG, true, true, false, false,
@@ -57,43 +55,42 @@ public final class PackageSafetyPolicyTest {
                         PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false, false, false,
                         true, false, true, false, true, false, false, false), "PackageManager unavailable");
         expect(PackageSafetyPolicy.State.UNKNOWN, PackageSafetyPolicy.Reason.DEVICE_OWNER_QUERY_UNKNOWN,
-                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false, false,
+                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false,
                         false, false, true, false, true, false, false, false), "DevicePolicyManager failure");
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.DEVICE_OWNER_OR_ACTIVE_ADMIN,
-                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false, false,
+                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false,
                         true, true, true, false, true, false, false, false), "Device Owner");
         expect(PackageSafetyPolicy.State.UNKNOWN, PackageSafetyPolicy.Reason.CRITICAL_ROLE_QUERY_UNKNOWN,
-                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false, false,
+                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false,
                         true, false, false, false, true, false, false, false), "critical-role query failure");
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.CRITICAL_SYSTEM_ROLE,
-                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false, false,
+                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false,
                         true, false, true, true, true, false, false, false), "TV Input / IME / Settings role");
         expect(PackageSafetyPolicy.State.UNKNOWN, PackageSafetyPolicy.Reason.CRITICAL_PERMISSION_QUERY_UNKNOWN,
-                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false, false,
+                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false,
                         true, false, true, false, false, false, false, false), "permission query failure");
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.CRITICAL_PERMISSION,
-                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false, false,
+                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false,
                         true, false, true, false, true, true, false, false), "critical Android permission");
 
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.SYSTEM_UID,
-                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false, true,
+                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, true,
                         true, false, true, false, true, false, true, true), "system UID");
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.PERSISTENT_SYSTEM_APPLICATION,
-                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, true, false,
+                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, true, false,
                         true, false, true, false, true, false, true, true), "persistent system app");
         expect(PackageSafetyPolicy.State.UNKNOWN, PackageSafetyPolicy.Reason.UNKNOWN_OEM_SYSTEM_APPLICATION,
-                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false, false,
+                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false,
                         true, false, true, false, true, false, false, true), "unknown OEM system app");
         expect(PackageSafetyPolicy.State.UNKNOWN, PackageSafetyPolicy.Reason.SYSTEM_PACKAGE_NOT_IN_SELECTED_PROFILE,
-                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false, false,
+                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false,
                         true, false, true, false, true, false, true, false), "unknown system package");
         expect(PackageSafetyPolicy.State.SAFE_TO_DISABLE, PackageSafetyPolicy.Reason.REVIEWED_PROFILE_SYSTEM_APPLICATION,
-                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false, false,
+                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false,
                         true, false, true, false, true, false, true, true), "profile candidate with independent checks");
 
         for (int api : new int[] {24, 28, 34, 35}) {
-            PackageSafetyPolicy.Facts f = facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME,
-                    false, false, false, false, true, false, true, false, true, false, false, false);
+            PackageSafetyPolicy.Facts f = facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, false, false, false, true, false, true, false, true, false, false, false);
             expect(PackageSafetyPolicy.State.SAFE_TO_DISABLE, PackageSafetyPolicy.Reason.NON_SYSTEM_APPLICATION,
                     f, "API " + api + " policy parity");
         }
@@ -101,7 +98,7 @@ public final class PackageSafetyPolicyTest {
         check(PackageSafetyPolicy.evaluate(safeUser).confidence == PackageSafetyPolicy.Confidence.CONFIRMED,
                 "safe decision must carry confirmed confidence");
         PackageSafetyPolicy.Decision unknown = PackageSafetyPolicy.evaluate(
-                facts(PackageSafetyPolicy.HomeState.UNKNOWN, false, false, false, false,
+                facts(PackageSafetyPolicy.HomeState.UNKNOWN, false, false, false,
                         true, false, true, false, true, false, false, false));
         check(unknown.confidence == PackageSafetyPolicy.Confidence.INCOMPLETE,
                 "unknown decision must carry incomplete confidence");
