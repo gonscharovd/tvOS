@@ -48,3 +48,31 @@ Debug artifact годится для CI проверки/скачивания, �
 `SingleUserPrefs` сохраняет исходные `profiles.list/current` и `ask_on_wake`, а также migration snapshot keys; предыдущая версия APK сможет прочитать прежний профиль без ручного восстановления registry. `CustomMedia` добавляет `profiles` в allowlist JSON backup и проецирует `legacy_list_before_single_user` / `legacy_current_before_single_user` обратно в экспортируемые `list/current` для установок, где более ранняя миграция уже переписала registry. Import remains merge-based and does not clear preferences. Backup остаётся частичным: CleanYourTV state, ADB/security data и custom media files не включены; TOS-009 их не удаляет. Android может независимо очистить cache.
 
 Regression contracts: `tests/test_settings_backup_safety.py` проверяет отсутствие destructive cleanup и profile backup projection; `tests/test_single_user_migration_contract.py` проверяет сохранение registry без изменения helper. Backup safety test включён в Linux и Windows jobs. Runtime backup/restore и downgrade на физическом ТВ не выполнялись; не считать их device-validated.
+
+
+### DEBT-010 — CleanYourTV Android runtime validation
+
+- **Проблема:** pure-Java tests и Android APK build не подтверждают реальные PackageManager/RoleManager/DevicePolicyManager результаты на Android TV разных OEM.
+- **Что известно:** Linux/Windows CI #456 прошёл; policy fail-closed при отсутствующем/неполном evidence. API 24/28/34/35 parity tests выполняют pure-Java policy, а не runtime adapter.
+- **Что неизвестно:** OEM flags/permissions, boot receivers, Permission Controller intent visibility, HOME interception, TV Input services и Device Owner package на конкретных Sber/Xiaomi/TCL/Philips/Sony/Hisense устройствах.
+- **Приоритет:** P1 для runtime rollout; не ослаблять `UNKNOWN` и не выполнять debloat до read-only inventory и явного разрешения.
+- **Статус:** OPEN — Draft PR #19; runtime tests не выполнялись.
+
+### DEBT-011 — Sber model profile updater/service metadata
+
+- **Проблема:** два Sber профиля содержат пакеты с updater/service названиями (`ru.sberdevices.updater`, `ru.sberdevices.rcfupdater`, `ru.sberdevices.services.core`). Их реальные permissions, UID, persistent flags и boot receivers на целевом SDX-50U4123B не проверены.
+- **Что сделано:** generic Android inspector защищает соответствующие пакеты при наличии critical permission, system UID, persistent flag, critical role/boot receiver или Device Owner evidence. Не добавлялся непроверенный package-name allow/deny массовый список.
+- **Риск/ограничение:** пока metadata не прочитана на конкретной прошивке, нельзя утверждать, что эти пакеты будут защищены всеми возможными OEM механизмами. Не выбирать похожий Sber profile как точный.
+- **Приоритет:** P1 перед любым CleanYourTV run на Sber.
+- **Статус:** OPEN — runtime evidence отсутствует.
+
+### DEBT-012 — OEM HOME interception outside public Android APIs
+
+- **Проблема:** некоторые прошивки могут перехватывать физическую кнопку HOME через OEM механизм вне RoleManager / preferred activities.
+- **Защита:** все стандартные HOME candidates защищены; Sber StarLauncher сохраняет отдельный legacy deny rule. Unknown HOME state блокирует disable.
+- **Статус:** OPEN — требуется read-only/runtime validation на каждом OEM; не ослаблять policy.
+
+### DEBT-013 — Permission Controller visibility on modern OEM Android
+
+- **Проблема:** Android 29+ inspector требует обнаружить Permission Controller intent handler. OEM может скрыть/изменить этот handler; тогда policy останется UNKNOWN и заблокирует package mutation.
+- **Статус:** EXPECTED FAIL-SAFE LIMITATION — не обходить по package name без проверяемого API evidence.
