@@ -73,7 +73,7 @@ final class AndroidHomeAppDetector {
             if (app == null) {
                 try {
                     app = pm.getApplicationInfo(activity.packageName, PackageManager.MATCH_DISABLED_COMPONENTS);
-                } catch (PackageManager.NameNotFoundException | RuntimeException ignored) {
+                } catch (PackageManager.NameNotFoundException | RuntimeException | LinkageError ignored) {
                     app = null;
                 }
             }
