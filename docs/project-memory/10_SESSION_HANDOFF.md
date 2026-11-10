@@ -99,3 +99,18 @@ TOS-008 завершена: migration JVM test подключён к Linux/Windo
 - Никакие PR не слиты, `main` не изменён, APK не устанавливался, OTA не выпускалась, TV state/user data не изменялись.
 
 **NEXT ACTION:** провести review Draft PR #18 и согласовать его с PR #17 dependency chain. После review — начать TOS-013 (CleanYourTV safety audit), не переписывая 341 profiles без доказательств.
+
+
+## TOS-013 — точка передачи (2026-11-10)
+
+- Draft PR #19: https://github.com/gonscharovd/tvOS/pull/19.
+- Branch `feat/package-safety-policy-2026-11`, base `feat/dynamic-home-detection-2026-11` / PR #18 head `fc6d18cf6eb18805d2b42c6e4f88f8f678305324`. Latest PR #19 head at this handoff: `19337cbc3eaa7fb4f3e232fb121fedef214d989e` (audit Markdown report was the last docs-only change).
+- Code commit `22d46a96a5dba243ae95c1a516b6890c6e72015d` passed GitHub Actions run #456 on Linux and Windows, including policy/guard/HOME/DeviceProfile tests, Python contracts, APK builds and artifacts.
+- Implemented shared `PackageSafetyPolicy`, Android inspector, shell mutation guard, disabled HOME candidate discovery, boot receiver/system/persistent protection, OEM conflict/incomplete inventory fail-closed behavior, restore input validation and user-app uninstall gate.
+- 341 CleanYourTV profiles were not rewritten. `NEVER_DISABLE_EXACT` reviewed; all existing rules retained. Sber updater/service runtime metadata and exact SDX-50U4123B profile match remain unverified.
+- Physical Android runtime tests were not run. No ADB commands on TV, no package disable/enable/delete, no HOME changes, no APK installation, no OTA, no merge. `main` unchanged.
+- `docs/cleanyourtv-safety-audit.md` contains the dependency map, exact deny-rule audit, profile review, tests and unresolved limitations.
+
+## NEXT ACTION
+
+**Review Draft PR #19 against PR #18 dependency and inspect the final diff. Keep it Draft; do not merge or retarget to `main` until the upstream dependency chain is reviewed and the Product Owner explicitly approves. Physical TV validation is a separate read-only, explicitly approved step; do not disable packages.**
