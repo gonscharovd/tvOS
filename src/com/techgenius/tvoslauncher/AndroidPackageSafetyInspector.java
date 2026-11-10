@@ -198,17 +198,25 @@ final class AndroidPackageSafetyInspector {
     }
 
     PackageSafetyPolicy.Decision evaluate(String pkg) {
+        return evaluateInternal(pkg, false);
+    }
+
+    PackageSafetyPolicy.Decision evaluateDelete(String pkg) {
+        return evaluateInternal(pkg, true);
+    }
+
+    private PackageSafetyPolicy.Decision evaluateInternal(String pkg, boolean delete) {
         if (context == null || packageManager == null || pkg == null) {
-            return PackageSafetyPolicy.evaluate(facts(pkg, false, false, false, false,
+            return decide(facts(pkg, false, false, false, false,
                     false, false, false, false, false, false, false, false,
-                    PackageSafetyPolicy.HomeState.UNKNOWN, null));
+                    PackageSafetyPolicy.HomeState.UNKNOWN, null), delete);
         }
 
         boolean valid = PackageSafetyPolicy.isValidPackageName(pkg);
         if (!valid) {
-            return PackageSafetyPolicy.evaluate(facts(pkg, false, false, false, false,
+            return decide(facts(pkg, false, false, false, false,
                     false, false, false, false, false, false, false, false,
-                    PackageSafetyPolicy.HomeState.SAFE_NON_HOME, null));
+                    PackageSafetyPolicy.HomeState.SAFE_NON_HOME, null), delete);
         }
 
         PackageSafetyPolicy.HomeState homeState = homeState(pkg);
@@ -216,8 +224,8 @@ final class AndroidPackageSafetyInspector {
         try {
             app = packageManager.getApplicationInfo(pkg, PackageManager.MATCH_DISABLED_COMPONENTS);
         } catch (PackageManager.NameNotFoundException | RuntimeException | LinkageError e) {
-            return PackageSafetyPolicy.evaluate(facts(pkg, false, false, false, false,
-                    false, false, false, false, false, false, false, false, homeState));
+            return decide(facts(pkg, false, false, false, false,
+                    false, false, false, false, false, false, false, false, homeState), delete);
         }
 
         boolean systemApp = (app.flags & (ApplicationInfo.FLAG_SYSTEM
@@ -266,7 +274,7 @@ final class AndroidPackageSafetyInspector {
         PackageSafetyPolicy.Facts facts = facts(pkg, true, systemApp, persistent,
                 systemUid, ownerKnown, owner, roleKnown, criticalRole, permissionKnown,
                 criticalPermission, knownOem, inSelectedProfile, homeState, label);
-        return PackageSafetyPolicy.evaluate(facts);
+        return decide(facts, delete);
     }
 
     private PackageSafetyPolicy.HomeState homeState(String pkg) {
@@ -281,6 +289,10 @@ final class AndroidPackageSafetyInspector {
             if (home.currentHomeKnown) return PackageSafetyPolicy.HomeState.SAFE_NON_HOME;
         }
         return PackageSafetyPolicy.HomeState.UNKNOWN;
+    }
+
+    private static PackageSafetyPolicy.Decision decide(PackageSafetyPolicy.Facts facts, boolean delete) {
+        return delete ? PackageSafetyPolicy.evaluateDelete(facts) : PackageSafetyPolicy.evaluate(facts);
     }
 
     private PackageSafetyPolicy.Facts facts(String pkg, boolean packageInfoKnown,
