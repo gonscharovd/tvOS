@@ -1806,7 +1806,7 @@ public final class CleanYourTv {
                         : !savedDisabled.contains(pkg);
                 String label = resolveAppLabel(pm, pkg);
                 boolean isCritical = isCriticalProtectedService(pkg, label);
-                boolean coreWarning = isCritical || !isSafeToDisable(c, pkg);
+                boolean coreWarning = isCritical || !isSafeToDisable(c, pkg, homeDetection);
                 String desc = isCritical
                         ? tr(c, "🛑 Critical system service — protected (cannot be disabled)", "🛑 Kritik sistem servisi — korumalı (devre dışı bırakılamaz)")
                         : (coreWarning
