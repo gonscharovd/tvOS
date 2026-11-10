@@ -195,14 +195,14 @@ final class AndroidPackageSafetyInspector {
     PackageSafetyPolicy.Decision evaluate(String pkg) {
         if (context == null || packageManager == null || pkg == null) {
             return PackageSafetyPolicy.evaluate(facts(pkg, false, false, false, false,
-                    false, false, false, false, false, false, false, false,
+                    false, false, false, false, false, false, false, false, false,
                     PackageSafetyPolicy.HomeState.UNKNOWN));
         }
 
         boolean valid = PackageSafetyPolicy.isValidPackageName(pkg);
         if (!valid) {
             return PackageSafetyPolicy.evaluate(facts(pkg, false, false, false, false,
-                    false, false, false, false, false, false, false, false,
+                    false, false, false, false, false, false, false, false, false,
                     PackageSafetyPolicy.HomeState.SAFE_NON_HOME));
         }
 
@@ -212,7 +212,7 @@ final class AndroidPackageSafetyInspector {
             app = packageManager.getApplicationInfo(pkg, PackageManager.MATCH_DISABLED_COMPONENTS);
         } catch (PackageManager.NameNotFoundException | RuntimeException | LinkageError e) {
             return PackageSafetyPolicy.evaluate(facts(pkg, false, false, false, false,
-                    false, false, false, false, false, false, false, false, homeState));
+                    false, false, false, false, false, false, false, false, false, homeState));
         }
 
         boolean systemApp = (app.flags & (ApplicationInfo.FLAG_SYSTEM
@@ -249,8 +249,6 @@ final class AndroidPackageSafetyInspector {
                 || pkg.equals(permissionControllerPackage);
         boolean roleKnown = criticalRoleQueryKnown;
 
-        boolean legacyHardProtected = CleanYourTv.isLegacyHardProtectedPackage(pkg);
-        boolean coreProtected = CleanYourTv.isCoreAndroidProtectedPackage(pkg);
         boolean knownOem = deviceProfile != null && deviceProfile.isKnownOem();
         boolean inSelectedProfile = knownOem
                 && CleanYourTv.isSelectedModelProfileCandidate(context, pkg, deviceProfile);
@@ -262,12 +260,9 @@ final class AndroidPackageSafetyInspector {
         } catch (RuntimeException ignored) {
             // Package label is cosmetic; package name and platform facts remain authoritative.
         }
-        legacyHardProtected = legacyHardProtected
-                || CleanYourTv.isCriticalProtectedService(pkg, label);
-
         PackageSafetyPolicy.Facts facts = facts(pkg, true, systemApp, privileged, persistent,
                 systemUid, ownerKnown, owner, roleKnown, criticalRole, permissionKnown,
-                criticalPermission, knownOem, inSelectedProfile, homeState);
+                criticalPermission, knownOem, inSelectedProfile, homeState, label);
         return PackageSafetyPolicy.evaluate(facts);
     }
 
@@ -285,19 +280,19 @@ final class AndroidPackageSafetyInspector {
         return PackageSafetyPolicy.HomeState.UNKNOWN;
     }
 
-    private static PackageSafetyPolicy.Facts facts(String pkg, boolean packageInfoKnown,
+    private PackageSafetyPolicy.Facts facts(String pkg, boolean packageInfoKnown,
             boolean systemApp, boolean privileged, boolean persistent, boolean systemUid,
             boolean ownerKnown, boolean owner, boolean rolesKnown, boolean criticalRole,
             boolean permissionsKnown, boolean criticalPermission, boolean knownOem,
             boolean inProfile, PackageSafetyPolicy.HomeState homeState) {
         boolean valid = PackageSafetyPolicy.isValidPackageName(pkg);
-        return new PackageSafetyPolicy.Facts(pkg, valid,
-                contextOwnsPackage(pkg), false, false, homeState, packageInfoKnown,
-                systemApp, privileged, persistent, systemUid, ownerKnown, owner,
-                rolesKnown, criticalRole, permissionsKnown, criticalPermission, knownOem, inProfile);
-    }
-
-    private static boolean contextOwnsPackage(String pkg) {
-        return pkg != null && "com.gonscharovd.tvoslauncher".equals(pkg);
+        boolean own = context != null && pkg != null && pkg.equals(context.getPackageName());
+        boolean legacyProtected = CleanYourTv.isLegacyHardProtectedPackage(pkg)
+                || CleanYourTv.isCriticalProtectedService(pkg, null);
+        boolean coreProtected = CleanYourTv.isCoreAndroidProtectedPackage(pkg);
+        return new PackageSafetyPolicy.Facts(pkg, valid, own, legacyProtected, coreProtected,
+                homeState, packageInfoKnown, systemApp, privileged, persistent, systemUid,
+                ownerKnown, owner, rolesKnown, criticalRole, permissionsKnown,
+                criticalPermission, knownOem, inProfile);
     }
 }
