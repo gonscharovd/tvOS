@@ -32,7 +32,7 @@ public final class PackageMutationCommandGuardTest {
                 "cmd package set-enabled-setting com.example.app disabled-user");
         expect(PackageMutationCommandGuard.Type.UNSUPPORTED_MUTATION, null,
                 "pm disable-user --user 0 com.example.app; echo done");
-        expect(PackageMutationCommandGuard.Type.UNSUPPORTED_MUTATION, null,
+        expect(PackageMutationCommandGuard.Type.DELETE, null,
                 "pm disable-user --user 0 com.example.app; pm uninstall --user 0 com.other.app");
         System.out.println("Package mutation command guard tests passed.");
     }
