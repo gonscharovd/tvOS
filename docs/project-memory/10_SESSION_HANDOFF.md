@@ -70,8 +70,8 @@ TOS-008 завершена: migration JVM test подключён к Linux/Windo
 
 - Product goal is now universal Android TV API 24+; Sber SDX-50U4123B is only the first test platform.
 - PR #16 Open/Draft, head `85513e87f4b6abfe49352e67e8844d5fdbceb56a`; TOS-010 asset profile `sber` → `ru`; CI #338 Linux/Windows success.
-- PR #17 Open/Draft, base PR #16, head `a7fa0057b22c3125c087f9a78e8844d5fdbceb56a`; DeviceProfile model/resolver/JVM tests added; runs #339 push and #340 PR were in progress at last check.
+- PR #17 Open/Draft, base PR #16, head `a7fa0057b22c3125c087f9a78e8844d5fdbceb56a`; DeviceProfile model/resolver/JVM tests added; runs #339 push and #340 PR both completed successfully on Linux and Windows.
 - Confirmed portability gaps: Sber hard-coded CleanYourTV protection, Philips/TCL HOME special-case and fixed stock HOME list, Happ-only VPN toggle. Existing 341 TV profiles remain untouched.
 - No PR merged, main unchanged, no OTA, no APK install or TV state changes.
 
-**NEXT ACTION:** Wait for runs #339 and #340. If both pass, complete TOS-011 review and start TOS-012 Dynamic HOME Detection using PackageManager resolution. Do not change TV state, OTA, signing or main; do not merge automatically.
+**NEXT ACTION:** TOS-011 CI is green (#339/#340, Linux and Windows). Next start TOS-012 Dynamic HOME Detection using PackageManager resolution. Do not change TV state, OTA, signing or main; do not merge automatically.
