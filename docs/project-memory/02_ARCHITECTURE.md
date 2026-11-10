@@ -104,3 +104,14 @@ CI подтверждает только реально запущенные ш�
 ### First-launch legacy data retention
 
 TOS-009 removes `cleanupRemovedFeatureData()` and `deleteLegacyFeatureFiles()` from `MainActivity`; no first-launch code clears retired-feature preferences, shelf keys, `cache/tmdb` or `files/continue.json`. This is intentionally non-destructive even though the corresponding UI/features were removed. `tests/test_settings_backup_safety.py` protects this contract and is wired into Linux and Windows jobs. Android may still evict cache files under storage pressure; the app no longer explicitly deletes them. Runtime behavior on Sber TV remains unverified.
+
+
+
+## Universal Android TV target architecture (approved 2026-11-10)
+
+- **testOS Core:** OEM-neutral home UI, apps, dock, search, settings, DPAD/focus, OTA and themes.
+- **Android TV Compatibility Layer:** standard Android APIs for PackageManager, ActivityManager, TV Input Framework, HOME intents/roles, permissions and system settings. Feature availability must be probed, not assumed.
+- **OEM Device Profiles:** advisory manufacturer/family/device metadata and capability adapters. Unknown OEM is a supported mode; identity must never authorize package removal.
+- **Optional Integrations:** CleanYourTV, VPN providers (Happ optional), weather and system tools. Missing integrations must not impair core launcher startup.
+
+TOS-011 adds a first isolated `DeviceProfile` model and `DeviceProfileResolver`; it is not yet wired into HOME, CleanYourTV or VPN decisions. Existing 341-entry CleanYourTV model database remains intact.
