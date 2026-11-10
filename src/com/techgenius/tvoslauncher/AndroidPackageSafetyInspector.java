@@ -82,12 +82,10 @@ final class AndroidPackageSafetyInspector {
     private final Set<String> criticalRolePackages;
     private final boolean devicePolicyQueryKnown;
     private final boolean criticalRoleQueryKnown;
-    private final String permissionControllerPackage;
-
     private AndroidPackageSafetyInspector(Context context, PackageManager pm,
             DevicePolicyManager dpm, HomeAppDetector.Result home, DeviceProfile profile,
             Set<String> activeAdmins, Set<String> criticalRoles, boolean dpmKnown,
-            boolean roleKnown, String permissionControllerPackage) {
+            boolean roleKnown) {
         this.context = context;
         this.packageManager = pm;
         this.devicePolicyManager = dpm;
@@ -97,7 +95,6 @@ final class AndroidPackageSafetyInspector {
         this.criticalRolePackages = criticalRoles;
         this.devicePolicyQueryKnown = dpmKnown;
         this.criticalRoleQueryKnown = roleKnown;
-        this.permissionControllerPackage = permissionControllerPackage;
     }
 
     static AndroidPackageSafetyInspector create(Context context, HomeAppDetector.Result home) {
@@ -132,16 +129,6 @@ final class AndroidPackageSafetyInspector {
 
         Set<String> criticalRoles = new HashSet<>();
         boolean roleKnown = collectCriticalRoles(pm, criticalRoles);
-        String permissionController = "";
-        if (Build.VERSION.SDK_INT >= 29) {
-            try {
-                permissionController = pm.getPermissionControllerPackageName();
-                if (permissionController == null) roleKnown = false;
-            } catch (RuntimeException | LinkageError ignored) {
-                roleKnown = false;
-            }
-        }
-
         DeviceProfile profile = null;
         try {
             profile = DeviceProfileResolver.fromSystem(context);
@@ -150,13 +137,13 @@ final class AndroidPackageSafetyInspector {
         }
 
         return new AndroidPackageSafetyInspector(context, pm, dpm, home, profile,
-                admins, criticalRoles, dpmKnown, roleKnown, permissionController);
+                admins, criticalRoles, dpmKnown, roleKnown);
     }
 
     private static AndroidPackageSafetyInspector unknownSession() {
         return new AndroidPackageSafetyInspector(null, null, null, null, null,
                 Collections.<String>emptySet(), Collections.<String>emptySet(),
-                false, false, "");
+                false, false);
     }
 
     private static boolean collectCriticalRoles(PackageManager pm, Set<String> out) {
@@ -173,6 +160,7 @@ final class AndroidPackageSafetyInspector {
 
             List<Intent> activities = new ArrayList<>();
             activities.add(new Intent(Settings.ACTION_SETTINGS));
+            activities.add(new Intent(Settings.ACTION_MANAGE_APP_PERMISSIONS));
             activities.add(new Intent(Intent.ACTION_INSTALL_PACKAGE)
                     .setDataAndType(Uri.parse("content://testos.invalid/package.apk"), APK_MIME));
             activities.add(new Intent(Intent.ACTION_VIEW)
@@ -246,8 +234,7 @@ final class AndroidPackageSafetyInspector {
             permissionKnown = false;
         }
 
-        boolean criticalRole = criticalRolePackages.contains(pkg)
-                || pkg.equals(permissionControllerPackage);
+        boolean criticalRole = criticalRolePackages.contains(pkg);
         boolean roleKnown = criticalRoleQueryKnown;
 
         boolean knownOem = deviceProfile != null && deviceProfile.isKnownOem();
