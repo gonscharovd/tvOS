@@ -68,6 +68,8 @@ def main() -> None:
     assert "ru.sberdevices.SberDevicesServiceSystem" in protected_exact
     assert "ru.sberdevices.starlauncher" in protected_exact
     assert "com.google.android.tungsten.setupwraith" in protected_exact
+    assert "will not disable it through any path" in SOURCE
+    assert "I Forgot & Re-added Wi-Fi — Continue" not in SOURCE
     assert "if (NEVER_DISABLE_EXACT.contains(pkg) || isCriticalProtectedService(pkg, null))" in SOURCE
     assert "if (disable && !isSafeToDisable(activity, pkg))" in SOURCE
     assert "allowAnySystemApp" not in SOURCE
