@@ -681,8 +681,8 @@ public class SetupActivity extends Activity {
     void defaultHomeSetup() {
         title(tr("Make testOS Default Home", "testOS'ı Varsayılan Ana Ekran Yap"));
         TextView s = subtitle(tr(
-                "On TCL, Philips, and Google TVs, OEM firmware often forces the stock launcher when pressing Home. Follow the steps below so pressing Home always opens testOS, then click Continue.",
-                "TCL, Philips ve Google TV'lerde üretici yazılımı genellikle Home tuşuna basıldığında stok başlatıcıyı zorlar. Home tuşunun her zaman testOS'ı açması için aşağıdaki adımları uygulayın ve ardından Devam Et'e basın."));
+                "Some TV firmware may override the Home button and launch its own system home app. Follow the steps below so pressing Home opens testOS, then click Continue.",
+                "Bazı TV yazılımları Home tuşuna basıldığında kendi sistem ana ekran uygulamasını açabilir. Home tuşunun testOS'ı açması için aşağıdaki adımları uygulayın ve ardından Devam Et'e basın."));
         ((LinearLayout.LayoutParams) s.getLayoutParams()).width = u(620);
         ((LinearLayout.LayoutParams) s.getLayoutParams()).bottomMargin = u(14);
         LinearLayout l = scrollableList();
@@ -694,7 +694,7 @@ public class SetupActivity extends Activity {
                 isDef,
                 () -> runAdbTroubleshootStep(this::executeStep1SetDefaultLauncherViaAdb));
 
-        option(l, tr("Step 2: Disable System Launchers (Google TV / Android TV / OEM)", "2. Adım: Sistem Başlatıcılarını Devre Dışı Bırak (Google TV / Android TV / OEM)"),
+        option(l, tr("Step 2: Review Other System HOME Apps", "2. Adım: Diğer Sistem HOME Uygulamalarını İncele"),
                 CleanYourTv.getSystemLaunchersSummary(this),
                 !Perms.hasEnabledStockLauncher(this),
                 () -> runAdbTroubleshootStep(() -> CleanYourTv.showDisableSystemLaunchersDialog(this, () -> show(index, 0))));

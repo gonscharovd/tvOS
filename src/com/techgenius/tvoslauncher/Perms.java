@@ -110,78 +110,18 @@ final class Perms {
 
     // ---------------------------------------------------------------- default home screen
 
-    private static final String[] STOCK_TV_HOME_PACKAGES = {
-        "com.google.android.tvlauncher",
-        "com.google.android.apps.tv.launcherx",
-        "com.google.android.leanbacklauncher",
-        "org.droidtv.ui.home",
-        "org.droidtv.home",
-        "com.tpvision.home",
-        "com.tcl.cyberui",
-        "com.tcl.tv.launcher",
-        "com.tcl.launcher",
-        "com.falcon.launcher",
-        "com.ffalcon.launcher",
-        "com.hisense.tv.launcher",
-        "com.mi.tv.launcher",
-        "com.mitv.tvhome",
-        "com.sony.dtv.homemenu",
-        "com.skyworth.tvos.launcher",
-        "com.coocaa.tv.launcher",
-        "com.haier.tv.launcher",
-        "com.homwee.launcher",
-        "com.zeasn.whaleos.launcher",
-        "com.sdmc.launcher",
-        "com.amazon.tv.launcher",
-        "com.amazon.firehomestarter"
-    };
-
-    static String[] getStockTvHomePackages() {
-        return STOCK_TV_HOME_PACKAGES;
-    }
-
+    /**
+     * Reports whether another enabled system HOME candidate exists.
+     * Unknown package visibility is treated conservatively, never as "all stock launchers disabled".
+     */
     static boolean hasEnabledStockLauncher(android.content.Context c) {
-        if (c == null) return false;
-        PackageManager pm = c.getPackageManager();
-        for (String pkg : STOCK_TV_HOME_PACKAGES) {
-            try {
-                android.content.pm.ApplicationInfo ai = pm.getApplicationInfo(pkg, 0);
-                if (ai != null && ai.enabled) {
-                    int state = pm.getApplicationEnabledSetting(pkg);
-                    if (state != PackageManager.COMPONENT_ENABLED_STATE_DISABLED
-                            && state != PackageManager.COMPONENT_ENABLED_STATE_DISABLED_USER) {
-                        return true;
-                    }
-                }
-            } catch (Throwable ignored) {
-            }
-        }
-        return false;
-    }
-
-    private static boolean isOemLockedHomeTv(android.content.Context c) {
-        String brand = (Build.BRAND != null ? Build.BRAND : "").toLowerCase(java.util.Locale.US);
-        String manuf = (Build.MANUFACTURER != null ? Build.MANUFACTURER : "").toLowerCase(java.util.Locale.US);
-        String model = (Build.MODEL != null ? Build.MODEL : "").toLowerCase(java.util.Locale.US);
-        if (brand.contains("philips") || manuf.contains("philips")
-                || brand.contains("tpvision") || manuf.contains("tpvision")
-                || brand.contains("tpv") || manuf.contains("tpv")
-                || brand.contains("tcl") || manuf.contains("tcl") || model.contains("tcl")) {
+        if (c == null) return true;
+        try {
+            return AndroidHomeAppDetector.detect(c)
+                    .hasEnabledSystemHomeCandidate(c.getPackageName());
+        } catch (Throwable ignored) {
             return true;
         }
-        if (c != null) {
-            PackageManager pm = c.getPackageManager();
-            String[] oemPkgs = {
-                "org.droidtv.ui.home", "org.droidtv.home", "org.droidtv.settings",
-                "com.tpvision.home", "com.tcl.cyberui", "com.tcl.tv.launcher"
-            };
-            for (String p : oemPkgs) {
-                try {
-                    if (pm.getApplicationInfo(p, 0) != null) return true;
-                } catch (Throwable ignored) { }
-            }
-        }
-        return false;
     }
 
     static boolean isDefaultHome(Activity a) {
@@ -191,34 +131,13 @@ final class Perms {
     static boolean isDefaultHome(android.content.Context c) {
         if (c == null) return false;
         try {
-            // If Home Button Fix is enabled in Button Mapper and Accessibility is active, Home opens testOS.
+            // Preserve the existing accessibility remap semantics: the HOME key can open testOS
+            // even when Android's selected HOME role belongs to another launcher.
             if (ButtonMapper.isHomeFixEnabled(c) && ButtonMapper.isServiceEnabled(c)) {
                 return true;
             }
-            PackageManager pm = c.getPackageManager();
-            Intent home = new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME);
-            android.content.pm.ResolveInfo ri = pm.resolveActivity(home, PackageManager.MATCH_DEFAULT_ONLY);
-            boolean resolvedToUs = ri != null && ri.activityInfo != null
-                    && c.getPackageName().equals(ri.activityInfo.packageName);
-            if (!resolvedToUs) {
-                return false;
-            }
-            // On Android 10+ (API 29+), also verify RoleManager.ROLE_HOME
-            if (Build.VERSION.SDK_INT >= 29) {
-                android.app.role.RoleManager rm = c.getSystemService(android.app.role.RoleManager.class);
-                if (rm != null && rm.isRoleAvailable(android.app.role.RoleManager.ROLE_HOME)) {
-                    if (!rm.isRoleHeld(android.app.role.RoleManager.ROLE_HOME)) {
-                        return false;
-                    }
-                }
-            }
-            // On TCL and Philips Android 11/12 TVs, the firmware intercepts HOME and launches the stock
-            // Android TV / Google TV / OEM launcher as long as that stock launcher package remains enabled.
-            if (Build.VERSION.SDK_INT >= 30 && isOemLockedHomeTv(c) && hasEnabledStockLauncher(c)) {
-                return false;
-            }
-            return true;
-        } catch (Throwable t) {
+            return AndroidHomeAppDetector.detect(c).isCurrentHome(c.getPackageName());
+        } catch (Throwable ignored) {
             return false;
         }
     }
@@ -241,7 +160,7 @@ final class Perms {
 
         String[] items = {
             I18n.s(a, "Set Default via Local ADB (Recommended)", "Yerel ADB ile Varsayılan Yap (Önerilen)"),
-            I18n.s(a, "Disable Stock TV Launchers (TCL / Philips / Google TV)", "Stok TV Başlatıcılarını Devre Dışı Bırak (TCL / Philips / Google TV)"),
+            I18n.s(a, "Review Other System HOME Apps", "Diğer Sistem HOME Uygulamalarını İncele"),
             I18n.s(a, "Enable Home Button Fix (Accessibility Remap)", "Ana Ekran Tuşu Düzeltmesini Aç (Erişilebilirlik)"),
             I18n.s(a, "Open Android Default Home Settings", "Android Varsayılan Ana Ekran Ayarlarını Aç")
         };

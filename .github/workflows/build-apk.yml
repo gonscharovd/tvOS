@@ -7,6 +7,7 @@ on:
       - main
       - refactor/testos-core-cleanup-2026-11
       - feat/portable-android-tv-platform-2026-11
+      - feat/device-profile-foundation-2026-11
   push:
     branches:
       - feature/ram-cleaner-happ-vpn
@@ -18,6 +19,7 @@ on:
       - perf/sber-edition-asset-optimization
       - feat/portable-android-tv-platform-2026-11
       - feat/device-profile-foundation-2026-11
+      - feat/dynamic-home-detection-2026-11
 
 permissions:
   contents: read
@@ -61,6 +63,9 @@ jobs:
           echo "VERSION_CODE=${VERSION_CODE:-$DEFAULT_VERSION_CODE}" >> "$GITHUB_ENV"
           echo "VERSION_NAME=${VERSION_NAME:-$DEFAULT_VERSION_NAME}" >> "$GITHUB_ENV"
 
+      - name: Test HOME detection Android wiring
+        run: python3 tests/test_home_detection_contract.py
+
       - name: Test single-user migration CI contract
         run: python3 tests/test_single_user_migration_contract.py
 
@@ -79,6 +84,14 @@ jobs:
 
       - name: Test grouped Settings navigation
         run: python3 tests/test_settings_navigation.py
+
+      - name: Test HOME detection policy
+        run: |
+          set -euo pipefail
+          test_dir="$RUNNER_TEMP/tvos-home-detection"
+          mkdir -p "$test_dir"
+          javac --release 11 -d "$test_dir" src/com/techgenius/tvoslauncher/HomeAppDetector.java tests/HomeAppDetectorTest.java
+          java -cp "$test_dir" com.techgenius.tvoslauncher.HomeAppDetectorTest
 
       - name: Test device profile identity
         run: |
@@ -176,6 +189,16 @@ jobs:
           $sdkManager = (Get-Command sdkmanager.bat -ErrorAction Stop).Source
           & $sdkManager "platforms;android-34" "build-tools;34.0.0"
 
+      - name: Test HOME detection policy
+        shell: pwsh
+        run: |
+          $testDir = Join-Path $env:RUNNER_TEMP "tvos-home-detection"
+          New-Item -ItemType Directory -Force -Path $testDir | Out-Null
+          & javac --release 11 -d $testDir src/com/techgenius/tvoslauncher/HomeAppDetector.java tests/HomeAppDetectorTest.java
+          if ($LASTEXITCODE -ne 0) { throw "HOME detection test compilation failed" }
+          & java -cp $testDir com.techgenius.tvoslauncher.HomeAppDetectorTest
+          if ($LASTEXITCODE -ne 0) { throw "HOME detection policy test failed" }
+
       - name: Test device profile identity
         shell: pwsh
         run: |
@@ -195,6 +218,10 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "Single-user migration test compilation failed" }
           & java -cp $testDir com.techgenius.tvoslauncher.SingleUserMigrationTest
           if ($LASTEXITCODE -ne 0) { throw "Single-user migration data test failed" }
+
+      - name: Test HOME detection Android wiring
+        shell: pwsh
+        run: python tests/test_home_detection_contract.py
 
       - name: Test single-user migration CI contract
         shell: pwsh

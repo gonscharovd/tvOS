@@ -59,6 +59,14 @@ public final class I18n {
         add("Active — Set as default home launcher", "Активно — назначить лаунчером по умолчанию");
         add("Run ROLE_HOME & set-home-activity over Local ADB ›", "Выполнить ROLE_HOME и set-home-activity через локальный ADB ›");
         add("Step 2: Disable System Launchers (Google TV / Android TV / OEM)", "Шаг 2. Отключить системные лаунчеры (Google TV / Android TV / производителя)");
+        add("Review Other System HOME Apps", "Проверить другие системные приложения HOME");
+        add("Current system HOME is protected", "Текущее системное приложение HOME защищено");
+        add("HOME detected; other launcher roles are unknown and protected", "HOME обнаружен; роли других лаунчеров неизвестны, они защищены");
+        add("HOME selection unknown — launcher actions are protected", "Выбор HOME неизвестен — действия с лаунчерами заблокированы");
+        add("No other system HOME apps found", "Другие системные приложения HOME не найдены");
+        add("Some TV firmware may override the Home button and launch its own system home app. Follow the steps below so pressing Home opens testOS, then click Continue.", "Некоторые прошивки ТВ могут перехватывать кнопку «Домой» и запускать собственный системный экран. Выполните шаги ниже, чтобы кнопка открывала testOS, затем нажмите «Продолжить».");
+        add("Step 2: Review Other System HOME Apps", "Шаг 2. Проверить другие системные приложения HOME");
+        add("testOS is the current HOME; no other system HOME apps found", "Текущий HOME — testOS; другие системные приложения HOME не найдены");
         add("Step 3: Fix Home Button via Accessibility (Button Mapper)", "Шаг 3. Переназначить кнопку «Домой» через специальные возможности (Button Mapper)");
         add("Step 4: Open Android System Home Settings", "Шаг 4. Открыть системные настройки главного экрана Android");
         add("Proceed to the next setup step when you are done here", "Когда закончите, перейдите к следующему шагу настройки");
