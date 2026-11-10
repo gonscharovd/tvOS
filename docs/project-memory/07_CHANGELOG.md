@@ -93,3 +93,14 @@
 - [PR #14](https://github.com/gonscharovd/tvOS/pull/14)
 - [Release v2.1.73](https://github.com/gonscharovd/tvOS/releases/tag/v2.1.73)
 - [Последний CI run #313](https://github.com/gonscharovd/tvOS/actions/runs/42561116519)
+
+
+## 2026-11-10 — TOS-012 Dynamic HOME Detection (CI review pending)
+
+- Added pure-Java `HomeAppDetector` model and Android `AndroidHomeAppDetector` adapter.
+- HOME candidates are enumerated with PackageManager; current HOME requires explicit preferred-activity evidence. `resolveActivity` is deliberately not used for HOME selection because best-match/priority is not proof of user selection.
+- API 29+ checks public `RoleManager.isRoleHeld` for testOS; it does not call hidden `getRoleHolders`.
+- Removed fixed 23-package stock HOME list and Philips/TCL HOME lock heuristic from `Perms.java`. Updated LocalAdb role-holder removal and PowerService boot guard to use discovered system HOME candidates.
+- CleanYourTV protects the selected HOME and fails closed when selection/candidate role is unknown; no changes to the 341 model profiles.
+- Added Android HOME manifest package visibility, pure-Java policy tests and Linux/Windows wiring contract.
+- Current branch `feat/dynamic-home-detection-2026-11`; run #357 on head `877b74597e46a7b355485458274ac93492902e8e` pending at time of entry. No PR merged, no OTA, no APK install, no TV changes.
