@@ -11,7 +11,7 @@
 
 ## Что это за проект
 
-testOS — собственный русскоязычный однопользовательский launcher для Android TV, развиваемый в форке `gonscharovd/tvOS` на основе `techgenius1/tvOS-Launcher`. Основное целевое устройство — Sber SDX-50U4123B (Android 9 / API 28 / ARMv7). Приложение включает домашний экран Night Scenes, управление пультом, системные оверлеи, CleanYourTV, OTA-обновление и локальное резервное копирование настроек.
+testOS — универсальный русскоязычный Android TV launcher (API 24+) в форке `gonscharovd/tvOS`. Sber SDX-50U4123B — первая тестовая платформа, не основа архитектуры. Целевые OEM: Sber, Xiaomi, TCL, Philips, Sony, Hisense и другие Android TV / Google TV устройства.
 
 ## Порядок изучения
 
@@ -71,3 +71,9 @@ testOS — собственный русскоязычный однопольз�
 - [PR #15 — project memory and documentation sync](https://github.com/gonscharovd/tvOS/pull/15)
 - [Последний известный релиз v2.1.73](https://github.com/gonscharovd/tvOS/releases/tag/v2.1.73)
 - [Последняя успешная проверка ветки на момент фиксации: run #322](https://github.com/gonscharovd/tvOS/actions/runs/42607667504)
+
+
+
+## Универсальная цель (2026-11-10)
+
+testOS — универсальный Android TV launcher для API 24+. Sber SDX-50U4123B — первая тестовая платформа, не основа архитектуры. Целевые OEM: Sber, Xiaomi/Mi TV, TCL, Philips, Sony, Hisense и другие Android TV / Google TV. Архитектурные уровни: testOS Core, Android TV Compatibility Layer, OEM Device Profiles, Optional Integrations.
