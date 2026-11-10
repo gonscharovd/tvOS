@@ -87,3 +87,15 @@ TOS-008 завершена: migration JVM test подключён к Linux/Windo
 - No PR #18 yet, no merge, no APK installation, no OTA, no TV state changes; main unchanged.
 
 **NEXT ACTION:** Verify GitHub Actions run #357 on head `877b74597e46a7b355485458274ac93492902e8e`. If both jobs pass, create Draft PR #18 with base `feat/device-profile-foundation-2026-11` (PR #17 head). If they fail, fix the actual failing step and rerun. Then update project memory and proceed to TOS-013 only after review.
+
+
+## TOS-012 — точка передачи (2026-11-10)
+
+- Реализация TOS-012 находится в Draft PR #18: https://github.com/gonscharovd/tvOS/pull/18.
+- Branch `feat/dynamic-home-detection-2026-11`, head `fc6d18cf6eb18805d2b42c6e4f88f8f678305324`; base PR #17 branch `feat/device-profile-foundation-2026-11` / SHA `a7fa0057b22c3125c087f9a78d60f7d7837def1c`.
+- GitHub Actions run #363 (`42838478394`) прошёл success на Linux и Windows. Все policy, wiring, localization, APK build и package/version steps зелёные.
+- HOME detection использует PackageManager preferred activity + candidate query, API29+ RoleManager self-role check. Не выбирает первый candidate и не использует resolveActivity best-match. Unknown/ambiguous candidates fail closed; все альтернативные HOME-кандидаты защищены от автоматического disable.
+- Не выполнено: runtime проверка на Sber/Xiaomi/TCL/Philips/Sony/Hisense/Google TV; поведение OEM firmware, перехватывающих физическую HOME кнопку вне стандартного Android role/preferred path, остаётся неизвестным.
+- Никакие PR не слиты, `main` не изменён, APK не устанавливался, OTA не выпускалась, TV state/user data не изменялись.
+
+**NEXT ACTION:** провести review Draft PR #18 и согласовать его с PR #17 dependency chain. После review — начать TOS-013 (CleanYourTV safety audit), не переписывая 341 profiles без доказательств.
