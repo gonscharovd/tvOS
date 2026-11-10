@@ -97,6 +97,8 @@ public final class CleanYourTv {
         NEVER_DISABLE_EXACT.add("com.google.android.gms");
         NEVER_DISABLE_EXACT.add("com.google.android.gsf");
         NEVER_DISABLE_EXACT.add("com.google.android.webview");
+        // Google TV setup wizard may own the saved Wi-Fi network; keep it protected in every UI path.
+        NEVER_DISABLE_EXACT.add("com.google.android.tungsten.setupwraith");
         // Philips/DroidTV live-TV and tuner recovery components.
         NEVER_DISABLE_EXACT.add("org.droidtv.playtv");
         NEVER_DISABLE_EXACT.add("org.droidtv.tunerservice");
