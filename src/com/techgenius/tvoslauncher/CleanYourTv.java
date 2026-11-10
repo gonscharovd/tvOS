@@ -1744,9 +1744,17 @@ public final class CleanYourTv {
                 return tr(c, "HOME selection unknown — launcher actions are protected",
                         "HOME seçimi bilinmiyor — başlatıcı işlemleri korumaya alındı");
             }
+            if (home.testOsIsCurrentHome) {
+                return tr(c, "testOS is the current HOME; no other system HOME apps found",
+                        "Mevcut HOME testOS; başka sistem HOME uygulaması bulunamadı");
+            }
             if (Boolean.TRUE.equals(home.isCurrentHomeSystemApp())) {
                 return tr(c, "Current system HOME is protected",
                         "Mevcut sistem HOME uygulaması korumalı");
+            }
+            if (home.isCurrentHomeSystemApp() == null) {
+                return tr(c, "HOME detected; other launcher roles are unknown and protected",
+                        "HOME algılandı; diğer başlatıcı rolleri bilinmiyor ve korumalı");
             }
             return tr(c, "No other system HOME apps found",
                     "Başka sistem HOME uygulaması bulunamadı");
