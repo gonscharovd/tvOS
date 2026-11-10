@@ -9,6 +9,7 @@ INSPECTOR = (ROOT / "src/com/techgenius/tvoslauncher/AndroidPackageSafetyInspect
 POLICY = (ROOT / "src/com/techgenius/tvoslauncher/PackageSafetyPolicy.java").read_text(encoding="utf-8")
 PERMS = (ROOT / "src/com/techgenius/tvoslauncher/Perms.java").read_text(encoding="utf-8")
 LOCAL_ADB = (ROOT / "src/com/techgenius/tvoslauncher/LocalAdb.java").read_text(encoding="utf-8")
+SCENE_HOME = (ROOT / "src/com/techgenius/tvoslauncher/SceneHome.java").read_text(encoding="utf-8")
 MANIFEST = (ROOT / "AndroidManifest.xml").read_text(encoding="utf-8")
 
 
@@ -65,9 +66,12 @@ def main() -> None:
         require("pm disable-user" not in source and "pm uninstall" not in source
                 and "deletePackage(" not in source,
                 f"{path} must not add an alternate package mutation path")
-    require("REQUEST_DELETE_PACKAGES" not in MANIFEST,
-            "the app must not request the unused package deletion capability")
-    forbidden_delete_api = ("deletePackage(", "ACTION_DELETE", "ACTION_UNINSTALL_PACKAGE",
+    require("REQUEST_DELETE_PACKAGES" in MANIFEST,
+            "user-app uninstall via Android confirmation requires the declared request permission")
+    require("CleanYourTv.isSafeToDelete(host, a.pkg)" in SCENE_HOME
+            and "Intent.ACTION_DELETE" in SCENE_HOME,
+            "SceneHome user-app uninstall must be gated by the shared deletion policy")
+    forbidden_delete_api = ("deletePackage(", "ACTION_UNINSTALL_PACKAGE",
                             "setApplicationEnabledSetting(", "setPackagesSuspended(",
                             "setApplicationHidden(")
     for source_path in (ROOT / "src").rglob("*.java"):
@@ -75,7 +79,7 @@ def main() -> None:
         for token in forbidden_delete_api:
             require(token not in source, f"{source_path} must not introduce {token}")
     require("deletePackage(" not in CLEAN and "pm uninstall" not in CLEAN,
-            "CleanYourTV must not delete packages")
+            "CleanYourTV must not directly delete packages")
     require("pm enable --user 0 " in CLEAN,
             "restore path must remain an enable-only recovery operation")
     require("pm disable-user --user 0 " in CLEAN,
