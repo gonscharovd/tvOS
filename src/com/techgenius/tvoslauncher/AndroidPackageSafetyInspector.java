@@ -284,6 +284,16 @@ final class AndroidPackageSafetyInspector {
             boolean systemApp, boolean privileged, boolean persistent, boolean systemUid,
             boolean ownerKnown, boolean owner, boolean rolesKnown, boolean criticalRole,
             boolean permissionsKnown, boolean criticalPermission, boolean knownOem,
+            boolean inProfile, PackageSafetyPolicy.HomeState homeState) {
+        return facts(pkg, packageInfoKnown, systemApp, privileged, persistent, systemUid,
+                ownerKnown, owner, rolesKnown, criticalRole, permissionsKnown,
+                criticalPermission, knownOem, inProfile, homeState, null);
+    }
+
+    private PackageSafetyPolicy.Facts facts(String pkg, boolean packageInfoKnown,
+            boolean systemApp, boolean privileged, boolean persistent, boolean systemUid,
+            boolean ownerKnown, boolean owner, boolean rolesKnown, boolean criticalRole,
+            boolean permissionsKnown, boolean criticalPermission, boolean knownOem,
             boolean inProfile, PackageSafetyPolicy.HomeState homeState, String appLabel) {
         boolean valid = PackageSafetyPolicy.isValidPackageName(pkg);
         boolean own = context != null && pkg != null && pkg.equals(context.getPackageName());
