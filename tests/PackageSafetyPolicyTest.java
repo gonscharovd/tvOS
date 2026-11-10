@@ -101,6 +101,18 @@ public final class PackageSafetyPolicyTest {
                     f, "API " + api + " policy parity");
         }
 
+        check(PackageSafetyPolicy.evaluate(safeUser).confidence == PackageSafetyPolicy.Confidence.CONFIRMED,
+                "safe decision must carry confirmed confidence");
+        PackageSafetyPolicy.Decision unknown = PackageSafetyPolicy.evaluate(
+                facts(PackageSafetyPolicy.HomeState.UNKNOWN, false, false, false, false,
+                        true, false, true, false, true, false, false, false));
+        check(unknown.confidence == PackageSafetyPolicy.Confidence.INCOMPLETE,
+                "unknown decision must carry incomplete confidence");
+        check(PackageSafetyPolicy.evaluateDelete(safeUser).state == PackageSafetyPolicy.State.PROTECTED
+                        && PackageSafetyPolicy.evaluateDelete(safeUser).reason
+                        == PackageSafetyPolicy.Reason.PACKAGE_DELETE_NOT_SUPPORTED,
+                "package deletion must remain unsupported and denied");
+
         check(!PackageSafetyPolicy.isValidPackageName("vendor.example.app; pm disable-user android"),
                 "shell metacharacters must not pass package validation");
         check(!PackageSafetyPolicy.isValidPackageName("not-a-package"), "hyphenated command must be rejected");
