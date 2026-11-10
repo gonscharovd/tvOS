@@ -31,6 +31,26 @@ public final class DeviceProfileTest {
         check(conflict.family == DeviceProfile.Family.UNKNOWN, "conflicting package evidence must fail closed");
         check(conflict.evidence.contains("conflicting-oem-package-evidence"), "conflict must be observable");
 
+        DeviceProfile buildPackageConflict = DeviceProfile.resolve("Sber", "SaluteTV", "m7332_eu",
+                "m7332_eu", "SaluteTV",
+                new HashSet<>(Arrays.asList("ru.sberdevices.home", "com.xiaomi.tv.home")), true);
+        check(buildPackageConflict.family == DeviceProfile.Family.UNKNOWN,
+                "Build OEM identity conflicting with installed package evidence must fail closed");
+        check(buildPackageConflict.evidence.contains("conflicting-build-and-package-oem-evidence"),
+                "Build/package conflict must be observable");
+
+        DeviceProfile inventoryUnknown = DeviceProfile.resolve("Sber", "SaluteTV", "TV",
+                "device", "product", null, false);
+        check(inventoryUnknown.family == DeviceProfile.Family.SBER,
+                "Build identity remains available for diagnostics when inventory is unknown");
+        check(!inventoryUnknown.packageInventoryKnown,
+                "unknown package inventory must remain explicit");
+
+        DeviceProfile packageOnly = DeviceProfile.resolve("", "", "", "", "",
+                new HashSet<>(Arrays.asList("ru.sberdevices.home")), true);
+        check(packageOnly.isKnownOem() && !packageOnly.evidence.contains("build-properties"),
+                "package-only OEM inference is distinguishable from Build identity");
+
         System.out.println("Device profile identity tests passed.");
     }
 }
