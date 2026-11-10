@@ -178,6 +178,10 @@ jobs:
         shell: pwsh
         run: python tests/test_single_user_migration_contract.py
 
+      - name: Test legacy data retention and profile rollback backup
+        shell: pwsh
+        run: python tests/test_settings_backup_safety.py
+
       - name: Test PowerShell build version contract
         shell: pwsh
         run: ./tests/test_build_contract.ps1
