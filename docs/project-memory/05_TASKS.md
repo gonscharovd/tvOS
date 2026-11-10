@@ -90,7 +90,19 @@
 | TOS-010 | Remove OEM/Sber coupling from build-time asset optimization; profile describes language, not TV brand | P1 | REVIEW | PR #16; run #338 Linux/Windows success; asset-build scope only |
 | TOS-011 | Add Device Profile Architecture: immutable device identity, Android Build/PackageManager resolver, fail-closed unknown/conflicting evidence | P1 | IN PROGRESS | PR #17; runs #339/#340 pending at last check; no runtime integrations yet |
 | TOS-012 | Dynamic HOME detection via explicit PackageManager preferred activity + RoleManager self-role check; fail-safe protection of selected/alternate HOME candidates | P1 | REVIEW | Draft PR #18 based on PR #17; CI run #363 Linux/Windows success; no runtime validation |
-| TOS-013 | Universalize CleanYourTV safety: current/system HOME, Android/TV core, unknown OEM safe behavior | P1 | READY | TOS-011, TOS-012; audit 341 profiles, do not rewrite without evidence |
+| TOS-013 | Universal CleanYourTV safety: shared fail-closed policy, HOME/system/boot protection, guarded shell/restore/uninstall | P1 | REVIEW | Draft PR #19 based on PR #18; CI #456 Linux/Windows success; runtime validation pending |
 | TOS-014 | Separate VPN provider abstraction from Happ; make Happ optional adapter | P2 | READY | Common provider contract; test missing apps and VPN API availability |
 | TOS-015 | Build compatibility matrix API 24+ × OEM × features with evidence confidence | P2 | READY | TOS-011–014 |
 | TOS-016 | Add regression scenarios for unknown OEM, stock/OEM HOME, missing integrations and restricted APIs | P1 | READY | TOS-011–015; Linux/Windows CI; runtime proof tracked separately |
+
+
+### TOS-013 — Universal CleanYourTV Safety Audit
+
+- **Реализация:** `PackageSafetyPolicy.java`, `AndroidPackageSafetyInspector.java`, `PackageMutationCommandGuard.java`; CleanYourTV single/batch disable and restore, LocalAdb transport guard, SceneHome user-app uninstall gate.
+- **Safety:** `UNKNOWN` blocks action. Selected/alternate HOME (including disabled candidates), critical Android/TV roles and permissions, system UID, persistent apps, active admins/Device Owner/Profile Owner and system boot receivers are protected. System package candidate requires Build identity + complete inventory + matching OEM family + selected model package membership + independent Android checks.
+- **Audit:** 341 profiles retained. `NEVER_DISABLE_EXACT` audited rule-by-rule; no existing rule removed. Added `com.google.android.tungsten.setupwraith` protection because existing code identifies its Wi-Fi ownership risk. Sber updater/service package runtime metadata remains unknown.
+- **Restore fix:** validate saved package names; command guard accepts only exact single-package user-0 enable/disable; compound and shell uninstall commands are rejected.
+- **Tests:** pure-Java policy, HOME, DeviceProfile and command-guard tests; Python contracts for Android wiring and all mutation paths. API 24/28/34/35 policy parity is JVM-level only; no real Android runtime simulation.
+- **CI:** run #456 passed Linux and Windows on code commit `22d46a96a5dba243ae95c1a516b6890c6e72015d`; PR #19 latest head has a later docs-only audit report commit.
+- **Статус:** REVIEW — Draft PR #19, not merged. Physical OEM runtime validation remains separate.
+- **Связанные файлы:** `CleanYourTv.java`, `AndroidPackageSafetyInspector.java`, `PackageSafetyPolicy.java`, `PackageMutationCommandGuard.java`, `LocalAdb.java`, `AndroidHomeAppDetector.java`, `DeviceProfile.java`, `DeviceProfileResolver.java`, `SceneHome.java`, tests, `docs/cleanyourtv-safety-audit.md`.
