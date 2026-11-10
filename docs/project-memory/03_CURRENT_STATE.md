@@ -1,6 +1,6 @@
 # Текущее состояние проекта
 
-**Дата среза:** 2026-11-10  
+**Дата среза:** 2026-11-10 (обновлено после PR #16/#17)  
 **Репозиторий:** `gonscharovd/tvOS`  
 **Default branch:** `main`
 
@@ -85,3 +85,14 @@ PR #14 остаётся Draft и не merged. Код не опубликован
 3. TOS-009: implementation и полный CI #330 успешны; ожидает review PR #14.
 4. TOS-006: выполнить read-only preflight, подтвердить installed APK fingerprint и только затем согласовать release-signed in-place candidate.
 5. TOS-007: отдельная OTA validation после TOS-006; не запускать GitHub latest release updater во время TOS-006.
+
+
+
+## Universal portability audit — 2026-11-10
+
+- PR #16 Open / Draft, base PR #14, head `85513e87f4b6abfe49352e67e8844d5fdbceb56a`; TOS-010 changed build asset profile from OEM-specific `sber` to language-based `ru`. GitHub Actions run #338 passed Linux and Windows.
+- PR #17 Open / Draft, base PR #16, head `a7fa0057b22c3125c087f9a78d60f7d7837def1c`; TOS-011 adds `DeviceProfile.java`, `DeviceProfileResolver.java`, `DeviceProfileTest.java`; runs #339/#340 were still in progress at last check.
+- PR #14 Open / Draft, head `6d3fc12a271ad8d5cb3681cc614e8182041fddcf`, CI #330 success. PR #15 Open / Draft; GitHub reports base SHA `fa91b18305e57bae536d6664af88cb6230a4ec7e`, older than current PR #14 head; sync required before merge.
+- Confirmed code issues: `CleanYourTv.java` retains Sber Device Owner/StarLauncher hard-protection entries; `Perms.java` has Philips/TCL-specific HOME handling and a static stock HOME package list; `VpnController.java` toggles Happ only. 341 CleanYourTV profiles have not been rewritten.
+- PR #16 only removes OEM coupling from asset optimization. PR #17 adds isolated device identity metadata; neither proves universal runtime behavior.
+- `main` unchanged; no PR merged; no APK installed on TV; no OTA published; no runtime device validation.
