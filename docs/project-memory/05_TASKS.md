@@ -14,7 +14,7 @@
 | TOS-006 | Выполнить runtime regression на Sber SDX-50U4123B для PR #14 | P1 | BLOCKED | TOS-009 CI/review; read-only device inventory; verified release signing compatibility |
 | TOS-007 | Подтвердить сертификат установленного APK и OTA in-place update после PR #14 | P1 | BLOCKED | TOS-006, release signing |
 | TOS-008 | Подключить SingleUserMigrationTest.java к CI workflow | P2 | REVIEW | TOS-001; Linux/Windows CI #322 success |
-| TOS-009 | Сделать first-launch cleanup безопасным для legacy data до runtime migration | P1 | IN PROGRESS | Реализация в PR #14; полный CI и review ещё ожидаются |
+| TOS-009 | Сделать first-launch cleanup безопасным для legacy data до runtime migration | P1 | REVIEW | Реализация в PR #14; полный CI #330 success; ожидает code review |
 
 ## Детализация
 
@@ -74,8 +74,8 @@
 - **Rollback export:** `CustomMedia` включает `profiles` в settings backup; если legacy snapshot существует, экспортируемые `list/current` берутся из него. Импорт выполняется merge-based, без очистки prefs. Для rollback: сохранить backup после обновления; при необходимости открыть Settings → Restore и импортировать его в PR #14 до downgrade; затем устанавливать старый APK только при совпадающем сертификате и допустимом downgrade. Кодовый путь ещё не проверен физически.
 - **Ограничения backup:** CleanYourTV state, ADB/security state и custom media files остаются вне общего JSON backup, но TOS-009 их не удаляет. Android OS может очищать cache независимо от приложения.
 - **Regression:** обновлены `tests/test_settings_backup_safety.py` и `tests/test_single_user_migration_contract.py`; backup safety test подключён к Windows job, Linux уже запускал его.
-- **Критерии:** полный CI для текущего head зелёный; code review; никакого удаления legacy data; helper `SingleUserMigration` без изменений.
-- **Статус:** IN PROGRESS — изменения закоммичены в PR #14, полный CI run #330 выполняется.
+- **Критерии:** полный CI для текущего head зелёный; выполнено. Осталось code review; runtime/rollback на ТВ отдельно не проверялись. Никакого удаления legacy data; helper `SingleUserMigration` без изменений.
+- **Статус:** REVIEW — изменения закоммичены в PR #14, полный CI #330 success; ожидает review.
 
 ### TOS-008 — Single-user migration CI coverage
 - **Аудит:** `SingleUserMigration.migrate` — чистая Java-функция без Android-зависимостей; `SingleUserMigrationTest.java` — standalone `main` test, поэтому не требуются Android SDK stubs, Robolectric или instrumentation.
