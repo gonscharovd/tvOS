@@ -7,14 +7,14 @@
 
 ## Контекст
 
-TOS-008 завершена: migration JVM test подключён к Linux/Windows CI (#322 success). TOS-009 implementation внесена в PR #14: destructive first-launch cleanup удалён, profile registry сохранён, backup rollback projection добавлена. Финальный CI run #330 для текущего head выполняется. TOS-006 остаётся BLOCKED до зелёного CI/review, read-only device inventory и signing compatibility. PR #14 и #15 остаются Open / Draft; main не менялся.
+TOS-008 завершена: migration JVM test подключён к Linux/Windows CI (#322 success). TOS-009 implementation внесена в PR #14: destructive first-launch cleanup удалён, profile registry сохранён, backup rollback projection добавлена. Финальный CI run #330 для текущего head завершился success. TOS-006 остаётся BLOCKED до зелёного CI/review, read-only device inventory и signing compatibility. PR #14 и #15 остаются Open / Draft; main не менялся.
 
 ## Проверенное состояние GitHub
 
 - main = a765318b577e66fae66a8ffe28439dcd6233f38f.
 - PR #14 Open / Draft, base main, head 6d3fc12a271ad8d5cb3681cc614e8182041fddcf.
 - PR #15 Open / Draft, base ref — PR #14 branch; GitHub API по-прежнему возвращает base SHA fa91b183..., устаревший относительно текущего code head. Перед merge проверить синхронизацию.
-- Последний подтверждённый CI до TOS-009 — run #322 success на предыдущем head d1523ade... Новые прогоны #328/#329 завершились failure из-за временно удалённых JSON imports в SingleUserPrefs; imports восстановлены. Текущий полный CI run #330 (https://github.com/gonscharovd/tvOS/actions/runs/42791143018) выполняется на финальном head 6d3fc12a271ad8d5cb3681cc614e8182041fddcf.
+- Последний подтверждённый CI до TOS-009 — run #322 success на предыдущем head d1523ade... Новые прогоны #328/#329 завершились failure из-за временно удалённых JSON imports в SingleUserPrefs; imports восстановлены. Полный CI run #330 (https://github.com/gonscharovd/tvOS/actions/runs/42791143018) завершился success на финальном head 6d3fc12a271ad8d5cb3681cc614e8182041fddcf.
 - Последний GitHub Release — v2.1.73, versionCode 88, asset tvos-home.apk. PR #14 development target — 2.1.74 / code 89; release не опубликован.
 
 ## TOS-006 — аудит runtime regression
@@ -62,4 +62,4 @@ TOS-008 завершена: migration JVM test подключён к Linux/Windo
 
 ## NEXT ACTION
 
-**TOS-009 — дождаться результата полного CI run #330 на PR #14 head 6d3fc12a271ad8d5cb3681cc614e8182041fddcf; при success перепроверить regression contracts, обновить статусы TOS-009/DEBT-009 и синхронизировать Library. Не выполнять ADB, install, OTA, merge или изменения main.**
+**TOS-006 — начать read-only preflight Sber SDX-50U4123B: получить свежие package/version/HOME/disabled-packages данные и fingerprint установленного APK; сравнить его с release fingerprint. Не устанавливать APK, не запускать OTA, не менять HOME/package state, не сливать PR и не менять main.**
