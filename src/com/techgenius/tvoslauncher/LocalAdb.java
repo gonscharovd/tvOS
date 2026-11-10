@@ -1342,6 +1342,9 @@ final class LocalAdb {
         if (mutation.type == PackageMutationCommandGuard.Type.UNSUPPORTED_MUTATION) {
             return "BLOCKED: unsupported or compound package mutation command";
         }
+        // Re-enabling is the recovery-only mutation. The command parser has already constrained
+        // it to one valid package name and user 0, with no shell chaining or extra arguments.
+        if (mutation.type == PackageMutationCommandGuard.Type.ENABLE) return null;
         AndroidPackageSafetyInspector safety = safetySnapshot != null ? safetySnapshot
                 : AndroidPackageSafetyInspector.create(context, AndroidHomeAppDetector.detect(context));
         if (!safety.evaluate(mutation.packageName).isSafeToDisable()) {
