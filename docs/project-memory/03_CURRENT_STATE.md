@@ -1,6 +1,6 @@
 # Текущее состояние проекта
 
-**Дата среза:** 2026-11-09  
+**Дата среза:** 2026-11-10  
 **Репозиторий:** `gonscharovd/tvOS`  
 **Default branch:** `main`
 
@@ -10,7 +10,7 @@
 |---|---|
 | main | `a765318b577e66fae66a8ffe28439dcd6233f38f` |
 | Кодовая рабочая ветка | `refactor/testos-core-cleanup-2026-11` |
-| Последний commit кода | `d1523ade55d66f32139cfa6fc31bc60dac7f50b2` |
+| Последний commit кода | `7aa77d1cb3654f090cafdedfabf3274a7098d87b` |
 | PR #14 | Open / Draft, base `main`, head `d1523ad...` |
 | PR #14 diff | актуальный diff проверять в GitHub; TOS-008 добавила workflow/test files |
 | Документационная ветка | `docs/project-memory-2026-11` |
@@ -30,7 +30,7 @@ PR #15 намеренно основан на ветке PR #14, чтобы па
 - Удалены Classic grid/wallpaper UI, Hero/Continue Watching shelf и связанный dead code.
 - Удалена старая multi-profile модель; используются `SingleUserPrefs` и `SingleUserMigration`.
 - `SingleUserPrefs` сохраняет migration-specific legacy profile data: исходные profile files остаются на месте; прежние `profiles.list/current` копируются в `legacy_list_before_single_user` / `legacy_current_before_single_user`; при переносе non-p1 создаётся `home_legacy_p1`, если старый `home` непустой. Wallpapers и wallpaper-folder metadata не удаляются migration helper.
-- **Отдельный риск:** `MainActivity.cleanupRemovedFeatureData()` выполняется до основного `homePrefs()` при первом старте и очищает SharedPreferences `suggestions`, `nuvio_cloud`, `stremio_cloud`, `watch_cloud`; удаляет из canonical `home` ключи `shelf_mode`, `cw_enabled`, `shelf`, `top_shelf_tab`; удаляет `cache/tmdb` и `files/continue.json`. Это не часть `SingleUserMigration`, не покрыто migration JVM test и необратимо для этих данных. До runtime test требуется отдельное решение/изменение TOS-009.
+- **TOS-009 implementation in PR #14:** удалены вызов и реализация `MainActivity.cleanupRemovedFeatureData()` / `deleteLegacyFeatureFiles()`. Первый запуск больше не очищает `suggestions`, `nuvio_cloud`, `stremio_cloud`, `watch_cloud`, shelf keys в `home`, `cache/tmdb` или `files/continue.json`. Это не меняет `SingleUserMigration` helper.
 - Сохранены app launch, dock, More Apps, Search, Weather, Control Panel, Recent Apps, Button Mapper, CleanYourTV, OTA и shared artwork/backdrop helpers.
 - Добавлен единый version contract: `version.properties` задаёт development defaults `2.1.74` / versionCode `89`, release base `15` и prefix `2.1.`.
 - `build.sh` и `build.ps1` читают общий источник; environment overrides `VERSION_CODE` / `VERSION_NAME` сохраняют приоритет.
@@ -69,7 +69,7 @@ PR #14 остаётся Draft и не merged. Код не опубликован
 
 - `build.sh` / `build.ps1` version defaults унифицированы в `version.properties`; DEBT-001 устранён в PR #14.
 - Machine-specific JDK fallback удалён из `build.ps1`; `JAVA_HOME` и `PATH` resolution подтверждены run #317.
-- **Rollback caveat:** migration переписывает `profiles.list/current` в single-user `p1`, сохраняя старые значения в новых `legacy_*` keys. Предыдущая версия приложения может не читать эти keys; downgrade не гарантирует автоматическое восстановление прежнего selected profile. Это требует отдельного rollback path до runtime test.
+- **Profile rollback:** `SingleUserPrefs` больше не переписывает `profiles.list/current` и `ask_on_wake`; старый APK сможет прочитать прежний выбранный профиль. Значения также сохраняются в `legacy_list_before_single_user` / `legacy_current_before_single_user`. Settings JSON backup теперь включает `profiles` и проецирует эти legacy values обратно в экспортируемые `list/current`, чтобы поддержать ручное восстановление для уже мигрированных установок. Import/rollback на физическом ТВ ещё не проверен.
 - Runtime regression PR #14 на Sber SDX-50U4123B не выполнена. Подготовлен безопасный план TOS-006; исполнение заблокировано TOS-009 (first-launch destructive cleanup audit) и проверкой signing compatibility.
 - Сертификат установленного на ТВ APK не сверялся с release certificate в этой сессии. Release workflow проверяет ожидаемый SHA-256 certificate fingerprint `5dbf8846d9bb76a764928da8c8a833a837b44ba00f4a7c0b60dc77490319b10a`; совпадение с устройством не доказано.
 - Последний GitHub Release — `v2.1.73`, versionCode 88; PR #14 development target — `2.1.74`, versionCode 89. Официальный release asset не является PR preview.
@@ -82,6 +82,6 @@ PR #14 остаётся Draft и не merged. Код не опубликован
 
 1. Review PR #15 и документационных изменений.
 2. TOS-008: подключена к CI и прошла Linux/Windows в run #322; ожидает review.
-3. TOS-009: устранить/обезопасить first-launch legacy cleanup до runtime migration test.
+3. TOS-009: implementation внесена в PR #14; ожидается полный CI и review regression contracts.
 4. TOS-006: выполнить read-only preflight, подтвердить installed APK fingerprint и только затем согласовать release-signed in-place candidate.
 5. TOS-007: отдельная OTA validation после TOS-006; не запускать GitHub latest release updater во время TOS-006.
