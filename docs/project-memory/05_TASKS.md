@@ -89,7 +89,7 @@
 
 | TOS-010 | Remove OEM/Sber coupling from build-time asset optimization; profile describes language, not TV brand | P1 | REVIEW | PR #16; run #338 Linux/Windows success; asset-build scope only |
 | TOS-011 | Add Device Profile Architecture: immutable device identity, Android Build/PackageManager resolver, fail-closed unknown/conflicting evidence | P1 | IN PROGRESS | PR #17; runs #339/#340 pending at last check; no runtime integrations yet |
-| TOS-012 | Dynamic HOME detection via explicit PackageManager preferred activity + RoleManager self-role check; fail-safe protection of selected/ambiguous HOME | P1 | IN PROGRESS | Branch `feat/dynamic-home-detection-2026-11` based on PR #17; HomeAppDetector policy/Android adapter/tests added; run #357 pending at last check |
+| TOS-012 | Dynamic HOME detection via explicit PackageManager preferred activity + RoleManager self-role check; fail-safe protection of selected/alternate HOME candidates | P1 | REVIEW | Draft PR #18 based on PR #17; CI run #363 Linux/Windows success; no runtime validation |
 | TOS-013 | Universalize CleanYourTV safety: current/system HOME, Android/TV core, unknown OEM safe behavior | P1 | READY | TOS-011, TOS-012; audit 341 profiles, do not rewrite without evidence |
 | TOS-014 | Separate VPN provider abstraction from Happ; make Happ optional adapter | P2 | READY | Common provider contract; test missing apps and VPN API availability |
 | TOS-015 | Build compatibility matrix API 24+ × OEM × features with evidence confidence | P2 | READY | TOS-011–014 |
