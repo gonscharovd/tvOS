@@ -11,10 +11,13 @@ import java.util.regex.Pattern;
 public final class PackageSafetyPolicy {
     public enum State { SAFE_TO_DISABLE, PROTECTED, UNKNOWN }
 
+    public enum Confidence { CONFIRMED, INCOMPLETE }
+
     public enum HomeState { SAFE_NON_HOME, SELECTED_HOME, HOME_CANDIDATE, UNKNOWN }
 
     public enum Reason {
         NONE,
+        PACKAGE_DELETE_NOT_SUPPORTED,
         INVALID_PACKAGE_NAME,
         OWN_APPLICATION,
         LEGACY_HARD_PROTECTION,
@@ -91,10 +94,12 @@ public final class PackageSafetyPolicy {
     public static final class Decision {
         public final State state;
         public final Reason reason;
+        public final Confidence confidence;
 
         private Decision(State state, Reason reason) {
             this.state = state;
             this.reason = reason;
+            this.confidence = state == State.UNKNOWN ? Confidence.INCOMPLETE : Confidence.CONFIRMED;
         }
 
         public boolean isSafeToDisable() {
@@ -109,6 +114,10 @@ public final class PackageSafetyPolicy {
 
     public static boolean isValidPackageName(String packageName) {
         return packageName != null && PACKAGE_NAME.matcher(packageName).matches();
+    }
+
+    public static Decision evaluateDelete(Facts f) {
+        return protectedResult(Reason.PACKAGE_DELETE_NOT_SUPPORTED);
     }
 
     public static Decision evaluate(Facts f) {
