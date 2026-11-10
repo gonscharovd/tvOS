@@ -46,10 +46,12 @@ def main() -> None:
     require("UNKNOWN" in POLICY and "HOME_CANDIDATE" in POLICY
             and "UNKNOWN_OEM_SYSTEM_APPLICATION" in POLICY,
             "policy must model uncertainty and HOME/OEM states explicitly")
-    require("PACKAGE_MUTATION_TOKEN" in LOCAL_ADB
+    require("PackageMutationCommandGuard.inspect(command)" in LOCAL_ADB
             and "packageMutationBlockReason(c, shellCmd, packageSafetySnapshot)" in LOCAL_ADB
-            and "safety.evaluate(pkg).isSafeToDisable()" in LOCAL_ADB,
+            and "safety.evaluate(mutation.packageName).isSafeToDisable()" in LOCAL_ADB,
             "ADB transport must re-check every package mutation with the shared policy")
+    require("UNSUPPORTED_MUTATION" in LOCAL_ADB and "DELETE" in LOCAL_ADB,
+            "ADB transport must reject compound mutations and all package deletion")
     require("pm disable-user" not in PERMS,
             "Perms must not display a manual shell command that bypasses package safety")
     for path in (
