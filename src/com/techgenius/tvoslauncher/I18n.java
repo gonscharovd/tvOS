@@ -59,6 +59,7 @@ public final class I18n {
         add("Active — Set as default home launcher", "Активно — назначить лаунчером по умолчанию");
         add("Run ROLE_HOME & set-home-activity over Local ADB ›", "Выполнить ROLE_HOME и set-home-activity через локальный ADB ›");
         add("Step 2: Disable System Launchers (Google TV / Android TV / OEM)", "Шаг 2. Отключить системные лаунчеры (Google TV / Android TV / производителя)");
+        add("Review Other System HOME Apps", "Проверить другие системные приложения HOME");
         add("Step 3: Fix Home Button via Accessibility (Button Mapper)", "Шаг 3. Переназначить кнопку «Домой» через специальные возможности (Button Mapper)");
         add("Step 4: Open Android System Home Settings", "Шаг 4. Открыть системные настройки главного экрана Android");
         add("Proceed to the next setup step when you are done here", "Когда закончите, перейдите к следующему шагу настройки");
