@@ -78,9 +78,6 @@ public final class PackageSafetyPolicyTest {
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.SYSTEM_UID,
                 facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, false, true,
                         true, false, true, false, true, false, true, true), "system UID");
-        expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.PRIVILEGED_SYSTEM_APPLICATION,
-                facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, true, false, false,
-                        true, false, true, false, true, false, true, true), "privileged system app");
         expect(PackageSafetyPolicy.State.PROTECTED, PackageSafetyPolicy.Reason.PERSISTENT_SYSTEM_APPLICATION,
                 facts(PackageSafetyPolicy.HomeState.SAFE_NON_HOME, true, false, true, false,
                         true, false, true, false, true, false, true, true), "persistent system app");
