@@ -68,11 +68,13 @@ final class HomeAppDetector {
         PackageProtection protectionFor(String packageName) {
             String pkg = clean(packageName);
             if (pkg.isEmpty()) return PackageProtection.UNKNOWN;
-            if (currentHomeKnown) {
-                return currentHomePackage.equals(pkg)
-                        ? PackageProtection.PROTECTED_CURRENT_HOME : PackageProtection.SAFE;
+            if (currentHomeKnown && currentHomePackage.equals(pkg)) {
+                return PackageProtection.PROTECTED_CURRENT_HOME;
             }
+            // If candidate discovery failed or returned no corroborating candidates, do not
+            // infer that an arbitrary package is not HOME-capable.
             if (!candidatesKnown || candidates.isEmpty()) return PackageProtection.UNKNOWN;
+            if (currentHomeKnown) return PackageProtection.SAFE;
             for (Candidate candidate : candidates) {
                 if (candidate.packageName.equals(pkg)) return PackageProtection.UNKNOWN;
             }
@@ -82,8 +84,17 @@ final class HomeAppDetector {
         /**
          * Conservative UI signal: unknown candidate visibility is not interpreted as "no stock HOME".
          */
+        Boolean isCurrentHomeSystemApp() {
+            if (!currentHomeKnown) return null;
+            for (Candidate candidate : candidates) {
+                if (candidate.packageName.equals(currentHomePackage)) return candidate.systemApp;
+            }
+            return null;
+        }
+
         boolean hasEnabledSystemHomeCandidate(String ownPackage) {
             if (!candidatesKnown) return true;
+            if (candidates.isEmpty() && currentHomeKnown && !testOsIsCurrentHome) return true;
             String own = clean(ownPackage);
             for (Candidate candidate : candidates) {
                 if (candidate.packageName.equals(own)) continue;
