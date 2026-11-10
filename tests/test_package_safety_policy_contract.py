@@ -68,7 +68,8 @@ def main() -> None:
     require("REQUEST_DELETE_PACKAGES" not in MANIFEST,
             "the app must not request the unused package deletion capability")
     forbidden_delete_api = ("deletePackage(", "ACTION_DELETE", "ACTION_UNINSTALL_PACKAGE",
-                            "setApplicationEnabledSetting(")
+                            "setApplicationEnabledSetting(", "setPackagesSuspended(",
+                            "setApplicationHidden(")
     for source_path in (ROOT / "src").rglob("*.java"):
         source = source_path.read_text(encoding="utf-8")
         for token in forbidden_delete_api:
