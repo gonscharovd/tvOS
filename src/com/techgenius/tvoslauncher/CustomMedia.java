@@ -1658,7 +1658,7 @@ public final class CustomMedia {
     // Only user-facing configuration is exported. Runtime state, ADB/security state,
     // CleanYourTV package backups, search history and removed cloud features stay local.
     private static final String[] KNOWN_PREF_NAMES = {
-        "settings", "home", "home_default", "app_custom_names",
+        "settings", "home", "home_default", "profiles", "app_custom_names",
         "button_mapper", "control_panel", "weather", "inputs", "clicks",
         "custom_media", "screensaver"
     };
@@ -1707,6 +1707,20 @@ public final class CustomMedia {
             SharedPreferences sp = c.getSharedPreferences(pName, Context.MODE_PRIVATE);
             Map<String, ?> all = sp.getAll();
             if (all == null || all.isEmpty()) continue;
+
+            // Keep a portable rollback path for the pre-single-user profile selection.
+            // The migration retains the original registry values in legacy_* keys; expose
+            // those values as list/current in the exported copy so the older APK can read
+            // them after the user restores this backup before downgrading.
+            if ("profiles".equals(pName)) {
+                Map<String, Object> rollbackRegistry = new LinkedHashMap<>();
+                rollbackRegistry.putAll(all);
+                Object legacyList = all.get("legacy_list_before_single_user");
+                Object legacyCurrent = all.get("legacy_current_before_single_user");
+                if (legacyList instanceof String) rollbackRegistry.put("list", legacyList);
+                if (legacyCurrent instanceof String) rollbackRegistry.put("current", legacyCurrent);
+                all = rollbackRegistry;
+            }
 
             org.json.JSONObject entriesObj = new org.json.JSONObject();
             for (Map.Entry<String, ?> entry : all.entrySet()) {
