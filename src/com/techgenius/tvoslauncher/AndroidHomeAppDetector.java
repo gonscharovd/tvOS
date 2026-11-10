@@ -111,7 +111,12 @@ final class AndroidHomeAppDetector {
             // resolveActivity may return ResolverActivity when the user has not selected a default.
             // Only accept it when it is one of the actual HOME candidates discovered above.
             for (HomeAppDetector.Candidate candidate : candidates) {
-                if (candidate.packageName.equals(resolvedHome.getPackageName())) {
+                String resolvedClass = resolvedHome.getClassName() == null
+                        ? "" : resolvedHome.getClassName().toLowerCase(java.util.Locale.US);
+                boolean resolverComponent = resolvedClass.contains("resolveractivity")
+                        || resolvedClass.contains("fallbackhome")
+                        || resolvedClass.contains("chooseractivity");
+                if (!resolverComponent && candidate.packageName.equals(resolvedHome.getPackageName())) {
                     preferredPackage = resolvedHome.getPackageName();
                     preferredActivity = resolvedHome.getClassName();
                     break;
