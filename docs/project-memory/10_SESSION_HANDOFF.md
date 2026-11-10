@@ -1,6 +1,6 @@
 # Session handoff — testOS
 
-**Последнее обновление:** 2026-11-10
+**Последнее обновление:** 2026-11-10 (universal portability)
 **Проект:** gonscharovd/tvOS
 **Кодовая точка:** PR #14, refactor/testos-core-cleanup-2026-11, commit 6d3fc12a271ad8d5cb3681cc614e8182041fddcf
 **Документационная точка:** PR #15, docs/project-memory-2026-11 (проверять актуальный branch HEAD в GitHub)
@@ -63,3 +63,15 @@ TOS-008 завершена: migration JVM test подключён к Linux/Windo
 ## NEXT ACTION
 
 **TOS-006 — начать read-only preflight Sber SDX-50U4123B: получить свежие package/version/HOME/disabled-packages данные и fingerprint установленного APK; сравнить его с release fingerprint. Не устанавливать APK, не запускать OTA, не менять HOME/package state, не сливать PR и не менять main.**
+
+
+
+## Universal portability handoff — 2026-11-10
+
+- Product goal is now universal Android TV API 24+; Sber SDX-50U4123B is only the first test platform.
+- PR #16 Open/Draft, head `85513e87f4b6abfe49352e67e8844d5fdbceb56a`; TOS-010 asset profile `sber` → `ru`; CI #338 Linux/Windows success.
+- PR #17 Open/Draft, base PR #16, head `a7fa0057b22c3125c087f9a78e8844d5fdbceb56a`; DeviceProfile model/resolver/JVM tests added; runs #339 push and #340 PR were in progress at last check.
+- Confirmed portability gaps: Sber hard-coded CleanYourTV protection, Philips/TCL HOME special-case and fixed stock HOME list, Happ-only VPN toggle. Existing 341 TV profiles remain untouched.
+- No PR merged, main unchanged, no OTA, no APK install or TV state changes.
+
+**NEXT ACTION:** Wait for runs #339 and #340. If both pass, complete TOS-011 review and start TOS-012 Dynamic HOME Detection using PackageManager resolution. Do not change TV state, OTA, signing or main; do not merge automatically.
