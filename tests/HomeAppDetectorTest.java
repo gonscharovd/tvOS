@@ -45,6 +45,15 @@ public final class HomeAppDetectorTest {
         check(multiple.protectionFor("vendor.tv.home") == HomeAppDetector.PackageProtection.UNKNOWN,
                 "alternate HOME candidates must remain protected from automatic debloat");
 
+        HomeAppDetector.Candidate disabledHome = candidate("vendor.tv.disabledhome",
+                "vendor.tv.DisabledHomeActivity", true, false);
+        HomeAppDetector.Result disabledAlternate = evaluate(28, false, false, null,
+                "com.google.android.tvlauncher", "GoogleHome", true,
+                Arrays.asList(stock, google, disabledHome));
+        check(disabledAlternate.protectionFor("vendor.tv.disabledhome")
+                        == HomeAppDetector.PackageProtection.UNKNOWN,
+                "disabled alternate HOME remains a protected recovery candidate");
+
         // System HOME plus user-installed HOME.
         HomeAppDetector.Result mixed = evaluate(28, false, false, null,
                 "org.example.customhome", "CustomHome", true, Arrays.asList(stock, userHome));
