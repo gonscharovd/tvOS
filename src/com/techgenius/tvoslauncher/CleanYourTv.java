@@ -1496,7 +1496,7 @@ public final class CleanYourTv {
             String pkg = e.getKey();
             if (activePkgComments.containsKey(pkg)) continue;
             if (!installedPkgs.contains(pkg)) continue;
-            if (!isSafeToDisable(c, pkg, homeDetection)) continue;
+            if (!isSafeToDisable(c, pkg, safety)) continue;
 
             String label = resolveAppLabel(pm, pkg);
             String desc = e.getValue();
@@ -1701,7 +1701,7 @@ public final class CleanYourTv {
                     if (found.containsKey(pkg)) continue;
                     if (homeDetection.protectionFor(pkg) != HomeAppDetector.PackageProtection.SAFE) continue;
                     if (isExcludedFromLauncherList(pkg, actName)) continue;
-                    if (!isSafeToDisable(c, pkg, homeDetection)) continue;
+                    if (!isSafeToDisable(c, pkg, safety)) continue;
                     ApplicationInfo ai = ri.activityInfo.applicationInfo;
                     boolean isSystem = ai != null && ((ai.flags & (ApplicationInfo.FLAG_SYSTEM | ApplicationInfo.FLAG_UPDATED_SYSTEM_APP)) != 0);
                     if (!isSystem) continue;
@@ -1783,7 +1783,7 @@ public final class CleanYourTv {
                             : (isPackageCurrentlyEnabled(pm, pkg, ai) && !savedDisabled.contains(pkg));
                     String label = resolveAppLabel(pm, pkg);
                     boolean isCritical = isCriticalProtectedService(pkg, label);
-                    boolean coreWarning = isCritical || !isSafeToDisable(c, pkg, homeDetection);
+                    boolean coreWarning = isCritical || !isSafeToDisable(c, pkg, safety);
                     String desc = isCritical
                             ? tr(c, "🛑 Critical system service — protected (cannot be disabled)", "🛑 Kritik sistem servisi — korumalı (devre dışı bırakılamaz)")
                             : (coreWarning
@@ -1811,7 +1811,7 @@ public final class CleanYourTv {
                         : !savedDisabled.contains(pkg);
                 String label = resolveAppLabel(pm, pkg);
                 boolean isCritical = isCriticalProtectedService(pkg, label);
-                boolean coreWarning = isCritical || !isSafeToDisable(c, pkg, homeDetection);
+                boolean coreWarning = isCritical || !isSafeToDisable(c, pkg, safety);
                 String desc = isCritical
                         ? tr(c, "🛑 Critical system service — protected (cannot be disabled)", "🛑 Kritik sistem servisi — korumalı (devre dışı bırakılamaz)")
                         : (coreWarning
